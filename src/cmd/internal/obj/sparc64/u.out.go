@@ -236,8 +236,5 @@ const (
 	AXORCC
 	AXNOR
 	AXNORCC
-
-	ABA = obj.AJMP
-
 	ALAST
 )

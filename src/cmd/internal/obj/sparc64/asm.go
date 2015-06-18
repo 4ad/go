@@ -73,7 +73,7 @@ func opcode(a int) uint32 {
 		return op3(2, 21)
 
 	// Branch on integer condition codes with prediction (BPcc).
-	case ABA:
+	case obj.AJMP:
 		return cond(8) | op2(1)
 	case ABN:
 		return cond(0) | op2(1)
