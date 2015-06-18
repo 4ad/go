@@ -175,9 +175,9 @@ func opcode(a int) uint32 {
 
 	// Floating-point compare.
 	case AFCMPS:
-		return op3(2, 0x35) | opf(0x31)
+		return op3(2, 0x35) | opf(0x51)
 	case AFCMPD:
-		return op3(2, 0x35) | opf(0x32)
+		return op3(2, 0x35) | opf(0x52)
 
 	// Floating-point divide.
 	case AFDIVS:
