@@ -6,7 +6,7 @@ package sparc64
 
 import "cmd/internal/obj"
 
-func ri(rd, imm22 int) uint32 {
+func ir(imm22, rd int) uint32 {
 	return uint32(rd&31<<25 | imm22&(1<<23-1))
 }
 
@@ -22,11 +22,11 @@ func d30(disp30 int) uint32 {
 	return uint32(disp30 & (1<<31 - 1))
 }
 
-func rrr(rd, rs1, imm_asi, rs2 int) uint32 {
+func rrr(rs1, imm_asi, rs2, rd int) uint32 {
 	return uint32(rd&31<<25 | rs1&31<<14 | imm_asi&255<<5 | rs2&31)
 }
 
-func rrs(rd, rs1, simm13 int) uint32 {
+func rsr(rs1, simm13, rd int) uint32 {
 	return uint32(rd&31<<25 | rs1&31<<14 | 1<<13 | simm13&(1<<14-1))
 }
 
