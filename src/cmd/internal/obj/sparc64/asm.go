@@ -19,21 +19,27 @@ type Optab struct {
 var optab = map[Optab]int{
 	{obj.ATEXT, ClassAddr, ClassNone, ClassTextSize}: 0,
 
-	{AADD, ClassReg, ClassNone, ClassReg}: 1,
-	{AAND, ClassReg, ClassNone, ClassReg}: 1,
-	{AADD, ClassReg, ClassReg, ClassReg}:  1,
-	{AAND, ClassReg, ClassReg, ClassReg}:  1,
+	{AADD, ClassReg, ClassNone, ClassReg}:  1,
+	{AAND, ClassReg, ClassNone, ClassReg}:  1,
+	{AMULD, ClassReg, ClassNone, ClassReg}: 1,
+	{AADD, ClassReg, ClassReg, ClassReg}:   1,
+	{AAND, ClassReg, ClassReg, ClassReg}:   1,
+	{AMULD, ClassReg, ClassReg, ClassReg}:  1,
 
-	{AADD, ClassConst13, ClassNone, ClassReg}: 2,
-	{AAND, ClassConst13, ClassNone, ClassReg}: 2,
-	{AADD, ClassConst13, ClassReg, ClassReg}:  2,
-	{AAND, ClassConst13, ClassReg, ClassReg}:  2,
+	{AADD, ClassConst13, ClassNone, ClassReg}:  2,
+	{AAND, ClassConst13, ClassNone, ClassReg}:  2,
+	{AMULD, ClassConst13, ClassNone, ClassReg}: 2,
+	{AADD, ClassConst13, ClassReg, ClassReg}:   2,
+	{AAND, ClassConst13, ClassReg, ClassReg}:   2,
+	{AMULD, ClassConst13, ClassReg, ClassReg}:  2,
 
 	{ALDD, ClassPairPlus, ClassNone, ClassReg}: 3,
 	{ASTD, ClassReg, ClassNone, ClassPairPlus}: 4,
 
 	{ALDD, ClassIndir13, ClassNone, ClassReg}: 5,
 	{ASTD, ClassReg, ClassNone, ClassIndir13}: 6,
+
+	{ARDPC, ClassNone, ClassNone, ClassReg}: 7,
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -162,6 +168,10 @@ func rrr(rs2, imm_asi, rs1, rd int16) uint32 {
 
 func srr(simm13 int64, rs1, rd int16) uint32 {
 	return uint32(int(rd)&31<<25 | int(rs1)&31<<14 | 1<<13 | int(simm13)&(1<<14-1))
+}
+
+func rd(r int16) uint32 {
+	return uint32(int(r) & 31 << 25)
 }
 
 func op(op int) uint32 {
@@ -592,8 +602,8 @@ func aclass(a *obj.Addr) int8 {
 
 func asmout(p *obj.Prog, o int) (out []uint32, err error) {
 	out = make([]uint32, 2)
-	size := 1
 	o1 := &out[0]
+	size := 1
 	switch o {
 	default:
 		return nil, fmt.Errorf("unknown asm %d", o)
@@ -631,6 +641,10 @@ func asmout(p *obj.Prog, o int) (out []uint32, err error) {
 	// STD Rs, $imm13(R)	-> *(R+$imm13) = Rs
 	case 6:
 		*o1 = opcode(p.As) | srr(p.To.Offset, p.To.Reg, p.From.Reg)
+
+	// RDPC R
+	case 7:
+		*o1 = opcode(p.As) | rd(p.To.Reg)
 	}
 
 	return out[:size], nil
