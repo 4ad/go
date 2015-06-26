@@ -19,7 +19,52 @@ var optab = map[Optab]int{
 	{obj.ATEXT, ClassAddr, ClassNone, ClassTextSize}: 0,
 }
 
+// Compatible classes, e.g. if something accepts a $hugeconst, it
+// can also accept $smallconst, $0 and ZR. Something that accepts a
+// register, can also accept $0, etc.
+var cc = map[uint8][]uint8{
+	ClassReg:           {ClassZero},
+	ClassConst13:       {ClassZero},
+	ClassConst:         {ClassConst13, ClassZero},
+	ClassEffectiveAddr: {ClassEffectiveAddr13},
+	ClassIndir:         {ClassIndir13},
+}
+
 func init() {
+	// For each line in optab that accepts a large-class operand,
+	// duplicate it so that we'll also have a line that accepts a
+	// small-class operand, but do it only if there isn't an already
+	// existent line with the same key.
+	for o, v := range optab {
+		for _, c := range cc[o.a1] {
+			do := o
+			do.a1 = c
+			_, ok := optab[do]
+			if !ok {
+				optab[do] = v
+			}
+		}
+	}
+	for o, v := range optab {
+		for _, c := range cc[o.a2] {
+			do := o
+			do.a2 = c
+			_, ok := optab[do]
+			if !ok {
+				optab[do] = v
+			}
+		}
+	}
+	for o, v := range optab {
+		for _, c := range cc[o.a3] {
+			do := o
+			do.a3 = c
+			_, ok := optab[do]
+			if !ok {
+				optab[do] = v
+			}
+		}
+	}
 }
 
 func ir(imm22, rd int) uint32 {
