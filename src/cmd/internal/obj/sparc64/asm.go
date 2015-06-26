@@ -20,9 +20,19 @@ type outfunc func(*obj.Prog) (out []uint32, err error)
 
 var optab = map[Optab]outfunc{
 	{obj.ATEXT, ClassAddr, ClassNone, ClassTextSize}: nil,
+
+	{AADD, ClassReg, ClassNone, ClassReg}: asmrrr,
+	{AAND, ClassReg, ClassNone, ClassReg}: asmrrr,
+	{AADD, ClassReg, ClassReg, ClassReg}:  asmrrr,
+	{AAND, ClassReg, ClassReg, ClassReg}:  asmrrr,
+
+	{AADD, ClassConst13, ClassNone, ClassReg}: asmsrr,
+	{AAND, ClassConst13, ClassNone, ClassReg}: asmsrr,
+	{AADD, ClassConst13, ClassReg, ClassReg}:  asmsrr,
+	{AAND, ClassConst13, ClassReg, ClassReg}:  asmsrr,
 }
 
-// Compatible classes, e.g. if something accepts a $hugeconst, it
+// Compatible classes, if something accepts a $hugeconst, it
 // can also accept $smallconst, $0 and ZR. Something that accepts a
 // register, can also accept $0, etc.
 var cc = map[int8][]int8{
@@ -33,7 +43,51 @@ var cc = map[int8][]int8{
 	ClassIndir:         {ClassIndir13},
 }
 
+// Compatible instructions, if an asm* function accepts AADD,
+// it accepts ASUBCCC too.
+var ci = map[int16][]int16{
+	AADD:     {AADDCC, AADDC, AADDCCC, ASUB, ASUBCC, ASUBC, ASUBCCC},
+	AAND:     {AANDCC, AANDN, AANDNCC, AOR, AORCC, AORN, AORNCC, AXOR, AXORCC, AXNOR, AXNORCC},
+	obj.AJMP: {ABN, ABNE, ABE, ABG, ABLE, ABGE, ABL, ABGU, ABLEU, ABCC, ABCS, ABPOS, ABNEG, ABVC, ABVS},
+	ABRZ:     {ABRLEZ, ABRLZ, ABRNZ, ABRGZ, ABRGEZ},
+	ACASA:    {ACASAW},
+	AFABSD:   {AFABSS},
+	AFADDD:   {AFADDS, AFSUBS, AFSUBD},
+	AFBA:     {AFBN, AFBU, AFBG, AFBUG, AFBL, AFBUL, AFBLG, AFBNE, AFBE, AFBUE, AFBGE, AFBUGE, AFBLE, AFBULE, AFBO},
+	AFCMPD:   {AFCMPS},
+	AFDIVD:   {AFDIVS},
+	AFWTOD:   {AFWTOS},
+	AFMOVD:   {AFMOVS},
+	AFMULD:   {AFMULS, AFSMULD},
+	AFNEGD:   {AFNEGS},
+	AFSQRTD:  {AFSQRTS},
+	AFSTOXD:  {AFDTOXD, AFSTOXW, AFDTOXW},
+	AFSTOD:   {AFDTOS},
+	AFXTOD:   {AFXTOS},
+	ALDD:     {ALDSB, ALDSH, ALDSW, ALDUB, ALDUH, ALDUW},
+	ALDDF:    {ALDSF},
+	AMULD:    {ASDIVD, AUDIVD},
+	ARDPC:    {ARDTICK, ARDCCR},
+	ASLLD:    {ASLLW, ASRLW, ASRAW, ASRLD, ASRAD},
+	ASTD:     {ASTB, ASTH, ASTW},
+	ASTDF:    {ASTSF},
+}
+
 func init() {
+	// For each line in optab, duplicate it so that we'll also
+	// have a line that will accept compatible instructions, but
+	// only if there isn't an already existent line with the same
+	// key.
+	for o, v := range optab {
+		for _, c := range ci[o.as] {
+			do := o
+			do.as = c
+			_, ok := optab[do]
+			if !ok {
+				optab[do] = v
+			}
+		}
+	}
 	// For each line in optab that accepts a large-class operand,
 	// duplicate it so that we'll also have a line that accepts a
 	// small-class operand, but do it only if there isn't an already
@@ -98,12 +152,12 @@ func d30(disp30 int) uint32 {
 	return uint32(disp30 & (1<<31 - 1))
 }
 
-func rrr(rs1, imm_asi, rs2, rd int) uint32 {
+func rrr(rs2, imm_asi, rs1, rd int16) uint32 {
 	return uint32(rd&31<<25 | rs1&31<<14 | imm_asi&255<<5 | rs2&31)
 }
 
-func rsr(rs1, simm13, rd int) uint32 {
-	return uint32(rd&31<<25 | rs1&31<<14 | 1<<13 | simm13&(1<<14-1))
+func srr(simm13 int64, rs1, rd int16) uint32 {
+	return uint32(int(rd)&31<<25 | int(rs1)&31<<14 | 1<<13 | int(simm13)&(1<<14-1))
 }
 
 func op(op int) uint32 {
@@ -126,7 +180,7 @@ func opf(opf int) uint32 {
 	return uint32(opf << 5)
 }
 
-func opcode(a int) uint32 {
+func opcode(a int16) uint32 {
 	switch a {
 	// Add.
 	case AADD:
@@ -434,7 +488,7 @@ func opcode(a int) uint32 {
 		return op3(2, 23)
 
 	default:
-		panic("unknown instruction: " + obj.Aconv(a))
+		panic("unknown instruction: " + obj.Aconv(int(a)))
 	}
 }
 
@@ -530,4 +584,24 @@ func aclass(a *obj.Addr) int8 {
 		}
 	}
 	return ClassUnknown
+}
+
+// op Rs,        Rd	-> Rd = Rd  op Rs
+// op Rs1, Rs2,  Rd	-> Rd = Rs2 op Rs1
+func asmrrr(p *obj.Prog) (out []uint32, err error) {
+	reg := p.Reg
+	if reg == 0 {
+		reg = p.To.Reg
+	}
+	return []uint32{opcode(p.As) | rrr(p.From.Reg, 0, reg, p.To.Reg)}, nil
+}
+
+// op $imm13,     Rd	-> Rd = Rd op $imm13
+// op $imm13, Rs, Rd	-> Rd = Rs op $imm13
+func asmsrr(p *obj.Prog) (out []uint32, err error) {
+	reg := p.Reg
+	if reg == 0 {
+		reg = p.To.Reg
+	}
+	return []uint32{opcode(p.As) | srr(p.From.Offset, reg, p.To.Reg)}, nil
 }
