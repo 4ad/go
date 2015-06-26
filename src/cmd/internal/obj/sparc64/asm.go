@@ -16,20 +16,18 @@ type Optab struct {
 	a3 int8
 }
 
-type outfunc func(*obj.Prog) (out []uint32, err error)
+var optab = map[Optab]int{
+	{obj.ATEXT, ClassAddr, ClassNone, ClassTextSize}: 0,
 
-var optab = map[Optab]outfunc{
-	{obj.ATEXT, ClassAddr, ClassNone, ClassTextSize}: nil,
+	{AADD, ClassReg, ClassNone, ClassReg}: 1,
+	{AAND, ClassReg, ClassNone, ClassReg}: 1,
+	{AADD, ClassReg, ClassReg, ClassReg}:  1,
+	{AAND, ClassReg, ClassReg, ClassReg}:  1,
 
-	{AADD, ClassReg, ClassNone, ClassReg}: asmrrr,
-	{AAND, ClassReg, ClassNone, ClassReg}: asmrrr,
-	{AADD, ClassReg, ClassReg, ClassReg}:  asmrrr,
-	{AAND, ClassReg, ClassReg, ClassReg}:  asmrrr,
-
-	{AADD, ClassConst13, ClassNone, ClassReg}: asmsrr,
-	{AAND, ClassConst13, ClassNone, ClassReg}: asmsrr,
-	{AADD, ClassConst13, ClassReg, ClassReg}:  asmsrr,
-	{AAND, ClassConst13, ClassReg, ClassReg}:  asmsrr,
+	{AADD, ClassConst13, ClassNone, ClassReg}: 2,
+	{AAND, ClassConst13, ClassNone, ClassReg}: 2,
+	{AADD, ClassConst13, ClassReg, ClassReg}:  2,
+	{AAND, ClassConst13, ClassReg, ClassReg}:  2,
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -124,16 +122,16 @@ func init() {
 	}
 }
 
-func oplook(p *obj.Prog) (outfunc, error) {
+func oplook(p *obj.Prog) (int, error) {
 	o := Optab{as: p.As, a1: p.From.Class, a2: rclass(p.Reg), a3: p.To.Class}
 	if p.Reg == 0 {
 		o.a2 = ClassNone
 	}
-	f, ok := optab[o]
+	v, ok := optab[o]
 	if !ok {
-		return nil, fmt.Errorf("illegal combination %v %v %v %v, %d %d", p, DRconv(o.a1), DRconv(o.a2), DRconv(o.a3), p.From.Type, p.To.Type)
+		return 0, fmt.Errorf("illegal combination %v %v %v %v, %d %d", p, DRconv(o.a1), DRconv(o.a2), DRconv(o.a3), p.From.Type, p.To.Type)
 	}
-	return f, nil
+	return v, nil
 }
 
 func ir(imm22, rd int) uint32 {
@@ -586,22 +584,31 @@ func aclass(a *obj.Addr) int8 {
 	return ClassUnknown
 }
 
-// op Rs,        Rd	-> Rd = Rd  op Rs
-// op Rs1, Rs2,  Rd	-> Rd = Rs2 op Rs1
-func asmrrr(p *obj.Prog) (out []uint32, err error) {
-	reg := p.Reg
-	if reg == 0 {
-		reg = p.To.Reg
-	}
-	return []uint32{opcode(p.As) | rrr(p.From.Reg, 0, reg, p.To.Reg)}, nil
-}
+func asmout(p *obj.Prog, o int) (out []uint32, err error) {
+	out = make([]uint32, 2)
+	size := 1
+	o1 := &out[0]
+	switch o {
+	default:
+		return nil, fmt.Errorf("unknown asm %d", o)
 
-// op $imm13,     Rd	-> Rd = Rd op $imm13
-// op $imm13, Rs, Rd	-> Rd = Rs op $imm13
-func asmsrr(p *obj.Prog) (out []uint32, err error) {
-	reg := p.Reg
-	if reg == 0 {
-		reg = p.To.Reg
+	// op Rs,        Rd	-> Rd = Rd  op Rs
+	// op Rs1, Rs2,  Rd	-> Rd = Rs2 op Rs1
+	case 1:
+		reg := p.Reg
+		if reg == 0 {
+			reg = p.To.Reg
+		}
+		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, reg, p.To.Reg)
+
+	// op $imm13,     Rd	-> Rd = Rd op $imm13
+	// op $imm13, Rs, Rd	-> Rd = Rs op $imm13
+	case 2:
+		reg := p.Reg
+		if reg == 0 {
+			reg = p.To.Reg
+		}
+		*o1 = opcode(p.As) | srr(p.From.Offset, reg, p.To.Reg)
 	}
-	return []uint32{opcode(p.As) | srr(p.From.Offset, reg, p.To.Reg)}, nil
+	return out[:size], nil
 }
