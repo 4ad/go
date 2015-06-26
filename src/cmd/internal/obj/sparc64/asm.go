@@ -6,13 +6,14 @@ package sparc64
 
 import (
 	"cmd/internal/obj"
+	"fmt"
 )
 
 type Optab struct {
-	as uint16
-	a1 uint8
-	a2 uint8
-	a3 uint8
+	as int16
+	a1 int8
+	a2 int8
+	a3 int8
 }
 
 var optab = map[Optab]int{
@@ -22,7 +23,7 @@ var optab = map[Optab]int{
 // Compatible classes, e.g. if something accepts a $hugeconst, it
 // can also accept $smallconst, $0 and ZR. Something that accepts a
 // register, can also accept $0, etc.
-var cc = map[uint8][]uint8{
+var cc = map[int8][]int8{
 	ClassReg:           {ClassZero},
 	ClassConst13:       {ClassZero},
 	ClassConst:         {ClassConst13, ClassZero},
@@ -65,6 +66,18 @@ func init() {
 			}
 		}
 	}
+}
+
+func oplook(p *obj.Prog) (int, error) {
+	o := Optab{as: p.As, a1: p.From.Class, a2: rclass(p.Reg), a3: p.To.Class}
+	if p.Reg == 0 {
+		o.a2 = ClassNone
+	}
+	v, ok := optab[o]
+	if !ok {
+		return 0, fmt.Errorf("illegal combination %v %v %v %v, %d %d", p, DRconv(o.a1), DRconv(o.a2), DRconv(o.a3), p.From.Type, p.To.Type)
+	}
+	return v, nil
 }
 
 func ir(imm22, rd int) uint32 {

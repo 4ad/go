@@ -89,8 +89,7 @@ const (
 )
 
 const (
-	ClassUnknown = iota
-	ClassNone
+	ClassUnknown   = iota
 	ClassReg       // R1..R31
 	ClassFloatReg  // F0..F31
 	ClassBiased    // BSP or BFP
@@ -112,7 +111,29 @@ const (
 	ClassMem  // sym(SB)
 
 	ClassTextSize
+	ClassNone
 )
+
+var cnames = []string{
+	ClassUnknown:         "ClassUnknown",
+	ClassReg:             "ClassReg",
+	ClassFloatReg:        "ClassFloatReg",
+	ClassBiased:          "ClassBiased",
+	ClassPairComma:       "ClassPairComma",
+	ClassPairPlus:        "ClassPairPlus",
+	ClassZero:            "ClassZero",
+	ClassConst13:         "ClassConst13",
+	ClassConst:           "ClassConst",
+	ClassFloatConst:      "ClassFloatConst",
+	ClassEffectiveAddr13: "ClassEffectiveAddr13",
+	ClassEffectiveAddr:   "ClassEffectiveAddr",
+	ClassIndir13:         "ClassIndir13",
+	ClassIndir:           "ClassIndir",
+	ClassAddr:            "ClassAddr",
+	ClassMem:             "ClassMem",
+	ClassTextSize:        "ClassTextSize",
+	ClassNone:            "ClassNone",
+}
 
 //go:generate go run ../stringer.go -i $GOFILE -o anames.go -p sparc64
 
