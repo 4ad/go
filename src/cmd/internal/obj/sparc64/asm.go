@@ -6,6 +6,19 @@ package sparc64
 
 import "cmd/internal/obj"
 
+type Optab struct {
+	as    uint16
+	a1    uint8
+	a2    uint8
+	a3    uint8
+	type_ int8
+}
+
+var optab = []Optab{
+	{obj.ATEXT, ClassAddr, ClassNone, ClassTextSize, 0},
+	{obj.AXXX, ClassNone, ClassNone, ClassNone, 0},
+}
+
 func ir(imm22, rd int) uint32 {
 	return uint32(rd&31<<25 | imm22&(1<<23-1))
 }
