@@ -60,7 +60,7 @@ var ci = map[int16][]int16{
 	AAND:     {AANDCC, AANDN, AANDNCC, AOR, AORCC, AORN, AORNCC, AXOR, AXORCC, AXNOR, AXNORCC},
 	obj.AJMP: {ABN, ABNE, ABE, ABG, ABLE, ABGE, ABL, ABGU, ABLEU, ABCC, ABCS, ABPOS, ABNEG, ABVC, ABVS},
 	ABRZ:     {ABRLEZ, ABRLZ, ABRNZ, ABRGZ, ABRGEZ},
-	ACASA:    {ACASAW},
+	ACASD:    {ACASW},
 	AFABSD:   {AFABSS},
 	AFADDD:   {AFADDS, AFSUBS, AFSUBD},
 	AFBA:     {AFBN, AFBU, AFBG, AFBUG, AFBL, AFBUL, AFBLG, AFBNE, AFBE, AFBUE, AFBGE, AFBUGE, AFBLE, AFBULE, AFBO},
@@ -268,10 +268,10 @@ func opcode(a int16) uint32 {
 	case obj.ACALL:
 		return op(1)
 
-	case ACASAW:
-		return op3(3, 0x3C)
-	case ACASA:
-		return op3(3, 0x3E)
+	case ACASW:
+		return op3(3, 0x3C) | 1<<13
+	case ACASD:
+		return op3(3, 0x3E) | 1<<13
 
 	case AFABSS:
 		return op3(2, 0x34) | opf(9)
