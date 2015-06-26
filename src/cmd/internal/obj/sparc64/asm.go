@@ -413,7 +413,28 @@ func opcode(a int) uint32 {
 	}
 }
 
-func rclass(r int16) int {
+func oregclass(offset int64) int8 {
+	if -4096 <= offset && offset <= 4095 {
+		return ClassIndir13
+	}
+	return ClassIndir
+}
+
+func addrclass(offset int64) int8 {
+	if -4096 <= offset && offset <= 4095 {
+		return ClassEffectiveAddr13
+	}
+	return ClassEffectiveAddr
+}
+
+func constclass(offset int64) int8 {
+	if -4096 <= offset && offset <= 4095 {
+		return ClassConst13
+	}
+	return ClassConst
+}
+
+func rclass(r int16) int8 {
 	switch {
 	case r == RegZero:
 		return ClassZero
@@ -423,6 +444,65 @@ func rclass(r int16) int {
 		return ClassFloatReg
 	case r == REG_BSP || r == REG_BFP:
 		return ClassBiased
+	}
+	return ClassUnknown
+}
+
+func aclass(a *obj.Addr) int8 {
+	switch a.Type {
+	case obj.TYPE_NONE:
+		return ClassNone
+
+	case obj.TYPE_REG:
+		return rclass(a.Reg)
+
+	case obj.TYPE_REGREG:
+		return ClassPairComma
+
+	case obj.TYPE_MEM:
+		switch a.Name {
+		case obj.NAME_EXTERN, obj.NAME_STATIC:
+			if a.Sym == nil {
+				return ClassUnknown
+			}
+			return ClassMem
+
+		case obj.NAME_AUTO, obj.NAME_PARAM:
+			panic("unimplemented")
+
+		case obj.TYPE_NONE:
+			if a.Scale == 1 {
+				return ClassPairPlus
+			}
+			return oregclass(a.Offset)
+		}
+
+	case obj.TYPE_FCONST:
+		return ClassFloatConst
+
+	case obj.TYPE_TEXTSIZE:
+		return ClassTextSize
+
+	case obj.TYPE_CONST, obj.TYPE_ADDR:
+		switch a.Name {
+		case obj.TYPE_NONE:
+			if a.Reg != 0 {
+				if a.Reg == RegZero && a.Offset == 0 {
+					return ClassZero
+				}
+				return addrclass(a.Offset)
+			}
+			return constclass(a.Offset)
+
+		case obj.NAME_EXTERN, obj.NAME_STATIC:
+			if a.Sym == nil {
+				return ClassUnknown
+			}
+			return ClassAddr
+
+		case obj.NAME_AUTO, obj.NAME_PARAM:
+			panic("unimplemented")
+		}
 	}
 	return ClassUnknown
 }

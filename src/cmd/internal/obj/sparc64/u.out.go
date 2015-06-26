@@ -89,7 +89,8 @@ const (
 )
 
 const (
-	ClassNone      = iota
+	ClassUnknown = iota
+	ClassNone
 	ClassReg       // R1..R31
 	ClassFloatReg  // F0..F31
 	ClassBiased    // BSP or BFP
@@ -111,7 +112,6 @@ const (
 	ClassMem  // sym(SB)
 
 	ClassTextSize
-	ClassUnknown
 )
 
 //go:generate go run ../stringer.go -i $GOFILE -o anames.go -p sparc64
