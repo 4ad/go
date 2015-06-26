@@ -104,6 +104,7 @@ const (
 	ClassEffectiveAddr13 // $n(R), n is 13-bit signed
 	ClassEffectiveAddr   // $n(R), n large
 
+	ClassIndir0  // (R)
 	ClassIndir13 // n(R), n is 13-bit signed
 	ClassIndir   // n(R), n large
 
@@ -127,6 +128,7 @@ var cnames = []string{
 	ClassFloatConst:      "ClassFloatConst",
 	ClassEffectiveAddr13: "ClassEffectiveAddr13",
 	ClassEffectiveAddr:   "ClassEffectiveAddr",
+	ClassIndir0:          "ClassIndir0",
 	ClassIndir13:         "ClassIndir13",
 	ClassIndir:           "ClassIndir",
 	ClassAddr:            "ClassAddr",

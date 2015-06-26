@@ -40,6 +40,8 @@ var optab = map[Optab]int{
 	{ASTD, ClassReg, ClassNone, ClassIndir13}: 6,
 
 	{ARDPC, ClassNone, ClassNone, ClassReg}: 7,
+
+	{ACASD, ClassReg, ClassReg, ClassIndir0}: 8,
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -50,7 +52,8 @@ var cc = map[int8][]int8{
 	ClassConst13:       {ClassZero},
 	ClassConst:         {ClassConst13, ClassZero},
 	ClassEffectiveAddr: {ClassEffectiveAddr13},
-	ClassIndir:         {ClassIndir13},
+	ClassIndir13:       {ClassIndir0},
+	ClassIndir:         {ClassIndir13, ClassIndir0},
 }
 
 // Compatible instructions, if an asm* function accepts AADD,
@@ -507,6 +510,9 @@ func opcode(a int16) uint32 {
 }
 
 func oregclass(offset int64) int8 {
+	if offset == 0 {
+		return ClassIndir0
+	}
 	if -4096 <= offset && offset <= 4095 {
 		return ClassIndir13
 	}
@@ -645,6 +651,10 @@ func asmout(p *obj.Prog, o int) (out []uint32, err error) {
 	// RDPC R
 	case 7:
 		*o1 = opcode(p.As) | rd(p.To.Reg)
+
+	// CASD/CASW
+	case 8:
+		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, p.To.Reg, p.Reg)
 	}
 
 	return out[:size], nil
