@@ -16,8 +16,10 @@ type Optab struct {
 	a3 int8
 }
 
-var optab = map[Optab]int{
-	{obj.ATEXT, ClassAddr, ClassNone, ClassTextSize}: 0,
+type outfunc func(*obj.Prog) (out []uint32, err error)
+
+var optab = map[Optab]outfunc{
+	{obj.ATEXT, ClassAddr, ClassNone, ClassTextSize}: nil,
 }
 
 // Compatible classes, e.g. if something accepts a $hugeconst, it
@@ -68,16 +70,16 @@ func init() {
 	}
 }
 
-func oplook(p *obj.Prog) (int, error) {
+func oplook(p *obj.Prog) (outfunc, error) {
 	o := Optab{as: p.As, a1: p.From.Class, a2: rclass(p.Reg), a3: p.To.Class}
 	if p.Reg == 0 {
 		o.a2 = ClassNone
 	}
-	v, ok := optab[o]
+	f, ok := optab[o]
 	if !ok {
-		return 0, fmt.Errorf("illegal combination %v %v %v %v, %d %d", p, DRconv(o.a1), DRconv(o.a2), DRconv(o.a3), p.From.Type, p.To.Type)
+		return nil, fmt.Errorf("illegal combination %v %v %v %v, %d %d", p, DRconv(o.a1), DRconv(o.a2), DRconv(o.a3), p.From.Type, p.To.Type)
 	}
-	return v, nil
+	return f, nil
 }
 
 func ir(imm22, rd int) uint32 {
