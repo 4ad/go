@@ -4,7 +4,10 @@
 
 package sparc64
 
-import "cmd/internal/obj"
+import (
+	"cmd/internal/obj"
+	"sort"
+)
 
 type Optab struct {
 	as    uint16
@@ -16,7 +19,42 @@ type Optab struct {
 
 var optab = []Optab{
 	{obj.ATEXT, ClassAddr, ClassNone, ClassTextSize, 0},
-	{obj.AXXX, ClassNone, ClassNone, ClassNone, 0},
+}
+
+type ocmp []Optab
+
+func (x ocmp) Len() int {
+	return len(x)
+}
+
+func (x ocmp) Swap(i, j int) {
+	x[i], x[j] = x[j], x[i]
+}
+
+func (x ocmp) Less(i, j int) bool {
+	p1 := &x[i]
+	p2 := &x[j]
+	n := int(p1.as) - int(p2.as)
+	if n != 0 {
+		return n < 0
+	}
+	n = int(p1.a1) - int(p2.a1)
+	if n != 0 {
+		return n < 0
+	}
+	n = int(p1.a2) - int(p2.a2)
+	if n != 0 {
+		return n < 0
+	}
+	n = int(p1.a3) - int(p2.a3)
+	if n != 0 {
+		return n < 0
+	}
+	return false
+}
+
+func init() {
+	sort.Sort(ocmp(optab))
 }
 
 func ir(imm22, rd int) uint32 {
