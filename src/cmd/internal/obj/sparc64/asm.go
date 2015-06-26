@@ -28,6 +28,12 @@ var optab = map[Optab]int{
 	{AAND, ClassConst13, ClassNone, ClassReg}: 2,
 	{AADD, ClassConst13, ClassReg, ClassReg}:  2,
 	{AAND, ClassConst13, ClassReg, ClassReg}:  2,
+
+	{ALDD, ClassPairPlus, ClassNone, ClassReg}: 3,
+	{ASTD, ClassReg, ClassNone, ClassPairPlus}: 4,
+
+	{ALDD, ClassIndir13, ClassNone, ClassReg}: 5,
+	{ASTD, ClassReg, ClassNone, ClassIndir13}: 6,
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -609,6 +615,23 @@ func asmout(p *obj.Prog, o int) (out []uint32, err error) {
 			reg = p.To.Reg
 		}
 		*o1 = opcode(p.As) | srr(p.From.Offset, reg, p.To.Reg)
+
+	// LDD (R1+R2), R	-> R = *(R1+R2)
+	case 3:
+		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, p.From.Index, p.To.Reg)
+
+	// STD R, (R1+R2)	-> *(R1+R2) = R
+	case 4:
+		*o1 = opcode(p.As) | rrr(p.To.Reg, 0, p.To.Index, p.From.Reg)
+
+	// LDD $imm13(Rs), R	-> R = *(Rs+$imm13)
+	case 5:
+		*o1 = opcode(p.As) | srr(p.From.Offset, p.From.Reg, p.To.Reg)
+
+	// STD Rs, $imm13(R)	-> *(R+$imm13) = Rs
+	case 6:
+		*o1 = opcode(p.As) | srr(p.To.Offset, p.To.Reg, p.From.Reg)
 	}
+
 	return out[:size], nil
 }
