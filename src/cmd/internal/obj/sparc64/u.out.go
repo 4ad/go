@@ -259,5 +259,4 @@ const (
 	AXORCC
 	AXNOR
 	AXNORCC
-	ALAST
 )
