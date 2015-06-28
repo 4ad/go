@@ -9,6 +9,9 @@ import (
 	"encoding/binary"
 )
 
+// TODO(aram):
+func preprocess(ctxt *obj.Link, cursym *obj.LSym) {}
+
 var unaryDst = map[int]bool{
 	AWORD:   true,
 	ADWORD:  true,
@@ -18,11 +21,12 @@ var unaryDst = map[int]bool{
 }
 
 var Linksparc64 = obj.LinkArch{
-	ByteOrder: binary.BigEndian,
-	Name:      "sparc64",
-	Thechar:   'u',
-	UnaryDst:  unaryDst,
-	Minlc:     4,
-	Ptrsize:   8,
-	Regsize:   8,
+	ByteOrder:  binary.BigEndian,
+	Name:       "sparc64",
+	Thechar:    'u',
+	Preprocess: preprocess,
+	UnaryDst:   unaryDst,
+	Minlc:      4,
+	Ptrsize:    8,
+	Regsize:    8,
 }
