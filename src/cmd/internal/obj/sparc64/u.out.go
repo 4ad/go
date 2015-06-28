@@ -259,4 +259,7 @@ const (
 	AXORCC
 	AXNOR
 	AXNORCC
+
+	AWORD
+	ADWORD
 )
