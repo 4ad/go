@@ -88,6 +88,13 @@ const (
 	RegFP   = REG_R30
 )
 
+// Prog.mark
+const (
+	FOLL = 1 << iota
+	LABEL
+	LEAF
+)
+
 const (
 	ClassUnknown   = iota
 	ClassReg       // R1..R31
