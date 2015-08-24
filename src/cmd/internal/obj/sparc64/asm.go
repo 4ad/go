@@ -627,6 +627,7 @@ func span(ctxt *obj.Link, cursym *obj.LSym) {
 		text = append(text, out...)
 	}
 	pc += -pc & (16 - 1)
+	cursym.Size = pc
 	obj.Symgrow(ctxt, cursym, pc)
 	bp := cursym.P
 	for _, v := range text {
