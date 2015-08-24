@@ -524,8 +524,8 @@ const (
 	RBaseAMD64   = 2 * 1024
 	RBaseARM     = 3 * 1024
 	RBasePPC64   = 4 * 1024 // range [4k, 8k)
-	RBaseARM64   = 8 * 1024 // range [8k, 12k)
-	RBaseSPARC64 = 12 * 1024
+	RBaseARM64   = 8 * 1024 // range [8k, 13k)
+	RBaseSPARC64 = 13 * 1024
 )
 
 // RegisterRegister binds a pretty-printer (Rconv) for register
