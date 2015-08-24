@@ -12,6 +12,10 @@ import (
 
 // TODO(aram):
 func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
+	cursym.Text.Pc = 0
+	cursym.Args = cursym.Text.To.Val.(int32)
+	cursym.Locals = int32(cursym.Text.To.Offset)
+
 	for p := cursym.Text.Link; p != nil; p = p.Link {
 		p.From.Class = aclass(&p.From)
 		p.To.Class = aclass(&p.To)

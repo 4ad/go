@@ -611,7 +611,6 @@ func span(ctxt *obj.Link, cursym *obj.LSym) {
 		return
 	}
 
-	cursym.Text.Pc = 0
 	var pc int64      // relative to entry point
 	var text []uint32 // actual assembled bytes
 	for p := cursym.Text.Link; p != nil; p = p.Link {
