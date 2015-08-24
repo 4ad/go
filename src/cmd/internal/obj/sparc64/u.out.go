@@ -78,6 +78,8 @@ const (
 
 	REG_BSP = REG_R14 + 64
 	REG_BFP = REG_R30 + 64
+
+	REG_LAST
 )
 
 // Register assignments:
