@@ -9,6 +9,7 @@ import (
 	"cmd/internal/obj/arm"
 	"cmd/internal/obj/arm64"
 	"cmd/internal/obj/ppc64"
+	"cmd/internal/obj/sparc64"
 	"cmd/internal/obj/x86"
 	"fmt"
 	"strings"
@@ -73,6 +74,8 @@ func Set(GOARCH string) *Arch {
 		a := archPPC64()
 		a.LinkArch = &ppc64.Linkppc64le
 		return a
+	case "sparc64":
+		return archSparc64()
 	}
 	return nil
 }
@@ -361,5 +364,50 @@ func archPPC64() *Arch {
 		RegisterPrefix: registerPrefix,
 		RegisterNumber: ppc64RegisterNumber,
 		IsJump:         jumpPPC64,
+	}
+}
+
+func archSparc64() *Arch {
+	register := make(map[string]int16)
+	// Create maps for easy lookup of instruction names etc.
+	// Note that there is no list of names as there is for 386 and amd64.
+	register[sparc64.Rconv(sparc64.REG_BSP)] = sparc64.REG_BSP
+	register[sparc64.Rconv(sparc64.REG_BFP)] = sparc64.REG_BFP
+	for i := sparc64.REG_R0; i <= sparc64.REG_R31; i++ {
+		register[sparc64.Rconv(i)] = int16(i)
+	}
+	for i := sparc64.REG_F0; i <= sparc64.REG_F31; i++ {
+		register[sparc64.Rconv(i)] = int16(i)
+	}
+	// Pseudo-registers.
+	register["SB"] = RSB
+	register["FP"] = RFP
+	register["PC"] = RPC
+	register["SP"] = RSP
+	// TODO: g register.
+	registerPrefix := map[string]bool{
+		"F": true,
+		"R": true,
+	}
+
+	instructions := make(map[string]int)
+	for i, s := range obj.Anames {
+		instructions[s] = i
+	}
+	for i, s := range sparc64.Anames {
+		if i >= obj.A_ARCHSPECIFIC {
+			instructions[s] = i + obj.ABaseSPARC64
+		}
+	}
+	// Annoying aliases.
+	instructions["BL"] = sparc64.ABL
+
+	return &Arch{
+		LinkArch:       &sparc64.Linksparc64,
+		Instructions:   instructions,
+		Register:       register,
+		RegisterPrefix: registerPrefix,
+		RegisterNumber: sparc64RegisterNumber,
+		IsJump:         jumpArm64,
 	}
 }
