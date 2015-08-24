@@ -66,6 +66,7 @@ var Linksparc64 = obj.LinkArch{
 	Name:       "sparc64",
 	Thechar:    'u',
 	Preprocess: preprocess,
+	Assemble:   span,
 	Follow:     follow,
 	UnaryDst:   unaryDst,
 	Minlc:      4,

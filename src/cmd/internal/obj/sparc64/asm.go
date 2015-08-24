@@ -606,6 +606,35 @@ func aclass(a *obj.Addr) int8 {
 	return ClassUnknown
 }
 
+func span(ctxt *obj.Link, cursym *obj.LSym) {
+	if cursym.Text == nil || cursym.Text.Link == nil { // handle external functions and ELF section symbols
+		return
+	}
+
+	var pc int64      // relative to entry point
+	var text []uint32 // actual assembled bytes
+	for p := cursym.Text.Link; p != nil; p = p.Link {
+		o, err := oplook(p)
+		if err != nil {
+			ctxt.Diag(err.Error())
+		}
+		out, err := asmout(p, o)
+		if err != nil {
+			ctxt.Diag(err.Error())
+		}
+		pc += int64(len(out))
+		p.Pc = pc
+		text = append(text, out...)
+	}
+	pc += -pc & (16 - 1)
+	obj.Symgrow(ctxt, cursym, pc)
+	bp := cursym.P
+	for _, v := range text {
+		ctxt.Arch.ByteOrder.PutUint32(bp, v)
+		bp = bp[4:]
+	}
+}
+
 func asmout(p *obj.Prog, o int) (out []uint32, err error) {
 	out = make([]uint32, 2)
 	o1 := &out[0]
