@@ -622,7 +622,7 @@ func span(ctxt *obj.Link, cursym *obj.LSym) {
 		if err != nil {
 			ctxt.Diag(err.Error())
 		}
-		pc += int64(len(out))
+		pc += int64(len(out)) * 4
 		p.Pc = pc
 		text = append(text, out...)
 	}
