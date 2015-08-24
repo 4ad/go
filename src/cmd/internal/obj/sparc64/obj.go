@@ -11,7 +11,12 @@ import (
 )
 
 // TODO(aram):
-func preprocess(ctxt *obj.Link, cursym *obj.LSym) {}
+func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
+	for p := cursym.Text.Link; p != nil; p = p.Link {
+		p.From.Class = aclass(&p.From)
+		p.To.Class = aclass(&p.To)
+	}
+}
 
 func relinv(a int) int {
 	switch a {
