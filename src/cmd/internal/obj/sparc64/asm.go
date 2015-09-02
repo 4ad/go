@@ -17,31 +17,31 @@ type Optab struct {
 }
 
 var optab = map[Optab]int{
-	{obj.ATEXT, ClassAddr, ClassNone, ClassTextSize}: 0,
+	Optab{obj.ATEXT, ClassAddr, ClassNone, ClassTextSize}: 0,
 
-	{AADD, ClassReg, ClassNone, ClassReg}:  1,
-	{AAND, ClassReg, ClassNone, ClassReg}:  1,
-	{AMULD, ClassReg, ClassNone, ClassReg}: 1,
-	{AADD, ClassReg, ClassReg, ClassReg}:   1,
-	{AAND, ClassReg, ClassReg, ClassReg}:   1,
-	{AMULD, ClassReg, ClassReg, ClassReg}:  1,
+	Optab{AADD, ClassReg, ClassNone, ClassReg}:  1,
+	Optab{AAND, ClassReg, ClassNone, ClassReg}:  1,
+	Optab{AMULD, ClassReg, ClassNone, ClassReg}: 1,
+	Optab{AADD, ClassReg, ClassReg, ClassReg}:   1,
+	Optab{AAND, ClassReg, ClassReg, ClassReg}:   1,
+	Optab{AMULD, ClassReg, ClassReg, ClassReg}:  1,
 
-	{AADD, ClassConst13, ClassNone, ClassReg}:  2,
-	{AAND, ClassConst13, ClassNone, ClassReg}:  2,
-	{AMULD, ClassConst13, ClassNone, ClassReg}: 2,
-	{AADD, ClassConst13, ClassReg, ClassReg}:   2,
-	{AAND, ClassConst13, ClassReg, ClassReg}:   2,
-	{AMULD, ClassConst13, ClassReg, ClassReg}:  2,
+	Optab{AADD, ClassConst13, ClassNone, ClassReg}:  2,
+	Optab{AAND, ClassConst13, ClassNone, ClassReg}:  2,
+	Optab{AMULD, ClassConst13, ClassNone, ClassReg}: 2,
+	Optab{AADD, ClassConst13, ClassReg, ClassReg}:   2,
+	Optab{AAND, ClassConst13, ClassReg, ClassReg}:   2,
+	Optab{AMULD, ClassConst13, ClassReg, ClassReg}:  2,
 
-	{ALDD, ClassPairPlus, ClassNone, ClassReg}: 3,
-	{ASTD, ClassReg, ClassNone, ClassPairPlus}: 4,
+	Optab{ALDD, ClassPairPlus, ClassNone, ClassReg}: 3,
+	Optab{ASTD, ClassReg, ClassNone, ClassPairPlus}: 4,
 
-	{ALDD, ClassIndir13, ClassNone, ClassReg}: 5,
-	{ASTD, ClassReg, ClassNone, ClassIndir13}: 6,
+	Optab{ALDD, ClassIndir13, ClassNone, ClassReg}: 5,
+	Optab{ASTD, ClassReg, ClassNone, ClassIndir13}: 6,
 
-	{ARDPC, ClassNone, ClassNone, ClassReg}: 7,
+	Optab{ARDPC, ClassNone, ClassNone, ClassReg}: 7,
 
-	{ACASD, ClassReg, ClassReg, ClassIndir0}: 8,
+	Optab{ACASD, ClassReg, ClassReg, ClassIndir0}: 8,
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
