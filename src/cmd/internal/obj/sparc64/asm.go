@@ -197,6 +197,17 @@ func opf(opf int) uint32 {
 	return uint32(opf << 5)
 }
 
+func oprd(a int16) uint32 {
+	switch a {
+	// Read ancillary state register.
+	case ARD, AMOVD:
+		return op3(2, 0x28)
+
+	default:
+		panic("unknown instruction: " + obj.Aconv(int(a)))
+	}
+}
+
 func opcode(a int16) uint32 {
 	switch a {
 	// Add.
@@ -443,10 +454,6 @@ func opcode(a int16) uint32 {
 	case AORNCC:
 		return op3(2, 22)
 
-	// Read ancillary state register.
-	case ARD, AMOVD:
-		return op3(2, 0x28)
-
 	case ASETHI:
 		return op2(4)
 
@@ -678,7 +685,7 @@ func asmout(p *obj.Prog, o int) (out []uint32, err error) {
 
 	// RD Rspecial, R
 	case 7:
-		*o1 = opcode(p.As) | uint32(p.From.Reg&0x1f)<<14 | rd(p.To.Reg)
+		*o1 = oprd(p.As) | uint32(p.From.Reg&0x1f)<<14 | rd(p.To.Reg)
 
 	// CASD/CASW
 	case 8:
