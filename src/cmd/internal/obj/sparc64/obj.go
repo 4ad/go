@@ -19,6 +19,9 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 	// For future use by oplook and friends.
 	for p := cursym.Text; p != nil; p = p.Link {
 		p.From.Class = aclass(&p.From)
+		if p.From3 != nil {
+			p.From3.Class = aclass(p.From3)
+		}
 		p.To.Class = aclass(&p.To)
 	}
 

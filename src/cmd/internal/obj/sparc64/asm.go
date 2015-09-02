@@ -26,12 +26,9 @@ var optab = map[Optab]int{
 	Optab{AAND, ClassReg, ClassReg, ClassReg}:   1,
 	Optab{AMULD, ClassReg, ClassReg, ClassReg}:  1,
 
-	Optab{AADD, ClassConst13, ClassNone, ClassReg}:  2,
-	Optab{AAND, ClassConst13, ClassNone, ClassReg}:  2,
-	Optab{AMULD, ClassConst13, ClassNone, ClassReg}: 2,
-	Optab{AADD, ClassConst13, ClassReg, ClassReg}:   2,
-	Optab{AAND, ClassConst13, ClassReg, ClassReg}:   2,
-	Optab{AMULD, ClassConst13, ClassReg, ClassReg}:  2,
+	Optab{AADD, ClassReg, ClassConst13, ClassReg}:  2,
+	Optab{AAND, ClassReg, ClassConst13, ClassReg}:  2,
+	Optab{AMULD, ClassReg, ClassConst13, ClassReg}: 2,
 
 	Optab{ALDD, ClassPairPlus, ClassNone, ClassReg}: 3,
 	Optab{ASTD, ClassReg, ClassNone, ClassPairPlus}: 4,
@@ -138,9 +135,9 @@ func init() {
 }
 
 func oplook(p *obj.Prog) (int, error) {
-	o := Optab{as: p.As, a1: p.From.Class, a2: rclass(p.Reg), a3: p.To.Class}
-	if p.Reg == 0 {
-		o.a2 = ClassNone
+	o := Optab{as: p.As, a1: p.From.Class, a2: ClassNone, a3: p.To.Class}
+	if p.From3 != nil {
+		o.a2 = p.From3.Class
 	}
 	v, ok := optab[o]
 	if !ok {
@@ -165,11 +162,11 @@ func d30(disp30 int) uint32 {
 	return uint32(disp30 & (1<<31 - 1))
 }
 
-func rrr(rs2, imm_asi, rs1, rd int16) uint32 {
+func rrr(rs1, imm_asi, rs2, rd int16) uint32 {
 	return uint32(uint32(rd)&31<<25 | uint32(rs1)&31<<14 | uint32(imm_asi)&255<<5 | uint32(rs2)&31)
 }
 
-func srr(simm13 int64, rs1, rd int16) uint32 {
+func rsr(rs1 int16, simm13 int64, rd int16) uint32 {
 	return uint32(int(rd)&31<<25 | int(rs1)&31<<14 | 1<<13 | int(simm13)&(1<<14-1))
 }
 
@@ -649,23 +646,18 @@ func asmout(p *obj.Prog, o int) (out []uint32, err error) {
 	default:
 		return nil, fmt.Errorf("unknown asm %d", o)
 
-	// op Rs,        Rd	-> Rd = Rd  op Rs
-	// op Rs1, Rs2,  Rd	-> Rd = Rs2 op Rs1
+	// op Rs,       Rd	-> Rd = Rs op Rd
+	// op Rs1, Rs2, Rd	-> Rd = Rs1 op Rs2
 	case 1:
-		reg := p.Reg
-		if reg == 0 {
-			reg = p.To.Reg
+		reg := p.To.Reg
+		if p.From3 != nil {
+			reg = p.From3.Reg
 		}
 		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, reg, p.To.Reg)
 
-	// op $imm13,     Rd	-> Rd = Rd op $imm13
-	// op $imm13, Rs, Rd	-> Rd = Rs op $imm13
+	// op Rs, $imm13, Rd	-> Rd = Rs op $imm13
 	case 2:
-		reg := p.Reg
-		if reg == 0 {
-			reg = p.To.Reg
-		}
-		*o1 = opcode(p.As) | srr(p.From.Offset, reg, p.To.Reg)
+		*o1 = opcode(p.As) | rsr(p.From.Reg, p.From3.Offset, p.To.Reg)
 
 	// LDD (R1+R2), R	-> R = *(R1+R2)
 	case 3:
@@ -677,11 +669,11 @@ func asmout(p *obj.Prog, o int) (out []uint32, err error) {
 
 	// LDD $imm13(Rs), R	-> R = *(Rs+$imm13)
 	case 5:
-		*o1 = opcode(p.As) | srr(p.From.Offset, p.From.Reg, p.To.Reg)
+		*o1 = opcode(p.As) | rsr(p.From.Reg, p.From.Offset, p.To.Reg)
 
 	// STD Rs, $imm13(R)	-> *(R+$imm13) = Rs
 	case 6:
-		*o1 = opcode(p.As) | srr(p.To.Offset, p.To.Reg, p.From.Reg)
+		*o1 = opcode(p.As) | rsr(p.To.Reg, p.To.Offset, p.From.Reg)
 
 	// RD Rspecial, R
 	case 7:
