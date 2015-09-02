@@ -575,6 +575,10 @@ func (p *Parser) asmInstruction(op int, cond string, a []obj.Addr) {
 				p.errorf("invalid addressing modes for %s instruction", obj.Aconv(op))
 				return
 			}
+		case 'u':
+			prog.From = a[0]
+			prog.Reg = p.getRegister(prog, op, &a[1])
+			prog.To = a[2]
 		default:
 			p.errorf("TODO: implement three-operand instructions for this architecture")
 			return
