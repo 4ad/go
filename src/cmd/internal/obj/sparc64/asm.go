@@ -166,7 +166,7 @@ func d30(disp30 int) uint32 {
 }
 
 func rrr(rs2, imm_asi, rs1, rd int16) uint32 {
-	return uint32(rd&31<<25 | rs1&31<<14 | imm_asi&255<<5 | rs2&31)
+	return uint32(uint32(rd)&31<<25 | uint32(rs1)&31<<14 | uint32(imm_asi)&255<<5 | uint32(rs2)&31)
 }
 
 func srr(simm13 int64, rs1, rd int16) uint32 {
