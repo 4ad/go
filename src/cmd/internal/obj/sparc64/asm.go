@@ -38,7 +38,7 @@ var optab = map[Optab]int{
 
 	Optab{ARD, ClassSpecialReg, ClassNone, ClassReg}: 7,
 
-	Optab{ACASD, ClassReg, ClassReg, ClassIndir0}: 8,
+	Optab{ACASD, ClassIndir0, ClassReg, ClassReg}: 8,
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -681,7 +681,7 @@ func asmout(p *obj.Prog, o int) (out []uint32, err error) {
 
 	// CASD/CASW
 	case 8:
-		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, p.To.Reg, p.Reg)
+		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, p.From3.Reg, p.To.Reg)
 	}
 
 	return out[:size], nil
