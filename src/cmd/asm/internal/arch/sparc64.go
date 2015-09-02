@@ -19,7 +19,7 @@ func sparc64RegisterNumber(name string, n int16) (int16, bool) {
 			return sparc64.REG_F0 + n, true
 		}
 	case "R":
-		if 0 <= n && n <= 30 { // not 31
+		if 1 <= n && n <= 30 { // not 1, not 31
 			return sparc64.REG_R0 + n, true
 		}
 	}

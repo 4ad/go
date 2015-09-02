@@ -115,11 +115,8 @@ func relinv(a int) int {
 }
 
 var unaryDst = map[int]bool{
-	AWORD:   true,
-	ADWORD:  true,
-	ARDPC:   true,
-	ARDTICK: true,
-	ARDCCR:  true,
+	AWORD:  true,
+	ADWORD: true,
 }
 
 var Linksparc64 = obj.LinkArch{

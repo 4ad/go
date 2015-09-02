@@ -26,6 +26,12 @@ func Rconv(r int) string {
 		return "BSP"
 	case r == REG_BFP:
 		return "BFP"
+	case r == REG_CCR:
+		return "CCR"
+	case r == REG_TICK:
+		return "TICK"
+	case r == REG_RPC:
+		return "RPC"
 	}
 	switch {
 	case REG_R0 <= r && r <= REG_R31:

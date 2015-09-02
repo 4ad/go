@@ -39,7 +39,7 @@ var optab = map[Optab]int{
 	Optab{ALDD, ClassIndir13, ClassNone, ClassReg}: 5,
 	Optab{ASTD, ClassReg, ClassNone, ClassIndir13}: 6,
 
-	Optab{ARDPC, ClassNone, ClassNone, ClassReg}: 7,
+	Optab{ARD, ClassSpecialReg, ClassNone, ClassReg}: 7,
 
 	Optab{ACASD, ClassReg, ClassReg, ClassIndir0}: 8,
 }
@@ -80,7 +80,6 @@ var ci = map[int16][]int16{
 	ALDD:     {ALDSB, ALDSH, ALDSW, ALDUB, ALDUH, ALDUW},
 	ALDDF:    {ALDSF},
 	AMULD:    {ASDIVD, AUDIVD},
-	ARDPC:    {ARDTICK, ARDCCR},
 	ASLLD:    {ASLLW, ASRLW, ASRAW, ASRLD, ASRAD},
 	ASTD:     {ASTB, ASTH, ASTW},
 	ASTDF:    {ASTSF},
@@ -444,12 +443,8 @@ func opcode(a int16) uint32 {
 		return op3(2, 22)
 
 	// Read ancillary state register.
-	case ARDCCR:
-		return op3(2, 0x28) | 2<<14
-	case ARDTICK:
-		return op3(2, 0x28) | 4<<14
-	case ARDPC:
-		return op3(2, 0x28) | 5<<14
+	case ARD:
+		return op3(2, 0x28)
 
 	case ASETHI:
 		return op2(4)
@@ -543,6 +538,8 @@ func rclass(r int16) int8 {
 		return ClassFloatReg
 	case r == REG_BSP || r == REG_BFP:
 		return ClassBiased
+	case r >= REG_SPECIAL:
+		return ClassSpecialReg
 	}
 	return ClassUnknown
 }
@@ -678,9 +675,9 @@ func asmout(p *obj.Prog, o int) (out []uint32, err error) {
 	case 6:
 		*o1 = opcode(p.As) | srr(p.To.Offset, p.To.Reg, p.From.Reg)
 
-	// RDPC R
+	// RD Rspecial, R
 	case 7:
-		*o1 = opcode(p.As) | rd(p.To.Reg)
+		*o1 = opcode(p.As) | uint32(p.From.Reg&0x1f)<<14 | rd(p.To.Reg)
 
 	// CASD/CASW
 	case 8:

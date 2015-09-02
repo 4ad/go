@@ -79,7 +79,13 @@ const (
 	REG_BSP = REG_R14 + 64
 	REG_BFP = REG_R30 + 64
 
-	REG_LAST
+	REG_SPECIAL = REG_R0 + 512
+
+	REG_CCR  = REG_SPECIAL + 2
+	REG_TICK = REG_SPECIAL + 4
+	REG_RPC  = REG_SPECIAL + 5
+
+	REG_LAST = REG_R0 + 1024
 )
 
 // Register assignments:
@@ -98,12 +104,13 @@ const (
 )
 
 const (
-	ClassUnknown   = iota
-	ClassReg       // R1..R31
-	ClassFloatReg  // F0..F31
-	ClassBiased    // BSP or BFP
-	ClassPairComma // (Rn, Rn+1)
-	ClassPairPlus  // (Rn+Rm)
+	ClassUnknown    = iota
+	ClassReg        // R1..R31
+	ClassFloatReg   // F0..F31
+	ClassSpecialReg // TICK, CCR, etc
+	ClassBiased     // BSP or BFP
+	ClassPairComma  // (Rn, Rn+1)
+	ClassPairPlus   // (Rn+Rm)
 
 	ClassZero       // $0 or ZR
 	ClassConst13    // signed 13-bit constant
@@ -125,8 +132,9 @@ const (
 )
 
 var cnames = []string{
-	ClassUnknown:         "ClassUnknown",
-	ClassReg:             "ClassReg",
+	ClassUnknown: "ClassUnknown",
+	ClassReg:     "ClassReg",
+
 	ClassFloatReg:        "ClassFloatReg",
 	ClassBiased:          "ClassBiased",
 	ClassPairComma:       "ClassPairComma",
@@ -244,9 +252,7 @@ const (
 	AORCC
 	AORN
 	AORNCC
-	ARDCCR
-	ARDTICK
-	ARDPC
+	ARD
 	ASETHI
 	ASLLW
 	ASRLW

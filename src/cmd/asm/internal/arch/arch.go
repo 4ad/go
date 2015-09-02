@@ -379,6 +379,9 @@ func archSparc64() *Arch {
 	for i := sparc64.REG_F0; i <= sparc64.REG_F31; i++ {
 		register[sparc64.Rconv(i)] = int16(i)
 	}
+	register["CCR"] = sparc64.REG_CCR
+	register["TICK"] = sparc64.REG_TICK
+	register["RPC"] = sparc64.REG_RPC
 	// Pseudo-registers.
 	register["SB"] = RSB
 	register["FP"] = RFP
