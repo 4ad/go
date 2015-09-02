@@ -277,4 +277,6 @@ const (
 
 	AWORD
 	ADWORD
+
+	AMOVD
 )

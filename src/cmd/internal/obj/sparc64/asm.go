@@ -80,6 +80,7 @@ var ci = map[int16][]int16{
 	ALDD:     {ALDSB, ALDSH, ALDSW, ALDUB, ALDUH, ALDUW},
 	ALDDF:    {ALDSF},
 	AMULD:    {ASDIVD, AUDIVD},
+	ARD:      {AMOVD},
 	ASLLD:    {ASLLW, ASRLW, ASRAW, ASRLD, ASRAD},
 	ASTD:     {ASTB, ASTH, ASTW},
 	ASTDF:    {ASTSF},
@@ -443,7 +444,7 @@ func opcode(a int16) uint32 {
 		return op3(2, 22)
 
 	// Read ancillary state register.
-	case ARD:
+	case ARD, AMOVD:
 		return op3(2, 0x28)
 
 	case ASETHI:
