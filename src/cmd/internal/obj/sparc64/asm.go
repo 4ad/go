@@ -74,12 +74,12 @@ var ci = map[int16][]int16{
 	AFSTOXD:  {AFDTOXD, AFSTOXW, AFDTOXW},
 	AFSTOD:   {AFDTOS},
 	AFXTOD:   {AFXTOS},
-	ALDD:     {ALDSB, ALDSH, ALDSW, ALDUB, ALDUH, ALDUW},
+	ALDD:     {ALDSB, ALDSH, ALDSW, ALDUB, ALDUH, ALDUW, AMOVSB, AMOVSH, AMOVSW, AMOVB, AMOVH, AMOVW, AMOVD},
 	ALDDF:    {ALDSF},
 	AMULD:    {ASDIVD, AUDIVD},
 	ARD:      {AMOVD},
 	ASLLD:    {ASLLW, ASRLW, ASRAW, ASRLD, ASRAD},
-	ASTD:     {ASTB, ASTH, ASTW},
+	ASTD:     {ASTB, ASTH, ASTW, AMOVB, AMOVH, AMOVW, AMOVD},
 	ASTDF:    {ASTSF},
 }
 
@@ -192,6 +192,58 @@ func cond(cond int) uint32 {
 
 func opf(opf int) uint32 {
 	return uint32(opf << 5)
+}
+
+func opload(a int16) uint32 {
+	switch a {
+	// Load integer.
+	case ALDSB, AMOVSB:
+		return op3(3, 9)
+	case ALDSH, AMOVSH:
+		return op3(3, 10)
+	case ALDSW, AMOVSW:
+		return op3(3, 8)
+	case ALDUB, AMOVB:
+		return op3(3, 1)
+	case ALDUH, AMOVH:
+		return op3(3, 2)
+	case ALDUW, AMOVW:
+		return op3(3, 0)
+	case ALDD, AMOVD:
+		return op3(3, 11)
+
+	// Load floating-point register.
+	case ALDSF:
+		return op3(3, 0x20)
+	case ALDDF:
+		return op3(3, 0x23)
+
+	default:
+		panic("unknown instruction: " + obj.Aconv(int(a)))
+	}
+}
+
+func opstore(a int16) uint32 {
+	switch a {
+	// Store Integer.
+	case ASTB, AMOVB:
+		return op3(3, 5)
+	case ASTH, AMOVH:
+		return op3(3, 6)
+	case ASTW, AMOVW:
+		return op3(3, 4)
+	case ASTD, AMOVD:
+		return op3(3, 14)
+
+	// Store floating-point.
+	case ASTSF:
+		return op3(3, 0x24)
+	case ASTDF:
+		return op3(3, 0x27)
+
+	default:
+		panic("unknown instruction: " + obj.Aconv(int(a)))
+	}
 }
 
 func oprd(a int16) uint32 {
@@ -407,28 +459,6 @@ func opcode(a int16) uint32 {
 	case AJMPL:
 		return op3(2, 0x38)
 
-	// Load integer.
-	case ALDSB:
-		return op3(3, 9)
-	case ALDSH:
-		return op3(3, 10)
-	case ALDSW:
-		return op3(3, 8)
-	case ALDUB:
-		return op3(3, 1)
-	case ALDUH:
-		return op3(3, 2)
-	case ALDUW:
-		return op3(3, 0)
-	case ALDD:
-		return op3(3, 11)
-
-	// Load floating-point register.
-	case ALDSF:
-		return op3(3, 0x20)
-	case ALDDF:
-		return op3(3, 0x23)
-
 	// Memory Barrier.
 	case AMEMBAR:
 		return op3(2, 0x28) | 0xF<<14
@@ -467,22 +497,6 @@ func opcode(a int16) uint32 {
 		return op3(2, 0x26) | 1<<12
 	case ASRAD:
 		return op3(2, 0x27) | 1<<12
-
-	// Store Integer.
-	case ASTB:
-		return op3(3, 5)
-	case ASTH:
-		return op3(3, 6)
-	case ASTW:
-		return op3(3, 4)
-	case ASTD:
-		return op3(3, 14)
-
-	// Store floating-point.
-	case ASTSF:
-		return op3(3, 0x24)
-	case ASTDF:
-		return op3(3, 0x27)
 
 	// Subtract.
 	case ASUB:
@@ -661,19 +675,19 @@ func asmout(p *obj.Prog, o int) (out []uint32, err error) {
 
 	// LDD (R1+R2), R	-> R = *(R1+R2)
 	case 3:
-		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, p.From.Index, p.To.Reg)
+		*o1 = opload(p.As) | rrr(p.From.Reg, 0, p.From.Index, p.To.Reg)
 
 	// STD R, (R1+R2)	-> *(R1+R2) = R
 	case 4:
-		*o1 = opcode(p.As) | rrr(p.To.Reg, 0, p.To.Index, p.From.Reg)
+		*o1 = opstore(p.As) | rrr(p.To.Reg, 0, p.To.Index, p.From.Reg)
 
 	// LDD $imm13(Rs), R	-> R = *(Rs+$imm13)
 	case 5:
-		*o1 = opcode(p.As) | rsr(p.From.Reg, p.From.Offset, p.To.Reg)
+		*o1 = opload(p.As) | rsr(p.From.Reg, p.From.Offset, p.To.Reg)
 
 	// STD Rs, $imm13(R)	-> *(R+$imm13) = Rs
 	case 6:
-		*o1 = opcode(p.As) | rsr(p.To.Reg, p.To.Offset, p.From.Reg)
+		*o1 = opstore(p.As) | rsr(p.To.Reg, p.To.Offset, p.From.Reg)
 
 	// RD Rspecial, R
 	case 7:
