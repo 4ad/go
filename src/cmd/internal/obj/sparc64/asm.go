@@ -22,25 +22,25 @@ var optab = map[Optab]int{
 	Optab{AADD, ClassReg, ClassNone, ClassReg}:  1,
 	Optab{AAND, ClassReg, ClassNone, ClassReg}:  1,
 	Optab{AMULD, ClassReg, ClassNone, ClassReg}: 1,
-	Optab{AMOVD, ClassReg, ClassNone, ClassReg}: 1,
 	Optab{AADD, ClassReg, ClassReg, ClassReg}:   1,
 	Optab{AAND, ClassReg, ClassReg, ClassReg}:   1,
 	Optab{AMULD, ClassReg, ClassReg, ClassReg}:  1,
+	Optab{AMOVD, ClassReg, ClassNone, ClassReg}: 2,
 
-	Optab{AADD, ClassReg, ClassConst13, ClassReg}:   2,
-	Optab{AAND, ClassReg, ClassConst13, ClassReg}:   2,
-	Optab{AMULD, ClassReg, ClassConst13, ClassReg}:  2,
-	Optab{AMOVD, ClassConst13, ClassNone, ClassReg}: 2,
+	Optab{AADD, ClassReg, ClassConst13, ClassReg}:   3,
+	Optab{AAND, ClassReg, ClassConst13, ClassReg}:   3,
+	Optab{AMULD, ClassReg, ClassConst13, ClassReg}:  3,
+	Optab{AMOVD, ClassConst13, ClassNone, ClassReg}: 4,
 
-	Optab{ALDD, ClassPairPlus, ClassNone, ClassReg}: 3,
-	Optab{ASTD, ClassReg, ClassNone, ClassPairPlus}: 4,
+	Optab{ALDD, ClassPairPlus, ClassNone, ClassReg}: 5,
+	Optab{ASTD, ClassReg, ClassNone, ClassPairPlus}: 6,
 
-	Optab{ALDD, ClassIndir13, ClassNone, ClassReg}: 5,
-	Optab{ASTD, ClassReg, ClassNone, ClassIndir13}: 6,
+	Optab{ALDD, ClassIndir13, ClassNone, ClassReg}: 7,
+	Optab{ASTD, ClassReg, ClassNone, ClassIndir13}: 8,
 
-	Optab{ARD, ClassSpecialReg, ClassNone, ClassReg}: 7,
+	Optab{ARD, ClassSpecialReg, ClassNone, ClassReg}: 9,
 
-	Optab{ACASD, ClassIndir0, ClassReg, ClassReg}: 8,
+	Optab{ACASD, ClassIndir0, ClassReg, ClassReg}: 10,
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -678,32 +678,40 @@ func asmout(p *obj.Prog, o int) (out []uint32, err error) {
 		}
 		*o1 = opalu(p.As) | rrr(p.From.Reg, 0, reg, p.To.Reg)
 
-	// op Rs, $imm13, Rd	-> Rd = Rs op $imm13
+	// MOVD Rs, Rd
 	case 2:
+		*o1 = opalu(p.As) | rrr(p.From.Reg, 0, RegZero, p.To.Reg)
+
+	// op Rs, $imm13, Rd	-> Rd = Rs op $imm13
+	case 3:
 		*o1 = opalu(p.As) | rsr(p.From.Reg, p.From3.Offset, p.To.Reg)
 
+	// MOVD $imm13, Rd
+	case 4:
+		*o1 = opalu(p.As) | rsr(RegZero, p.From.Offset, p.To.Reg)
+
 	// LDD (R1+R2), R	-> R = *(R1+R2)
-	case 3:
+	case 5:
 		*o1 = opload(p.As) | rrr(p.From.Reg, 0, p.From.Index, p.To.Reg)
 
 	// STD R, (R1+R2)	-> *(R1+R2) = R
-	case 4:
+	case 6:
 		*o1 = opstore(p.As) | rrr(p.To.Reg, 0, p.To.Index, p.From.Reg)
 
 	// LDD $imm13(Rs), R	-> R = *(Rs+$imm13)
-	case 5:
+	case 7:
 		*o1 = opload(p.As) | rsr(p.From.Reg, p.From.Offset, p.To.Reg)
 
 	// STD Rs, $imm13(R)	-> *(R+$imm13) = Rs
-	case 6:
+	case 8:
 		*o1 = opstore(p.As) | rsr(p.To.Reg, p.To.Offset, p.From.Reg)
 
 	// RD Rspecial, R
-	case 7:
+	case 9:
 		*o1 = oprd(p.As) | uint32(p.From.Reg&0x1f)<<14 | rd(p.To.Reg)
 
 	// CASD/CASW
-	case 8:
+	case 10:
 		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, p.From3.Reg, p.To.Reg)
 	}
 
