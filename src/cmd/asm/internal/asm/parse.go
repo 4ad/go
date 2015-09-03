@@ -484,7 +484,7 @@ func (p *Parser) register(name string, prefix rune) (r1, r2 int16, scale int8, o
 				return
 			}
 		case '+':
-			if char != '9' {
+			if char != '9' && char != 'u' {
 				p.errorf("(register+register) not supported on this architecture")
 				return
 			}
@@ -662,8 +662,8 @@ func (p *Parser) registerIndirect(a *obj.Addr, prefix rune) {
 			// Nothing may follow
 			return
 		}
-		if p.arch.Thechar == '9' {
-			// Special form for PPC64: (R1+R2); alias for (R1)(R2*1).
+		if p.arch.Thechar == '9' || p.arch.Thechar == 'u' {
+			// Special form for PPC64, SPARC64: (R1+R2); alias for (R1)(R2*1).
 			if prefix != 0 || scale != 0 {
 				p.errorf("illegal address mode for register+register")
 				return
