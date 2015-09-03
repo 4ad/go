@@ -25,6 +25,10 @@ var optab = map[Optab]int{
 	Optab{AADD, ClassReg, ClassReg, ClassReg}:   1,
 	Optab{AAND, ClassReg, ClassReg, ClassReg}:   1,
 	Optab{AMULD, ClassReg, ClassReg, ClassReg}:  1,
+
+	Optab{AFADDD, ClassFloatReg, ClassNone, ClassFloatReg}:     1,
+	Optab{AFADDD, ClassFloatReg, ClassFloatReg, ClassFloatReg}: 1,
+
 	Optab{AMOVD, ClassReg, ClassNone, ClassReg}: 2,
 
 	Optab{AADD, ClassReg, ClassConst13, ClassReg}:   3,
@@ -319,6 +323,18 @@ func opalu(a int16) uint32 {
 	case AXNORCC:
 		return op3(2, 23)
 
+	// Floating-Point Add
+	case AFADDS:
+		return op3(2, 0x34) | opf(0x41)
+	case AFADDD:
+		return op3(2, 0x34) | opf(0x42)
+
+	// Floating-point subtract.
+	case AFSUBS:
+		return op3(2, 0x34) | opf(0x45)
+	case AFSUBD:
+		return op3(2, 0x34) | opf(0x46)
+
 	default:
 		panic("unknown instruction: " + obj.Aconv(int(a)))
 	}
@@ -387,11 +403,6 @@ func opcode(a int16) uint32 {
 		return op3(2, 0x34) | opf(9)
 	case AFABSD:
 		return op3(2, 0x34) | opf(10)
-
-	case AFADDS:
-		return op3(2, 0x34) | opf(0x41)
-	case AFADDD:
-		return op3(2, 0x34) | opf(0x42)
 
 	// Branch on floating-point condition codes (FBfcc).
 	case AFBA:
@@ -489,12 +500,6 @@ func opcode(a int16) uint32 {
 		return op3(2, 0x34) | opf(0xC9)
 	case AFDTOS:
 		return op3(2, 0x34) | opf(0xC6)
-
-	// Floating-point subtract.
-	case AFSUBS:
-		return op3(2, 0x34) | opf(0x45)
-	case AFSUBD:
-		return op3(2, 0x34) | opf(0x46)
 
 	// Convert 64-bit integer to floating point.
 	case AFXTOS:
