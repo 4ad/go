@@ -22,13 +22,15 @@ var optab = map[Optab]int{
 	Optab{AADD, ClassReg, ClassNone, ClassReg}:  1,
 	Optab{AAND, ClassReg, ClassNone, ClassReg}:  1,
 	Optab{AMULD, ClassReg, ClassNone, ClassReg}: 1,
+	Optab{AMOVD, ClassReg, ClassNone, ClassReg}: 1,
 	Optab{AADD, ClassReg, ClassReg, ClassReg}:   1,
 	Optab{AAND, ClassReg, ClassReg, ClassReg}:   1,
 	Optab{AMULD, ClassReg, ClassReg, ClassReg}:  1,
 
-	Optab{AADD, ClassReg, ClassConst13, ClassReg}:  2,
-	Optab{AAND, ClassReg, ClassConst13, ClassReg}:  2,
-	Optab{AMULD, ClassReg, ClassConst13, ClassReg}: 2,
+	Optab{AADD, ClassReg, ClassConst13, ClassReg}:   2,
+	Optab{AAND, ClassReg, ClassConst13, ClassReg}:   2,
+	Optab{AMULD, ClassReg, ClassConst13, ClassReg}:  2,
+	Optab{AMOVD, ClassConst13, ClassNone, ClassReg}: 2,
 
 	Optab{ALDD, ClassPairPlus, ClassNone, ClassReg}: 3,
 	Optab{ASTD, ClassReg, ClassNone, ClassPairPlus}: 4,
@@ -257,7 +259,7 @@ func oprd(a int16) uint32 {
 	}
 }
 
-func opcode(a int16) uint32 {
+func opalu(a int16) uint32 {
 	switch a {
 	// Add.
 	case AADD:
@@ -279,6 +281,51 @@ func opcode(a int16) uint32 {
 	case AANDNCC:
 		return op3(2, 21)
 
+	// Multiply and divide.
+	case AMULD:
+		return op3(2, 9)
+	case ASDIVD:
+		return op3(2, 0x2D)
+	case AUDIVD:
+		return op3(2, 0xD)
+
+	// OR logical operation.
+	case AOR, AMOVD:
+		return op3(2, 2)
+	case AORCC:
+		return op3(2, 18)
+	case AORN:
+		return op3(2, 6)
+	case AORNCC:
+		return op3(2, 22)
+
+	// Subtract.
+	case ASUB:
+		return op3(2, 4)
+	case ASUBCC:
+		return op3(2, 20)
+	case ASUBC:
+		return op3(2, 12)
+	case ASUBCCC:
+		return op3(2, 28)
+
+	// XOR logical operation.
+	case AXOR:
+		return op3(2, 3)
+	case AXORCC:
+		return op3(2, 19)
+	case AXNOR:
+		return op3(2, 7)
+	case AXNORCC:
+		return op3(2, 23)
+
+	default:
+		panic("unknown instruction: " + obj.Aconv(int(a)))
+	}
+}
+
+func opcode(a int16) uint32 {
+	switch a {
 	// Branch on integer condition codes with prediction (BPcc).
 	case obj.AJMP:
 		return cond(8) | op2(1)
@@ -463,24 +510,6 @@ func opcode(a int16) uint32 {
 	case AMEMBAR:
 		return op3(2, 0x28) | 0xF<<14
 
-	// Multiply and divide.
-	case AMULD:
-		return op3(2, 9)
-	case ASDIVD:
-		return op3(2, 0x2D)
-	case AUDIVD:
-		return op3(2, 0xD)
-
-	// OR logical operation.
-	case AOR:
-		return op3(2, 2)
-	case AORCC:
-		return op3(2, 18)
-	case AORN:
-		return op3(2, 6)
-	case AORNCC:
-		return op3(2, 22)
-
 	case ASETHI:
 		return op2(4)
 
@@ -497,26 +526,6 @@ func opcode(a int16) uint32 {
 		return op3(2, 0x26) | 1<<12
 	case ASRAD:
 		return op3(2, 0x27) | 1<<12
-
-	// Subtract.
-	case ASUB:
-		return op3(2, 4)
-	case ASUBCC:
-		return op3(2, 20)
-	case ASUBC:
-		return op3(2, 12)
-	case ASUBCCC:
-		return op3(2, 28)
-
-	// XOR logical operation.
-	case AXOR:
-		return op3(2, 3)
-	case AXORCC:
-		return op3(2, 19)
-	case AXNOR:
-		return op3(2, 7)
-	case AXNORCC:
-		return op3(2, 23)
 
 	default:
 		panic("unknown instruction: " + obj.Aconv(int(a)))
@@ -667,11 +676,11 @@ func asmout(p *obj.Prog, o int) (out []uint32, err error) {
 		if p.From3 != nil {
 			reg = p.From3.Reg
 		}
-		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, reg, p.To.Reg)
+		*o1 = opalu(p.As) | rrr(p.From.Reg, 0, reg, p.To.Reg)
 
 	// op Rs, $imm13, Rd	-> Rd = Rs op $imm13
 	case 2:
-		*o1 = opcode(p.As) | rsr(p.From.Reg, p.From3.Offset, p.To.Reg)
+		*o1 = opalu(p.As) | rsr(p.From.Reg, p.From3.Offset, p.To.Reg)
 
 	// LDD (R1+R2), R	-> R = *(R1+R2)
 	case 3:
