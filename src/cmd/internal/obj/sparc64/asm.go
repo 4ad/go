@@ -39,8 +39,14 @@ var optab = map[Optab]int{
 	Optab{ALDD, ClassPairPlus, ClassNone, ClassReg}: 5,
 	Optab{ASTD, ClassReg, ClassNone, ClassPairPlus}: 6,
 
+	Optab{ALDDF, ClassPairPlus, ClassNone, ClassDoubleReg}: 5,
+	Optab{ASTDF, ClassDoubleReg, ClassNone, ClassPairPlus}: 6,
+
 	Optab{ALDD, ClassIndir13, ClassNone, ClassReg}: 7,
 	Optab{ASTD, ClassReg, ClassNone, ClassIndir13}: 8,
+
+	Optab{ALDDF, ClassIndir13, ClassNone, ClassDoubleReg}: 7,
+	Optab{ASTDF, ClassDoubleReg, ClassNone, ClassIndir13}: 8,
 
 	Optab{ARD, ClassSpecialReg, ClassNone, ClassReg}: 9,
 
@@ -65,9 +71,11 @@ var isInstDouble = map[int16]bool{
 	AFABSD:  true,
 	AFCMPD:  true,
 	AFDIVD:  true,
+	AFMOVD:  true,
 	AFMULD:  true,
 	AFNEGD:  true,
 	AFSQRTD: true,
+	ALDDF:   true,
 	ASTDF:   true,
 }
 
@@ -77,10 +85,12 @@ var isInstFloat = map[int16]bool{
 	AFABSS:  true,
 	AFCMPS:  true,
 	AFDIVS:  true,
+	AFMOVS:  true,
 	AFMULS:  true,
 	AFSMULD: true,
 	AFNEGS:  true,
 	AFSQRTS: true,
+	ALDSF:   true,
 	ASTSF:   true,
 }
 
@@ -106,12 +116,12 @@ var ci = map[int16][]int16{
 	AFSTOD:   {AFDTOS},
 	AFXTOD:   {AFXTOS},
 	ALDD:     {ALDSB, ALDSH, ALDSW, ALDUB, ALDUH, ALDUW, AMOVSB, AMOVSH, AMOVSW, AMOVB, AMOVH, AMOVW, AMOVD},
-	ALDDF:    {ALDSF},
+	ALDDF:    {ALDSF, AFMOVD, AFMOVS},
 	AMULD:    {ASDIVD, AUDIVD},
 	ARD:      {AMOVD},
 	ASLLD:    {ASLLW, ASRLW, ASRAW, ASRLD, ASRAD},
 	ASTD:     {ASTB, ASTH, ASTW, AMOVB, AMOVH, AMOVW, AMOVD},
-	ASTDF:    {ASTSF},
+	ASTDF:    {ASTSF, AFMOVD, AFMOVS},
 }
 
 func init() {
@@ -255,9 +265,9 @@ func opload(a int16) uint32 {
 		return op3(3, 11)
 
 	// Load floating-point register.
-	case ALDSF:
+	case ALDSF, AFMOVS:
 		return op3(3, 0x20)
-	case ALDDF:
+	case ALDDF, AFMOVD:
 		return op3(3, 0x23)
 
 	default:
@@ -278,9 +288,9 @@ func opstore(a int16) uint32 {
 		return op3(3, 14)
 
 	// Store floating-point.
-	case ASTSF:
+	case ASTSF, AFMOVS:
 		return op3(3, 0x24)
-	case ASTDF:
+	case ASTDF, AFMOVD:
 		return op3(3, 0x27)
 
 	default:
