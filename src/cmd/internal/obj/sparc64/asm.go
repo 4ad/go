@@ -26,8 +26,8 @@ var optab = map[Optab]int{
 	Optab{AAND, ClassReg, ClassReg, ClassReg}:   1,
 	Optab{AMULD, ClassReg, ClassReg, ClassReg}:  1,
 
-	Optab{AFADDD, ClassFloatReg, ClassNone, ClassFloatReg}:     1,
-	Optab{AFADDD, ClassFloatReg, ClassFloatReg, ClassFloatReg}: 1,
+	Optab{AFADDD, ClassDoubleReg, ClassNone, ClassDoubleReg}:      1,
+	Optab{AFADDD, ClassDoubleReg, ClassDoubleReg, ClassDoubleReg}: 1,
 
 	Optab{AMOVD, ClassReg, ClassNone, ClassReg}: 2,
 
@@ -57,6 +57,31 @@ var cc = map[int8][]int8{
 	ClassEffectiveAddr: {ClassEffectiveAddr13},
 	ClassIndir13:       {ClassIndir0},
 	ClassIndir:         {ClassIndir13, ClassIndir0},
+}
+
+var isDouble = map[int16]bool{
+	AFADDD:  true,
+	AFSUBD:  true,
+	AFABSD:  true,
+	AFCMPD:  true,
+	AFDIVD:  true,
+	AFMULD:  true,
+	AFNEGD:  true,
+	AFSQRTD: true,
+	ASTDF:   true,
+}
+
+var isFloat = map[int16]bool{
+	AFADDS:  true,
+	AFSUBS:  true,
+	AFABSS:  true,
+	AFCMPS:  true,
+	AFDIVS:  true,
+	AFMULS:  true,
+	AFSMULD: true,
+	AFNEGS:  true,
+	AFSQRTS: true,
+	ASTSF:   true,
 }
 
 // Compatible instructions, if an asm* function accepts AADD,
@@ -93,11 +118,22 @@ func init() {
 	// For each line in optab, duplicate it so that we'll also
 	// have a line that will accept compatible instructions, but
 	// only if there isn't an already existent line with the same
-	// key.
+	// key. Also change operand type, if the instruction is a double.
 	for o, v := range optab {
 		for _, c := range ci[o.as] {
 			do := o
 			do.as = c
+			if isDouble[o.as] && isFloat[do.as] {
+				if do.a1 == ClassDoubleReg {
+					do.a1 = ClassFloatReg
+				}
+				if do.a2 == ClassDoubleReg {
+					do.a2 = ClassFloatReg
+				}
+				if do.a3 == ClassDoubleReg {
+					do.a3 = ClassFloatReg
+				}
+			}
 			_, ok := optab[do]
 			if !ok {
 				optab[do] = v
@@ -569,6 +605,8 @@ func rclass(r int16) int8 {
 		return ClassReg
 	case REG_F0 <= r && r <= REG_F31:
 		return ClassFloatReg
+	case REG_D0 <= r && r <= REG_D62:
+		return ClassDoubleReg
 	case r == REG_BSP || r == REG_BFP:
 		return ClassBiased
 	case r >= REG_SPECIAL:

@@ -38,6 +38,10 @@ func Rconv(r int) string {
 		return fmt.Sprintf("R%d", r-REG_R0)
 	case REG_F0 <= r && r <= REG_F31:
 		return fmt.Sprintf("F%d", r-REG_F0)
+	case REG_D0 <= r && r <= REG_D30 && r%2 == 0:
+		return fmt.Sprintf("D%d", r-REG_D0)
+	case REG_D32 <= r && r <= REG_D62 && r%2 == 1:
+		return fmt.Sprintf("D%d", r-REG_D0+31)
 	}
 	return fmt.Sprintf("badreg(%d)", r)
 }

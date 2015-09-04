@@ -379,6 +379,9 @@ func archSparc64() *Arch {
 	for i := sparc64.REG_F0; i <= sparc64.REG_F31; i++ {
 		register[sparc64.Rconv(i)] = int16(i)
 	}
+	for i := sparc64.REG_D0; i <= sparc64.REG_D62; i++ {
+		register[sparc64.Rconv(i)] = int16(i)
+	}
 	register["CCR"] = sparc64.REG_CCR
 	register["TICK"] = sparc64.REG_TICK
 	register["RPC"] = sparc64.REG_RPC
@@ -389,6 +392,7 @@ func archSparc64() *Arch {
 	register["SP"] = RSP
 	// TODO: g register.
 	registerPrefix := map[string]bool{
+		"D": true,
 		"F": true,
 		"R": true,
 	}

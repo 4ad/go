@@ -42,7 +42,7 @@ const (
 	REG_R30
 	REG_R31
 
-	// floating point
+	// single-precision floating point
 	REG_F0
 	REG_F1
 	REG_F2
@@ -76,8 +76,44 @@ const (
 	REG_F30
 	REG_F31
 
-	REG_BSP = REG_R14 + 64
-	REG_BFP = REG_R30 + 64
+	// double-precision floating point; the first half is aliased to
+	// single-precision registers, that is: Dn is aliased to Fn, Fn+1,
+	// where n ≤ 30.
+	REG_D0
+	REG_D32
+	REG_D2
+	REG_D34
+	REG_D4
+	REG_D36
+	REG_D6
+	REG_D38
+	REG_D8
+	REG_D40
+	REG_D10
+	REG_D42
+	REG_D12
+	REG_D44
+	REG_D14
+	REG_D46
+	REG_D16
+	REG_D48
+	REG_D18
+	REG_D50
+	REG_D20
+	REG_D52
+	REG_D22
+	REG_D54
+	REG_D24
+	REG_D56
+	REG_D26
+	REG_D58
+	REG_D28
+	REG_D60
+	REG_D30
+	REG_D62
+
+	REG_BSP = REG_R14 + 128
+	REG_BFP = REG_R30 + 128
 
 	REG_SPECIAL = REG_R0 + 512
 
@@ -104,13 +140,16 @@ const (
 )
 
 const (
-	ClassUnknown    = iota
+	ClassUnknown = iota
+
 	ClassReg        // R1..R31
 	ClassFloatReg   // F0..F31
+	ClassDoubleReg  // D0..D62
 	ClassSpecialReg // TICK, CCR, etc
 	ClassBiased     // BSP or BFP
-	ClassPairComma  // (Rn, Rn+1)
-	ClassPairPlus   // (Rn+Rm)
+
+	ClassPairComma // (Rn, Rn+1)
+	ClassPairPlus  // (Rn+Rm)
 
 	ClassZero       // $0 or ZR
 	ClassConst13    // signed 13-bit constant
@@ -132,10 +171,10 @@ const (
 )
 
 var cnames = []string{
-	ClassUnknown: "ClassUnknown",
-	ClassReg:     "ClassReg",
-
+	ClassUnknown:         "ClassUnknown",
+	ClassReg:             "ClassReg",
 	ClassFloatReg:        "ClassFloatReg",
+	ClassDoubleReg:       "ClassDoubleReg",
 	ClassBiased:          "ClassBiased",
 	ClassPairComma:       "ClassPairComma",
 	ClassPairPlus:        "ClassPairPlus",
