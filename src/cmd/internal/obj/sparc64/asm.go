@@ -31,20 +31,19 @@ var optab = map[Optab]int{
 
 	Optab{AMOVD, ClassReg, ClassNone, ClassReg}: 2,
 
-	Optab{AADD, ClassReg, ClassConst13, ClassReg}:   3,
-	Optab{AAND, ClassReg, ClassConst13, ClassReg}:   3,
-	Optab{AMULD, ClassReg, ClassConst13, ClassReg}:  3,
+	Optab{AADD, ClassReg, ClassConst13, ClassReg}:  3,
+	Optab{AAND, ClassReg, ClassConst13, ClassReg}:  3,
+	Optab{AMULD, ClassReg, ClassConst13, ClassReg}: 3,
+
 	Optab{AMOVD, ClassConst13, ClassNone, ClassReg}: 4,
 
-	Optab{ALDD, ClassPairPlus, ClassNone, ClassReg}: 5,
-	Optab{ASTD, ClassReg, ClassNone, ClassPairPlus}: 6,
-
+	Optab{ALDD, ClassPairPlus, ClassNone, ClassReg}:        5,
+	Optab{ASTD, ClassReg, ClassNone, ClassPairPlus}:        6,
 	Optab{ALDDF, ClassPairPlus, ClassNone, ClassDoubleReg}: 5,
 	Optab{ASTDF, ClassDoubleReg, ClassNone, ClassPairPlus}: 6,
 
-	Optab{ALDD, ClassIndir13, ClassNone, ClassReg}: 7,
-	Optab{ASTD, ClassReg, ClassNone, ClassIndir13}: 8,
-
+	Optab{ALDD, ClassIndir13, ClassNone, ClassReg}:        7,
+	Optab{ASTD, ClassReg, ClassNone, ClassIndir13}:        8,
 	Optab{ALDDF, ClassIndir13, ClassNone, ClassDoubleReg}: 7,
 	Optab{ASTDF, ClassDoubleReg, ClassNone, ClassIndir13}: 8,
 
