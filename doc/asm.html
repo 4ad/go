@@ -771,6 +771,10 @@ The 64-bit SPARC port is in an experimental state.
 </p>
 
 <p>
+The port does not use register windows, the toolchain uses global register names. The integer registers are <code>R1</code>, <code>R2</code>, ..., <code>R31</code>. <code>ZR</code> is hardwired to zero. There are no <code>%g</code>, <code>%i</code>, <code>%o</code>, or <code>%l</code> registers.
+</p>
+
+<p>
 The single-precision (32-bit) and double-precision (64-bit) floating-point registers use different names, as it is conventional for this architecture.
 There are 32 single-precision floating point registers: <code>F0</code>, <code>F1</code>, <code>F2</code>, ..., <code>F31</code>.
 There are also 32 double-precision floating point registers: <code>D0</code>, <code>D2</code>, <code>D4</code>, ..., <code>D62</code>.
@@ -783,10 +787,6 @@ The first half (<code>D0</code> to <code>D30</code>) of the double-precision reg
 
 <p>
 The toolchain does not support quad-precision (128-bit) floating point yet.
-</p>
-
-<p>
-The port does not use register windows.
 </p>
 
 <p>
