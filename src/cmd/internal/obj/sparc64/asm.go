@@ -59,7 +59,7 @@ var cc = map[int8][]int8{
 	ClassIndir:         {ClassIndir13, ClassIndir0},
 }
 
-var isDouble = map[int16]bool{
+var isInstDouble = map[int16]bool{
 	AFADDD:  true,
 	AFSUBD:  true,
 	AFABSD:  true,
@@ -71,7 +71,7 @@ var isDouble = map[int16]bool{
 	ASTDF:   true,
 }
 
-var isFloat = map[int16]bool{
+var isInstFloat = map[int16]bool{
 	AFADDS:  true,
 	AFSUBS:  true,
 	AFABSS:  true,
@@ -123,7 +123,7 @@ func init() {
 		for _, c := range ci[o.as] {
 			do := o
 			do.as = c
-			if isDouble[o.as] && isFloat[do.as] {
+			if isInstDouble[o.as] && isInstFloat[do.as] {
 				if do.a1 == ClassDoubleReg {
 					do.a1 = ClassFloatReg
 				}
