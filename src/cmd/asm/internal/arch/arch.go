@@ -415,6 +415,6 @@ func archSparc64() *Arch {
 		Register:       register,
 		RegisterPrefix: registerPrefix,
 		RegisterNumber: sparc64RegisterNumber,
-		IsJump:         jumpArm64,
+		IsJump:         jumpSparc64,
 	}
 }
