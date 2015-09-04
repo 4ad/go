@@ -764,6 +764,54 @@ mode as on the x86, but the only scale allowed is <code>1</code>.
 
 </ul>
 
+<h3 id="sparc64">64-bit SPARC, a.k.a. sparc64</h3>
+
+<p>
+The 64-bit SPARC port is in an experimental state.
+</p>
+
+<p>
+The single-precision (32-bit) and double-precision (64-bit) floating-point registers use different names, as it is conventional for this architecture.
+There are 32 single-precision floating point registers: <code>F0</code>, <code>F1</code>, <code>F2</code>, ..., <code>F31</code>.
+There are also 32 double-precision floating point registers: <code>D0</code>, <code>D2</code>, <code>D4</code>, ..., <code>D62</code>.
+Notice that 64-bit floating point registers use even names, there is no <code>D1</code>, for example, and register numbering goes up to <code>D62</code>.
+</p>
+
+<p>
+The first half (<code>D0</code> to <code>D30</code>) of the double-precision registers alias the single-precision registers. For example <code>D6</code> aliases <code>F6</code> and <code>F7</code>. <code>D18</code> aliases <code>F18</code> and <code>F19</code>. The upper half of the double-precision registers does not alias the single-precision registers. That is, <code>D48</code> is not aliased to any 32-bit registers.
+</p>
+
+<p>
+The toolchain does not support quad-precision (128-bit) floating point yet.
+</p>
+
+<p>
+The port does not use register windows.
+</p>
+
+<p>
+On SPARC it is usual for the (hardware) stack pointer (<code>RSP</code>) and frame pointer (<code>RFP</code>) to be biased.
+For example, on 64-bit SPARC the stack pointer points 2047 bytes lower in memory than the top of stack.
+The toolchain provides <code>BSP</code> and <code>BFP</code> registers, which hide the stack bias from the user.
+</p>
+
+<p>
+Addressing modes:
+</p>
+
+<ul>
+
+<li>
+<code>(R5)(R6*1)</code>: The location at <code>R5</code> plus <code>R6</code>. It is a scaled
+mode as on the x86, but the only scale allowed is <code>1</code>.
+</li>
+
+<li>
+<code>(R5+R6)</code>: Alias for <code>(R5)(R6*1)</code>
+</li>
+
+</ul>
+
 <h3 id="unsupported_opcodes">Unsupported opcodes</h3>
 
 <p>
