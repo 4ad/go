@@ -152,6 +152,8 @@ const (
 	ClassPairPlus  // (Rn+Rm)
 
 	ClassZero       // $0 or ZR
+	ClassConst5     // unsigned 5-bit constant
+	ClassConst6     // unsigned 5-bit constant
 	ClassConst13    // signed 13-bit constant
 	ClassConst      // 64-bit constant
 	ClassFloatConst // floting-point constant
@@ -179,6 +181,8 @@ var cnames = []string{
 	ClassPairComma:       "ClassPairComma",
 	ClassPairPlus:        "ClassPairPlus",
 	ClassZero:            "ClassZero",
+	ClassConst5:          "ClassConst5",
+	ClassConst6:          "ClassConst6",
 	ClassConst13:         "ClassConst13",
 	ClassConst:           "ClassConst",
 	ClassFloatConst:      "ClassFloatConst",

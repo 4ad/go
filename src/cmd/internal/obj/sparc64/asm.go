@@ -25,6 +25,8 @@ var optab = map[Optab]int{
 	Optab{AADD, ClassReg, ClassReg, ClassReg}:   1,
 	Optab{AAND, ClassReg, ClassReg, ClassReg}:   1,
 	Optab{AMULD, ClassReg, ClassReg, ClassReg}:  1,
+	Optab{ASLLD, ClassReg, ClassReg, ClassReg}:  1,
+	Optab{ASLLW, ClassReg, ClassReg, ClassReg}:  1,
 
 	Optab{AFADDD, ClassDoubleReg, ClassNone, ClassDoubleReg}:      1,
 	Optab{AFADDD, ClassDoubleReg, ClassDoubleReg, ClassDoubleReg}: 1,
@@ -35,6 +37,8 @@ var optab = map[Optab]int{
 	Optab{AADD, ClassReg, ClassConst13, ClassReg}:  3,
 	Optab{AAND, ClassReg, ClassConst13, ClassReg}:  3,
 	Optab{AMULD, ClassReg, ClassConst13, ClassReg}: 3,
+	Optab{ASLLD, ClassReg, ClassConst6, ClassReg}:  3,
+	Optab{ASLLW, ClassReg, ClassConst5, ClassReg}:  3,
 
 	Optab{AMOVD, ClassConst13, ClassNone, ClassReg}: 4,
 
@@ -75,8 +79,8 @@ var optab = map[Optab]int{
 // register, can also accept $0, etc.
 var cc = map[int8][]int8{
 	ClassReg:           {ClassZero},
-	ClassConst13:       {ClassZero},
-	ClassConst:         {ClassConst13, ClassZero},
+	ClassConst13:       {ClassConst6, ClassConst5, ClassZero},
+	ClassConst:         {ClassConst13, ClassConst6, ClassConst5, ClassZero},
 	ClassEffectiveAddr: {ClassEffectiveAddr13},
 	ClassIndir13:       {ClassIndir0},
 	ClassIndir:         {ClassIndir13, ClassIndir0},
@@ -130,7 +134,8 @@ var ci = map[int16][]int16{
 	ALDDF:    {ALDSF, AFMOVD, AFMOVS},
 	AMULD:    {ASDIVD, AUDIVD},
 	ARD:      {AMOVD},
-	ASLLD:    {ASLLW, ASRLW, ASRAW, ASRLD, ASRAD},
+	ASLLD:    {ASRLD, ASRAD},
+	ASLLW:    {ASLLW, ASRLW, ASRAW},
 	ASTD:     {ASTB, ASTH, ASTW, AMOVB, AMOVH, AMOVW, AMOVD},
 	ASTDF:    {ASTSF, AFMOVD, AFMOVS},
 }
@@ -406,6 +411,20 @@ func opalu(a int16) uint32 {
 	case AFSMULD:
 		return op3(2, 0x34) | opf(0x69)
 
+	// Shift.
+	case ASLLW:
+		return op3(2, 0x25)
+	case ASRLW:
+		return op3(2, 0x26)
+	case ASRAW:
+		return op3(2, 0x27)
+	case ASLLD:
+		return op3(2, 0x25) | 1<<12
+	case ASRLD:
+		return op3(2, 0x26) | 1<<12
+	case ASRAD:
+		return op3(2, 0x27) | 1<<12
+
 	default:
 		panic("unknown instruction: " + obj.Aconv(int(a)))
 	}
@@ -575,20 +594,6 @@ func opcode(a int16) uint32 {
 	case ASETHI:
 		return op2(4)
 
-	// Shift.
-	case ASLLW:
-		return op3(2, 0x25)
-	case ASRLW:
-		return op3(2, 0x26)
-	case ASRAW:
-		return op3(2, 0x27)
-	case ASLLD:
-		return op3(2, 0x25) | 1<<12
-	case ASRLD:
-		return op3(2, 0x26) | 1<<12
-	case ASRAD:
-		return op3(2, 0x27) | 1<<12
-
 	default:
 		panic("unknown instruction: " + obj.Aconv(int(a)))
 	}
@@ -612,6 +617,12 @@ func addrclass(offset int64) int8 {
 }
 
 func constclass(offset int64) int8 {
+	if 0 <= offset && offset <= 31 {
+		return ClassConst5
+	}
+	if 0 <= offset && offset <= 63 {
+		return ClassConst6
+	}
 	if -4096 <= offset && offset <= 4095 {
 		return ClassConst13
 	}
