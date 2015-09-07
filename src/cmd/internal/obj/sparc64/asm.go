@@ -51,9 +51,20 @@ var optab = map[Optab]int{
 
 	Optab{ACASD, ClassIndir0, ClassReg, ClassReg}: 10,
 
+	Optab{AFSTOD, ClassFloatReg, ClassNone, ClassDoubleReg}: 11,
+	Optab{AFDTOS, ClassDoubleReg, ClassNone, ClassFloatReg}: 11,
+
 	Optab{AFMOVD, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
-	Optab{AFSTOD, ClassFloatReg, ClassNone, ClassDoubleReg}:  11,
-	Optab{AFDTOS, ClassDoubleReg, ClassNone, ClassFloatReg}:  11,
+
+	Optab{AFXTOD, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
+	Optab{AFWTOD, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
+	Optab{AFXTOS, ClassDoubleReg, ClassNone, ClassFloatReg}:  11,
+	Optab{AFWTOS, ClassFloatReg, ClassNone, ClassFloatReg}:   11,
+
+	Optab{AFSTOXD, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
+	Optab{AFDTOXD, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
+	Optab{AFDTOXW, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
+	Optab{AFSTOXW, ClassFloatReg, ClassNone, ClassFloatReg}:   11,
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
