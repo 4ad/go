@@ -254,8 +254,8 @@ const (
 	AFITOS
 	AFITOD
 	AFLUSH
-	AFMOVS
-	AFMOVD
+	AFMOVS // also pseudo
+	AFMOVD // also pseudo
 	AFMULS
 	AFMULD
 	AFSMULD
@@ -314,14 +314,15 @@ const (
 	AXNOR
 	AXNORCC
 
-	AWORD
-	ADWORD
-
+	// Pseudo-instructions
 	AMOVB
 	AMOVSB
 	AMOVH
 	AMOVSH
 	AMOVW
 	AMOVSW
-	AMOVD
+	AMOVD // also real alias
+
+	AWORD
+	ADWORD
 )

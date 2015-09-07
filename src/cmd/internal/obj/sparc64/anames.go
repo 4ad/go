@@ -123,8 +123,6 @@ var Anames = []string{
 	"XORCC",
 	"XNOR",
 	"XNORCC",
-	"WORD",
-	"DWORD",
 	"MOVB",
 	"MOVSB",
 	"MOVH",
@@ -132,4 +130,6 @@ var Anames = []string{
 	"MOVW",
 	"MOVSW",
 	"MOVD",
+	"WORD",
+	"DWORD",
 }
