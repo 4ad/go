@@ -57,14 +57,14 @@ var optab = map[Optab]int{
 	Optab{AFMOVD, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
 
 	Optab{AFXTOD, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
-	Optab{AFWTOD, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
+	Optab{AFITOD, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
 	Optab{AFXTOS, ClassDoubleReg, ClassNone, ClassFloatReg}:  11,
-	Optab{AFWTOS, ClassFloatReg, ClassNone, ClassFloatReg}:   11,
+	Optab{AFITOS, ClassFloatReg, ClassNone, ClassFloatReg}:   11,
 
-	Optab{AFSTOXD, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
-	Optab{AFDTOXD, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
-	Optab{AFDTOXW, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
-	Optab{AFSTOXW, ClassFloatReg, ClassNone, ClassFloatReg}:   11,
+	Optab{AFSTOX, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
+	Optab{AFDTOX, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
+	Optab{AFDTOI, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
+	Optab{AFSTOI, ClassFloatReg, ClassNone, ClassFloatReg}:   11,
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -121,12 +121,11 @@ var ci = map[int16][]int16{
 	AFBA:     {AFBN, AFBU, AFBG, AFBUG, AFBL, AFBUL, AFBLG, AFBNE, AFBE, AFBUE, AFBGE, AFBUGE, AFBLE, AFBULE, AFBO},
 	AFCMPD:   {AFCMPS},
 	AFDIVD:   {AFDIVS},
-	AFWTOD:   {AFWTOS},
+	AFITOD:   {AFITOS},
 	AFMOVD:   {AFMOVS},
 	AFMULD:   {AFMULS, AFSMULD},
 	AFNEGD:   {AFNEGS},
 	AFSQRTD:  {AFSQRTS},
-	AFSTOXD:  {AFDTOXD, AFSTOXW, AFDTOXW},
 	AFSTOD:   {AFDTOS},
 	AFXTOD:   {AFXTOS},
 	ALDD:     {ALDSB, ALDSH, ALDSW, ALDUB, ALDUH, ALDUW, AMOVSB, AMOVSH, AMOVSW, AMOVB, AMOVH, AMOVW, AMOVD},
@@ -511,9 +510,9 @@ func opcode(a int16) uint32 {
 		return op3(2, 0x34) | opf(0x4E)
 
 	// Convert 32-bit integer to floating point.
-	case AFWTOS:
+	case AFITOS:
 		return op3(2, 0x34) | opf(0xC4)
-	case AFWTOD:
+	case AFITOD:
 		return op3(2, 0x34) | opf(0xC8)
 
 	case AFLUSH:
@@ -546,13 +545,13 @@ func opcode(a int16) uint32 {
 		return op3(2, 0x34) | opf(0x2A)
 
 	// Convert floating-point to integer.
-	case AFSTOXD:
+	case AFSTOX:
 		return op3(2, 0x34) | opf(0x81)
-	case AFDTOXD:
+	case AFDTOX:
 		return op3(2, 0x34) | opf(0x82)
-	case AFSTOXW:
+	case AFSTOI:
 		return op3(2, 0x34) | opf(0xD1)
-	case AFDTOXW:
+	case AFDTOI:
 		return op3(2, 0x34) | opf(0xD2)
 
 	// Convert between floating-point formats.
