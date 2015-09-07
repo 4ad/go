@@ -27,7 +27,10 @@ var optab = map[Optab]int{
 	Optab{AMULD, ClassReg, ClassReg, ClassReg}:  1,
 
 	Optab{AFADDD, ClassDoubleReg, ClassNone, ClassDoubleReg}:      1,
+	Optab{AFMULD, ClassDoubleReg, ClassNone, ClassDoubleReg}:      1,
 	Optab{AFADDD, ClassDoubleReg, ClassDoubleReg, ClassDoubleReg}: 1,
+	Optab{AFMULD, ClassDoubleReg, ClassDoubleReg, ClassDoubleReg}: 1,
+	Optab{AFSMULD, ClassFloatReg, ClassFloatReg, ClassDoubleReg}:  1,
 
 	Optab{AMOVD, ClassReg, ClassNone, ClassReg}: 2,
 
@@ -101,7 +104,6 @@ var isInstFloat = map[int16]bool{
 	AFDIVS:  true,
 	AFMOVS:  true,
 	AFMULS:  true,
-	AFSMULD: true,
 	AFNEGS:  true,
 	AFSQRTS: true,
 	ALDSF:   true,
@@ -120,10 +122,9 @@ var ci = map[int16][]int16{
 	AFADDD:   {AFADDS, AFSUBS, AFSUBD},
 	AFBA:     {AFBN, AFBU, AFBG, AFBUG, AFBL, AFBUL, AFBLG, AFBNE, AFBE, AFBUE, AFBGE, AFBUGE, AFBLE, AFBULE, AFBO},
 	AFCMPD:   {AFCMPS},
-	AFDIVD:   {AFDIVS},
 	AFITOD:   {AFITOS},
 	AFMOVD:   {AFMOVS},
-	AFMULD:   {AFMULS, AFSMULD},
+	AFMULD:   {AFMULS, AFSMULD, AFDIVD, AFDIVS},
 	AFNEGD:   {AFNEGS},
 	AFSQRTD:  {AFSQRTS},
 	AFSTOD:   {AFDTOS},
@@ -394,6 +395,20 @@ func opalu(a int16) uint32 {
 	case AFSUBD:
 		return op3(2, 0x34) | opf(0x46)
 
+	// Floating-point divide.
+	case AFDIVS:
+		return op3(2, 0x34) | opf(0x4D)
+	case AFDIVD:
+		return op3(2, 0x34) | opf(0x4E)
+
+	// Floating-point multiply.
+	case AFMULS:
+		return op3(2, 0x34) | opf(0x49)
+	case AFMULD:
+		return op3(2, 0x34) | opf(0x4A)
+	case AFSMULD:
+		return op3(2, 0x34) | opf(0x69)
+
 	default:
 		panic("unknown instruction: " + obj.Aconv(int(a)))
 	}
@@ -503,12 +518,6 @@ func opcode(a int16) uint32 {
 	case AFCMPD:
 		return op3(2, 0x35) | opf(0x52)
 
-	// Floating-point divide.
-	case AFDIVS:
-		return op3(2, 0x34) | opf(0x4D)
-	case AFDIVD:
-		return op3(2, 0x34) | opf(0x4E)
-
 	// Convert 32-bit integer to floating point.
 	case AFITOS:
 		return op3(2, 0x34) | opf(0xC4)
@@ -523,14 +532,6 @@ func opcode(a int16) uint32 {
 		return op3(2, 0x34) | opf(1)
 	case AFMOVD:
 		return op3(2, 0x34) | opf(2)
-
-	// Floating-point multiply.
-	case AFMULS:
-		return op3(2, 0x34) | opf(0x49)
-	case AFMULD:
-		return op3(2, 0x34) | opf(0x4A)
-	case AFSMULD:
-		return op3(2, 0x34) | opf(0x69)
 
 	// Floating-point negate.
 	case AFNEGS:
