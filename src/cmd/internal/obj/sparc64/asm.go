@@ -27,9 +27,7 @@ var optab = map[Optab]int{
 	Optab{AMULD, ClassReg, ClassReg, ClassReg}:  1,
 
 	Optab{AFADDD, ClassDoubleReg, ClassNone, ClassDoubleReg}:      1,
-	Optab{AFMULD, ClassDoubleReg, ClassNone, ClassDoubleReg}:      1,
 	Optab{AFADDD, ClassDoubleReg, ClassDoubleReg, ClassDoubleReg}: 1,
-	Optab{AFMULD, ClassDoubleReg, ClassDoubleReg, ClassDoubleReg}: 1,
 	Optab{AFSMULD, ClassFloatReg, ClassFloatReg, ClassDoubleReg}:  1,
 
 	Optab{AMOVD, ClassReg, ClassNone, ClassReg}: 2,
@@ -69,8 +67,7 @@ var optab = map[Optab]int{
 	Optab{AFDTOI, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
 	Optab{AFSTOI, ClassFloatReg, ClassNone, ClassFloatReg}:   11,
 
-	Optab{AFNEGD, ClassDoubleReg, ClassNone, ClassDoubleReg}:  11,
-	Optab{AFSQRTD, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
+	Optab{AFABSD, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -121,15 +118,12 @@ var ci = map[int16][]int16{
 	obj.AJMP: {ABN, ABNE, ABE, ABG, ABLE, ABGE, ABL, ABGU, ABLEU, ABCC, ABCS, ABPOS, ABNEG, ABVC, ABVS},
 	ABRZ:     {ABRLEZ, ABRLZ, ABRNZ, ABRGZ, ABRGEZ},
 	ACASD:    {ACASW},
-	AFABSD:   {AFABSS},
-	AFADDD:   {AFADDS, AFSUBS, AFSUBD},
+	AFABSD:   {AFABSS, AFNEGD, AFNEGS, AFSQRTD, AFNEGS},
+	AFADDD:   {AFADDS, AFSUBS, AFSUBD, AFMULD, AFMULS, AFSMULD, AFDIVD, AFDIVS},
 	AFBA:     {AFBN, AFBU, AFBG, AFBUG, AFBL, AFBUL, AFBLG, AFBNE, AFBE, AFBUE, AFBGE, AFBUGE, AFBLE, AFBULE, AFBO},
 	AFCMPD:   {AFCMPS},
 	AFITOD:   {AFITOS},
 	AFMOVD:   {AFMOVS},
-	AFMULD:   {AFMULS, AFSMULD, AFDIVD, AFDIVS},
-	AFNEGD:   {AFNEGS},
-	AFSQRTD:  {AFSQRTS},
 	AFSTOD:   {AFDTOS},
 	AFXTOD:   {AFXTOS},
 	ALDD:     {ALDSB, ALDSH, ALDSW, ALDUB, ALDUH, ALDUW, AMOVSB, AMOVSH, AMOVSW, AMOVB, AMOVH, AMOVW, AMOVD},
