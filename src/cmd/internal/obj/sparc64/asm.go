@@ -52,6 +52,8 @@ var optab = map[Optab]int{
 	Optab{ACASD, ClassIndir0, ClassReg, ClassReg}: 10,
 
 	Optab{AFMOVD, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
+	Optab{AFSTOD, ClassFloatReg, ClassNone, ClassDoubleReg}:  11,
+	Optab{AFDTOS, ClassDoubleReg, ClassNone, ClassFloatReg}:  11,
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -768,7 +770,7 @@ func asmout(p *obj.Prog, o int) (out []uint32, err error) {
 	case 10:
 		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, p.From3.Reg, p.To.Reg)
 
-	// FMOVD Fs, Fd
+	// fop Fs, Fd
 	case 11:
 		*o1 = opcode(p.As) | rrr(0, 0, p.From.Reg, p.To.Reg)
 	}
