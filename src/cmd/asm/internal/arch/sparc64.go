@@ -53,6 +53,17 @@ var sparc64Jump = map[string]bool{
 	"AJMPL":  true,
 }
 
+// IsSPARC64MEMBAR reports whether the op (as defined by an sparc64.A*
+// constant) is one of the special MEMBAR instructions that require
+// special handling.
+func IsSPARC64MEMBAR(op int) bool {
+	switch op {
+	case sparc64.AMEMBAR:
+		return true
+	}
+	return false
+}
+
 func jumpSparc64(word string) bool {
 	return sparc64Jump[word]
 }

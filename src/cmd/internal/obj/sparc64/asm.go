@@ -75,6 +75,8 @@ var optab = map[Optab]int{
 	Optab{AFABSD, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
 
 	Optab{ASETHI, ClassConst, ClassNone, ClassReg}: 12,
+
+	Optab{AMEMBAR, ClassConst, ClassConst, ClassNone}: 13,
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -592,7 +594,7 @@ func opcode(a int16) uint32 {
 
 	// Memory Barrier.
 	case AMEMBAR:
-		return op3(2, 0x28) | 0xF<<14
+		return op3(2, 0x28) | 0xF<<14 | 1<<13
 
 	case ASETHI:
 		return op2(4)
@@ -802,6 +804,13 @@ func asmout(p *obj.Prog, o int) (out []uint32, err error) {
 			return nil, errors.New("SETHI constant not mod 1024")
 		}
 		*o1 = opcode(p.As) | ir(uint32(p.From.Offset)>>10, p.To.Reg)
+
+	// MEMBAR $cmask, $mmask
+	case 13:
+		if p.From.Offset&^7 != 0 || p.From3.Offset&^15 != 0 {
+			return nil, errors.New("MEMBAR mask out of range")
+		}
+		*o1 = opcode(p.As) | uint32(p.From.Offset)&7<<4 | uint32(p.From3.Offset)&15
 	}
 
 	return out[:size], nil

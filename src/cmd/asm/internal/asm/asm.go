@@ -509,6 +509,10 @@ func (p *Parser) asmInstruction(op int, cond string, a []obj.Addr) {
 			prog.From = a[0]
 			prog.Reg = p.getRegister(prog, op, &a[1])
 			break
+		} else if p.arch.Thechar == 'u' && arch.IsSPARC64MEMBAR(op) {
+			prog.From = a[0]
+			prog.From3 = newAddr(a[1])
+			break
 		}
 		prog.From = a[0]
 		prog.To = a[1]
