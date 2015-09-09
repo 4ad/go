@@ -153,7 +153,7 @@ const (
 
 	ClassZero       // $0 or ZR
 	ClassConst5     // unsigned 5-bit constant
-	ClassConst6     // unsigned 5-bit constant
+	ClassConst6     // unsigned 6-bit constant
 	ClassConst13    // signed 13-bit constant
 	ClassConst      // 64-bit constant
 	ClassFloatConst // floting-point constant
