@@ -115,6 +115,12 @@ const (
 	REG_BSP = REG_R14 + 128
 	REG_BFP = REG_R30 + 128
 
+	// floating-point condition-code registers
+	REG_FCC0 = REG_R0 + 256 + iota
+	REG_FCC1
+	REG_FCC2
+	REG_FCC3
+
 	REG_SPECIAL = REG_R0 + 512
 
 	REG_CCR  = REG_SPECIAL + 2
@@ -142,11 +148,12 @@ const (
 const (
 	ClassUnknown = iota
 
-	ClassReg        // R1..R31
-	ClassFloatReg   // F0..F31
-	ClassDoubleReg  // D0..D62
-	ClassSpecialReg // TICK, CCR, etc
-	ClassBiased     // BSP or BFP
+	ClassReg          // R1..R31
+	ClassFloatReg     // F0..F31
+	ClassDoubleReg    // D0..D62
+	ClassFloatCondReg // FCC0..FCC3
+	ClassSpecialReg   // TICK, CCR, etc
+	ClassBiased       // BSP or BFP
 
 	ClassPairComma // (Rn, Rn+1)
 	ClassPairPlus  // (Rn+Rm)
@@ -177,6 +184,8 @@ var cnames = []string{
 	ClassReg:             "ClassReg",
 	ClassFloatReg:        "ClassFloatReg",
 	ClassDoubleReg:       "ClassDoubleReg",
+	ClassFloatCondReg:    "ClassFloatCondReg",
+	ClassSpecialReg:      "ClassSpecialReg",
 	ClassBiased:          "ClassBiased",
 	ClassPairComma:       "ClassPairComma",
 	ClassPairPlus:        "ClassPairPlus",

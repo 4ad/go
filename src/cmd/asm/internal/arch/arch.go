@@ -382,6 +382,10 @@ func archSparc64() *Arch {
 	for i := sparc64.REG_D0; i <= sparc64.REG_D62; i++ {
 		register[sparc64.Rconv(i)] = int16(i)
 	}
+	register["FCC0"] = sparc64.REG_FCC0
+	register["FCC1"] = sparc64.REG_FCC1
+	register["FCC2"] = sparc64.REG_FCC2
+	register["FCC3"] = sparc64.REG_FCC3
 	register["CCR"] = sparc64.REG_CCR
 	register["TICK"] = sparc64.REG_TICK
 	register["RPC"] = sparc64.REG_RPC
