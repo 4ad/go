@@ -6,6 +6,7 @@ package sparc64
 
 import (
 	"cmd/internal/obj"
+	"errors"
 	"fmt"
 )
 
@@ -72,6 +73,8 @@ var optab = map[Optab]int{
 	Optab{AFSTOI, ClassFloatReg, ClassNone, ClassFloatReg}:   11,
 
 	Optab{AFABSD, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
+
+	Optab{ASETHI, ClassConst, ClassNone, ClassReg}: 12,
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -214,8 +217,8 @@ func oplook(p *obj.Prog) (int, error) {
 	return v, nil
 }
 
-func ir(imm22, rd int) uint32 {
-	return uint32(rd&31<<25 | imm22&(1<<23-1))
+func ir(imm22 uint32, rd int16) uint32 {
+	return uint32(rd&31<<25) | uint32(imm22&(1<<23-1))
 }
 
 func d22(a, disp22 int) uint32 {
@@ -792,6 +795,13 @@ func asmout(p *obj.Prog, o int) (out []uint32, err error) {
 	// fop Fs, Fd
 	case 11:
 		*o1 = opcode(p.As) | rrr(0, 0, p.From.Reg, p.To.Reg)
+
+	// SETHI $const, R
+	case 12:
+		if p.From.Offset>>32 != 0 || p.From.Offset&0x3FF != 0 {
+			return nil, errors.New("SETHI constant not mod 1024")
+		}
+		*o1 = opcode(p.As) | ir(uint32(p.From.Offset)>>10, p.To.Reg)
 	}
 
 	return out[:size], nil
