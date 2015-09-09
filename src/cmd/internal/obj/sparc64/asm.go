@@ -218,7 +218,7 @@ func oplook(p *obj.Prog) (int, error) {
 }
 
 func ir(imm22 uint32, rd int16) uint32 {
-	return uint32(rd&31<<25) | uint32(imm22&(1<<23-1))
+	return uint32(rd)&31<<25 | uint32(imm22&(1<<23-1))
 }
 
 func d22(a, disp22 int) uint32 {
