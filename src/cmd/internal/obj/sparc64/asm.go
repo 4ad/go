@@ -810,7 +810,7 @@ func asmout(p *obj.Prog, o int) (out []uint32, err error) {
 		}
 		*o1 = opcode(p.As) | ir(uint32(p.From.Offset)>>10, p.To.Reg)
 
-	// MEMBAR $cmask, $mmask
+	// MEMBAR $mask
 	case 13:
 		if p.From.Offset > 127 {
 			return nil, errors.New("MEMBAR mask out of range")
