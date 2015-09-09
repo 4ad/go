@@ -76,7 +76,7 @@ var optab = map[Optab]int{
 
 	Optab{ASETHI, ClassConst, ClassNone, ClassReg}: 12,
 
-	Optab{AMEMBAR, ClassConst, ClassConst, ClassNone}: 13,
+	Optab{AMEMBAR, ClassConst, ClassNone, ClassNone}: 13,
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -807,10 +807,10 @@ func asmout(p *obj.Prog, o int) (out []uint32, err error) {
 
 	// MEMBAR $cmask, $mmask
 	case 13:
-		if p.From.Offset&^7 != 0 || p.From3.Offset&^15 != 0 {
+		if p.From.Offset > 127 {
 			return nil, errors.New("MEMBAR mask out of range")
 		}
-		*o1 = opcode(p.As) | uint32(p.From.Offset)&7<<4 | uint32(p.From3.Offset)&15
+		*o1 = opcode(p.As) | uint32(p.From.Offset)
 	}
 
 	return out[:size], nil
