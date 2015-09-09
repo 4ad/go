@@ -111,16 +111,22 @@ const (
 	REG_D60
 	REG_D30
 	REG_D62
+)
 
+const (
 	REG_BSP = REG_R14 + 128
 	REG_BFP = REG_R30 + 128
+)
 
+const (
 	// floating-point condition-code registers
 	REG_FCC0 = REG_R0 + 256 + iota
 	REG_FCC1
 	REG_FCC2
 	REG_FCC3
+)
 
+const (
 	REG_SPECIAL = REG_R0 + 512
 
 	REG_CCR  = REG_SPECIAL + 2

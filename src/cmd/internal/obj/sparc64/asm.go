@@ -77,6 +77,9 @@ var optab = map[Optab]int{
 	Optab{ASETHI, ClassConst, ClassNone, ClassReg}: 12,
 
 	Optab{AMEMBAR, ClassConst, ClassNone, ClassNone}: 13,
+
+	Optab{AFCMPD, ClassDoubleReg, ClassDoubleReg, ClassFloatCondReg}: 14,
+	Optab{AFCMPD, ClassDoubleReg, ClassDoubleReg, ClassNone}:         14,
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -813,6 +816,10 @@ func asmout(p *obj.Prog, o int) (out []uint32, err error) {
 			return nil, errors.New("MEMBAR mask out of range")
 		}
 		*o1 = opcode(p.As) | uint32(p.From.Offset)
+
+	// FCMPD FCC, F, F
+	case 14:
+		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, p.From3.Reg, p.To.Reg&3)
 	}
 
 	return out[:size], nil
