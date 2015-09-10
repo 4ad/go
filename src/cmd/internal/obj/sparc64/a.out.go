@@ -229,6 +229,11 @@ const (
 	AANDCC
 	AANDN
 	AANDNCC
+
+	// These are the two-operand SPARCv9 32-, and 64-bit, branch
+	// on integer condition codes with prediction (BPcc), not the
+	// single-operand SPARCv8 32-bit branch on integer condition
+	// codes (Bicc).
 	ABN
 	ABNE
 	ABE
@@ -244,6 +249,7 @@ const (
 	ABNEG
 	ABVC
 	ABVS
+
 	ABRZ
 	ABRLEZ
 	ABRLZ
