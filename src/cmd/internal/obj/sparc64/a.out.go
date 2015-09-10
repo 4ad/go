@@ -279,8 +279,8 @@ const (
 	AFITOS
 	AFITOD
 	AFLUSH
-	AFMOVS // also pseudo
-	AFMOVD // also pseudo
+	AFMOVS // the SPARC64 instruction, and alias for loads and stores
+	AFMOVD // the SPARC64 instruction, and alias for loads and stores
 	AFMULS
 	AFMULD
 	AFSMULD
@@ -339,14 +339,15 @@ const (
 	AXNOR
 	AXNORCC
 
-	// Pseudo-instructions
+	// Pseudo-instructions, aliases to SPARC64 instructions and
+	// synthetic instructions.
 	AMOVB
 	AMOVSB
 	AMOVH
 	AMOVSH
 	AMOVW
 	AMOVSW
-	AMOVD // also real alias
+	AMOVD // also the SPARC64 synthetic instruction
 
 	AWORD
 	ADWORD
