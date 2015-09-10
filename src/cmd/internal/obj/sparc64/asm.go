@@ -74,12 +74,15 @@ var optab = map[Optab]int{
 
 	Optab{AFABSD, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
 
-	Optab{ASETHI, ClassConst, ClassNone, ClassReg}: 12,
+	Optab{ASETHI, ClassConst32, ClassNone, ClassReg}: 12,
 
 	Optab{AMEMBAR, ClassConst, ClassNone, ClassNone}: 13,
 
 	Optab{AFCMPD, ClassDoubleReg, ClassDoubleReg, ClassFloatCondReg}: 14,
 	Optab{AFCMPD, ClassDoubleReg, ClassDoubleReg, ClassNone}:         14,
+
+	Optab{AMOVD, ClassConst32, ClassNone, ClassReg}:  15,
+	Optab{AMOVD, ClassConst31_, ClassNone, ClassReg}: 16,
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -88,7 +91,9 @@ var optab = map[Optab]int{
 var cc = map[int8][]int8{
 	ClassReg:           {ClassZero},
 	ClassConst13:       {ClassConst6, ClassConst5, ClassZero},
-	ClassConst:         {ClassConst13, ClassConst6, ClassConst5, ClassZero},
+	ClassConst31:       {ClassConst6, ClassConst5, ClassZero},
+	ClassConst32:       {ClassConst31_, ClassConst31, ClassConst13, ClassConst6, ClassConst5, ClassZero},
+	ClassConst:         {ClassConst32, ClassConst31_, ClassConst31, ClassConst13, ClassConst6, ClassConst5, ClassZero},
 	ClassEffectiveAddr: {ClassEffectiveAddr13},
 	ClassIndir13:       {ClassIndir0},
 	ClassIndir:         {ClassIndir13, ClassIndir0},
@@ -634,6 +639,15 @@ func constclass(offset int64) int8 {
 	if -4096 <= offset && offset <= 4095 {
 		return ClassConst13
 	}
+	if -1<<31 <= offset && offset < 0 {
+		return ClassConst31_
+	}
+	if 0 <= offset && offset <= 1<<31-1 {
+		return ClassConst31
+	}
+	if 0 <= offset && offset <= 1<<32-1 {
+		return ClassConst32
+	}
 	return ClassConst
 }
 
@@ -749,6 +763,7 @@ func span(ctxt *obj.Link, cursym *obj.LSym) {
 func asmout(p *obj.Prog, o int) (out []uint32, err error) {
 	out = make([]uint32, 2)
 	o1 := &out[0]
+	o2 := &out[1]
 	size := 1
 	switch o {
 	default:
@@ -805,7 +820,7 @@ func asmout(p *obj.Prog, o int) (out []uint32, err error) {
 
 	// SETHI $const, R
 	case 12:
-		if p.From.Offset>>32 != 0 || p.From.Offset&0x3FF != 0 {
+		if p.From.Offset&0x3FF != 0 {
 			return nil, errors.New("SETHI constant not mod 1024")
 		}
 		*o1 = opcode(p.As) | ir(uint32(p.From.Offset)>>10, p.To.Reg)
@@ -820,6 +835,29 @@ func asmout(p *obj.Prog, o int) (out []uint32, err error) {
 	// FCMPD FCC, F, F
 	case 14:
 		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, p.From3.Reg, p.To.Reg&3)
+
+	// MOVD $imm32, R ->
+	// 	SETHI hi($imm32), R
+	// 	OR R, lo($imm32), R
+	case 15:
+		*o1 = opcode(ASETHI) | ir(uint32(p.From.Offset)>>10, p.To.Reg)
+		if p.From.Offset&0x3FF == 0 {
+			break
+		}
+		size = 2
+		*o2 = opalu(AOR) | rsr(p.To.Reg, int64(p.From.Offset&0x3FF), p.To.Reg)
+
+	// MOVD -$imm31, R ->
+	// 	SETHI hi(^$imm32), R
+	// 	XOR R, lo($imm32)|0x1C00, R
+	case 16:
+		size = 2
+		*o1 = opcode(ASETHI) | ir(^(uint32(p.From.Offset))>>10, p.To.Reg)
+		if p.From.Offset&0x3FF == 0 {
+			*o2 = opalu(ASRAD) | rrr(p.To.Reg, 0, RegZero, p.To.Reg)
+			break
+		}
+		*o2 = opalu(AXOR) | rsr(p.To.Reg, int64(uint32(p.From.Offset)&0x3ff|0x1C00), p.To.Reg)
 	}
 
 	return out[:size], nil

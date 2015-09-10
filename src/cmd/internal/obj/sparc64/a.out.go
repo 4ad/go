@@ -168,8 +168,11 @@ const (
 	ClassConst5     // unsigned 5-bit constant
 	ClassConst6     // unsigned 6-bit constant
 	ClassConst13    // signed 13-bit constant
+	ClassConst31_   // signed 32-bit constant, negative
+	ClassConst31    // signed 32-bit constant, positive or zero
+	ClassConst32    // 32-bit constant
 	ClassConst      // 64-bit constant
-	ClassFloatConst // floting-point constant
+	ClassFloatConst // floating-point constant
 
 	ClassEffectiveAddr13 // $n(R), n is 13-bit signed
 	ClassEffectiveAddr   // $n(R), n large
@@ -199,6 +202,9 @@ var cnames = []string{
 	ClassConst5:          "ClassConst5",
 	ClassConst6:          "ClassConst6",
 	ClassConst13:         "ClassConst13",
+	ClassConst31_:        "ClassConst31-",
+	ClassConst31:         "ClassConst31+",
+	ClassConst32:         "ClassConst32",
 	ClassConst:           "ClassConst",
 	ClassFloatConst:      "ClassFloatConst",
 	ClassEffectiveAddr13: "ClassEffectiveAddr13",
