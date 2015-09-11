@@ -141,7 +141,8 @@ const (
 	RegZero = REG_R0
 	RegRSP  = REG_R14
 	RegLink = REG_R15
-	RegFP   = REG_R30
+	RegPIC  = REG_R23
+	RegRFP  = REG_R30
 )
 
 // Prog.mark

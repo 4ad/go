@@ -16,8 +16,12 @@ func init() {
 
 func Rconv(r int) string {
 	switch {
-	case r == RegFP:
+	case r == RegRFP:
 		return "RFP"
+	case r == RegLink:
+		return "LR"
+	case r == RegPIC:
+		return "PIC"
 	case r == RegRSP:
 		return "RSP"
 	case r == RegZero:
