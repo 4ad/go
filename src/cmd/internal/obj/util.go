@@ -420,6 +420,9 @@ func Dconv(p *Prog, a *Addr) string {
 
 	case TYPE_ADDR:
 		str = fmt.Sprintf("$%s", Mconv(a))
+		if a.Index != REG_NONE {
+			str += fmt.Sprintf("(%v*%d)", Rconv(int(a.Index)), int(a.Scale))
+		}
 
 	case TYPE_SHIFT:
 		v := int(a.Offset)
