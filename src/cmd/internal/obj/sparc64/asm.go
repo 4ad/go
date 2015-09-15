@@ -612,6 +612,13 @@ func opcode(a int16) uint32 {
 	}
 }
 
+func pcrelclass(offset int64) int8 {
+	if -1<<18 <= offset && offset <= 1<<18-1 {
+		return ClassPCREL19
+	}
+	return ClassUnknown
+}
+
 func oregclass(offset int64) int8 {
 	if offset == 0 {
 		return ClassIndir0
@@ -727,6 +734,10 @@ func aclass(a *obj.Addr) int8 {
 
 		case obj.NAME_AUTO, obj.NAME_PARAM:
 			panic("unimplemented")
+		}
+	case obj.TYPE_BRANCH:
+		if a.Sym == nil && a.Val != nil {
+			return pcrelclass(a.Offset)
 		}
 	}
 	return ClassUnknown
