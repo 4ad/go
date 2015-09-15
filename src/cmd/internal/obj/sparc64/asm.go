@@ -47,10 +47,10 @@ var optab = map[Optab]Opval{
 
 	Optab{AMOVD, ClassConst13, ClassNone, ClassReg}: {4, 4},
 
-	Optab{ALDD, ClassPairPlus, ClassNone, ClassReg}:        {5, 4},
-	Optab{ASTD, ClassReg, ClassNone, ClassPairPlus}:        {6, 4},
-	Optab{ALDDF, ClassPairPlus, ClassNone, ClassDoubleReg}: {5, 4},
-	Optab{ASTDF, ClassDoubleReg, ClassNone, ClassPairPlus}: {6, 4},
+	Optab{ALDD, ClassIndirRegReg, ClassNone, ClassReg}:        {5, 4},
+	Optab{ASTD, ClassReg, ClassNone, ClassIndirRegReg}:        {6, 4},
+	Optab{ALDDF, ClassIndirRegReg, ClassNone, ClassDoubleReg}: {5, 4},
+	Optab{ASTDF, ClassDoubleReg, ClassNone, ClassIndirRegReg}: {6, 4},
 
 	Optab{ALDD, ClassIndir13, ClassNone, ClassReg}:        {7, 4},
 	Optab{ASTD, ClassReg, ClassNone, ClassIndir13}:        {8, 4},
@@ -91,20 +91,24 @@ var optab = map[Optab]Opval{
 	Optab{obj.AJMP, ClassCond, ClassNone, ClassShortBranch}: {17, 8},
 	Optab{ABRZ, ClassReg, ClassNone, ClassShortBranch}:      {18, 8},
 	Optab{AFBA, ClassNone, ClassNone, ClassShortBranch}:     {19, 8},
+
+	Optab{AJMPL, ClassReg, ClassNone, ClassReg}:        {20, 8},
+	Optab{AJMPL, ClassRegConst13, ClassNone, ClassReg}: {20, 8},
+	Optab{AJMPL, ClassRegReg, ClassNone, ClassReg}:     {21, 8},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
 // can also accept $smallconst, $0 and ZR. Something that accepts a
 // register, can also accept $0, etc.
 var cc = map[int8][]int8{
-	ClassReg:           {ClassZero},
-	ClassConst13:       {ClassConst6, ClassConst5, ClassZero},
-	ClassConst31:       {ClassConst6, ClassConst5, ClassZero},
-	ClassConst32:       {ClassConst31_, ClassConst31, ClassConst13, ClassConst6, ClassConst5, ClassZero},
-	ClassConst:         {ClassConst32, ClassConst31_, ClassConst31, ClassConst13, ClassConst6, ClassConst5, ClassZero},
-	ClassEffectiveAddr: {ClassEffectiveAddr13},
-	ClassIndir13:       {ClassIndir0},
-	ClassIndir:         {ClassIndir13, ClassIndir0},
+	ClassReg:      {ClassZero},
+	ClassConst13:  {ClassConst6, ClassConst5, ClassZero},
+	ClassConst31:  {ClassConst6, ClassConst5, ClassZero},
+	ClassConst32:  {ClassConst31_, ClassConst31, ClassConst13, ClassConst6, ClassConst5, ClassZero},
+	ClassConst:    {ClassConst32, ClassConst31_, ClassConst31, ClassConst13, ClassConst6, ClassConst5, ClassZero},
+	ClassRegConst: {ClassRegConst13},
+	ClassIndir13:  {ClassIndir0},
+	ClassIndir:    {ClassIndir13, ClassIndir0},
 }
 
 var isInstDouble = map[int16]bool{
@@ -632,9 +636,9 @@ func oregclass(offset int64) int8 {
 
 func addrclass(offset int64) int8 {
 	if -4096 <= offset && offset <= 4095 {
-		return ClassEffectiveAddr13
+		return ClassRegConst13
 	}
-	return ClassEffectiveAddr
+	return ClassRegConst
 }
 
 func constclass(offset int64) int8 {
@@ -689,9 +693,6 @@ func aclass(a *obj.Addr) int8 {
 	case obj.TYPE_REG:
 		return rclass(a.Reg)
 
-	case obj.TYPE_REGREG:
-		return ClassPairComma
-
 	case obj.TYPE_MEM:
 		switch a.Name {
 		case obj.NAME_EXTERN, obj.NAME_STATIC:
@@ -705,7 +706,7 @@ func aclass(a *obj.Addr) int8 {
 
 		case obj.TYPE_NONE:
 			if a.Scale == 1 {
-				return ClassPairPlus
+				return ClassIndirRegReg
 			}
 			return oregclass(a.Offset)
 		}
@@ -722,6 +723,9 @@ func aclass(a *obj.Addr) int8 {
 			if a.Reg != 0 {
 				if a.Reg == RegZero && a.Offset == 0 {
 					return ClassZero
+				}
+				if a.Scale == 1 {
+					return ClassRegReg
 				}
 				return addrclass(a.Offset)
 			}
@@ -917,6 +921,16 @@ func asmout(p *obj.Prog, o Opval) (out []uint32, err error) {
 			return nil, errors.New("branch target not mod 4")
 		}
 		*o1 = opcode(p.As) | uint32(offset>>2)&(1<<22-1)
+		*o2 = nop
+
+	// JMPL $imm13(Rs1), Rd
+	case 20:
+		*o1 = opcode(p.As) | rsr(p.From.Reg, p.From.Offset, p.To.Reg)
+		*o2 = nop
+
+	// JMPL $(R1+R2), Rd
+	case 21:
+		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, p.From.Index, p.To.Reg)
 		*o2 = nop
 	}
 

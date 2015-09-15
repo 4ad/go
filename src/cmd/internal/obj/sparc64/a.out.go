@@ -169,9 +169,6 @@ const (
 	ClassSpecialReg // TICK, CCR, etc
 	ClassBiased     // BSP or BFP
 
-	ClassPairComma // (Rn, Rn+1)
-	ClassPairPlus  // (Rn+Rm)
-
 	ClassZero       // $0 or ZR
 	ClassConst5     // unsigned 5-bit constant
 	ClassConst6     // unsigned 6-bit constant
@@ -182,12 +179,14 @@ const (
 	ClassConst      // 64-bit constant
 	ClassFloatConst // floating-point constant
 
-	ClassEffectiveAddr13 // $n(R), n is 13-bit signed
-	ClassEffectiveAddr   // $n(R), n large
+	ClassRegReg     // $(Rn+Rm) or $(Rn)(Rm*1)
+	ClassRegConst13 // $n(R), n is 13-bit signed
+	ClassRegConst   // $n(R), n large
 
-	ClassIndir0  // (R)
-	ClassIndir13 // n(R), n is 13-bit signed
-	ClassIndir   // n(R), n large
+	ClassIndirRegReg // (Rn+Rm) or (Rn)(Rm*1)
+	ClassIndir0      // (R)
+	ClassIndir13     // n(R), n is 13-bit signed
+	ClassIndir       // n(R), n large
 
 	ClassShortBranch // n(PC) branch target, n is 21-bit signed, mod 4
 
@@ -199,35 +198,35 @@ const (
 )
 
 var cnames = []string{
-	ClassUnknown:         "ClassUnknown",
-	ClassReg:             "ClassReg",
-	ClassFloatReg:        "ClassFloatReg",
-	ClassDoubleReg:       "ClassDoubleReg",
-	ClassCond:            "ClassCond",
-	ClassFloatCond:       "ClassFloatCond",
-	ClassSpecialReg:      "ClassSpecialReg",
-	ClassBiased:          "ClassBiased",
-	ClassPairComma:       "ClassPairComma",
-	ClassPairPlus:        "ClassPairPlus",
-	ClassZero:            "ClassZero",
-	ClassConst5:          "ClassConst5",
-	ClassConst6:          "ClassConst6",
-	ClassConst13:         "ClassConst13",
-	ClassConst31_:        "ClassConst31-",
-	ClassConst31:         "ClassConst31+",
-	ClassConst32:         "ClassConst32",
-	ClassConst:           "ClassConst",
-	ClassFloatConst:      "ClassFloatConst",
-	ClassEffectiveAddr13: "ClassEffectiveAddr13",
-	ClassEffectiveAddr:   "ClassEffectiveAddr",
-	ClassIndir0:          "ClassIndir0",
-	ClassIndir13:         "ClassIndir13",
-	ClassIndir:           "ClassIndir",
-	ClassShortBranch:     "ClassShortBranch",
-	ClassAddr:            "ClassAddr",
-	ClassMem:             "ClassMem",
-	ClassTextSize:        "ClassTextSize",
-	ClassNone:            "ClassNone",
+	ClassUnknown:     "ClassUnknown",
+	ClassReg:         "ClassReg",
+	ClassFloatReg:    "ClassFloatReg",
+	ClassDoubleReg:   "ClassDoubleReg",
+	ClassCond:        "ClassCond",
+	ClassFloatCond:   "ClassFloatCond",
+	ClassSpecialReg:  "ClassSpecialReg",
+	ClassBiased:      "ClassBiased",
+	ClassZero:        "ClassZero",
+	ClassConst5:      "ClassConst5",
+	ClassConst6:      "ClassConst6",
+	ClassConst13:     "ClassConst13",
+	ClassConst31_:    "ClassConst31-",
+	ClassConst31:     "ClassConst31+",
+	ClassConst32:     "ClassConst32",
+	ClassConst:       "ClassConst",
+	ClassFloatConst:  "ClassFloatConst",
+	ClassRegReg:      "ClassRegReg",
+	ClassRegConst13:  "ClassRegConst13",
+	ClassRegConst:    "ClassRegConst",
+	ClassIndirRegReg: "ClassIndirRegReg",
+	ClassIndir0:      "ClassIndir0",
+	ClassIndir13:     "ClassIndir13",
+	ClassIndir:       "ClassIndir",
+	ClassShortBranch: "ClassShortBranch",
+	ClassAddr:        "ClassAddr",
+	ClassMem:         "ClassMem",
+	ClassTextSize:    "ClassTextSize",
+	ClassNone:        "ClassNone",
 }
 
 //go:generate go run ../stringer.go -i $GOFILE -o anames.go -p sparc64
