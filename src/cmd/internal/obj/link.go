@@ -412,6 +412,7 @@ const (
 	R_CALLARM64
 	R_CALLIND
 	R_CALLPOWER
+	R_CALLSPARC64
 	R_CONST
 	R_PCREL
 	// R_TLS_LE, used on 386, amd64, and ARM, resolves to the offset of the
