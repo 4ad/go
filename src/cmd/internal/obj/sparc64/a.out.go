@@ -188,7 +188,8 @@ const (
 	ClassIndir0  // (R)
 	ClassIndir13 // n(R), n is 13-bit signed
 	ClassIndir   // n(R), n large
-	ClassPCREL19 // n(PC), n is 19-bit signed
+
+	ClassShortBranch // n(PC) branch target, n is 21-bit signed, mod 4
 
 	ClassAddr // $sym(SB)
 	ClassMem  // sym(SB)
@@ -222,7 +223,7 @@ var cnames = []string{
 	ClassIndir0:          "ClassIndir0",
 	ClassIndir13:         "ClassIndir13",
 	ClassIndir:           "ClassIndir",
-	ClassPCREL19:         "ClassPCREL19",
+	ClassShortBranch:     "ClassShortBranch",
 	ClassAddr:            "ClassAddr",
 	ClassMem:             "ClassMem",
 	ClassTextSize:        "ClassTextSize",

@@ -17,72 +17,78 @@ type Optab struct {
 	a3 int8
 }
 
-var optab = map[Optab]int{
-	Optab{obj.ATEXT, ClassAddr, ClassNone, ClassTextSize}: 0,
+type Opval struct {
+	op, size int8
+}
 
-	Optab{AADD, ClassReg, ClassNone, ClassReg}:  1,
-	Optab{AAND, ClassReg, ClassNone, ClassReg}:  1,
-	Optab{AMULD, ClassReg, ClassNone, ClassReg}: 1,
-	Optab{AADD, ClassReg, ClassReg, ClassReg}:   1,
-	Optab{AAND, ClassReg, ClassReg, ClassReg}:   1,
-	Optab{AMULD, ClassReg, ClassReg, ClassReg}:  1,
-	Optab{ASLLD, ClassReg, ClassReg, ClassReg}:  1,
-	Optab{ASLLW, ClassReg, ClassReg, ClassReg}:  1,
+var optab = map[Optab]Opval{
+	Optab{obj.ATEXT, ClassAddr, ClassNone, ClassTextSize}: {0, 0},
 
-	Optab{AFADDD, ClassDoubleReg, ClassNone, ClassDoubleReg}:      1,
-	Optab{AFADDD, ClassDoubleReg, ClassDoubleReg, ClassDoubleReg}: 1,
-	Optab{AFSMULD, ClassFloatReg, ClassFloatReg, ClassDoubleReg}:  1,
+	Optab{AADD, ClassReg, ClassNone, ClassReg}:  {1, 4},
+	Optab{AAND, ClassReg, ClassNone, ClassReg}:  {1, 4},
+	Optab{AMULD, ClassReg, ClassNone, ClassReg}: {1, 4},
+	Optab{AADD, ClassReg, ClassReg, ClassReg}:   {1, 4},
+	Optab{AAND, ClassReg, ClassReg, ClassReg}:   {1, 4},
+	Optab{AMULD, ClassReg, ClassReg, ClassReg}:  {1, 4},
+	Optab{ASLLD, ClassReg, ClassReg, ClassReg}:  {1, 4},
+	Optab{ASLLW, ClassReg, ClassReg, ClassReg}:  {1, 4},
 
-	Optab{AMOVD, ClassReg, ClassNone, ClassReg}: 2,
+	Optab{AFADDD, ClassDoubleReg, ClassNone, ClassDoubleReg}:      {1, 4},
+	Optab{AFADDD, ClassDoubleReg, ClassDoubleReg, ClassDoubleReg}: {1, 4},
+	Optab{AFSMULD, ClassFloatReg, ClassFloatReg, ClassDoubleReg}:  {1, 4},
 
-	Optab{AADD, ClassReg, ClassConst13, ClassReg}:  3,
-	Optab{AAND, ClassReg, ClassConst13, ClassReg}:  3,
-	Optab{AMULD, ClassReg, ClassConst13, ClassReg}: 3,
-	Optab{ASLLD, ClassReg, ClassConst6, ClassReg}:  3,
-	Optab{ASLLW, ClassReg, ClassConst5, ClassReg}:  3,
+	Optab{AMOVD, ClassReg, ClassNone, ClassReg}: {2, 4},
 
-	Optab{AMOVD, ClassConst13, ClassNone, ClassReg}: 4,
+	Optab{AADD, ClassReg, ClassConst13, ClassReg}:  {3, 4},
+	Optab{AAND, ClassReg, ClassConst13, ClassReg}:  {3, 4},
+	Optab{AMULD, ClassReg, ClassConst13, ClassReg}: {3, 4},
+	Optab{ASLLD, ClassReg, ClassConst6, ClassReg}:  {3, 4},
+	Optab{ASLLW, ClassReg, ClassConst5, ClassReg}:  {3, 4},
 
-	Optab{ALDD, ClassPairPlus, ClassNone, ClassReg}:        5,
-	Optab{ASTD, ClassReg, ClassNone, ClassPairPlus}:        6,
-	Optab{ALDDF, ClassPairPlus, ClassNone, ClassDoubleReg}: 5,
-	Optab{ASTDF, ClassDoubleReg, ClassNone, ClassPairPlus}: 6,
+	Optab{AMOVD, ClassConst13, ClassNone, ClassReg}: {4, 4},
 
-	Optab{ALDD, ClassIndir13, ClassNone, ClassReg}:        7,
-	Optab{ASTD, ClassReg, ClassNone, ClassIndir13}:        8,
-	Optab{ALDDF, ClassIndir13, ClassNone, ClassDoubleReg}: 7,
-	Optab{ASTDF, ClassDoubleReg, ClassNone, ClassIndir13}: 8,
+	Optab{ALDD, ClassPairPlus, ClassNone, ClassReg}:        {5, 4},
+	Optab{ASTD, ClassReg, ClassNone, ClassPairPlus}:        {6, 4},
+	Optab{ALDDF, ClassPairPlus, ClassNone, ClassDoubleReg}: {5, 4},
+	Optab{ASTDF, ClassDoubleReg, ClassNone, ClassPairPlus}: {6, 4},
 
-	Optab{ARD, ClassSpecialReg, ClassNone, ClassReg}: 9,
+	Optab{ALDD, ClassIndir13, ClassNone, ClassReg}:        {7, 4},
+	Optab{ASTD, ClassReg, ClassNone, ClassIndir13}:        {8, 4},
+	Optab{ALDDF, ClassIndir13, ClassNone, ClassDoubleReg}: {7, 4},
+	Optab{ASTDF, ClassDoubleReg, ClassNone, ClassIndir13}: {8, 4},
 
-	Optab{ACASD, ClassIndir0, ClassReg, ClassReg}: 10,
+	Optab{ARD, ClassSpecialReg, ClassNone, ClassReg}: {9, 4},
 
-	Optab{AFSTOD, ClassFloatReg, ClassNone, ClassDoubleReg}: 11,
-	Optab{AFDTOS, ClassDoubleReg, ClassNone, ClassFloatReg}: 11,
+	Optab{ACASD, ClassIndir0, ClassReg, ClassReg}: {10, 4},
 
-	Optab{AFMOVD, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
+	Optab{AFSTOD, ClassFloatReg, ClassNone, ClassDoubleReg}: {11, 4},
+	Optab{AFDTOS, ClassDoubleReg, ClassNone, ClassFloatReg}: {11, 4},
 
-	Optab{AFXTOD, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
-	Optab{AFITOD, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
-	Optab{AFXTOS, ClassDoubleReg, ClassNone, ClassFloatReg}:  11,
-	Optab{AFITOS, ClassFloatReg, ClassNone, ClassFloatReg}:   11,
+	Optab{AFMOVD, ClassDoubleReg, ClassNone, ClassDoubleReg}: {11, 4},
 
-	Optab{AFSTOX, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
-	Optab{AFDTOX, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
-	Optab{AFDTOI, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
-	Optab{AFSTOI, ClassFloatReg, ClassNone, ClassFloatReg}:   11,
+	Optab{AFXTOD, ClassDoubleReg, ClassNone, ClassDoubleReg}: {11, 4},
+	Optab{AFITOD, ClassDoubleReg, ClassNone, ClassDoubleReg}: {11, 4},
+	Optab{AFXTOS, ClassDoubleReg, ClassNone, ClassFloatReg}:  {11, 4},
+	Optab{AFITOS, ClassFloatReg, ClassNone, ClassFloatReg}:   {11, 4},
 
-	Optab{AFABSD, ClassDoubleReg, ClassNone, ClassDoubleReg}: 11,
+	Optab{AFSTOX, ClassDoubleReg, ClassNone, ClassDoubleReg}: {11, 4},
+	Optab{AFDTOX, ClassDoubleReg, ClassNone, ClassDoubleReg}: {11, 4},
+	Optab{AFDTOI, ClassDoubleReg, ClassNone, ClassDoubleReg}: {11, 4},
+	Optab{AFSTOI, ClassFloatReg, ClassNone, ClassFloatReg}:   {11, 4},
 
-	Optab{ASETHI, ClassConst32, ClassNone, ClassReg}: 12,
+	Optab{AFABSD, ClassDoubleReg, ClassNone, ClassDoubleReg}: {11, 4},
 
-	Optab{AMEMBAR, ClassConst, ClassNone, ClassNone}: 13,
+	Optab{ASETHI, ClassConst32, ClassNone, ClassReg}: {12, 4},
 
-	Optab{AFCMPD, ClassDoubleReg, ClassDoubleReg, ClassFloatCondReg}: 14,
-	Optab{AFCMPD, ClassDoubleReg, ClassDoubleReg, ClassNone}:         14,
+	Optab{AMEMBAR, ClassConst, ClassNone, ClassNone}: {13, 4},
 
-	Optab{AMOVD, ClassConst32, ClassNone, ClassReg}:  15,
-	Optab{AMOVD, ClassConst31_, ClassNone, ClassReg}: 16,
+	Optab{AFCMPD, ClassDoubleReg, ClassDoubleReg, ClassFloatCondReg}: {14, 4},
+	Optab{AFCMPD, ClassDoubleReg, ClassDoubleReg, ClassNone}:         {14, 4},
+
+	Optab{AMOVD, ClassConst32, ClassNone, ClassReg}:  {15, 8},
+	Optab{AMOVD, ClassConst31_, ClassNone, ClassReg}: {16, 8},
+
+	Optab{obj.AJMP, ClassCondReg, ClassNone, ClassShortBranch}: {17, 8},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -215,14 +221,14 @@ func init() {
 	}
 }
 
-func oplook(p *obj.Prog) (int, error) {
+func oplook(p *obj.Prog) (Opval, error) {
 	o := Optab{as: p.As, a1: p.From.Class, a2: ClassNone, a3: p.To.Class}
 	if p.From3 != nil {
 		o.a2 = p.From3.Class
 	}
 	v, ok := optab[o]
 	if !ok {
-		return 0, fmt.Errorf("illegal combination %v %v %v %v, %d %d", p, DRconv(o.a1), DRconv(o.a2), DRconv(o.a3), p.From.Type, p.To.Type)
+		return Opval{}, fmt.Errorf("illegal combination %v %v %v %v, %d %d", p, DRconv(o.a1), DRconv(o.a2), DRconv(o.a3), p.From.Type, p.To.Type)
 	}
 	return v, nil
 }
@@ -612,13 +618,6 @@ func opcode(a int16) uint32 {
 	}
 }
 
-func pcrelclass(offset int64) int8 {
-	if -1<<18 <= offset && offset <= 1<<18-1 {
-		return ClassPCREL19
-	}
-	return ClassUnknown
-}
-
 func oregclass(offset int64) int8 {
 	if offset == 0 {
 		return ClassIndir0
@@ -737,7 +736,7 @@ func aclass(a *obj.Addr) int8 {
 		}
 	case obj.TYPE_BRANCH:
 		if a.Sym == nil && a.Val != nil {
-			return pcrelclass(a.Offset)
+			return ClassShortBranch
 		}
 	}
 	return ClassUnknown
@@ -748,24 +747,26 @@ func span(ctxt *obj.Link, cursym *obj.LSym) {
 		return
 	}
 
-	var pc int64      // relative to entry point
-	var text []uint32 // actual assembled bytes
+	var pc int64 // relative to entry point
 	for p := cursym.Text.Link; p != nil; p = p.Link {
 		o, err := oplook(p)
 		if err != nil {
 			ctxt.Diag(err.Error())
 		}
-		out, err := asmout(p, o)
-		if err != nil {
-			ctxt.Diag(err.Error())
-		}
 		p.Pc = pc
-		pc += int64(len(out)) * 4
-		text = append(text, out...)
+		pc += int64(o.size)
 	}
 	pc += -pc & (16 - 1)
 	cursym.Size = pc
 	obj.Symgrow(ctxt, cursym, pc)
+
+	var text []uint32 // actual assembled bytes
+	for p := cursym.Text.Link; p != nil; p = p.Link {
+		o, _ := oplook(p)
+		out, _ := asmout(p, o)
+		text = append(text, out...)
+	}
+
 	bp := cursym.P
 	for _, v := range text {
 		ctxt.Arch.ByteOrder.PutUint32(bp, v)
@@ -773,12 +774,14 @@ func span(ctxt *obj.Link, cursym *obj.LSym) {
 	}
 }
 
-func asmout(p *obj.Prog, o int) (out []uint32, err error) {
+// nop is a true SPARC64 nop.
+var nop uint32 = opcode(ASETHI) | ir(0, RegZero)
+
+func asmout(p *obj.Prog, o Opval) (out []uint32, err error) {
 	out = make([]uint32, 2)
 	o1 := &out[0]
 	o2 := &out[1]
-	size := 1
-	switch o {
+	switch o.op {
 	default:
 		return nil, fmt.Errorf("unknown asm %d", o)
 
@@ -857,21 +860,31 @@ func asmout(p *obj.Prog, o int) (out []uint32, err error) {
 		if p.From.Offset&0x3FF == 0 {
 			break
 		}
-		size = 2
 		*o2 = opalu(AOR) | rsr(p.To.Reg, int64(p.From.Offset&0x3FF), p.To.Reg)
 
 	// MOVD -$imm31, R ->
 	// 	SETHI hi(^$imm32), R
 	// 	XOR R, lo($imm32)|0x1C00, R
 	case 16:
-		size = 2
 		*o1 = opcode(ASETHI) | ir(^(uint32(p.From.Offset))>>10, p.To.Reg)
 		if p.From.Offset&0x3FF == 0 {
 			*o2 = opalu(ASRAD) | rrr(p.To.Reg, 0, RegZero, p.To.Reg)
 			break
 		}
 		*o2 = opalu(AXOR) | rsr(p.To.Reg, int64(uint32(p.From.Offset)&0x3ff|0x1C00), p.To.Reg)
+
+	// BLE XCC, n(PC)
+	case 17:
+		offset := p.Pcond.Pc - p.Pc
+		if offset < -1<<22 || offset > 1<<22-1 {
+			return nil, errors.New("branch target out of range")
+		}
+		if offset%4 != 0 {
+			return nil, errors.New("branch target not mod 4")
+		}
+		*o1 = opcode(p.As) | uint32(p.From.Reg&3)<<20 | uint32(offset>>2)&(1<<19-1)
+		*o2 = nop
 	}
 
-	return out[:size], nil
+	return out[:o.size/4], nil
 }
