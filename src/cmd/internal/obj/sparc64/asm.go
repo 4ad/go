@@ -95,6 +95,8 @@ var optab = map[Optab]Opval{
 	Optab{AJMPL, ClassReg, ClassNone, ClassReg}:        {20, 8},
 	Optab{AJMPL, ClassRegConst13, ClassNone, ClassReg}: {20, 8},
 	Optab{AJMPL, ClassRegReg, ClassNone, ClassReg}:     {21, 8},
+
+	Optab{obj.ACALL, ClassNone, ClassNone, ClassMem}: {22, 8},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -769,7 +771,7 @@ func span(ctxt *obj.Link, cursym *obj.LSym) {
 	var text []uint32 // actual assembled bytes
 	for p := cursym.Text.Link; p != nil; p = p.Link {
 		o, _ := oplook(p)
-		out, _ := asmout(p, o)
+		out, _ := asmout(p, o, cursym)
 		text = append(text, out...)
 	}
 
@@ -783,7 +785,7 @@ func span(ctxt *obj.Link, cursym *obj.LSym) {
 // nop is a true SPARC64 nop.
 var nop uint32 = opcode(ASETHI) | ir(0, RegZero)
 
-func asmout(p *obj.Prog, o Opval) (out []uint32, err error) {
+func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	out = make([]uint32, 2)
 	o1 := &out[0]
 	o2 := &out[1]
@@ -931,6 +933,17 @@ func asmout(p *obj.Prog, o Opval) (out []uint32, err error) {
 	// JMPL $(R1+R2), Rd
 	case 21:
 		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, p.From.Index, p.To.Reg)
+		*o2 = nop
+
+	// CALL sym(SB)
+	case 22:
+		*o1 = opcode(p.As)
+		rel := obj.Addrel(cursym)
+		rel.Off = int32(p.Pc)
+		rel.Siz = 4
+		rel.Sym = p.To.Sym
+		rel.Add = p.To.Offset
+		rel.Type = obj.R_CALLSPARC64
 		*o2 = nop
 	}
 
