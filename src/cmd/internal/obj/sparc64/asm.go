@@ -82,13 +82,13 @@ var optab = map[Optab]Opval{
 
 	Optab{AMEMBAR, ClassConst, ClassNone, ClassNone}: {13, 4},
 
-	Optab{AFCMPD, ClassDoubleReg, ClassDoubleReg, ClassFloatCondReg}: {14, 4},
-	Optab{AFCMPD, ClassDoubleReg, ClassDoubleReg, ClassNone}:         {14, 4},
+	Optab{AFCMPD, ClassDoubleReg, ClassDoubleReg, ClassFloatCond}: {14, 4},
+	Optab{AFCMPD, ClassDoubleReg, ClassDoubleReg, ClassNone}:      {14, 4},
 
 	Optab{AMOVD, ClassConst32, ClassNone, ClassReg}:  {15, 8},
 	Optab{AMOVD, ClassConst31_, ClassNone, ClassReg}: {16, 8},
 
-	Optab{obj.AJMP, ClassCondReg, ClassNone, ClassShortBranch}: {17, 8},
+	Optab{obj.AJMP, ClassCond, ClassNone, ClassShortBranch}: {17, 8},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -670,9 +670,9 @@ func rclass(r int16) int8 {
 	case r == REG_BSP || r == REG_BFP:
 		return ClassBiased
 	case r == REG_ICC || r == REG_XCC:
-		return ClassCondReg
+		return ClassCond
 	case REG_FCC0 <= r && r <= REG_FCC3:
-		return ClassFloatCondReg
+		return ClassFloatCond
 	case r >= REG_SPECIAL:
 		return ClassSpecialReg
 	}

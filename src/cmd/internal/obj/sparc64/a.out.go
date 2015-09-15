@@ -161,13 +161,13 @@ const (
 const (
 	ClassUnknown = iota
 
-	ClassReg          // R1..R31
-	ClassFloatReg     // F0..F31
-	ClassDoubleReg    // D0..D62
-	ClassCondReg      // ICC, XCC
-	ClassFloatCondReg // FCC0..FCC3
-	ClassSpecialReg   // TICK, CCR, etc
-	ClassBiased       // BSP or BFP
+	ClassReg        // R1..R31
+	ClassFloatReg   // F0..F31
+	ClassDoubleReg  // D0..D62
+	ClassCond       // ICC, XCC
+	ClassFloatCond  // FCC0..FCC3
+	ClassSpecialReg // TICK, CCR, etc
+	ClassBiased     // BSP or BFP
 
 	ClassPairComma // (Rn, Rn+1)
 	ClassPairPlus  // (Rn+Rm)
@@ -203,8 +203,8 @@ var cnames = []string{
 	ClassReg:             "ClassReg",
 	ClassFloatReg:        "ClassFloatReg",
 	ClassDoubleReg:       "ClassDoubleReg",
-	ClassCondReg:         "ClassCondReg",
-	ClassFloatCondReg:    "ClassFloatCondReg",
+	ClassCond:            "ClassCond",
+	ClassFloatCond:       "ClassFloatCond",
 	ClassSpecialReg:      "ClassSpecialReg",
 	ClassBiased:          "ClassBiased",
 	ClassPairComma:       "ClassPairComma",
