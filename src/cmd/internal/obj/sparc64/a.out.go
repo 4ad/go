@@ -127,6 +127,12 @@ const (
 )
 
 const (
+	// integer condition-code flags
+	REG_ICC = REG_R0 + 384
+	REG_XCC = REG_R0 + 384 + 2
+)
+
+const (
 	REG_SPECIAL = REG_R0 + 512
 
 	REG_CCR  = REG_SPECIAL + 2
@@ -158,6 +164,7 @@ const (
 	ClassReg          // R1..R31
 	ClassFloatReg     // F0..F31
 	ClassDoubleReg    // D0..D62
+	ClassCondReg      // ICC, XCC
 	ClassFloatCondReg // FCC0..FCC3
 	ClassSpecialReg   // TICK, CCR, etc
 	ClassBiased       // BSP or BFP
@@ -194,6 +201,7 @@ var cnames = []string{
 	ClassReg:             "ClassReg",
 	ClassFloatReg:        "ClassFloatReg",
 	ClassDoubleReg:       "ClassDoubleReg",
+	ClassCondReg:         "ClassCondReg",
 	ClassFloatCondReg:    "ClassFloatCondReg",
 	ClassSpecialReg:      "ClassSpecialReg",
 	ClassBiased:          "ClassBiased",

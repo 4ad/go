@@ -30,6 +30,10 @@ func Rconv(r int) string {
 		return "BSP"
 	case r == REG_BFP:
 		return "BFP"
+	case r == REG_ICC:
+		return "ICC"
+	case r == REG_XCC:
+		return "XCC"
 	case r == REG_CCR:
 		return "CCR"
 	case r == REG_TICK:
