@@ -883,6 +883,10 @@ func asmout(p *obj.Prog, o Opval) (out []uint32, err error) {
 			return nil, errors.New("branch target not mod 4")
 		}
 		*o1 = opcode(p.As) | uint32(p.From.Reg&3)<<20 | uint32(offset>>2)&(1<<19-1)
+		// default is to predict branch taken
+		if p.Scond == 0 {
+			*o1 |= 1 << 19
+		}
 		*o2 = nop
 	}
 

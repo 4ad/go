@@ -9,7 +9,9 @@
 package arch
 
 import (
+	"cmd/internal/obj"
 	"cmd/internal/obj/sparc64"
+	"strings"
 )
 
 var sparc64Jump = map[string]bool{
@@ -65,6 +67,39 @@ func IsSPARC64CMP(op int) bool {
 
 func jumpSparc64(word string) bool {
 	return sparc64Jump[word]
+}
+
+// SPARC64Suffix handles the special suffix for the SPARC64.
+// It returns a boolean to indicate success; failure means
+// cond was unrecognized.
+func SPARC64Suffix(prog *obj.Prog, cond string) bool {
+	if cond == "" {
+		return true
+	}
+	bits, ok := ParseSPARC64Suffix(cond)
+	if !ok {
+		return false
+	}
+	prog.Scond = bits
+	return true
+}
+
+// ParseSPARC64Suffix parses the suffix attached to an SPARC64 instruction.
+func ParseSPARC64Suffix(cond string) (uint8, bool) {
+	if cond == "" {
+		return 0, true
+	}
+	if strings.HasPrefix(cond, ".") {
+		cond = cond[1:]
+	}
+	names := strings.Split(cond, ".")
+	if len(names) != 1 {
+		return 0, false
+	}
+	if names[0] == "PN" {
+		return 1, true
+	}
+	return 0, false
 }
 
 func sparc64RegisterNumber(name string, n int16) (int16, bool) {

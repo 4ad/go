@@ -36,6 +36,12 @@ func (p *Parser) append(prog *obj.Prog, cond string, doLabel bool) {
 				return
 			}
 
+		case 'u':
+			if !arch.SPARC64Suffix(prog, cond) {
+				p.errorf("unrecognized suffix .%q", cond)
+				return
+			}
+
 		default:
 			p.errorf("unrecognized suffix .%q", cond)
 			return

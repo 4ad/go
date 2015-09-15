@@ -261,23 +261,30 @@ const (
 	C_SCOND_XOR = 14
 )
 
-// CConv formats ARM condition codes.
-func CConv(s uint8) string {
+// CConv formats ARM condition codes and SPARC64 instruction suffixes.
+func CConv(ctxt *Link, s uint8) (sc string) {
 	if s == 0 {
 		return ""
 	}
-	sc := armCondCode[(s&C_SCOND)^C_SCOND_XOR]
-	if s&C_SBIT != 0 {
-		sc += ".S"
-	}
-	if s&C_PBIT != 0 {
-		sc += ".P"
-	}
-	if s&C_WBIT != 0 {
-		sc += ".W"
-	}
-	if s&C_UBIT != 0 { /* ambiguous with FBIT */
-		sc += ".U"
+	switch ctxt.Arch.Thechar {
+	case '5', '7':
+		sc = armCondCode[(s&C_SCOND)^C_SCOND_XOR]
+		if s&C_SBIT != 0 {
+			sc += ".S"
+		}
+		if s&C_PBIT != 0 {
+			sc += ".P"
+		}
+		if s&C_WBIT != 0 {
+			sc += ".W"
+		}
+		if s&C_UBIT != 0 { /* ambiguous with FBIT */
+			sc += ".U"
+		}
+	case 'u':
+		if s == 1 {
+			sc = ".PN"
+		}
 	}
 	return sc
 }
@@ -287,7 +294,7 @@ func (p *Prog) String() string {
 		return "<Prog without ctxt>"
 	}
 
-	sc := CConv(p.Scond)
+	sc := CConv(p.Ctxt, p.Scond)
 
 	var buf bytes.Buffer
 
