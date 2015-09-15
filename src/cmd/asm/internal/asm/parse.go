@@ -664,11 +664,18 @@ func (p *Parser) registerIndirect(a *obj.Addr, prefix rune) {
 		}
 		if p.arch.Thechar == '9' || p.arch.Thechar == 'u' {
 			// Special form for PPC64, SPARC64: (R1+R2); alias for (R1)(R2*1).
-			if prefix != 0 || scale != 0 {
+			if scale != 0 {
+				p.errorf("illegal address mode for register+register")
+				return
+			}
+			if prefix != 0 && prefix != '$' {
 				p.errorf("illegal address mode for register+register")
 				return
 			}
 			a.Type = obj.TYPE_MEM
+			if prefix == '$' {
+				a.Type = obj.TYPE_ADDR
+			}
 			a.Scale = 1
 			a.Index = r2
 			// Nothing may follow.
