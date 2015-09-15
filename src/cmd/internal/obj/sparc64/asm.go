@@ -89,8 +89,8 @@ var optab = map[Optab]Opval{
 	Optab{AMOVD, ClassConst31_, ClassNone, ClassReg}: {16, 8},
 
 	Optab{obj.AJMP, ClassCond, ClassNone, ClassShortBranch}: {17, 8},
-
-	Optab{ABRZ, ClassReg, ClassNone, ClassShortBranch}: {18, 8},
+	Optab{ABRZ, ClassReg, ClassNone, ClassShortBranch}:      {18, 8},
+	Optab{AFBA, ClassNone, ClassNone, ClassShortBranch}:     {19, 8},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -905,6 +905,18 @@ func asmout(p *obj.Prog, o Opval) (out []uint32, err error) {
 		if p.Scond == 0 {
 			*o1 |= 1 << 19
 		}
+		*o2 = nop
+
+	// FBA n(PC)
+	case 19:
+		offset := p.Pcond.Pc - p.Pc
+		if offset < -1<<25 || offset > 1<<25-1 {
+			return nil, errors.New("branch target out of range")
+		}
+		if offset%4 != 0 {
+			return nil, errors.New("branch target not mod 4")
+		}
+		*o1 = opcode(p.As) | uint32(offset>>2)&(1<<22-1)
 		*o2 = nop
 	}
 
