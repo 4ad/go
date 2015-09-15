@@ -89,6 +89,8 @@ var optab = map[Optab]Opval{
 	Optab{AMOVD, ClassConst31_, ClassNone, ClassReg}: {16, 8},
 
 	Optab{obj.AJMP, ClassCond, ClassNone, ClassShortBranch}: {17, 8},
+
+	Optab{ABRZ, ClassReg, ClassNone, ClassShortBranch}: {18, 8},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -883,6 +885,22 @@ func asmout(p *obj.Prog, o Opval) (out []uint32, err error) {
 			return nil, errors.New("branch target not mod 4")
 		}
 		*o1 = opcode(p.As) | uint32(p.From.Reg&3)<<20 | uint32(offset>>2)&(1<<19-1)
+		// default is to predict branch taken
+		if p.Scond == 0 {
+			*o1 |= 1 << 19
+		}
+		*o2 = nop
+
+	// BRZ R, n(PC)
+	case 18:
+		offset := p.Pcond.Pc - p.Pc
+		if offset < -1<<19 || offset > 1<<19-1 {
+			return nil, errors.New("branch target out of range")
+		}
+		if offset%4 != 0 {
+			return nil, errors.New("branch target not mod 4")
+		}
+		*o1 = opcode(p.As) | uint32((offset>>14)&3)<<20 | uint32(p.From.Reg&31)<<14 | uint32(offset>>2)&(1<<14-1)
 		// default is to predict branch taken
 		if p.Scond == 0 {
 			*o1 |= 1 << 19
