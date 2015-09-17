@@ -7,8 +7,26 @@ package sparc64
 import (
 	"cmd/internal/obj"
 	"encoding/binary"
+	"fmt"
 	"log"
 )
+
+func progedit(ctxt *obj.Link, p *obj.Prog) {
+	// Rewrite 64-bit integer constants and float constants
+	// to values stored in memory.
+	switch p.As {
+	case AMOVD:
+		if aclass(&p.From) == ClassConst {
+			literal := fmt.Sprintf("$i64.%016x", p.From.Offset)
+			s := obj.Linklookup(ctxt, literal, 0)
+			s.Size = 8
+			p.From.Type = obj.TYPE_MEM
+			p.From.Sym = s
+			p.From.Name = obj.NAME_EXTERN
+			p.From.Offset = 0
+		}
+	}
+}
 
 // TODO(aram):
 func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
@@ -130,6 +148,7 @@ var Linksparc64 = obj.LinkArch{
 	Preprocess: preprocess,
 	Assemble:   span,
 	Follow:     follow,
+	Progedit:   progedit,
 	UnaryDst:   unaryDst,
 	Minlc:      4,
 	Ptrsize:    8,
