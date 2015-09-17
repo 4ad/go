@@ -104,6 +104,8 @@ var optab = map[Optab]Opval{
 	Optab{ALDDF, ClassMem, ClassNone, ClassDoubleReg}: {24, 12},
 	Optab{ASTD, ClassReg, ClassNone, ClassMem}:        {25, 12},
 	Optab{ASTDF, ClassDoubleReg, ClassNone, ClassMem}: {25, 12},
+
+	Optab{obj.ARET, ClassNone, ClassNone, ClassNone}: {26, 8},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -994,6 +996,11 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		rel.Add = p.To.Offset
 		rel.Type = obj.R_ADDRSPARC64
 		*o3 = opstore(p.As) | rsr(REG_TMP, 0, p.From.Reg)
+
+	// RET
+	case 26:
+		*o1 = opcode(AJMPL) | rsr(REG_LR, 0, REG_ZR)
+		*o2 = nop
 	}
 
 	return out[:o.size/4], nil
