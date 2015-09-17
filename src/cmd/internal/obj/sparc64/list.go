@@ -26,7 +26,7 @@ func Rconv(r int) string {
 		return "GOT"
 	case r == REG_RSP:
 		return "RSP"
-	case r == REG_ZERO:
+	case r == REG_ZR:
 		return "ZR"
 	case r == REG_ICC:
 		return "ICC"

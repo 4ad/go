@@ -667,7 +667,7 @@ func constclass(offset int64) int8 {
 
 func rclass(r int16) int8 {
 	switch {
-	case r == REG_ZERO:
+	case r == REG_ZR:
 		return ClassZero
 	case REG_R1 <= r && r <= REG_R31:
 		return ClassReg
@@ -721,7 +721,7 @@ func aclass(a *obj.Addr) int8 {
 		switch a.Name {
 		case obj.TYPE_NONE:
 			if a.Reg != 0 {
-				if a.Reg == REG_ZERO && a.Offset == 0 {
+				if a.Reg == REG_ZR && a.Offset == 0 {
 					return ClassZero
 				}
 				if a.Scale == 1 {
@@ -781,7 +781,7 @@ func span(ctxt *obj.Link, cursym *obj.LSym) {
 }
 
 // nop is a true SPARC64 nop.
-var nop uint32 = opcode(ASETHI) | ir(0, REG_ZERO)
+var nop uint32 = opcode(ASETHI) | ir(0, REG_ZR)
 
 func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	out = make([]uint32, 2)
@@ -802,7 +802,7 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 
 	// MOVD Rs, Rd
 	case 2:
-		*o1 = opalu(p.As) | rrr(p.From.Reg, 0, REG_ZERO, p.To.Reg)
+		*o1 = opalu(p.As) | rrr(p.From.Reg, 0, REG_ZR, p.To.Reg)
 
 	// op Rs, $imm13, Rd	-> Rd = Rs op $imm13
 	case 3:
@@ -810,7 +810,7 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 
 	// MOVD $imm13, Rd
 	case 4:
-		*o1 = opalu(p.As) | rsr(REG_ZERO, p.From.Offset, p.To.Reg)
+		*o1 = opalu(p.As) | rsr(REG_ZR, p.From.Offset, p.To.Reg)
 
 	// LDD (R1+R2), R	-> R = *(R1+R2)
 	case 5:
@@ -874,7 +874,7 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	case 16:
 		*o1 = opcode(ASETHI) | ir(^(uint32(p.From.Offset))>>10, p.To.Reg)
 		if p.From.Offset&0x3FF == 0 {
-			*o2 = opalu(ASRAD) | rrr(p.To.Reg, 0, REG_ZERO, p.To.Reg)
+			*o2 = opalu(ASRAD) | rrr(p.To.Reg, 0, REG_ZR, p.To.Reg)
 			break
 		}
 		*o2 = opalu(AXOR) | rsr(p.To.Reg, int64(uint32(p.From.Offset)&0x3ff|0x1C00), p.To.Reg)
