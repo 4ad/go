@@ -9,6 +9,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"log"
+	"math"
 )
 
 func progedit(ctxt *obj.Link, p *obj.Prog) {
@@ -18,6 +19,31 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 	case AMOVD:
 		if aclass(&p.From) == ClassConst {
 			literal := fmt.Sprintf("$i64.%016x", p.From.Offset)
+			s := obj.Linklookup(ctxt, literal, 0)
+			s.Size = 8
+			p.From.Type = obj.TYPE_MEM
+			p.From.Sym = s
+			p.From.Name = obj.NAME_EXTERN
+			p.From.Offset = 0
+		}
+
+	case AFMOVS:
+		if p.From.Type == obj.TYPE_FCONST {
+			f32 := float32(p.From.Val.(float64))
+			i32 := math.Float32bits(f32)
+			literal := fmt.Sprintf("$f32.%08x", uint32(i32))
+			s := obj.Linklookup(ctxt, literal, 0)
+			s.Size = 4
+			p.From.Type = obj.TYPE_MEM
+			p.From.Sym = s
+			p.From.Name = obj.NAME_EXTERN
+			p.From.Offset = 0
+		}
+
+	case AFMOVD:
+		if p.From.Type == obj.TYPE_FCONST {
+			i64 := math.Float64bits(p.From.Val.(float64))
+			literal := fmt.Sprintf("$f64.%016x", uint64(i64))
 			s := obj.Linklookup(ctxt, literal, 0)
 			s.Size = 8
 			p.From.Type = obj.TYPE_MEM
