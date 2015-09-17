@@ -99,6 +99,8 @@ var optab = map[Optab]Opval{
 	Optab{obj.ACALL, ClassNone, ClassNone, ClassMem}: {22, 8},
 
 	Optab{AMOVD, ClassAddr, ClassNone, ClassReg}: {23, 8},
+
+	Optab{ALDD, ClassMem, ClassNone, ClassReg}: {24, 12},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -786,9 +788,10 @@ func span(ctxt *obj.Link, cursym *obj.LSym) {
 var nop uint32 = opcode(ASETHI) | ir(0, REG_ZR)
 
 func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
-	out = make([]uint32, 2)
+	out = make([]uint32, 3)
 	o1 := &out[0]
 	o2 := &out[1]
+	o3 := &out[2]
 	switch o.op {
 	default:
 		return nil, fmt.Errorf("unknown asm %d", o)
@@ -958,6 +961,21 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		rel.Sym = p.To.Sym
 		rel.Add = p.To.Offset
 		rel.Type = obj.R_ADDRSPARC64
+
+	// MOV sym(SB), R ->
+	// 	SETHI hi($sym), R
+	// 	OR R, lo($sym), R
+	//	MOV (R), R
+	case 24:
+		*o1 = opcode(ASETHI) | ir(0, p.To.Reg)
+		*o2 = opalu(AOR) | rsr(p.To.Reg, 0, p.To.Reg)
+		rel := obj.Addrel(cursym)
+		rel.Off = int32(p.Pc)
+		rel.Siz = 8
+		rel.Sym = p.To.Sym
+		rel.Add = p.To.Offset
+		rel.Type = obj.R_ADDRSPARC64
+		*o3 = opload(p.As) | rsr(p.To.Reg, 0, p.To.Reg)
 	}
 
 	return out[:o.size/4], nil
