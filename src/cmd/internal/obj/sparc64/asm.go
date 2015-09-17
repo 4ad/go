@@ -103,6 +103,7 @@ var optab = map[Optab]Opval{
 	Optab{ALDD, ClassMem, ClassNone, ClassReg}:        {24, 12},
 	Optab{ALDDF, ClassMem, ClassNone, ClassDoubleReg}: {24, 12},
 	Optab{ASTD, ClassReg, ClassNone, ClassMem}:        {25, 12},
+	Optab{ASTDF, ClassDoubleReg, ClassNone, ClassMem}: {25, 12},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
