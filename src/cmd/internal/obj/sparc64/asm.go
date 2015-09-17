@@ -97,6 +97,8 @@ var optab = map[Optab]Opval{
 	Optab{AJMPL, ClassRegReg, ClassNone, ClassReg}:     {21, 8},
 
 	Optab{obj.ACALL, ClassNone, ClassNone, ClassMem}: {22, 8},
+
+	Optab{AMOVD, ClassAddr, ClassNone, ClassReg}: {23, 8},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -943,6 +945,19 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		rel.Add = p.To.Offset
 		rel.Type = obj.R_CALLSPARC64
 		*o2 = nop
+
+	// MOVD $sym(SB), R ->
+	// 	SETHI hi($sym), R
+	// 	OR R, lo($sym), R
+	case 23:
+		*o1 = opcode(ASETHI) | ir(0, p.To.Reg)
+		*o2 = opalu(AOR) | rsr(p.To.Reg, 0, p.To.Reg)
+		rel := obj.Addrel(cursym)
+		rel.Off = int32(p.Pc)
+		rel.Siz = 8
+		rel.Sym = p.To.Sym
+		rel.Add = p.To.Offset
+		rel.Type = obj.R_ADDRSPARC64
 	}
 
 	return out[:o.size/4], nil
