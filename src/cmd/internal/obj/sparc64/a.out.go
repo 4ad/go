@@ -139,12 +139,12 @@ const (
 
 // Register assignments:
 const (
-	RegZero = REG_R0
-	RegRSP  = REG_R14
-	RegLink = REG_R15
-	RegTMP  = REG_R22
-	RegGOT  = REG_R23
-	RegRFP  = REG_R30
+	REG_ZERO = REG_R0
+	REG_RSP  = REG_R14
+	REG_LR   = REG_R15
+	REG_TMP  = REG_R22
+	REG_GOT  = REG_R23
+	REG_RFP  = REG_R30
 )
 
 // Prog.mark
