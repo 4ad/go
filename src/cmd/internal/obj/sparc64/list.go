@@ -20,6 +20,8 @@ func Rconv(r int) string {
 		return "RFP"
 	case r == RegLink:
 		return "LR"
+	case r == RegTMP:
+		return "TMP"
 	case r == RegGOT:
 		return "GOT"
 	case r == RegRSP:

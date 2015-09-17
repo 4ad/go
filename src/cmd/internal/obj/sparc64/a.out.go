@@ -147,6 +147,7 @@ const (
 	RegZero = REG_R0
 	RegRSP  = REG_R14
 	RegLink = REG_R15
+	RegTMP  = REG_R22
 	RegGOT  = REG_R23
 	RegRFP  = REG_R30
 )
