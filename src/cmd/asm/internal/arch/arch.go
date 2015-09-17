@@ -371,8 +371,6 @@ func archSparc64() *Arch {
 	register := make(map[string]int16)
 	// Create maps for easy lookup of instruction names etc.
 	// Note that there is no list of names as there is for 386 and amd64.
-	register[sparc64.Rconv(sparc64.REG_BSP)] = sparc64.REG_BSP
-	register[sparc64.Rconv(sparc64.REG_BFP)] = sparc64.REG_BFP
 	for i := sparc64.REG_R0; i <= sparc64.REG_R31; i++ {
 		register[sparc64.Rconv(i)] = int16(i)
 	}

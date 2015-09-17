@@ -114,11 +114,6 @@ const (
 )
 
 const (
-	REG_BSP = REG_R14 + 128
-	REG_BFP = REG_R30 + 128
-)
-
-const (
 	// floating-point condition-code registers
 	REG_FCC0 = REG_R0 + 256 + iota
 	REG_FCC1
@@ -168,7 +163,6 @@ const (
 	ClassCond       // ICC, XCC
 	ClassFloatCond  // FCC0..FCC3
 	ClassSpecialReg // TICK, CCR, etc
-	ClassBiased     // BSP or BFP
 
 	ClassZero       // $0 or ZR
 	ClassConst5     // unsigned 5-bit constant
@@ -206,7 +200,6 @@ var cnames = []string{
 	ClassCond:        "ClassCond",
 	ClassFloatCond:   "ClassFloatCond",
 	ClassSpecialReg:  "ClassSpecialReg",
-	ClassBiased:      "ClassBiased",
 	ClassZero:        "ClassZero",
 	ClassConst5:      "ClassConst5",
 	ClassConst6:      "ClassConst6",

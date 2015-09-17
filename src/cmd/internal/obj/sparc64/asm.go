@@ -675,8 +675,6 @@ func rclass(r int16) int8 {
 		return ClassFloatReg
 	case REG_D0 <= r && r <= REG_D62:
 		return ClassDoubleReg
-	case r == REG_BSP || r == REG_BFP:
-		return ClassBiased
 	case r == REG_ICC || r == REG_XCC:
 		return ClassCond
 	case REG_FCC0 <= r && r <= REG_FCC3:
