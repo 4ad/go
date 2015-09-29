@@ -193,6 +193,8 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				p.From3.Offset = int64(frameSize)
 				p.To.Type = obj.TYPE_REG
 				p.To.Reg = REG_RSP
+
+				break
 			}
 
 			locals := cursym.Locals
@@ -242,6 +244,8 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				q1.From3.Offset = int64(frameSize)
 				q1.To.Type = obj.TYPE_REG
 				q1.To.Reg = REG_RSP
+
+				break
 			}
 
 			locals := cursym.Locals
