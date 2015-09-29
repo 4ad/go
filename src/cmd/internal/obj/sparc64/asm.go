@@ -995,7 +995,7 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 
 	// RET
 	case 26:
-		*o1 = opcode(AJMPL) | rsr(REG_LR, 0, REG_ZR)
+		*o1 = opcode(AJMPL) | rsr(REG_LR, 8, REG_ZR)
 	}
 
 	return out[:o.size/4], nil
