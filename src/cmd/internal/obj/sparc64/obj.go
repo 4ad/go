@@ -60,15 +60,6 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 	cursym.Args = cursym.Text.To.Val.(int32)
 	cursym.Locals = int32(cursym.Text.To.Offset)
 
-	// For future use by oplook and friends.
-	for p := cursym.Text; p != nil; p = p.Link {
-		p.From.Class = aclass(&p.From)
-		if p.From3 != nil {
-			p.From3.Class = aclass(p.From3)
-		}
-		p.To.Class = aclass(&p.To)
-	}
-
 	// Find leaf subroutines,
 	// Strip NOPs.
 	var q *obj.Prog
@@ -87,7 +78,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			q1.Mark |= p.Mark
 			continue
 
-		case obj.AJMP, AFBA,
+		case obj.AJMP, AFBA, obj.ACALL,
 			obj.ADUFFZERO,
 			obj.ADUFFCOPY:
 			cursym.Text.Mark &^= LEAF
@@ -118,6 +109,15 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				cursym.Leaf = 1
 			}
 		}
+	}
+
+	// For future use by oplook and friends.
+	for p := cursym.Text; p != nil; p = p.Link {
+		p.From.Class = aclass(&p.From)
+		if p.From3 != nil {
+			p.From3.Class = aclass(p.From3)
+		}
+		p.To.Class = aclass(&p.To)
 	}
 }
 
