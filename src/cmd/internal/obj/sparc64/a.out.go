@@ -359,6 +359,7 @@ const (
 	AMOVW
 	AMOVSW
 	AMOVD // also the SPARC64 synthetic instruction
+	ARNOP // SETHI $0, ZR
 
 	AWORD
 	ADWORD

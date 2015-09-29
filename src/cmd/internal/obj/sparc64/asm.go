@@ -79,6 +79,7 @@ var optab = map[Optab]Opval{
 	Optab{AFABSD, ClassDoubleReg, ClassNone, ClassDoubleReg}: {11, 4},
 
 	Optab{ASETHI, ClassConst32, ClassNone, ClassReg}: {12, 4},
+	Optab{ARNOP, ClassNone, ClassNone, ClassNone}:    {12, 4},
 
 	Optab{AMEMBAR, ClassConst, ClassNone, ClassNone}: {13, 4},
 
@@ -627,7 +628,7 @@ func opcode(a int16) uint32 {
 	case AMEMBAR:
 		return op3(2, 0x28) | 0xF<<14 | 1<<13
 
-	case ASETHI:
+	case ASETHI, ARNOP:
 		return op2(4)
 
 	default:
@@ -851,6 +852,7 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		*o1 = opcode(p.As) | rrr(0, 0, p.From.Reg, p.To.Reg)
 
 	// SETHI $const, R
+	// RNOP
 	case 12:
 		if p.From.Offset&0x3FF != 0 {
 			return nil, errors.New("SETHI constant not mod 1024")

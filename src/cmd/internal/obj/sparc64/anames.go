@@ -130,6 +130,7 @@ var Anames = []string{
 	"MOVW",
 	"MOVSW",
 	"MOVD",
+	"RNOP",
 	"WORD",
 	"DWORD",
 }
