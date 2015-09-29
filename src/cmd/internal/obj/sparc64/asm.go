@@ -89,15 +89,15 @@ var optab = map[Optab]Opval{
 	Optab{AMOVD, ClassConst32, ClassNone, ClassReg}:  {15, 8},
 	Optab{AMOVD, ClassConst31_, ClassNone, ClassReg}: {16, 8},
 
-	Optab{obj.AJMP, ClassCond, ClassNone, ClassShortBranch}: {17, 8},
-	Optab{ABRZ, ClassReg, ClassNone, ClassShortBranch}:      {18, 8},
-	Optab{AFBA, ClassNone, ClassNone, ClassShortBranch}:     {19, 8},
+	Optab{obj.AJMP, ClassCond, ClassNone, ClassShortBranch}: {17, 4},
+	Optab{ABRZ, ClassReg, ClassNone, ClassShortBranch}:      {18, 4},
+	Optab{AFBA, ClassNone, ClassNone, ClassShortBranch}:     {19, 4},
 
-	Optab{AJMPL, ClassReg, ClassNone, ClassReg}:        {20, 8},
-	Optab{AJMPL, ClassRegConst13, ClassNone, ClassReg}: {20, 8},
-	Optab{AJMPL, ClassRegReg, ClassNone, ClassReg}:     {21, 8},
+	Optab{AJMPL, ClassReg, ClassNone, ClassReg}:        {20, 4},
+	Optab{AJMPL, ClassRegConst13, ClassNone, ClassReg}: {20, 4},
+	Optab{AJMPL, ClassRegReg, ClassNone, ClassReg}:     {21, 4},
 
-	Optab{obj.ACALL, ClassNone, ClassNone, ClassMem}: {22, 8},
+	Optab{obj.ACALL, ClassNone, ClassNone, ClassMem}: {22, 4},
 
 	Optab{AMOVD, ClassAddr, ClassNone, ClassReg}: {23, 8},
 
@@ -106,7 +106,7 @@ var optab = map[Optab]Opval{
 	Optab{ASTD, ClassReg, ClassNone, ClassMem}:        {25, 12},
 	Optab{ASTDF, ClassDoubleReg, ClassNone, ClassMem}: {25, 12},
 
-	Optab{obj.ARET, ClassNone, ClassNone, ClassNone}: {26, 8},
+	Optab{obj.ARET, ClassNone, ClassNone, ClassNone}: {26, 4},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -905,7 +905,6 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		if p.Scond == 0 {
 			*o1 |= 1 << 19
 		}
-		*o2 = nop
 
 	// BRZ R, n(PC)
 	case 18:
@@ -921,7 +920,6 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		if p.Scond == 0 {
 			*o1 |= 1 << 19
 		}
-		*o2 = nop
 
 	// FBA n(PC)
 	case 19:
@@ -933,17 +931,14 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 			return nil, errors.New("branch target not mod 4")
 		}
 		*o1 = opcode(p.As) | uint32(offset>>2)&(1<<22-1)
-		*o2 = nop
 
 	// JMPL $imm13(Rs1), Rd
 	case 20:
 		*o1 = opcode(p.As) | rsr(p.From.Reg, p.From.Offset, p.To.Reg)
-		*o2 = nop
 
 	// JMPL $(R1+R2), Rd
 	case 21:
 		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, p.From.Index, p.To.Reg)
-		*o2 = nop
 
 	// CALL sym(SB)
 	case 22:
@@ -954,7 +949,6 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		rel.Sym = p.To.Sym
 		rel.Add = p.To.Offset
 		rel.Type = obj.R_CALLSPARC64
-		*o2 = nop
 
 	// MOVD $sym(SB), R ->
 	// 	SETHI hi($sym), R
@@ -1002,7 +996,6 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	// RET
 	case 26:
 		*o1 = opcode(AJMPL) | rsr(REG_LR, 0, REG_ZR)
-		*o2 = nop
 	}
 
 	return out[:o.size/4], nil
