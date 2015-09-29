@@ -147,6 +147,8 @@ const (
 	REG_RFP = REG_R30
 )
 
+const StackBias = 0x7ff
+
 // Prog.mark
 const (
 	FOLL = 1 << iota

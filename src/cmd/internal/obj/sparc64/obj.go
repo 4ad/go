@@ -166,6 +166,114 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 		}
 	}
 
+	for p := cursym.Text; p != nil; p = p.Link {
+		switch p.As {
+		case obj.ATEXT:
+			if cursym.Leaf == 1 {
+				if cursym.Args == obj.ArgsSizeUnknown {
+					break
+				}
+				locals := cursym.Locals
+				if locals == -8 {
+					locals = 0
+				}
+				frameSize := cursym.Args + locals
+				if frameSize == 0 {
+					break
+				}
+				if frameSize&(8-1) != 0 {
+					ctxt.Diag("%v: unaligned frame size %d - must be 8 mod 16 (or 0)", p, frameSize)
+				}
+				p = obj.Appendp(ctxt, p)
+				p.As = ASUB
+				p.From.Type = obj.TYPE_REG
+				p.From.Reg = REG_RSP
+				p.From3 = new(obj.Addr)
+				p.From3.Type = obj.TYPE_CONST
+				p.From3.Offset = int64(frameSize)
+				p.To.Type = obj.TYPE_REG
+				p.To.Reg = REG_RSP
+			}
+
+			locals := cursym.Locals
+			frameSize := cursym.Args + locals + 8
+			if frameSize&(8-1) != 0 {
+				ctxt.Diag("%v: unaligned frame size %d - must be 8 mod 16 (or 0)", p, frameSize)
+			}
+
+			p = obj.Appendp(ctxt, p)
+			p.As = AMOVD
+			p.From.Type = obj.TYPE_REG
+			p.From.Reg = REG_LR
+			p.To.Type = obj.TYPE_MEM
+			p.To.Reg = REG_RSP
+			p.To.Offset = int64(StackBias + cursym.Args)
+
+			p = obj.Appendp(ctxt, p)
+			p.As = ASUB
+			p.From.Type = obj.TYPE_REG
+			p.From.Reg = REG_RSP
+			p.From3 = new(obj.Addr)
+			p.From3.Type = obj.TYPE_CONST
+			p.From3.Offset = int64(frameSize)
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = REG_RSP
+		case obj.ARET:
+			if cursym.Leaf == 1 {
+				if cursym.Args == obj.ArgsSizeUnknown {
+					break
+				}
+				locals := cursym.Locals
+				if locals == -8 {
+					locals = 0
+				}
+				frameSize := cursym.Args + locals
+				if frameSize == 0 {
+					break
+				}
+				q1 = p
+				p = obj.Appendp(ctxt, p)
+				p.As = obj.ARET
+				q1.As = AADD
+				q1.From.Type = obj.TYPE_REG
+				q1.From.Reg = REG_RSP
+				q1.From3 = new(obj.Addr)
+				q1.From3.Type = obj.TYPE_CONST
+				q1.From3.Offset = int64(frameSize)
+				q1.To.Type = obj.TYPE_REG
+				q1.To.Reg = REG_RSP
+			}
+
+			locals := cursym.Locals
+			frameSize := cursym.Args + locals + 8
+			if frameSize&(8-1) != 0 {
+				ctxt.Diag("%v: unaligned frame size %d - must be 8 mod 16 (or 0)", p, frameSize)
+			}
+
+			q1 = p
+			p = obj.Appendp(ctxt, p)
+			p.As = obj.ARET
+			q1.As = AADD
+			q1.From.Type = obj.TYPE_REG
+			q1.From.Reg = REG_RSP
+			q1.From3 = new(obj.Addr)
+			q1.From3.Type = obj.TYPE_CONST
+			q1.From3.Offset = int64(frameSize)
+			q1.To.Type = obj.TYPE_REG
+			q1.To.Reg = REG_RSP
+
+			q1 = p
+			p = obj.Appendp(ctxt, p)
+			p.As = obj.ARET
+			q1.As = AMOVD
+			q1.From.Type = obj.TYPE_MEM
+			q1.From.Reg = REG_RSP
+			q1.From.Offset = int64(StackBias + cursym.Args)
+			q1.To.Type = obj.TYPE_REG
+			q1.To.Reg = REG_LR
+		}
+	}
+
 	// Schedule delay-slots. Only RNOPs for now.
 	for p := cursym.Text; p != nil; p = p.Link {
 		if !isJump[p.As] {
