@@ -12,6 +12,65 @@ import (
 	"math"
 )
 
+var isUncondJump = map[int16]bool{
+	obj.ACALL:     true,
+	obj.ADUFFZERO: true,
+	obj.ADUFFCOPY: true,
+	obj.AJMP:      true,
+	obj.ARET:      true,
+	AFBA:          true,
+}
+
+var isCondJump = map[int16]bool{
+	ABN:    true,
+	ABNE:   true,
+	ABE:    true,
+	ABG:    true,
+	ABLE:   true,
+	ABGE:   true,
+	ABL:    true,
+	ABGU:   true,
+	ABLEU:  true,
+	ABCC:   true,
+	ABCS:   true,
+	ABPOS:  true,
+	ABNEG:  true,
+	ABVC:   true,
+	ABVS:   true,
+	ABRZ:   true,
+	ABRLEZ: true,
+	ABRLZ:  true,
+	ABRNZ:  true,
+	ABRGZ:  true,
+	ABRGEZ: true,
+	AFBN:   true,
+	AFBU:   true,
+	AFBG:   true,
+	AFBUG:  true,
+	AFBL:   true,
+	AFBUL:  true,
+	AFBLG:  true,
+	AFBNE:  true,
+	AFBE:   true,
+	AFBUE:  true,
+	AFBGE:  true,
+	AFBUGE: true,
+	AFBLE:  true,
+	AFBULE: true,
+	AFBO:   true,
+}
+
+var isJump = make(map[int16]bool)
+
+func init() {
+	for k := range isUncondJump {
+		isJump[k] = true
+	}
+	for k := range isCondJump {
+		isJump[k] = true
+	}
+}
+
 func progedit(ctxt *obj.Link, p *obj.Prog) {
 	// Rewrite 64-bit integer constants and float constants
 	// to values stored in memory.
@@ -65,28 +124,24 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 	var q *obj.Prog
 	var q1 *obj.Prog
 	for p := cursym.Text; p != nil; p = p.Link {
-		switch p.As {
-		case obj.ATEXT:
+		switch {
+		case p.As == obj.ATEXT:
 			p.Mark |= LEAF
 
-		case obj.ARET:
+		case p.As == obj.ARET:
 			break
 
-		case obj.ANOP:
+		case p.As == obj.ANOP:
 			q1 = p.Link
 			q.Link = q1 /* q is non-nop */
 			q1.Mark |= p.Mark
 			continue
 
-		case obj.AJMP, AFBA, obj.ACALL,
-			obj.ADUFFZERO,
-			obj.ADUFFCOPY:
+		case isUncondJump[p.As]:
 			cursym.Text.Mark &^= LEAF
 			fallthrough
 
-		case ABN, ABNE, ABE, ABG, ABLE, ABGE, ABL, ABGU, ABLEU, ABCC, ABCS, ABPOS, ABNEG, ABVC, ABVS,
-			ABRZ, ABRLEZ, ABRLZ, ABRNZ, ABRGZ, ABRGEZ,
-			AFBN, AFBU, AFBG, AFBUG, AFBL, AFBUL, AFBLG, AFBNE, AFBE, AFBUE, AFBGE, AFBUGE, AFBLE, AFBULE, AFBO:
+		case isCondJump[p.As]:
 			q1 = p.Pcond
 
 			if q1 != nil {
@@ -109,6 +164,18 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				cursym.Leaf = 1
 			}
 		}
+	}
+
+	// Schedule delay-slots. Only RNOPs for now.
+	for p := cursym.Text; p != nil; p = p.Link {
+		if !isJump[p.As] {
+			continue
+		}
+		if p.Link != nil && p.Link.As == ARNOP {
+			continue
+		}
+		p = obj.Appendp(ctxt, p)
+		p.As = ARNOP
 	}
 
 	// For future use by oplook and friends.
@@ -163,6 +230,7 @@ func relinv(a int) int {
 
 var unaryDst = map[int]bool{
 	obj.ACALL: true,
+	obj.AJMP:  true,
 	AWORD:     true,
 	ADWORD:    true,
 }

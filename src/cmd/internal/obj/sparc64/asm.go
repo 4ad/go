@@ -89,7 +89,8 @@ var optab = map[Optab]Opval{
 	Optab{AMOVD, ClassConst32, ClassNone, ClassReg}:  {15, 8},
 	Optab{AMOVD, ClassConst31_, ClassNone, ClassReg}: {16, 8},
 
-	Optab{obj.AJMP, ClassCond, ClassNone, ClassShortBranch}: {17, 4},
+	Optab{obj.AJMP, ClassNone, ClassNone, ClassShortBranch}: {17, 4},
+	Optab{ABN, ClassCond, ClassNone, ClassShortBranch}:      {17, 4},
 	Optab{ABRZ, ClassReg, ClassNone, ClassShortBranch}:      {18, 4},
 	Optab{AFBA, ClassNone, ClassNone, ClassShortBranch}:     {19, 4},
 
@@ -154,27 +155,27 @@ var isInstFloat = map[int16]bool{
 // Compatible instructions, if an asm* function accepts AADD,
 // it accepts ASUBCCC too.
 var ci = map[int16][]int16{
-	AADD:     {AADDCC, AADDC, AADDCCC, ASUB, ASUBCC, ASUBC, ASUBCCC},
-	AAND:     {AANDCC, AANDN, AANDNCC, AOR, AORCC, AORN, AORNCC, AXOR, AXORCC, AXNOR, AXNORCC},
-	obj.AJMP: {ABN, ABNE, ABE, ABG, ABLE, ABGE, ABL, ABGU, ABLEU, ABCC, ABCS, ABPOS, ABNEG, ABVC, ABVS},
-	ABRZ:     {ABRLEZ, ABRLZ, ABRNZ, ABRGZ, ABRGEZ},
-	ACASD:    {ACASW},
-	AFABSD:   {AFABSS, AFNEGD, AFNEGS, AFSQRTD, AFNEGS},
-	AFADDD:   {AFADDS, AFSUBS, AFSUBD, AFMULD, AFMULS, AFSMULD, AFDIVD, AFDIVS},
-	AFBA:     {AFBN, AFBU, AFBG, AFBUG, AFBL, AFBUL, AFBLG, AFBNE, AFBE, AFBUE, AFBGE, AFBUGE, AFBLE, AFBULE, AFBO},
-	AFCMPD:   {AFCMPS},
-	AFITOD:   {AFITOS},
-	AFMOVD:   {AFMOVS},
-	AFSTOD:   {AFDTOS},
-	AFXTOD:   {AFXTOS},
-	ALDD:     {ALDSB, ALDSH, ALDSW, ALDUB, ALDUH, ALDUW, AMOVSB, AMOVSH, AMOVSW, AMOVB, AMOVH, AMOVW, AMOVD},
-	ALDDF:    {ALDSF, AFMOVD, AFMOVS},
-	AMULD:    {ASDIVD, AUDIVD},
-	ARD:      {AMOVD},
-	ASLLD:    {ASRLD, ASRAD},
-	ASLLW:    {ASLLW, ASRLW, ASRAW},
-	ASTD:     {ASTB, ASTH, ASTW, AMOVB, AMOVH, AMOVW, AMOVD},
-	ASTDF:    {ASTSF, AFMOVD, AFMOVS},
+	AADD:   {AADDCC, AADDC, AADDCCC, ASUB, ASUBCC, ASUBC, ASUBCCC},
+	AAND:   {AANDCC, AANDN, AANDNCC, AOR, AORCC, AORN, AORNCC, AXOR, AXORCC, AXNOR, AXNORCC},
+	ABN:    {ABNE, ABE, ABG, ABLE, ABGE, ABL, ABGU, ABLEU, ABCC, ABCS, ABPOS, ABNEG, ABVC, ABVS},
+	ABRZ:   {ABRLEZ, ABRLZ, ABRNZ, ABRGZ, ABRGEZ},
+	ACASD:  {ACASW},
+	AFABSD: {AFABSS, AFNEGD, AFNEGS, AFSQRTD, AFNEGS},
+	AFADDD: {AFADDS, AFSUBS, AFSUBD, AFMULD, AFMULS, AFSMULD, AFDIVD, AFDIVS},
+	AFBA:   {AFBN, AFBU, AFBG, AFBUG, AFBL, AFBUL, AFBLG, AFBNE, AFBE, AFBUE, AFBGE, AFBUGE, AFBLE, AFBULE, AFBO},
+	AFCMPD: {AFCMPS},
+	AFITOD: {AFITOS},
+	AFMOVD: {AFMOVS},
+	AFSTOD: {AFDTOS},
+	AFXTOD: {AFXTOS},
+	ALDD:   {ALDSB, ALDSH, ALDSW, ALDUB, ALDUH, ALDUW, AMOVSB, AMOVSH, AMOVSW, AMOVB, AMOVH, AMOVW, AMOVD},
+	ALDDF:  {ALDSF, AFMOVD, AFMOVS},
+	AMULD:  {ASDIVD, AUDIVD},
+	ARD:    {AMOVD},
+	ASLLD:  {ASRLD, ASRAD},
+	ASLLW:  {ASLLW, ASRLW, ASRAW},
+	ASTD:   {ASTB, ASTH, ASTW, AMOVB, AMOVH, AMOVW, AMOVD},
+	ASTDF:  {ASTSF, AFMOVD, AFMOVS},
 }
 
 func init() {
@@ -751,9 +752,7 @@ func aclass(a *obj.Addr) int8 {
 			panic("unimplemented")
 		}
 	case obj.TYPE_BRANCH:
-		if a.Sym == nil && a.Val != nil {
-			return ClassShortBranch
-		}
+		return ClassShortBranch
 	}
 	return ClassUnknown
 }
@@ -892,6 +891,7 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		*o2 = opalu(AXOR) | rsr(p.To.Reg, int64(uint32(p.From.Offset)&0x3ff|0x1C00), p.To.Reg)
 
 	// BLE XCC, n(PC)
+	// JMP n(PC)
 	case 17:
 		offset := p.Pcond.Pc - p.Pc
 		if offset < -1<<22 || offset > 1<<22-1 {
