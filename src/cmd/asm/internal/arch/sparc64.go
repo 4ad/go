@@ -36,6 +36,7 @@ var sparc64Jump = map[string]bool{
 	"BRNZ":  true,
 	"BRGZ":  true,
 	"BRGEZ": true,
+	"CALL":  true,
 	"FBA":   true,
 	"FBN":   true,
 	"FBU":   true,
@@ -52,6 +53,7 @@ var sparc64Jump = map[string]bool{
 	"FBLE":  true,
 	"FBULE": true,
 	"FBO":   true,
+	"JMP":   true,
 	"JMPL":  true,
 }
 
