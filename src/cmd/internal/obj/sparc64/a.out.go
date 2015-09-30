@@ -145,6 +145,7 @@ const (
 	REG_TMP = REG_R22
 	REG_GOT = REG_R23
 	REG_RFP = REG_R30
+	REG_PLR = REG_R31
 )
 
 const (
