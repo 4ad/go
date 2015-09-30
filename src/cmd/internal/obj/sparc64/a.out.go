@@ -145,10 +145,10 @@ const (
 	REG_LR  = REG_R15
 	REG_GOT = REG_R23
 	REG_RFP = REG_R30
-	REG_PLR = REG_R31
 )
 
 const (
+	StackAlign            = 16
 	StackBias             = 0x7ff  // craziness
 	WindowSaveAreaSize    = 16 * 8 // only slots for RFP and PLR used
 	ArgumentsSaveAreaSize = 0      // normally 6*8 on SPARC, but we cheat

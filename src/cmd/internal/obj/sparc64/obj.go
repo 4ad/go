@@ -170,111 +170,174 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 		switch p.As {
 		case obj.ATEXT:
 			if cursym.Leaf == 1 {
-				if cursym.Args == obj.ArgsSizeUnknown {
-					break
+				frameSize := cursym.Locals
+				if frameSize == -8 {
+					frameSize = 0
 				}
-				locals := cursym.Locals
-				if locals == -8 {
-					locals = 0
-				}
-				frameSize := cursym.Args + locals
-				if frameSize == 0 {
-					break
-				}
-				if frameSize&(8-1) != 0 {
-					ctxt.Diag("%v: unaligned frame size %d - must be 8 mod 16 (or 0)", p, frameSize)
-				}
+				// TODO(aram): expect already-aligned frame size?
+				frameSize += -frameSize & (StackAlign - 1)
+
+				// MOVD RFP, (112+bias)(RSP)
+				p = obj.Appendp(ctxt, p)
+				p.As = AMOVD
+				p.From.Type = obj.TYPE_REG
+				p.From.Reg = REG_RFP
+				p.To.Type = obj.TYPE_MEM
+				p.To.Reg = REG_RSP
+				p.To.Offset = int64(112 + StackBias)
+
+				// ADD RSP, -(frame+128), RSP
+				p = obj.Appendp(ctxt, p)
+				p.As = AADD
+				p.From.Type = obj.TYPE_REG
+				p.From.Reg = REG_RSP
+				p.From3 = new(obj.Addr)
+				p.From3.Type = obj.TYPE_CONST
+				p.From3.Offset = -int64(frameSize + WindowSaveAreaSize)
+				p.To.Type = obj.TYPE_REG
+				p.To.Reg = REG_RSP
+
+				// SUB RSP, -(frame+128), RFP
 				p = obj.Appendp(ctxt, p)
 				p.As = ASUB
 				p.From.Type = obj.TYPE_REG
 				p.From.Reg = REG_RSP
 				p.From3 = new(obj.Addr)
 				p.From3.Type = obj.TYPE_CONST
-				p.From3.Offset = int64(frameSize)
+				p.From3.Offset = -int64(frameSize + WindowSaveAreaSize)
 				p.To.Type = obj.TYPE_REG
-				p.To.Reg = REG_RSP
+				p.To.Reg = REG_RFP
 
 				break
 			}
 
-			locals := cursym.Locals
-			frameSize := cursym.Args + locals + 8
-			if frameSize&(8-1) != 0 {
-				ctxt.Diag("%v: unaligned frame size %d - must be 8 mod 16 (or 0)", p, frameSize)
-			}
+			frameSize := cursym.Locals
+			// TODO(aram): expect already-aligned frame size?
+			frameSize += -frameSize & (StackAlign - 1)
 
+			// MOVD RFP, (112+bias)(RSP)
+			p = obj.Appendp(ctxt, p)
+			p.As = AMOVD
+			p.From.Type = obj.TYPE_REG
+			p.From.Reg = REG_RFP
+			p.To.Type = obj.TYPE_MEM
+			p.To.Reg = REG_RSP
+			p.To.Offset = int64(112 + StackBias)
+
+			// MOVD R31, (120+bias)(RSP)
+			p = obj.Appendp(ctxt, p)
+			p.As = AMOVD
+			p.From.Type = obj.TYPE_REG
+			p.From.Reg = REG_R31
+			p.To.Type = obj.TYPE_MEM
+			p.To.Reg = REG_RSP
+			p.To.Offset = int64(120 + StackBias)
+
+			// ADD RSP, -(frame+128|176), RSP
+			p = obj.Appendp(ctxt, p)
+			p.As = AADD
+			p.From.Type = obj.TYPE_REG
+			p.From.Reg = REG_RSP
+			p.From3 = new(obj.Addr)
+			p.From3.Type = obj.TYPE_CONST
+			p.From3.Offset = -int64(frameSize + MinStackFrameSize)
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = REG_RSP
+
+			// MOVD LR, R31
 			p = obj.Appendp(ctxt, p)
 			p.As = AMOVD
 			p.From.Type = obj.TYPE_REG
 			p.From.Reg = REG_LR
-			p.To.Type = obj.TYPE_MEM
-			p.To.Reg = REG_RSP
-			p.To.Offset = int64(StackBias + cursym.Args)
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = REG_R31
 
+			// SUB RSP, -(frame+128|176), RFP
 			p = obj.Appendp(ctxt, p)
 			p.As = ASUB
 			p.From.Type = obj.TYPE_REG
 			p.From.Reg = REG_RSP
 			p.From3 = new(obj.Addr)
 			p.From3.Type = obj.TYPE_CONST
-			p.From3.Offset = int64(frameSize)
+			p.From3.Offset = -int64(frameSize + MinStackFrameSize)
 			p.To.Type = obj.TYPE_REG
-			p.To.Reg = REG_RSP
+			p.To.Reg = REG_RFP
+
 		case obj.ARET:
 			if cursym.Leaf == 1 {
-				if cursym.Args == obj.ArgsSizeUnknown {
-					break
-				}
-				locals := cursym.Locals
-				if locals == -8 {
-					locals = 0
-				}
-				frameSize := cursym.Args + locals
-				if frameSize == 0 {
-					break
-				}
+				// MOVD RFP, TMP
 				q1 = p
 				p = obj.Appendp(ctxt, p)
 				p.As = obj.ARET
-				q1.As = AADD
+				q1.As = AMOVD
 				q1.From.Type = obj.TYPE_REG
-				q1.From.Reg = REG_RSP
-				q1.From3 = new(obj.Addr)
-				q1.From3.Type = obj.TYPE_CONST
-				q1.From3.Offset = int64(frameSize)
+				q1.From.Reg = REG_RFP
+				q1.To.Type = obj.TYPE_REG
+				q1.To.Reg = REG_TMP
+
+				// MOVD (112+StackBias)(RFP), RFP
+				q1 = obj.Appendp(ctxt, q1)
+				q1.As = AMOVD
+				q1.From.Type = obj.TYPE_MEM
+				q1.From.Reg = REG_RFP
+				q1.From.Offset = 112 + StackBias
+				q1.To.Type = obj.TYPE_REG
+				q1.To.Reg = REG_RFP
+
+				// MOVD TMP, RSP
+				q1 = obj.Appendp(ctxt, q1)
+				q1.As = AMOVD
+				q1.From.Type = obj.TYPE_REG
+				q1.From.Reg = REG_TMP
 				q1.To.Type = obj.TYPE_REG
 				q1.To.Reg = REG_RSP
 
 				break
 			}
 
-			locals := cursym.Locals
-			frameSize := cursym.Args + locals + 8
-			if frameSize&(8-1) != 0 {
-				ctxt.Diag("%v: unaligned frame size %d - must be 8 mod 16 (or 0)", p, frameSize)
-			}
-
-			q1 = p
-			p = obj.Appendp(ctxt, p)
-			p.As = obj.ARET
-			q1.As = AADD
-			q1.From.Type = obj.TYPE_REG
-			q1.From.Reg = REG_RSP
-			q1.From3 = new(obj.Addr)
-			q1.From3.Type = obj.TYPE_CONST
-			q1.From3.Offset = int64(frameSize)
-			q1.To.Type = obj.TYPE_REG
-			q1.To.Reg = REG_RSP
-
+			// MOVD RFP, TMP
 			q1 = p
 			p = obj.Appendp(ctxt, p)
 			p.As = obj.ARET
 			q1.As = AMOVD
-			q1.From.Type = obj.TYPE_MEM
-			q1.From.Reg = REG_RSP
-			q1.From.Offset = int64(StackBias + cursym.Args)
+			q1.From.Type = obj.TYPE_REG
+			q1.From.Reg = REG_RFP
+			q1.To.Type = obj.TYPE_REG
+			q1.To.Reg = REG_TMP
+
+			// MOVD R31, LR
+			q1 = obj.Appendp(ctxt, q1)
+			q1.As = AMOVD
+			q1.From.Type = obj.TYPE_REG
+			q1.From.Reg = REG_R31
 			q1.To.Type = obj.TYPE_REG
 			q1.To.Reg = REG_LR
+
+			// MOVD (120+StackBias)(RFP), R31
+			q1 = obj.Appendp(ctxt, q1)
+			q1.As = AMOVD
+			q1.From.Type = obj.TYPE_MEM
+			q1.From.Reg = REG_RFP
+			q1.From.Offset = 120 + StackBias
+			q1.To.Type = obj.TYPE_REG
+			q1.To.Reg = REG_R31
+
+			// MOVD (112+StackBias)(RFP), RFP
+			q1 = obj.Appendp(ctxt, q1)
+			q1.As = AMOVD
+			q1.From.Type = obj.TYPE_MEM
+			q1.From.Reg = REG_RFP
+			q1.From.Offset = 112 + StackBias
+			q1.To.Type = obj.TYPE_REG
+			q1.To.Reg = REG_RFP
+
+			// MOVD TMP, RSP
+			q1 = obj.Appendp(ctxt, q1)
+			q1.As = AMOVD
+			q1.From.Type = obj.TYPE_REG
+			q1.From.Reg = REG_TMP
+			q1.To.Type = obj.TYPE_REG
+			q1.To.Reg = REG_RSP
 		}
 	}
 

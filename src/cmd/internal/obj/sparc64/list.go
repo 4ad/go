@@ -20,8 +20,6 @@ func Rconv(r int) string {
 		return "RFP"
 	case r == REG_LR:
 		return "LR"
-	case r == REG_PLR:
-		return "PLR"
 	case r == REG_TMP:
 		return "TMP"
 	case r == REG_GOT:
