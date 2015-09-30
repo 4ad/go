@@ -147,7 +147,12 @@ const (
 	REG_RFP = REG_R30
 )
 
-const StackBias = 0x7ff
+const (
+	StackBias             = 0x7ff  // craziness
+	WindowSaveAreaSize    = 16 * 8 // only slots for RFP and PLR used
+	ArgumentsSaveAreaSize = 0      // normally 6*8 on SPARC, but we cheat
+	MinStackFrameSize     = WindowSaveAreaSize + ArgumentsSaveAreaSize
+)
 
 // Prog.mark
 const (
