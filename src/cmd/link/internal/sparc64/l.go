@@ -28,7 +28,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package arm64
+package sparc64
 
 // Writing object files.
 
@@ -62,14 +62,14 @@ package arm64
 // THE SOFTWARE.
 
 const (
-	thechar   = '7'
+	thechar   = 'u'
 	MaxAlign  = 32 // max data alignment
-	FuncAlign = 8
+	FuncAlign = 16
 	MINLC     = 4
 )
 
 /* Used by ../internal/ld/dwarf.go */
 const (
-	DWARFREGSP = 31
-	DWARFREGLR = 30
+	DWARFREGSP = 14
+	DWARFREGLR = 15
 )

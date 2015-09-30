@@ -28,7 +28,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package arm64
+package sparc64
 
 import (
 	"cmd/internal/obj"
@@ -46,7 +46,7 @@ func Main() {
 
 func linkarchinit() {
 	ld.Thestring = obj.Getgoarch()
-	ld.Thelinkarch = &ld.Linkarm64
+	ld.Thelinkarch = &ld.Linksparc64
 
 	ld.Thearch.Thechar = thechar
 	ld.Thearch.Ptrsize = ld.Thelinkarch.Ptrsize
@@ -67,17 +67,16 @@ func linkarchinit() {
 	ld.Thearch.Elfsetupplt = elfsetupplt
 	ld.Thearch.Gentext = gentext
 	ld.Thearch.Machoreloc1 = machoreloc1
-	ld.Thearch.Lput = ld.Lputl
-	ld.Thearch.Wput = ld.Wputl
-	ld.Thearch.Vput = ld.Vputl
+	ld.Thearch.Lput = ld.Lputb
+	ld.Thearch.Wput = ld.Wputb
+	ld.Thearch.Vput = ld.Vputb
 
-	ld.Thearch.Linuxdynld = "/lib/ld-linux-aarch64.so.1"
-
+	ld.Thearch.Linuxdynld = "XXX"
 	ld.Thearch.Freebsddynld = "XXX"
 	ld.Thearch.Openbsddynld = "XXX"
 	ld.Thearch.Netbsddynld = "XXX"
 	ld.Thearch.Dragonflydynld = "XXX"
-	ld.Thearch.Solarisdynld = "XXX"
+	ld.Thearch.Solarisdynld = "/lib/ld.so.1"
 }
 
 func archinit() {
@@ -85,11 +84,6 @@ func archinit() {
 	// Go was built; see ../../make.bash.
 	if ld.Linkmode == ld.LinkAuto && obj.Getgoextlinkenabled() == "0" {
 		ld.Linkmode = ld.LinkInternal
-	}
-
-	// Darwin/arm64 only supports external linking
-	if ld.HEADTYPE == obj.Hdarwin {
-		ld.Linkmode = ld.LinkExternal
 	}
 
 	switch ld.HEADTYPE {
@@ -108,52 +102,11 @@ func archinit() {
 	default:
 		ld.Exitf("unknown -H option: %v", ld.HEADTYPE)
 
-	case obj.Hplan9: /* plan 9 */
-		ld.HEADR = 32
-
-		if ld.INITTEXT == -1 {
-			ld.INITTEXT = 4128
-		}
-		if ld.INITDAT == -1 {
-			ld.INITDAT = 0
-		}
-		if ld.INITRND == -1 {
-			ld.INITRND = 4096
-		}
-
-	case obj.Hlinux: /* arm64 elf */
+	case obj.Hlinux, obj.Hsolaris: /* sparc64 elf */
 		ld.Elfinit()
 		ld.HEADR = ld.ELFRESERVE
 		if ld.INITTEXT == -1 {
 			ld.INITTEXT = 0x10000 + int64(ld.HEADR)
-		}
-		if ld.INITDAT == -1 {
-			ld.INITDAT = 0
-		}
-		if ld.INITRND == -1 {
-			ld.INITRND = 0x10000
-		}
-
-	case obj.Hdarwin: /* apple MACH */
-		ld.Debug['w'] = 1 // disable DWARF generation
-		ld.Machoinit()
-		ld.HEADR = ld.INITIAL_MACHO_HEADR
-		if ld.INITTEXT == -1 {
-			ld.INITTEXT = 4096 + int64(ld.HEADR)
-		}
-		if ld.INITDAT == -1 {
-			ld.INITDAT = 0
-		}
-		if ld.INITRND == -1 {
-			ld.INITRND = 4096
-		}
-
-	case obj.Hnacl:
-		ld.Elfinit()
-		ld.HEADR = 0x10000
-		ld.Funcalign = 16
-		if ld.INITTEXT == -1 {
-			ld.INITTEXT = 0x20000
 		}
 		if ld.INITDAT == -1 {
 			ld.INITDAT = 0

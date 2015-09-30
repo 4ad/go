@@ -551,6 +551,12 @@ func ldelf(f *obj.Biobuf, pkg string, length int64, pn string) {
 		Diag("%s: elf %s unimplemented", pn, Thestring)
 		return
 
+	case 'u':
+		if elfobj.machine != ElfMachSparc9 || hdr.Ident[4] != ElfClass64 {
+			Diag("%s: elf object but not sparc64", pn)
+			return
+		}
+
 	case '5':
 		if e != binary.LittleEndian || elfobj.machine != ElfMachArm || hdr.Ident[4] != ElfClass32 {
 			Diag("%s: elf object but not arm", pn)

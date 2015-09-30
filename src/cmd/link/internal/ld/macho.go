@@ -133,7 +133,7 @@ var load_budget int = INITIAL_MACHO_HEADR - 2*1024
 func Machoinit() {
 	switch Thearch.Thechar {
 	// 64-bit architectures
-	case '6', '7', '9':
+	case 'u', '6', '7', '9':
 		macho64 = true
 
 		// 32-bit architectures
