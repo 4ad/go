@@ -959,8 +959,8 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		rel := obj.Addrel(cursym)
 		rel.Off = int32(p.Pc)
 		rel.Siz = 8
-		rel.Sym = p.To.Sym
-		rel.Add = p.To.Offset
+		rel.Sym = p.From.Sym
+		rel.Add = p.From.Offset
 		rel.Type = obj.R_ADDRSPARC64
 
 	// MOV sym(SB), R ->
@@ -973,8 +973,8 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		rel := obj.Addrel(cursym)
 		rel.Off = int32(p.Pc)
 		rel.Siz = 8
-		rel.Sym = p.To.Sym
-		rel.Add = p.To.Offset
+		rel.Sym = p.From.Sym
+		rel.Add = p.From.Offset
 		rel.Type = obj.R_ADDRSPARC64
 		*o3 = opload(p.As) | rsr(p.To.Reg, 0, p.To.Reg)
 
