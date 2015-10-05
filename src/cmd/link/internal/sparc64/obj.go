@@ -76,7 +76,7 @@ func linkarchinit() {
 	ld.Thearch.Openbsddynld = "XXX"
 	ld.Thearch.Netbsddynld = "XXX"
 	ld.Thearch.Dragonflydynld = "XXX"
-	ld.Thearch.Solarisdynld = "/lib/ld.so.1"
+	ld.Thearch.Solarisdynld = "/usr/lib/sparcv9/ld.so.1"
 }
 
 func archinit() {
