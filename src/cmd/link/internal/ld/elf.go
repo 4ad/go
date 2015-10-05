@@ -1893,11 +1893,14 @@ func doelf() {
 		/*
 		 * .dynamic table
 		 */
+		if Thearch.Thechar == 'u' && HEADTYPE == obj.Hsolaris {
+			Elfwritedynent(Linklookup(Ctxt, ".dynamic", 0), DT_NEEDED, uint64(Addstring(Linklookup(Ctxt, ".dynstr", 0), "libc.so.1")))
+		}
 		elfwritedynentsym(s, DT_HASH, Linklookup(Ctxt, ".hash", 0))
 
 		elfwritedynentsym(s, DT_SYMTAB, Linklookup(Ctxt, ".dynsym", 0))
 		switch Thearch.Thechar {
-		case '6', '7', '9':
+		case 'u', '6', '7', '9':
 			Elfwritedynent(s, DT_SYMENT, ELF64SYMSIZE)
 		default:
 			Elfwritedynent(s, DT_SYMENT, ELF32SYMSIZE)
