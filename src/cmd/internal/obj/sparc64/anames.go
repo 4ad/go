@@ -119,6 +119,7 @@ var Anames = []string{
 	"SUBCC",
 	"SUBC",
 	"SUBCCC",
+	"TA",
 	"XOR",
 	"XORCC",
 	"XNOR",

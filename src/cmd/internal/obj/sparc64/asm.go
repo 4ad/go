@@ -108,6 +108,8 @@ var optab = map[Optab]Opval{
 	Optab{ASTDF, ClassDoubleReg, ClassNone, ClassMem}: {25, 12},
 
 	Optab{obj.ARET, ClassNone, ClassNone, ClassNone}: {26, 4},
+
+	Optab{ATA, ClassConst13, ClassNone, ClassNone}: {27, 4},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -632,6 +634,10 @@ func opcode(a int16) uint32 {
 	case ASETHI, ARNOP:
 		return op2(4)
 
+	// Trap on Integer Condition Codes (Tcc).
+	case ATA:
+		return op3(2, 0x3A)
+
 	default:
 		panic("unknown instruction: " + obj.Aconv(int(a)))
 	}
@@ -788,9 +794,6 @@ func span(ctxt *obj.Link, cursym *obj.LSym) {
 		bp = bp[4:]
 	}
 }
-
-// nop is a true SPARC64 nop.
-var nop uint32 = opcode(ASETHI) | ir(0, REG_ZR)
 
 func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	out = make([]uint32, 3)
@@ -996,6 +999,13 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	// RET
 	case 26:
 		*o1 = opcode(AJMPL) | rsr(REG_LR, 8, REG_ZR)
+
+	// TA $tn
+	case 27:
+		if p.From.Offset > 255 {
+			return nil, errors.New("trap number too big")
+		}
+		*o1 = cond(8) | opcode(p.As) | 1<<13 | uint32(p.From.Offset&0xff)
 	}
 
 	return out[:o.size/4], nil
