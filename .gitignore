@@ -20,6 +20,7 @@ _test
 _testmain.go
 build.out
 test.out
+alt/*.out
 doc/articles/wiki/*.bin
 misc/cgo/life/run.out
 misc/cgo/stdio/run.out
