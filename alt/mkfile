@@ -31,5 +31,8 @@ $RT: pkg/solaris_sparc64 $RTOBJS
 %.dat: %.out
 	sparc64-none-elf-readelf -x .data -x .rodata -x .noptrdata $prereq >$target
 
+copy:V: $EXES
+	rsync -i $EXES torside:~/x
+
 clean:V:
 	rm -rf pkg *.o *.gnu.S *.out *.dat
