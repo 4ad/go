@@ -169,49 +169,56 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 	for p := cursym.Text; p != nil; p = p.Link {
 		switch p.As {
 		case obj.ATEXT:
-			if cursym.Leaf == 1 {
-				frameSize := cursym.Locals
-				if frameSize == -8 {
-					frameSize = 0
-				}
-				// TODO(aram): expect already-aligned frame size?
-				frameSize += -frameSize & (StackAlign - 1)
+			// TODO(aram):
+			// 	mdb(1) seems to work with this leaf prolog, but DTrace
+			// 	doesn't. We need Dtrace, so we disable it for now.
+			//
+			// if cursym.Leaf == 1 {
+			// 	frameSize := cursym.Locals
+			// 	if frameSize == -8 {
+			// 		frameSize = 0
+			// 	}
+			// 	// TODO(aram): expect already-aligned frame size?
+			// 	frameSize += -frameSize & (StackAlign - 1)
 
-				// MOVD RFP, (112+bias)(RSP)
-				p = obj.Appendp(ctxt, p)
-				p.As = AMOVD
-				p.From.Type = obj.TYPE_REG
-				p.From.Reg = REG_RFP
-				p.To.Type = obj.TYPE_MEM
-				p.To.Reg = REG_RSP
-				p.To.Offset = int64(112 + StackBias)
+			// 	// MOVD RFP, (112+bias)(RSP)
+			// 	p = obj.Appendp(ctxt, p)
+			// 	p.As = AMOVD
+			// 	p.From.Type = obj.TYPE_REG
+			// 	p.From.Reg = REG_RFP
+			// 	p.To.Type = obj.TYPE_MEM
+			// 	p.To.Reg = REG_RSP
+			// 	p.To.Offset = int64(112 + StackBias)
 
-				// ADD RSP, -(frame+128), RSP
-				p = obj.Appendp(ctxt, p)
-				p.As = AADD
-				p.From.Type = obj.TYPE_REG
-				p.From.Reg = REG_RSP
-				p.From3 = new(obj.Addr)
-				p.From3.Type = obj.TYPE_CONST
-				p.From3.Offset = -int64(frameSize + WindowSaveAreaSize)
-				p.To.Type = obj.TYPE_REG
-				p.To.Reg = REG_RSP
+			// 	// ADD RSP, -(frame+128), RSP
+			// 	p = obj.Appendp(ctxt, p)
+			// 	p.As = AADD
+			// 	p.From.Type = obj.TYPE_REG
+			// 	p.From.Reg = REG_RSP
+			// 	p.From3 = new(obj.Addr)
+			// 	p.From3.Type = obj.TYPE_CONST
+			// 	p.From3.Offset = -int64(frameSize + WindowSaveAreaSize)
+			// 	p.To.Type = obj.TYPE_REG
+			// 	p.To.Reg = REG_RSP
 
-				// SUB RSP, -(frame+128), RFP
-				p = obj.Appendp(ctxt, p)
-				p.As = ASUB
-				p.From.Type = obj.TYPE_REG
-				p.From.Reg = REG_RSP
-				p.From3 = new(obj.Addr)
-				p.From3.Type = obj.TYPE_CONST
-				p.From3.Offset = -int64(frameSize + WindowSaveAreaSize)
-				p.To.Type = obj.TYPE_REG
-				p.To.Reg = REG_RFP
+			// 	// SUB RSP, -(frame+128), RFP
+			// 	p = obj.Appendp(ctxt, p)
+			// 	p.As = ASUB
+			// 	p.From.Type = obj.TYPE_REG
+			// 	p.From.Reg = REG_RSP
+			// 	p.From3 = new(obj.Addr)
+			// 	p.From3.Type = obj.TYPE_CONST
+			// 	p.From3.Offset = -int64(frameSize + WindowSaveAreaSize)
+			// 	p.To.Type = obj.TYPE_REG
+			// 	p.To.Reg = REG_RFP
 
-				break
-			}
+			// 	break
+			// }
 
 			frameSize := cursym.Locals
+			if frameSize == -8 {
+				frameSize = 0
+			}
 			// TODO(aram): expect already-aligned frame size?
 			frameSize += -frameSize & (StackAlign - 1)
 
@@ -264,36 +271,40 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			p.To.Reg = REG_R31
 
 		case obj.ARET:
-			if cursym.Leaf == 1 {
-				// MOVD RFP, TMP
-				q1 = p
-				p = obj.Appendp(ctxt, p)
-				p.As = obj.ARET
-				q1.As = AMOVD
-				q1.From.Type = obj.TYPE_REG
-				q1.From.Reg = REG_RFP
-				q1.To.Type = obj.TYPE_REG
-				q1.To.Reg = REG_TMP
+			// TODO(aram):
+			// 	mdb(1) seems to work with this leaf epilog, but DTrace
+			// 	doesn't. We need Dtrace, so we disable it for now.
+			//
+			// if cursym.Leaf == 1 {
+			// 	// MOVD RFP, TMP
+			// 	q1 = p
+			// 	p = obj.Appendp(ctxt, p)
+			// 	p.As = obj.ARET
+			// 	q1.As = AMOVD
+			// 	q1.From.Type = obj.TYPE_REG
+			// 	q1.From.Reg = REG_RFP
+			// 	q1.To.Type = obj.TYPE_REG
+			// 	q1.To.Reg = REG_TMP
 
-				// MOVD (112+StackBias)(RFP), RFP
-				q1 = obj.Appendp(ctxt, q1)
-				q1.As = AMOVD
-				q1.From.Type = obj.TYPE_MEM
-				q1.From.Reg = REG_RFP
-				q1.From.Offset = 112 + StackBias
-				q1.To.Type = obj.TYPE_REG
-				q1.To.Reg = REG_RFP
+			// 	// MOVD (112+StackBias)(RFP), RFP
+			// 	q1 = obj.Appendp(ctxt, q1)
+			// 	q1.As = AMOVD
+			// 	q1.From.Type = obj.TYPE_MEM
+			// 	q1.From.Reg = REG_RFP
+			// 	q1.From.Offset = 112 + StackBias
+			// 	q1.To.Type = obj.TYPE_REG
+			// 	q1.To.Reg = REG_RFP
 
-				// MOVD TMP, RSP
-				q1 = obj.Appendp(ctxt, q1)
-				q1.As = AMOVD
-				q1.From.Type = obj.TYPE_REG
-				q1.From.Reg = REG_TMP
-				q1.To.Type = obj.TYPE_REG
-				q1.To.Reg = REG_RSP
+			// 	// MOVD TMP, RSP
+			// 	q1 = obj.Appendp(ctxt, q1)
+			// 	q1.As = AMOVD
+			// 	q1.From.Type = obj.TYPE_REG
+			// 	q1.From.Reg = REG_TMP
+			// 	q1.To.Type = obj.TYPE_REG
+			// 	q1.To.Reg = REG_RSP
 
-				break
-			}
+			// 	break
+			// }
 
 			// MOVD RFP, TMP
 			q1 = p
