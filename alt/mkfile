@@ -1,0 +1,25 @@
+RTOBJS=runtime.o data.o
+RT=pkg/solaris_sparc64/runtime.a
+LD=`go env GOTOOLDIR`/link
+ALTROOT=`go env GOROOT`/alt
+
+all:V: hello.out
+
+tools:V:
+	go install -v cmd/asm cmd/link cmd/pack
+
+pkg/solaris_sparc64:
+	rm -rf pkg
+	mkdir -p pkg/solaris_sparc64
+
+%.o: tools %.s
+	GOOS=solaris GOARCH=sparc64 go tool asm $stem.s
+
+$RT: pkg/solaris_sparc64 $RTOBJS
+	go tool pack c $target $RTOBJS
+
+%.out: %.o $RT
+	GOROOT=$ALTROOT GOOS=solaris GOARCH=sparc64 $LD -w -o $target $stem.o
+
+clean:V:
+	rm -rf pkg *.o *.out
