@@ -21,6 +21,8 @@ _testmain.go
 build.out
 test.out
 alt/*.out
+alt/*.gnu.S
+alt/*.dat
 doc/articles/wiki/*.bin
 misc/cgo/life/run.out
 misc/cgo/stdio/run.out
