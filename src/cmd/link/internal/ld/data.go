@@ -1080,7 +1080,8 @@ func (p *GCProg) AddSym(s *LSym) {
 	// Things without pointers should be in SNOPTRDATA or SNOPTRBSS;
 	// everything we see should have pointers and should therefore have a type.
 	if typ == nil {
-		Diag("missing Go type information for global symbol: %s size %d", s.Name, int(s.Size))
+		// TODO(aram): reenable
+		// Diag("missing Go type information for global symbol: %s size %d", s.Name, int(s.Size))
 		return
 	}
 
