@@ -815,7 +815,7 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 
 	// MOVD Rs, Rd
 	case 2:
-		*o1 = opalu(p.As) | rrr(p.From.Reg, 0, REG_ZR, p.To.Reg)
+		*o1 = opalu(p.As) | rrr(REG_ZR, 0, p.From.Reg, p.To.Reg)
 
 	// op Rs, $imm13, Rd	-> Rd = Rs op $imm13
 	case 3:

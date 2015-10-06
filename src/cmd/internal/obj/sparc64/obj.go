@@ -244,14 +244,6 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			p.To.Type = obj.TYPE_REG
 			p.To.Reg = REG_RSP
 
-			// MOVD LR, R31
-			p = obj.Appendp(ctxt, p)
-			p.As = AMOVD
-			p.From.Type = obj.TYPE_REG
-			p.From.Reg = REG_LR
-			p.To.Type = obj.TYPE_REG
-			p.To.Reg = REG_R31
-
 			// SUB RSP, -(frame+128|176), RFP
 			p = obj.Appendp(ctxt, p)
 			p.As = ASUB
@@ -262,6 +254,14 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			p.From3.Offset = -int64(frameSize + MinStackFrameSize)
 			p.To.Type = obj.TYPE_REG
 			p.To.Reg = REG_RFP
+
+			// MOVD LR, R31
+			p = obj.Appendp(ctxt, p)
+			p.As = AMOVD
+			p.From.Type = obj.TYPE_REG
+			p.From.Reg = REG_LR
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = REG_R31
 
 		case obj.ARET:
 			if cursym.Leaf == 1 {
