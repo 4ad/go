@@ -3,7 +3,11 @@ RT=pkg/solaris_sparc64/runtime.a
 LD=`go env GOTOOLDIR`/link
 ALTROOT=`go env GOROOT`/alt
 
-all:V: hello.out
+EXES=empty.out hello.out call.out
+GNUS=${EXES:%.out=%.gnu.S}
+DATS=${EXES:%.out=%.dat}
+
+all:V: $EXES $GNUS $DATS
 
 tools:V:
 	go install -v cmd/asm cmd/link cmd/pack
@@ -21,5 +25,11 @@ $RT: pkg/solaris_sparc64 $RTOBJS
 %.out: %.o $RT
 	GOROOT=$ALTROOT GOOS=solaris GOARCH=sparc64 $LD -w -o $target $stem.o
 
+%.gnu.S: %.out
+	sparc64-none-elf-objdump -d $prereq >$target
+
+%.dat: %.out
+	sparc64-none-elf-readelf -x .data -x .rodata -x .noptrdata $prereq >$target
+
 clean:V:
-	rm -rf pkg *.o *.out
+	rm -rf pkg *.o *.S *.out
