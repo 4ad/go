@@ -32,4 +32,4 @@ $RT: pkg/solaris_sparc64 $RTOBJS
 	sparc64-none-elf-readelf -x .data -x .rodata -x .noptrdata $prereq >$target
 
 clean:V:
-	rm -rf pkg *.o *.S *.out
+	rm -rf pkg *.o *.gnu.S *.out *.dat
