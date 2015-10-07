@@ -71,7 +71,34 @@ func init() {
 	}
 }
 
+// Autoedit rewrites off(SP), off(FP), $off(SP), and $off(FP) to new(RFP).
+func autoedit(a *obj.Addr) {
+	if a == nil {
+		return
+	}
+	if a.Type != obj.TYPE_MEM && a.Type != obj.TYPE_ADDR {
+		return
+	}
+	if a.Name == obj.NAME_PARAM {
+		a.Reg = REG_RFP
+		a.Offset += MinStackFrameSize + StackBias
+		a.Name = obj.TYPE_NONE
+		return
+	}
+	if a.Name == obj.NAME_AUTO {
+		a.Reg = REG_RFP
+		a.Offset += StackBias
+		a.Name = obj.TYPE_NONE
+	}
+}
+
 func progedit(ctxt *obj.Link, p *obj.Prog) {
+	// Rewite virtual SP/FP references to RFP. This has to happen
+	// before any call to aclass, so it must be first here.
+	autoedit(&p.From)
+	autoedit(p.From3)
+	autoedit(&p.To)
+
 	// Rewrite 64-bit integer constants and float constants
 	// to values stored in memory.
 	switch p.As {
