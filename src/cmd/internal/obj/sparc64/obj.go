@@ -346,6 +346,51 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			p.To.Type = obj.TYPE_REG
 			p.To.Reg = REG_R31
 
+			if cursym.Args == obj.ArgsSizeUnknown {
+				break
+			}
+			args := int(cursym.Args) / 8
+			// At this point we have a stack frame that
+			// can be unwinded and register window spilled
+			// by native target code. However, the native
+			// target code (e.g. mdb(1)) doesn't know where
+			// to look for function arguments. Since we
+			// have argument information, we copy the
+			// arguments in the place where native tools
+			// expect them.
+
+			// For all functions copy at most 6 arguments into the
+			// %i registers.
+			if args > 6 {
+				args = 6
+			}
+			for i := 0; i < args; i++ {
+				// MOVD	argN+8N(FP), %iN
+				p = obj.Appendp(ctxt, p)
+				p.As = AMOVD
+				p.From.Type = obj.TYPE_MEM
+				p.From.Reg = REG_RFP
+				p.From.Offset = int64(i*8 + MinStackFrameSize + StackBias)
+				p.To.Type = obj.TYPE_REG
+				p.To.Reg = int16(REG_R24 + i) // %i0+i
+			}
+
+			// If the function is not a leaf, save incoming arguments
+			// into the slot reserved for register window spill.
+			if cursym.Leaf == 1 {
+				break
+			}
+			for i := 0; i < 6; i++ {
+				// MOVD %iN, (bias+64+8N)(RSP)
+				p = obj.Appendp(ctxt, p)
+				p.As = AMOVD
+				p.From.Type = obj.TYPE_REG
+				p.From.Reg = int16(REG_R24 + i) // %i0+i
+				p.To.Type = obj.TYPE_MEM
+				p.To.Reg = REG_RSP
+				p.To.Offset = int64(i*8 + 64 + StackBias)
+			}
+
 		case obj.ARET:
 			// TODO(aram):
 			// 	mdb(1) seems to work with this leaf epilog, but DTrace

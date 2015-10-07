@@ -153,7 +153,7 @@ const (
 	StackAlign            = 16
 	StackBias             = 0x7ff  // craziness
 	WindowSaveAreaSize    = 16 * 8 // only slots for RFP and PLR used
-	ArgumentsSaveAreaSize = 6 * 8  // unused
+	ArgumentsSaveAreaSize = 0      // unused, normally 6 * 8
 	MinStackFrameSize     = WindowSaveAreaSize + ArgumentsSaveAreaSize
 )
 
