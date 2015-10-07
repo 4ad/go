@@ -10,7 +10,7 @@ DATS=${EXES:%.out=%.dat}
 all:V: $EXES $GNUS $DATS
 
 tools:V:
-	go install -v cmd/asm cmd/link cmd/pack
+	go install -v cmd/asm cmd/compile cmd/link cmd/pack
 
 pkg/solaris_sparc64:
 	rm -rf pkg
@@ -21,6 +21,9 @@ pkg/solaris_sparc64:
 
 $RT: pkg/solaris_sparc64 $RTOBJS
 	go tool pack c $target $RTOBJS
+
+%.go.s: tools %.go
+	GOOS=linux GOARCH=arm64 go tool compile -S -o /dev/null $stem.go >$target
 
 %.out: %.o $RT
 	GOROOT=$ALTROOT GOOS=solaris GOARCH=sparc64 $LD -w -o $target $stem.o
@@ -35,4 +38,4 @@ copy:V: $EXES
 	rsync -i $EXES torside:~/x
 
 clean:V:
-	rm -rf pkg *.o *.gnu.S *.out *.dat
+	rm -rf pkg *.o *.gnu.S *.go.s *.out *.dat
