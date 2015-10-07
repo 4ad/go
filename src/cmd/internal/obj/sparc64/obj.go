@@ -99,6 +99,55 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 	autoedit(p.From3)
 	autoedit(&p.To)
 
+	// Rewrite constant moves to memory to go through an intermediary
+	// register
+	switch p.As {
+	case AMOVD:
+		if (p.From.Type == obj.TYPE_CONST || p.From.Type == obj.TYPE_ADDR) && (p.To.Type == obj.TYPE_MEM) {
+			q := obj.Appendp(ctxt, p)
+			q.As = p.As
+			q.To = p.To
+			q.From.Type = obj.TYPE_REG
+			q.From.Reg = REG_TMP
+			q.From.Offset = 0
+
+			p.To = obj.Addr{}
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = REG_TMP
+			p.To.Offset = 0
+		}
+
+	case AFMOVS:
+		if (p.From.Type == obj.TYPE_FCONST || p.From.Type == obj.TYPE_ADDR) && (p.To.Type == obj.TYPE_MEM) {
+			q := obj.Appendp(ctxt, p)
+			q.As = p.As
+			q.To = p.To
+			q.From.Type = obj.TYPE_REG
+			q.From.Reg = REG_FTMP
+			q.From.Offset = 0
+
+			p.To = obj.Addr{}
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = REG_FTMP
+			p.To.Offset = 0
+		}
+
+	case AFMOVD:
+		if (p.From.Type == obj.TYPE_FCONST || p.From.Type == obj.TYPE_ADDR) && (p.To.Type == obj.TYPE_MEM) {
+			q := obj.Appendp(ctxt, p)
+			q.As = p.As
+			q.To = p.To
+			q.From.Type = obj.TYPE_REG
+			q.From.Reg = REG_DTMP
+			q.From.Offset = 0
+
+			p.To = obj.Addr{}
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = REG_DTMP
+			p.To.Offset = 0
+		}
+	}
+
 	// Rewrite 64-bit integer constants and float constants
 	// to values stored in memory.
 	switch p.As {

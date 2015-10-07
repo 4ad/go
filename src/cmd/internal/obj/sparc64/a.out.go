@@ -139,12 +139,14 @@ const (
 
 // Register assignments:
 const (
-	REG_ZR  = REG_R0
-	REG_TMP = REG_R1
-	REG_RSP = REG_R14
-	REG_LR  = REG_R15
-	REG_GOT = REG_R23
-	REG_RFP = REG_R30
+	REG_ZR   = REG_R0
+	REG_TMP  = REG_R1
+	REG_RSP  = REG_R14
+	REG_LR   = REG_R15
+	REG_GOT  = REG_R23
+	REG_RFP  = REG_R30
+	REG_FTMP = REG_F0
+	REG_DTMP = REG_D0
 )
 
 const (
