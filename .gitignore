@@ -20,6 +20,7 @@ _test
 _testmain.go
 build.out
 test.out
+alt/*.[56789u]
 alt/*.out
 alt/*.gnu.S
 alt/*.go.s
