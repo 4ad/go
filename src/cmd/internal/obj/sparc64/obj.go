@@ -253,7 +253,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			// 	frameSize := cursym.Locals
 			// 	if frameSize == -8 {
 			// 		frameSize = 0
-			// 	}
+			// }
 			// if frameSize % 8 != 0 {
 			// 	ctxt.Diag("%v: unaligned frame size %d - must be 0 mod 8", p, frameSize)
 			// }
@@ -360,6 +360,9 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			// have argument information, we copy the
 			// arguments in the place where native tools
 			// expect them.
+
+			// TODO(aram): arrange for the compiler to set the %i
+			// registers and remove this code.
 
 			// For all functions copy at most 6 arguments into the
 			// %i registers.
