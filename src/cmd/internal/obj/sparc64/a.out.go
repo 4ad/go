@@ -150,7 +150,7 @@ const (
 )
 
 const (
-	StackAlign            = 16
+	StackAlign            = 8      // ABI says 16
 	StackBias             = 0x7ff  // craziness
 	WindowSaveAreaSize    = 16 * 8 // only slots for RFP and PLR used
 	ArgumentsSaveAreaSize = 0      // unused, normally 6 * 8

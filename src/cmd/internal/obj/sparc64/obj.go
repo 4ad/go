@@ -86,8 +86,8 @@ func autoedit(a *obj.Addr) {
 		return
 	}
 	if a.Name == obj.NAME_AUTO {
-		a.Reg = REG_RSP
-		a.Offset = MinStackFrameSize + StackBias - a.Offset - 8
+		a.Reg = REG_RFP
+		a.Offset += StackBias
 		a.Name = obj.TYPE_NONE
 	}
 }
@@ -254,8 +254,9 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			// 	if frameSize == -8 {
 			// 		frameSize = 0
 			// 	}
-			// 	// TODO(aram): expect already-aligned frame size?
-			// 	frameSize += -frameSize & (StackAlign - 1)
+			// if frameSize % 8 != 0 {
+			// 	ctxt.Diag("%v: unaligned frame size %d - must be 0 mod 8", p, frameSize)
+			// }
 
 			// 	// MOVD RFP, (112+bias)(RSP)
 			// 	p = obj.Appendp(ctxt, p)
@@ -295,8 +296,9 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			if frameSize == -8 {
 				frameSize = 0
 			}
-			// TODO(aram): expect already-aligned frame size?
-			frameSize += -frameSize & (StackAlign - 1)
+			if frameSize%8 != 0 {
+				ctxt.Diag("%v: unaligned frame size %d - must be 0 mod 8", p, frameSize)
+			}
 
 			// MOVD RFP, (112+bias)(RSP)
 			p = obj.Appendp(ctxt, p)
