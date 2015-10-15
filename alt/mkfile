@@ -1,12 +1,12 @@
-RTOBJS=runtime.o data.o
+RTOBJS=runtime.u data.u
 RT=pkg/solaris_sparc64/runtime.a
 LD=`go env GOTOOLDIR`/link
 ALTROOT=`go env GOROOT`/alt
 
-EXES=empty.out hello.out call.out virtreg.out
-GOS=call0.go.s
-GNUS=${EXES:%.out=%.gnu.S}
-DATS=${EXES:%.out=%.dat}
+EXES=empty.u.out hello.u.out call.u.out virtreg.u.out call1.6.out
+GOS=call0.7.go.s
+GNUS=${EXES:%.u.out=%.u.gnu.S}
+DATS=${EXES:%.u.out=%.u.dat}
 
 all:V: $EXES $GNUS $GOS $DATS
 
@@ -17,26 +17,42 @@ pkg/solaris_sparc64:
 	rm -rf pkg
 	mkdir -p pkg/solaris_sparc64
 
-%.o: tools %.s
-	GOOS=solaris GOARCH=sparc64 go tool asm $stem.s
+%.u: tools 
+
+%.u: %.s
+	GOOS=solaris GOARCH=sparc64 go tool asm -o $target $stem.s
+
+%.6: tools
+
+%.6: %.go
+	GOOS=darwin GOARCH=amd64 go tool compile -o $target $stem.go
+
+%.6: %.s
+	GOOS=darwin GOARCH=amd64 go tool asm -o $target $stem.s
 
 $RT: pkg/solaris_sparc64 $RTOBJS
 	go tool pack c $target $RTOBJS
 
-%.go.s: tools %.go
+%.7.go.s: tools %.go
 	GOOS=linux GOARCH=arm64 go tool compile -S -o /dev/null $stem.go >$target
 
-%.out: %.o $RT
-	GOROOT=$ALTROOT GOOS=solaris GOARCH=sparc64 $LD -w -o $target $stem.o
+call1.6.a: call1.6 call1_amd64.6
+	go tool pack c $target $prereq
 
-%.gnu.S: %.out
+%.6.out: %.6.a
+	GOOS=darwin GOARCH=amd64 go tool link -o $target $prereq
+
+%.u.out: %.u $RT
+	GOROOT=$ALTROOT GOOS=solaris GOARCH=sparc64 $LD -w -o $target $stem.u
+
+%.u.gnu.S: %.u.out
 	sparc64-none-elf-objdump -d $prereq >$target
 
-%.dat: %.out
+%.u.dat: %.u.out
 	sparc64-none-elf-readelf -x .data -x .rodata -x .noptrdata $prereq >$target
 
 copy:V: $EXES
 	rsync -i $EXES torside:~/x
 
 clean:V:
-	rm -rf pkg *.o *.gnu.S *.go.s *.out *.dat
+	rm -rf pkg *.[a56789uo] *.gnu.S *.go.s *.out *.dat

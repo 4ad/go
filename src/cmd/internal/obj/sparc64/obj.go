@@ -86,8 +86,8 @@ func autoedit(a *obj.Addr) {
 		return
 	}
 	if a.Name == obj.NAME_AUTO {
-		a.Reg = REG_RFP
-		a.Offset += StackBias
+		a.Reg = REG_RSP
+		a.Offset = MinStackFrameSize + StackBias - a.Offset - 8
 		a.Name = obj.TYPE_NONE
 	}
 }

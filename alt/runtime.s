@@ -1,10 +1,10 @@
 TEXT	_rt0_sparc64_solaris(SB),7,$0-0
-	MOVD	$0, R24
-	MOVD	$0, R25
-	MOVD	$0, R26
-	MOVD	$0, R27
-	MOVD	$0, R28
-	MOVD	$0, R29
+	OR	ZR, ZR, R24
+	OR	ZR, ZR, R25
+	OR	ZR, ZR, R26
+	OR	ZR, ZR, R27
+	OR	ZR, ZR, R28
+	OR	ZR, ZR, R29
 	CALL	main(SB)
 	// sys_exit(1)
 	MOVD	$1, R8
