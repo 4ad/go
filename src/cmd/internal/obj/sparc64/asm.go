@@ -110,6 +110,8 @@ var optab = map[Optab]Opval{
 	Optab{obj.ARET, ClassNone, ClassNone, ClassNone}: {26, 4},
 
 	Optab{ATA, ClassConst13, ClassNone, ClassNone}: {27, 4},
+
+	Optab{AMOVD, ClassRegConst13, ClassNone, ClassReg}: {28, 4},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -1006,6 +1008,10 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 			return nil, errors.New("trap number too big")
 		}
 		*o1 = cond(8) | opcode(p.As) | 1<<13 | uint32(p.From.Offset&0xff)
+
+	// MOVD	$imm13(R), Rd -> ADD R, $imm13, Rd
+	case 28:
+		*o1 = opalu(AADD) | rsr(p.From.Reg, p.From.Offset, p.To.Reg)
 	}
 
 	return out[:o.size/4], nil
