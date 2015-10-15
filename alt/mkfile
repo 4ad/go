@@ -4,10 +4,11 @@ LD=`go env GOTOOLDIR`/link
 ALTROOT=`go env GOROOT`/alt
 
 EXES=empty.out hello.out call.out virtreg.out
+GOS=call0.go.s
 GNUS=${EXES:%.out=%.gnu.S}
 DATS=${EXES:%.out=%.dat}
 
-all:V: $EXES $GNUS $DATS
+all:V: $EXES $GNUS $GOS $DATS
 
 tools:V:
 	go install -v cmd/asm cmd/compile cmd/link cmd/pack
