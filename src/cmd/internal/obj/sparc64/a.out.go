@@ -363,6 +363,7 @@ const (
 
 	// Pseudo-instructions, aliases to SPARC64 instructions and
 	// synthetic instructions.
+	ANEG
 	AMOVUB
 	AMOVB
 	AMOVUH
