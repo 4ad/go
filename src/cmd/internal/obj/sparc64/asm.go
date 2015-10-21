@@ -37,10 +37,7 @@ var optab = map[Optab]Opval{
 	Optab{AFADDD, ClassDoubleReg, ClassDoubleReg, ClassDoubleReg}: {1, 4},
 	Optab{AFSMULD, ClassFloatReg, ClassFloatReg, ClassDoubleReg}:  {1, 4},
 
-	Optab{AMOVUB, ClassReg, ClassNone, ClassReg}: {2, 4},
-	Optab{AMOVUH, ClassReg, ClassNone, ClassReg}: {2, 4},
-	Optab{AMOVUW, ClassReg, ClassNone, ClassReg}: {2, 4},
-	Optab{AMOVD, ClassReg, ClassNone, ClassReg}:  {2, 4},
+	Optab{AMOVD, ClassReg, ClassNone, ClassReg}: {2, 4},
 
 	Optab{AADD, ClassReg, ClassConst13, ClassReg}:  {3, 4},
 	Optab{AAND, ClassReg, ClassConst13, ClassReg}:  {3, 4},
@@ -115,6 +112,10 @@ var optab = map[Optab]Opval{
 	Optab{ATA, ClassConst13, ClassNone, ClassNone}: {27, 4},
 
 	Optab{AMOVD, ClassRegConst13, ClassNone, ClassReg}: {28, 4},
+
+	Optab{AMOVUB, ClassReg, ClassNone, ClassReg}: {29, 4},
+	Optab{AMOVUH, ClassReg, ClassNone, ClassReg}: {30, 8},
+	Optab{AMOVUW, ClassReg, ClassNone, ClassReg}: {31, 4},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -401,7 +402,7 @@ func opalu(a int16) uint32 {
 		return op3(2, 0xD)
 
 	// OR logical operation.
-	case AOR, AMOVUB, AMOVUH, AMOVUW, AMOVD:
+	case AOR, AMOVD:
 		return op3(2, 2)
 	case AORCC:
 		return op3(2, 18)
@@ -818,7 +819,7 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		}
 		*o1 = opalu(p.As) | rrr(p.From.Reg, 0, reg, p.To.Reg)
 
-	// mov Rs, Rd (zero-extending)
+	// MOVD Rs, Rd
 	case 2:
 		*o1 = opalu(p.As) | rrr(REG_ZR, 0, p.From.Reg, p.To.Reg)
 
@@ -1015,6 +1016,19 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	// MOVD	$imm13(R), Rd -> ADD R, $imm13, Rd
 	case 28:
 		*o1 = opalu(AADD) | rsr(p.From.Reg, p.From.Offset, p.To.Reg)
+
+	// MOVUB Rs, Rd
+	case 29:
+		*o1 = opalu(AAND) | rsr(p.From.Reg, 0xff, p.To.Reg)
+
+	// AMOVUH Rs, Rd
+	case 30:
+		*o1 = opalu(ASLLD) | rsr(p.From.Reg, 48, p.To.Reg)
+		*o2 = opalu(ASRLD) | rsr(p.To.Reg, 48, p.To.Reg)
+
+	// AMOVUW Rs, Rd
+	case 31:
+		*o1 = opalu(ASRLW) | rsr(p.From.Reg, 0, p.To.Reg)
 	}
 
 	return out[:o.size/4], nil
