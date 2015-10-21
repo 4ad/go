@@ -172,7 +172,7 @@ var ci = map[int16][]int16{
 	AFMOVD: {AFMOVS},
 	AFSTOD: {AFDTOS},
 	AFXTOD: {AFXTOS},
-	ALDD:   {ALDSB, ALDSH, ALDSW, ALDUB, ALDUH, ALDUW, AMOVSB, AMOVSH, AMOVSW, AMOVUB, AMOVUH, AMOVUW, AMOVD},
+	ALDD:   {ALDSB, ALDSH, ALDSW, ALDUB, ALDUH, ALDUW, AMOVB, AMOVH, AMOVW, AMOVUB, AMOVUH, AMOVUW, AMOVD},
 	ALDDF:  {ALDSF, AFMOVD, AFMOVS},
 	AMULD:  {ASDIVD, AUDIVD},
 	ARD:    {AMOVD},
@@ -307,11 +307,11 @@ func opf(opf int) uint32 {
 func opload(a int16) uint32 {
 	switch a {
 	// Load integer.
-	case ALDSB, AMOVSB:
+	case ALDSB, AMOVB:
 		return op3(3, 9)
-	case ALDSH, AMOVSH:
+	case ALDSH, AMOVH:
 		return op3(3, 10)
-	case ALDSW, AMOVSW:
+	case ALDSW, AMOVW:
 		return op3(3, 8)
 	case ALDUB, AMOVUB:
 		return op3(3, 1)
