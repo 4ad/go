@@ -3,7 +3,7 @@ RT=pkg/solaris_sparc64/runtime.a
 LD=`go env GOTOOLDIR`/link
 ALTROOT=`go env GOROOT`/alt
 
-EXES=empty.u.out hello.u.out call.u.out virtreg.u.out call1.6.out bigoffset.u.out
+EXES=empty.u.out hello.u.out call.u.out virtreg.u.out call1.6.out bigoffset.u.out mov.u.out
 GOS=call0.7.go.s
 GNUS=${EXES:%.u.out=%.u.gnu.S} conv.gnu.S
 DATS=${EXES:%.u.out=%.u.dat}

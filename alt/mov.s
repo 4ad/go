@@ -1,0 +1,6 @@
+TEXT	main(SB),7,$-8
+	MOVUB	R2, R3
+	MOVUH	R2, R3
+	MOVUW	R2, R3
+	MOVD	R2, R3
+	RET

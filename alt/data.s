@@ -1,3 +1,8 @@
+// Put this data in a read-only section.
+#define RODATA	8
+// This data contains no pointers.
+#define NOPTR	16
+
 // Linker has a bug, and we need non-zero length symbols in
 // these sections.
 
