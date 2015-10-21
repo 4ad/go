@@ -5,7 +5,7 @@ ALTROOT=`go env GOROOT`/alt
 
 EXES=empty.u.out hello.u.out call.u.out virtreg.u.out call1.6.out bigoffset.u.out
 GOS=call0.7.go.s
-GNUS=${EXES:%.u.out=%.u.gnu.S}
+GNUS=${EXES:%.u.out=%.u.gnu.S} conv.gnu.S
 DATS=${EXES:%.u.out=%.u.dat}
 
 all:V: $EXES $GNUS $GOS $DATS
@@ -47,6 +47,9 @@ call1.6.a: call1.6 call1_amd64.6
 
 %.u.gnu.S: %.u.out
 	sparc64-none-elf-objdump -d $prereq >$target
+
+%.gnu.S: %.c
+	sparc64-none-elf-gcc -m64 -S -O0 -o $target $prereq
 
 %.u.dat: %.u.out
 	sparc64-none-elf-readelf -x .data -x .rodata -x .noptrdata $prereq >$target
