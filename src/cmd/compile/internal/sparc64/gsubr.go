@@ -812,7 +812,7 @@ func optoas(op int, t *gc.Type) int {
 		gc.OOR<<16 | gc.TINT64,
 		gc.OOR<<16 | gc.TUINT64,
 		gc.OOR<<16 | gc.TPTR64:
-		a = sparc64.AORR
+		a = sparc64.AOR
 
 	case gc.OXOR<<16 | gc.TINT8,
 		gc.OXOR<<16 | gc.TUINT8,
