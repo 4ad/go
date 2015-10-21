@@ -116,6 +116,10 @@ var optab = map[Optab]Opval{
 	Optab{AMOVUB, ClassReg, ClassNone, ClassReg}: {29, 4},
 	Optab{AMOVUH, ClassReg, ClassNone, ClassReg}: {30, 8},
 	Optab{AMOVUW, ClassReg, ClassNone, ClassReg}: {31, 4},
+
+	Optab{AMOVB, ClassReg, ClassNone, ClassReg}: {32, 8},
+	Optab{AMOVH, ClassReg, ClassNone, ClassReg}: {33, 8},
+	Optab{AMOVW, ClassReg, ClassNone, ClassReg}: {34, 4},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -1029,6 +1033,20 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	// AMOVUW Rs, Rd
 	case 31:
 		*o1 = opalu(ASRLW) | rsr(p.From.Reg, 0, p.To.Reg)
+
+	// AMOVB Rs, Rd
+	case 32:
+		*o1 = opalu(ASLLD) | rsr(p.From.Reg, 56, p.To.Reg)
+		*o2 = opalu(ASRAD) | rsr(p.To.Reg, 56, p.To.Reg)
+
+	// AMOVH Rs, Rd
+	case 33:
+		*o1 = opalu(ASLLD) | rsr(p.From.Reg, 48, p.To.Reg)
+		*o2 = opalu(ASRAD) | rsr(p.To.Reg, 48, p.To.Reg)
+
+	// AMOVW Rs, Rd
+	case 34:
+		*o1 = opalu(ASRAW) | rsr(p.From.Reg, 0, p.To.Reg)
 	}
 
 	return out[:o.size/4], nil
