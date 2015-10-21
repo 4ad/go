@@ -172,13 +172,13 @@ var ci = map[int16][]int16{
 	AFMOVD: {AFMOVS},
 	AFSTOD: {AFDTOS},
 	AFXTOD: {AFXTOS},
-	ALDD:   {ALDSB, ALDSH, ALDSW, ALDUB, ALDUH, ALDUW, AMOVSB, AMOVSH, AMOVSW, AMOVB, AMOVH, AMOVW, AMOVD},
+	ALDD:   {ALDSB, ALDSH, ALDSW, ALDUB, ALDUH, ALDUW, AMOVSB, AMOVSH, AMOVSW, AMOVUB, AMOVUH, AMOVUW, AMOVD},
 	ALDDF:  {ALDSF, AFMOVD, AFMOVS},
 	AMULD:  {ASDIVD, AUDIVD},
 	ARD:    {AMOVD},
 	ASLLD:  {ASRLD, ASRAD},
 	ASLLW:  {ASLLW, ASRLW, ASRAW},
-	ASTD:   {ASTB, ASTH, ASTW, AMOVB, AMOVH, AMOVW, AMOVD},
+	ASTD:   {ASTB, ASTH, ASTW, AMOVUB, AMOVUH, AMOVUW, AMOVD},
 	ASTDF:  {ASTSF, AFMOVD, AFMOVS},
 }
 
@@ -313,11 +313,11 @@ func opload(a int16) uint32 {
 		return op3(3, 10)
 	case ALDSW, AMOVSW:
 		return op3(3, 8)
-	case ALDUB, AMOVB:
+	case ALDUB, AMOVUB:
 		return op3(3, 1)
-	case ALDUH, AMOVH:
+	case ALDUH, AMOVUH:
 		return op3(3, 2)
-	case ALDUW, AMOVW:
+	case ALDUW, AMOVUW:
 		return op3(3, 0)
 	case ALDD, AMOVD:
 		return op3(3, 11)
@@ -336,11 +336,11 @@ func opload(a int16) uint32 {
 func opstore(a int16) uint32 {
 	switch a {
 	// Store Integer.
-	case ASTB, AMOVB:
+	case ASTB, AMOVUB:
 		return op3(3, 5)
-	case ASTH, AMOVH:
+	case ASTH, AMOVUH:
 		return op3(3, 6)
-	case ASTW, AMOVW:
+	case ASTW, AMOVUW:
 		return op3(3, 4)
 	case ASTD, AMOVD:
 		return op3(3, 14)

@@ -363,11 +363,11 @@ const (
 
 	// Pseudo-instructions, aliases to SPARC64 instructions and
 	// synthetic instructions.
-	AMOVB
+	AMOVUB
 	AMOVSB
-	AMOVH
+	AMOVUH
 	AMOVSH
-	AMOVW
+	AMOVUW
 	AMOVSW
 	AMOVD // also the SPARC64 synthetic instruction
 	ARNOP // SETHI $0, ZR
