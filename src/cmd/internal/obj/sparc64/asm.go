@@ -37,7 +37,10 @@ var optab = map[Optab]Opval{
 	Optab{AFADDD, ClassDoubleReg, ClassDoubleReg, ClassDoubleReg}: {1, 4},
 	Optab{AFSMULD, ClassFloatReg, ClassFloatReg, ClassDoubleReg}:  {1, 4},
 
-	Optab{AMOVD, ClassReg, ClassNone, ClassReg}: {2, 4},
+	Optab{AMOVUB, ClassReg, ClassNone, ClassReg}: {2, 4},
+	Optab{AMOVUH, ClassReg, ClassNone, ClassReg}: {2, 4},
+	Optab{AMOVUW, ClassReg, ClassNone, ClassReg}: {2, 4},
+	Optab{AMOVD, ClassReg, ClassNone, ClassReg}:  {2, 4},
 
 	Optab{AADD, ClassReg, ClassConst13, ClassReg}:  {3, 4},
 	Optab{AAND, ClassReg, ClassConst13, ClassReg}:  {3, 4},
@@ -398,7 +401,7 @@ func opalu(a int16) uint32 {
 		return op3(2, 0xD)
 
 	// OR logical operation.
-	case AOR, AMOVD:
+	case AOR, AMOVUB, AMOVUH, AMOVUW, AMOVD:
 		return op3(2, 2)
 	case AORCC:
 		return op3(2, 18)
@@ -815,7 +818,7 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		}
 		*o1 = opalu(p.As) | rrr(p.From.Reg, 0, reg, p.To.Reg)
 
-	// MOVD Rs, Rd
+	// mov Rs, Rd (zero-extending)
 	case 2:
 		*o1 = opalu(p.As) | rrr(REG_ZR, 0, p.From.Reg, p.To.Reg)
 
