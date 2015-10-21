@@ -824,7 +824,7 @@ func optoas(op int, t *gc.Type) int {
 		gc.OXOR<<16 | gc.TINT64,
 		gc.OXOR<<16 | gc.TUINT64,
 		gc.OXOR<<16 | gc.TPTR64:
-		a = sparc64.AEOR
+		a = sparc64.AXOR
 
 		// TODO(minux): handle rotates
 	//case CASE(OLROT, TINT8):

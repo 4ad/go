@@ -46,7 +46,7 @@ var progtable = [sparc64.ALAST]obj.ProgInfo{
 	sparc64.ANEG:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
 	sparc64.AAND:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
 	sparc64.AORR:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
-	sparc64.AEOR:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
+	sparc64.AXOR:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
 	sparc64.AMUL:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
 	sparc64.ASMULL: {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
 	sparc64.AUMULL: {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
