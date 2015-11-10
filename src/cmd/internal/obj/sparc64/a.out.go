@@ -157,6 +157,10 @@ const (
 	MinStackFrameSize     = WindowSaveAreaSize + ArgumentsSaveAreaSize
 )
 
+const (
+	BIG = 1<<12 - 1 // magnitude of smallest negative immediate
+)
+
 // Prog.mark
 const (
 	FOLL = 1 << iota

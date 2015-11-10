@@ -58,8 +58,8 @@ func ginscon(as int, c int64, n2 *gc.Node) {
 
 	gc.Nodconst(&n1, gc.Types[gc.TINT64], c)
 
-	if as != sparc64.AMOVD && (c < -sparc64.BIG || c > sparc64.BIG) || as == sparc64.AMUL || n2 != nil && n2.Op != gc.OREGISTER {
-		// cannot have more than 16-bit of immediate in ADD, etc.
+	if as != sparc64.AMOVD && (c < -sparc64.BIG || c > sparc64.BIG) || as == sparc64.AMULD || n2 != nil && n2.Op != gc.OREGISTER {
+		// cannot have more than 13-bit of immediate in ADD, etc.
 		// instead, MOV into register first.
 		var ntmp gc.Node
 		gc.Regalloc(&ntmp, gc.Types[gc.TINT64], nil)
