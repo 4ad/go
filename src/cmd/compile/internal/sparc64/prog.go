@@ -85,8 +85,8 @@ var progtable = [sparc64.ALAST]obj.ProgInfo{
 	sparc64.AFCVTZUSW: {Flags: gc.SizeF | gc.LeftRead | gc.RightWrite | gc.Conv},
 
 	// float -> float
-	sparc64.AFCVTSD: {Flags: gc.SizeD | gc.LeftRead | gc.RightWrite | gc.Conv},
-	sparc64.AFCVTDS: {Flags: gc.SizeD | gc.LeftRead | gc.RightWrite | gc.Conv},
+	sparc64.AFSTOD: {Flags: gc.SizeD | gc.LeftRead | gc.RightWrite | gc.Conv},
+	sparc64.AFDTOS: {Flags: gc.SizeD | gc.LeftRead | gc.RightWrite | gc.Conv},
 
 	// integer -> float
 	sparc64.ASCVTFD:  {Flags: gc.SizeQ | gc.LeftRead | gc.RightWrite | gc.Conv},
