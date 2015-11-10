@@ -38,7 +38,7 @@ var progtable = [sparc64.ALAST]obj.ProgInfo{
 	// NOP is an internal no-op that also stands
 	// for USED and SET annotations, not the Power opcode.
 	obj.ANOP:      {Flags: gc.LeftRead | gc.RightWrite},
-	sparc64.AHINT: {Flags: gc.OK},
+	sparc64.ARNOP: {Flags: gc.OK},
 
 	// Integer
 	sparc64.AADD:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},

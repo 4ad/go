@@ -128,7 +128,7 @@ func appendpp(p *obj.Prog, as int, ftype int, freg int, foffset int64, ttype int
 func ginsnop() {
 	var con gc.Node
 	gc.Nodconst(&con, gc.Types[gc.TINT], 0)
-	gins(sparc64.AHINT, &con, nil)
+	gins(sparc64.ARNOP, &con, nil)
 }
 
 var panicdiv *gc.Node
