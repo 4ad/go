@@ -878,12 +878,13 @@ func optoas(op int, t *gc.Type) int {
 	//	a = 0//??? RLDC??
 	//	break;
 
-	case gc.OHMUL<<16 | gc.TINT64:
-		a = sparc64.ASMULH
-
-	case gc.OHMUL<<16 | gc.TUINT64,
-		gc.OHMUL<<16 | gc.TPTR64:
-		a = sparc64.AUMULH
+	// TODO(aram): handle high-multiply
+	//case gc.OHMUL<<16 | gc.TINT64:
+	//	a = sparc64.ASMULH
+	//
+	//case gc.OHMUL<<16 | gc.TUINT64,
+	//	gc.OHMUL<<16 | gc.TPTR64:
+	//	a = sparc64.AUMULH
 
 	case gc.OMUL<<16 | gc.TINT8,
 		gc.OMUL<<16 | gc.TINT16,
