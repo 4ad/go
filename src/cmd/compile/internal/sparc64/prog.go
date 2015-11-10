@@ -89,10 +89,10 @@ var progtable = [sparc64.ALAST]obj.ProgInfo{
 	sparc64.AFDTOS: {Flags: gc.SizeD | gc.LeftRead | gc.RightWrite | gc.Conv},
 
 	// integer -> float
-	sparc64.ASCVTFD:  {Flags: gc.SizeQ | gc.LeftRead | gc.RightWrite | gc.Conv},
-	sparc64.ASCVTFS:  {Flags: gc.SizeQ | gc.LeftRead | gc.RightWrite | gc.Conv},
-	sparc64.ASCVTFWD: {Flags: gc.SizeL | gc.LeftRead | gc.RightWrite | gc.Conv},
-	sparc64.ASCVTFWS: {Flags: gc.SizeL | gc.LeftRead | gc.RightWrite | gc.Conv},
+	sparc64.AFXTOD:   {Flags: gc.SizeQ | gc.LeftRead | gc.RightWrite | gc.Conv},
+	sparc64.AFXTOS:   {Flags: gc.SizeQ | gc.LeftRead | gc.RightWrite | gc.Conv},
+	sparc64.AFITOD:   {Flags: gc.SizeL | gc.LeftRead | gc.RightWrite | gc.Conv},
+	sparc64.AFITOS:   {Flags: gc.SizeL | gc.LeftRead | gc.RightWrite | gc.Conv},
 	sparc64.AUCVTFD:  {Flags: gc.SizeQ | gc.LeftRead | gc.RightWrite | gc.Conv},
 	sparc64.AUCVTFS:  {Flags: gc.SizeQ | gc.LeftRead | gc.RightWrite | gc.Conv},
 	sparc64.AUCVTFWD: {Flags: gc.SizeL | gc.LeftRead | gc.RightWrite | gc.Conv},

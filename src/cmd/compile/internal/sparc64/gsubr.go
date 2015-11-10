@@ -333,7 +333,7 @@ func gmove(f *gc.Node, t *gc.Node) {
 	* float to integer
 	 */
 	case gc.TFLOAT32<<16 | gc.TINT32:
-		a = sparc64.AFCVTZSSW
+		a = sparc64.AFSTOI
 		goto rdst
 
 	case gc.TFLOAT64<<16 | gc.TINT32:
@@ -386,23 +386,23 @@ func gmove(f *gc.Node, t *gc.Node) {
 	case gc.TINT8<<16 | gc.TFLOAT32,
 		gc.TINT16<<16 | gc.TFLOAT32,
 		gc.TINT32<<16 | gc.TFLOAT32:
-		a = sparc64.ASCVTFWS
+		a = sparc64.AFITOS
 
 		goto rdst
 
 	case gc.TINT8<<16 | gc.TFLOAT64,
 		gc.TINT16<<16 | gc.TFLOAT64,
 		gc.TINT32<<16 | gc.TFLOAT64:
-		a = sparc64.ASCVTFWD
+		a = sparc64.AFITOD
 
 		goto rdst
 
 	case gc.TINT64<<16 | gc.TFLOAT32:
-		a = sparc64.ASCVTFS
+		a = sparc64.AFXTOS
 		goto rdst
 
 	case gc.TINT64<<16 | gc.TFLOAT64:
-		a = sparc64.ASCVTFD
+		a = sparc64.AFXTOD
 		goto rdst
 
 	case gc.TUINT8<<16 | gc.TFLOAT32,
