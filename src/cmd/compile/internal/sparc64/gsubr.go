@@ -887,22 +887,15 @@ func optoas(op int, t *gc.Type) int {
 
 	case gc.OMUL<<16 | gc.TINT8,
 		gc.OMUL<<16 | gc.TINT16,
-		gc.OMUL<<16 | gc.TINT32:
-		a = sparc64.ASMULL
-
-	case gc.OMUL<<16 | gc.TINT64:
-		a = sparc64.AMUL
-
-	case gc.OMUL<<16 | gc.TUINT8,
+		gc.OMUL<<16 | gc.TINT32,
+		gc.OMUL<<16 | gc.TINT64,
+		gc.OMUL<<16 | gc.TUINT8,
 		gc.OMUL<<16 | gc.TUINT16,
 		gc.OMUL<<16 | gc.TUINT32,
-		gc.OMUL<<16 | gc.TPTR32:
-		// don't use word multiply, the high 32-bit are undefined.
-		a = sparc64.AUMULL
-
-	case gc.OMUL<<16 | gc.TUINT64,
+		gc.OMUL<<16 | gc.TPTR32,
+		gc.OMUL<<16 | gc.TUINT64,
 		gc.OMUL<<16 | gc.TPTR64:
-		a = sparc64.AMUL // for 64-bit multiplies, signedness doesn't matter.
+		a = sparc64.AMULD
 
 	case gc.OMUL<<16 | gc.TFLOAT32:
 		a = sparc64.AFMULS
