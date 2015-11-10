@@ -337,15 +337,15 @@ func gmove(f *gc.Node, t *gc.Node) {
 		goto rdst
 
 	case gc.TFLOAT64<<16 | gc.TINT32:
-		a = sparc64.AFCVTZSDW
+		a = sparc64.AFDTOI
 		goto rdst
 
 	case gc.TFLOAT32<<16 | gc.TINT64:
-		a = sparc64.AFCVTZSS
+		a = sparc64.AFSTOX
 		goto rdst
 
 	case gc.TFLOAT64<<16 | gc.TINT64:
-		a = sparc64.AFCVTZSD
+		a = sparc64.AFDTOX
 		goto rdst
 
 	case gc.TFLOAT32<<16 | gc.TUINT32:
