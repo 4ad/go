@@ -54,9 +54,9 @@ var progtable = [sparc64.ALAST]obj.ProgInfo{
 	sparc64.AUMULH: {Flags: gc.SizeL | gc.LeftRead | gc.RegRead | gc.RightWrite},
 	sparc64.ASDIV:  {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
 	sparc64.AUDIV:  {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
-	sparc64.ALSL:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
-	sparc64.ALSR:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
-	sparc64.AASR:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
+	sparc64.ASLA:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
+	sparc64.ASRL:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
+	sparc64.ASRA:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
 	sparc64.ACMP:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead},
 
 	// Floating point.

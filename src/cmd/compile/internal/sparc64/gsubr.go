@@ -850,7 +850,7 @@ func optoas(op int, t *gc.Type) int {
 		gc.OLSH<<16 | gc.TINT64,
 		gc.OLSH<<16 | gc.TUINT64,
 		gc.OLSH<<16 | gc.TPTR64:
-		a = sparc64.ALSL
+		a = sparc64.ASLA
 
 	case gc.ORSH<<16 | gc.TUINT8,
 		gc.ORSH<<16 | gc.TUINT16,
@@ -858,13 +858,13 @@ func optoas(op int, t *gc.Type) int {
 		gc.ORSH<<16 | gc.TPTR32,
 		gc.ORSH<<16 | gc.TUINT64,
 		gc.ORSH<<16 | gc.TPTR64:
-		a = sparc64.ALSR
+		a = sparc64.ASRL
 
 	case gc.ORSH<<16 | gc.TINT8,
 		gc.ORSH<<16 | gc.TINT16,
 		gc.ORSH<<16 | gc.TINT32,
 		gc.ORSH<<16 | gc.TINT64:
-		a = sparc64.AASR
+		a = sparc64.ASRA
 
 		// TODO(minux): handle rotates
 	//case CASE(ORROTC, TINT8):
