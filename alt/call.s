@@ -32,4 +32,4 @@ TEXT	foo5(SB),7,$0-0
 	RET
 
 DATA msg(SB)/8, $"hello\n"
-GLOBL msg(SB), SNOPTRDATA, $8
+GLOBL msg(SB), 16, $8

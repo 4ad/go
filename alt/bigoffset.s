@@ -8,4 +8,4 @@ TEXT	main(SB),7,$-8
 	RET
 
 DATA msg(SB)/8, $"big\n"
-GLOBL msg(SB), SNOPTRDATA, $8
+GLOBL msg(SB), 16, $8
