@@ -242,7 +242,7 @@ func gmove(f *gc.Node, t *gc.Node) {
 		gc.TUINT32<<16 | gc.TUINT8,
 		gc.TINT64<<16 | gc.TUINT8,
 		gc.TUINT64<<16 | gc.TUINT8:
-		a = sparc64.AMOVBU
+		a = sparc64.AMOVUB
 
 	case gc.TINT16<<16 | gc.TINT16, // same size
 		gc.TUINT16<<16 | gc.TINT16,
@@ -260,7 +260,7 @@ func gmove(f *gc.Node, t *gc.Node) {
 		gc.TUINT32<<16 | gc.TUINT16,
 		gc.TINT64<<16 | gc.TUINT16,
 		gc.TUINT64<<16 | gc.TUINT16:
-		a = sparc64.AMOVHU
+		a = sparc64.AMOVUH
 
 	case gc.TINT32<<16 | gc.TINT32, // same size
 		gc.TUINT32<<16 | gc.TINT32,
@@ -273,7 +273,7 @@ func gmove(f *gc.Node, t *gc.Node) {
 		gc.TUINT32<<16 | gc.TUINT32,
 		gc.TINT64<<16 | gc.TUINT32,
 		gc.TUINT64<<16 | gc.TUINT32:
-		a = sparc64.AMOVWU
+		a = sparc64.AMOVUW
 
 	case gc.TINT64<<16 | gc.TINT64, // same size
 		gc.TINT64<<16 | gc.TUINT64,
@@ -300,7 +300,7 @@ func gmove(f *gc.Node, t *gc.Node) {
 		gc.TUINT8<<16 | gc.TUINT32,
 		gc.TUINT8<<16 | gc.TINT64,
 		gc.TUINT8<<16 | gc.TUINT64:
-		a = sparc64.AMOVBU
+		a = sparc64.AMOVUB
 
 		goto rdst
 
@@ -316,7 +316,7 @@ func gmove(f *gc.Node, t *gc.Node) {
 		gc.TUINT16<<16 | gc.TUINT32,
 		gc.TUINT16<<16 | gc.TINT64,
 		gc.TUINT16<<16 | gc.TUINT64:
-		a = sparc64.AMOVHU
+		a = sparc64.AMOVUH
 
 		goto rdst
 
@@ -328,7 +328,7 @@ func gmove(f *gc.Node, t *gc.Node) {
 
 	case gc.TUINT32<<16 | gc.TINT64, // zero extend uint32
 		gc.TUINT32<<16 | gc.TUINT64:
-		a = sparc64.AMOVWU
+		a = sparc64.AMOVUW
 
 		goto rdst
 
@@ -528,15 +528,15 @@ func rawgins(as int, f *gc.Node, t *gc.Node) *obj.Prog {
 	w := int32(0)
 	switch as {
 	case sparc64.AMOVB,
-		sparc64.AMOVBU:
+		sparc64.AMOVUB:
 		w = 1
 
 	case sparc64.AMOVH,
-		sparc64.AMOVHU:
+		sparc64.AMOVUH:
 		w = 2
 
 	case sparc64.AMOVW,
-		sparc64.AMOVWU:
+		sparc64.AMOVUW:
 		w = 4
 
 	case sparc64.AMOVD:
@@ -707,20 +707,20 @@ func optoas(op int, t *gc.Type) int {
 		a = sparc64.AMOVB
 
 	case gc.OAS<<16 | gc.TUINT8:
-		a = sparc64.AMOVBU
+		a = sparc64.AMOVUB
 
 	case gc.OAS<<16 | gc.TINT16:
 		a = sparc64.AMOVH
 
 	case gc.OAS<<16 | gc.TUINT16:
-		a = sparc64.AMOVHU
+		a = sparc64.AMOVUH
 
 	case gc.OAS<<16 | gc.TINT32:
 		a = sparc64.AMOVW
 
 	case gc.OAS<<16 | gc.TUINT32,
 		gc.OAS<<16 | gc.TPTR32:
-		a = sparc64.AMOVWU
+		a = sparc64.AMOVUW
 
 	case gc.OAS<<16 | gc.TINT64,
 		gc.OAS<<16 | gc.TUINT64,
