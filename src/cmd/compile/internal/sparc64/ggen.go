@@ -527,6 +527,6 @@ func expandchecks(firstp *obj.Prog) {
 // res = runtime.getg()
 func getg(res *gc.Node) {
 	var n1 gc.Node
-	gc.Nodreg(&n1, res.Type, sparc64.REGG)
+	gc.Nodreg(&n1, res.Type, sparc64.REG_G)
 	gmove(&n1, res)
 }

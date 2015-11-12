@@ -43,7 +43,7 @@ func Main() {
 	gc.Thearch.Thelinkarch = thelinkarch
 	gc.Thearch.Typedefs = typedefs
 	gc.Thearch.REGSP = sparc64.REG_RSP
-	gc.Thearch.REGCTXT = sparc64.REGCTXT
+	gc.Thearch.REGCTXT = sparc64.REG_CTXT
 	gc.Thearch.REGCALLX = sparc64.REG_RT1
 	gc.Thearch.REGCALLX2 = sparc64.REG_RT2
 	gc.Thearch.REGRETURN = sparc64.REG_R0

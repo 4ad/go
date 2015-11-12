@@ -116,7 +116,7 @@ func excludedregs() uint64 {
 	regbits := uint64(RtoB(sparc64.REG_RSP) | RtoB(sparc64.REG_LR) | RtoB(sparc64.REG_GOT))
 
 	// Exclude R26 - R31.
-	for r := sparc64.REGMAX + 1; r <= sparc64.REG_R31; r++ {
+	for r := sparc64.REG_MAX + 1; r <= sparc64.REG_R31; r++ {
 		regbits |= RtoB(r)
 	}
 

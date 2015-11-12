@@ -39,7 +39,7 @@ import (
 
 var resvd = []int{
 	sparc64.REG_TMP,
-	sparc64.REGG,
+	sparc64.REG_G,
 	sparc64.REG_RT1,
 	sparc64.REG_RT2,
 	sparc64.REG_R31, // REGZERO and REGSP
