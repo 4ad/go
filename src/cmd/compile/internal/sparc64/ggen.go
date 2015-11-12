@@ -502,7 +502,7 @@ func expandchecks(firstp *obj.Prog) {
 		}
 
 		// check is
-		//	CBNZ arg, 2(PC)
+		//	BRNZ arg, 2(PC)
 		//	MOVD ZR, 0(arg)
 		p1 = gc.Ctxt.NewProg()
 		gc.Clearp(p1)
@@ -511,7 +511,7 @@ func expandchecks(firstp *obj.Prog) {
 		p1.Lineno = p.Lineno
 		p1.Pc = 9999
 
-		p.As = sparc64.ACBNZ
+		p.As = sparc64.ABRNZ
 		p.To.Type = obj.TYPE_BRANCH
 		p.To.Val = p1.Link
 
