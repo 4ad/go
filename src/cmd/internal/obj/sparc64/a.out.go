@@ -388,4 +388,6 @@ const (
 
 	AWORD
 	ADWORD
+
+	ALAST
 )

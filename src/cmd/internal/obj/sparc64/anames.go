@@ -135,4 +135,5 @@ var Anames = []string{
 	"RNOP",
 	"WORD",
 	"DWORD",
+	"LAST",
 }
