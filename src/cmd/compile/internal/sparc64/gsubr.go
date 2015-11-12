@@ -38,15 +38,18 @@ import (
 )
 
 var resvd = []int{
+	sparc64.REG_ZR,
+	sparc64.REG_RSP,
+	sparc64.REG_LR,
+	sparc64.REG_GOT,
 	sparc64.REG_TMP,
-	sparc64.REG_G,
 	sparc64.REG_RT1,
 	sparc64.REG_RT2,
-	sparc64.REG_R31, // REGZERO and REGSP
-	sparc64.FREGZERO,
-	sparc64.FREGHALF,
-	sparc64.FREGONE,
-	sparc64.FREGTWO,
+	sparc64.REG_CTXT,
+	sparc64.REG_RFP,
+	sparc64.REG_G,
+	sparc64.REG_FTMP,
+	sparc64.REG_DTMP,
 }
 
 /*
