@@ -78,30 +78,30 @@ func zerorange(p *obj.Prog, frame int64, lo int64, hi int64) *obj.Prog {
 	}
 	if cnt < int64(4*gc.Widthptr) {
 		for i := int64(0); i < cnt; i += int64(gc.Widthptr) {
-			p = appendpp(p, sparc64.AMOVD, obj.TYPE_REG, sparc64.REGZERO, 0, obj.TYPE_MEM, sparc64.REGSP, 8+frame+lo+i)
+			p = appendpp(p, sparc64.AMOVD, obj.TYPE_REG, sparc64.REG_ZR, 0, obj.TYPE_MEM, sparc64.REG_RSP, 8+frame+lo+i)
 		}
 	} else if cnt <= int64(128*gc.Widthptr) && !darwin { // darwin ld64 cannot handle BR26 reloc with non-zero addend
-		p = appendpp(p, sparc64.AMOVD, obj.TYPE_REG, sparc64.REGSP, 0, obj.TYPE_REG, sparc64.REGRT1, 0)
-		p = appendpp(p, sparc64.AADD, obj.TYPE_CONST, 0, 8+frame+lo-8, obj.TYPE_REG, sparc64.REGRT1, 0)
-		p.Reg = sparc64.REGRT1
+		p = appendpp(p, sparc64.AMOVD, obj.TYPE_REG, sparc64.REG_RSP, 0, obj.TYPE_REG, sparc64.REG_RT1, 0)
+		p = appendpp(p, sparc64.AADD, obj.TYPE_CONST, 0, 8+frame+lo-8, obj.TYPE_REG, sparc64.REG_RT1, 0)
+		p.Reg = sparc64.REG_RT1
 		p = appendpp(p, obj.ADUFFZERO, obj.TYPE_NONE, 0, 0, obj.TYPE_MEM, 0, 0)
 		f := gc.Sysfunc("duffzero")
 		gc.Naddr(&p.To, f)
 		gc.Afunclit(&p.To, f)
 		p.To.Offset = 4 * (128 - cnt/int64(gc.Widthptr))
 	} else {
-		p = appendpp(p, sparc64.AMOVD, obj.TYPE_CONST, 0, 8+frame+lo-8, obj.TYPE_REG, sparc64.REGTMP, 0)
-		p = appendpp(p, sparc64.AMOVD, obj.TYPE_REG, sparc64.REGSP, 0, obj.TYPE_REG, sparc64.REGRT1, 0)
-		p = appendpp(p, sparc64.AADD, obj.TYPE_REG, sparc64.REGTMP, 0, obj.TYPE_REG, sparc64.REGRT1, 0)
-		p.Reg = sparc64.REGRT1
-		p = appendpp(p, sparc64.AMOVD, obj.TYPE_CONST, 0, cnt, obj.TYPE_REG, sparc64.REGTMP, 0)
-		p = appendpp(p, sparc64.AADD, obj.TYPE_REG, sparc64.REGTMP, 0, obj.TYPE_REG, sparc64.REGRT2, 0)
-		p.Reg = sparc64.REGRT1
-		p = appendpp(p, sparc64.AMOVD, obj.TYPE_REG, sparc64.REGZERO, 0, obj.TYPE_MEM, sparc64.REGRT1, int64(gc.Widthptr))
+		p = appendpp(p, sparc64.AMOVD, obj.TYPE_CONST, 0, 8+frame+lo-8, obj.TYPE_REG, sparc64.REG_TMP, 0)
+		p = appendpp(p, sparc64.AMOVD, obj.TYPE_REG, sparc64.REG_RSP, 0, obj.TYPE_REG, sparc64.REG_RT1, 0)
+		p = appendpp(p, sparc64.AADD, obj.TYPE_REG, sparc64.REG_TMP, 0, obj.TYPE_REG, sparc64.REG_RT1, 0)
+		p.Reg = sparc64.REG_RT1
+		p = appendpp(p, sparc64.AMOVD, obj.TYPE_CONST, 0, cnt, obj.TYPE_REG, sparc64.REG_TMP, 0)
+		p = appendpp(p, sparc64.AADD, obj.TYPE_REG, sparc64.REG_TMP, 0, obj.TYPE_REG, sparc64.REG_RT2, 0)
+		p.Reg = sparc64.REG_RT1
+		p = appendpp(p, sparc64.AMOVD, obj.TYPE_REG, sparc64.REG_ZR, 0, obj.TYPE_MEM, sparc64.REG_RT1, int64(gc.Widthptr))
 		p.Scond = sparc64.C_XPRE
 		p1 := p
-		p = appendpp(p, sparc64.ACMP, obj.TYPE_REG, sparc64.REGRT1, 0, obj.TYPE_NONE, 0, 0)
-		p.Reg = sparc64.REGRT2
+		p = appendpp(p, sparc64.ACMP, obj.TYPE_REG, sparc64.REG_RT1, 0, obj.TYPE_NONE, 0, 0)
+		p.Reg = sparc64.REG_RT2
 		p = appendpp(p, sparc64.ABNE, obj.TYPE_NONE, 0, 0, obj.TYPE_BRANCH, 0, 0)
 		gc.Patch(p, p1)
 	}
@@ -197,7 +197,7 @@ func dodiv(op int, nl *gc.Node, nr *gc.Node, res *gc.Node) {
 
 	// Handle divide-by-zero panic.
 	p1 := gins(optoas(gc.OCMP, t), &tr, nil)
-	p1.Reg = sparc64.REGZERO
+	p1.Reg = sparc64.REG_ZR
 	p1 = gc.Gbranch(optoas(gc.ONE, t), nil, +1)
 	if panicdiv == nil {
 		panicdiv = gc.Sysfunc("panicdivide")
@@ -417,11 +417,11 @@ func clearfat(nl *gc.Node) {
 	q := uint64(w / 8) // dwords
 
 	var r0 gc.Node
-	gc.Nodreg(&r0, gc.Types[gc.TUINT64], sparc64.REGZERO)
+	gc.Nodreg(&r0, gc.Types[gc.TUINT64], sparc64.REG_ZR)
 	var dst gc.Node
 
 	// REGRT1 is reserved on sparc64, see sparc64/gsubr.go.
-	gc.Nodreg(&dst, gc.Types[gc.Tptr], sparc64.REGRT1)
+	gc.Nodreg(&dst, gc.Types[gc.Tptr], sparc64.REG_RT1)
 	gc.Agen(nl, &dst)
 
 	var boff uint64
@@ -517,7 +517,7 @@ func expandchecks(firstp *obj.Prog) {
 		// crash by write to memory address 0.
 		p1.As = sparc64.AMOVD
 		p1.From.Type = obj.TYPE_REG
-		p1.From.Reg = sparc64.REGZERO
+		p1.From.Reg = sparc64.REG_ZR
 		p1.To.Type = obj.TYPE_MEM
 		p1.To.Reg = p.From.Reg
 		p1.To.Offset = 0

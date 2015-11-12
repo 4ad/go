@@ -161,14 +161,14 @@ func proginfo(p *obj.Prog) {
 	}
 
 	if p.As == obj.ADUFFZERO {
-		info.Reguse |= RtoB(sparc64.REGRT1)
-		info.Regset |= RtoB(sparc64.REGRT1)
+		info.Reguse |= RtoB(sparc64.REG_RT1)
+		info.Regset |= RtoB(sparc64.REG_RT1)
 	}
 
 	if p.As == obj.ADUFFCOPY {
 		// TODO(austin) Revisit when duffcopy is implemented
-		info.Reguse |= RtoB(sparc64.REGRT1) | RtoB(sparc64.REGRT2) | RtoB(sparc64.REG_R5)
+		info.Reguse |= RtoB(sparc64.REG_RT1) | RtoB(sparc64.REG_RT2) | RtoB(sparc64.REG_R5)
 
-		info.Regset |= RtoB(sparc64.REGRT1) | RtoB(sparc64.REGRT2)
+		info.Regset |= RtoB(sparc64.REG_RT1) | RtoB(sparc64.REG_RT2)
 	}
 }
