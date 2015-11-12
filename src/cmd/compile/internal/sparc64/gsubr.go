@@ -610,7 +610,7 @@ func optoas(op int, t *gc.Type) int {
 		gc.OEQ<<16 | gc.TPTR64,
 		gc.OEQ<<16 | gc.TFLOAT32,
 		gc.OEQ<<16 | gc.TFLOAT64:
-		a = sparc64.ABEQ
+		a = sparc64.ABE
 
 	case gc.ONE<<16 | gc.TBOOL,
 		gc.ONE<<16 | gc.TINT8,
@@ -631,7 +631,7 @@ func optoas(op int, t *gc.Type) int {
 		gc.OLT<<16 | gc.TINT16,
 		gc.OLT<<16 | gc.TINT32,
 		gc.OLT<<16 | gc.TINT64:
-		a = sparc64.ABLT
+		a = sparc64.ABL
 
 	case gc.OLT<<16 | gc.TUINT8,
 		gc.OLT<<16 | gc.TUINT16,
@@ -639,7 +639,7 @@ func optoas(op int, t *gc.Type) int {
 		gc.OLT<<16 | gc.TUINT64,
 		gc.OLT<<16 | gc.TFLOAT32,
 		gc.OLT<<16 | gc.TFLOAT64:
-		a = sparc64.ABLO
+		a = sparc64.ABCS
 
 	case gc.OLE<<16 | gc.TINT8,
 		gc.OLE<<16 | gc.TINT16,
@@ -653,7 +653,7 @@ func optoas(op int, t *gc.Type) int {
 		gc.OLE<<16 | gc.TUINT64,
 		gc.OLE<<16 | gc.TFLOAT32,
 		gc.OLE<<16 | gc.TFLOAT64:
-		a = sparc64.ABLS
+		a = sparc64.ABLEU
 
 	case gc.OGT<<16 | gc.TINT8,
 		gc.OGT<<16 | gc.TINT16,
@@ -661,13 +661,13 @@ func optoas(op int, t *gc.Type) int {
 		gc.OGT<<16 | gc.TINT64,
 		gc.OGT<<16 | gc.TFLOAT32,
 		gc.OGT<<16 | gc.TFLOAT64:
-		a = sparc64.ABGT
+		a = sparc64.ABG
 
 	case gc.OGT<<16 | gc.TUINT8,
 		gc.OGT<<16 | gc.TUINT16,
 		gc.OGT<<16 | gc.TUINT32,
 		gc.OGT<<16 | gc.TUINT64:
-		a = sparc64.ABHI
+		a = sparc64.ABGU
 
 	case gc.OGE<<16 | gc.TINT8,
 		gc.OGE<<16 | gc.TINT16,
@@ -681,7 +681,7 @@ func optoas(op int, t *gc.Type) int {
 		gc.OGE<<16 | gc.TUINT16,
 		gc.OGE<<16 | gc.TUINT32,
 		gc.OGE<<16 | gc.TUINT64:
-		a = sparc64.ABHS
+		a = sparc64.ABCC
 
 	case gc.OCMP<<16 | gc.TBOOL,
 		gc.OCMP<<16 | gc.TINT8,
