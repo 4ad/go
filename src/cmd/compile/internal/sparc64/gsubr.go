@@ -509,7 +509,7 @@ func rawgins(as int, f *gc.Node, t *gc.Node) *obj.Prog {
 
 	// Bad things the front end has done to us. Crash to find call stack.
 	switch as {
-	case sparc64.AAND, sparc64.AMUL:
+	case sparc64.AAND, sparc64.AMULD:
 		if p.From.Type == obj.TYPE_CONST {
 			gc.Debug['h'] = 1
 			gc.Fatalf("bad inst: %v", p)
