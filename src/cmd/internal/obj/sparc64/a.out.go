@@ -141,6 +141,9 @@ const (
 const (
 	REG_ZR   = REG_R0
 	REG_TMP  = REG_R1
+	REG_RT1  = REG_R2
+	REG_RT2  = REG_R3
+	REG_CTXT = REG_R4
 	REG_RSP  = REG_R14
 	REG_LR   = REG_R15
 	REG_GOT  = REG_R23
