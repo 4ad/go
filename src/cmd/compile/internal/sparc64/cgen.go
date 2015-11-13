@@ -70,8 +70,9 @@ func blockcopy(n, res *gc.Node, osrc, odst, w int64) {
 		gc.Agenr(n, &src, nil)
 	}
 
-	var tmp gc.Node
+	var tmp, tmp1 gc.Node
 	gc.Regalloc(&tmp, gc.Types[gc.Tptr], nil)
+	gc.Regalloc(&tmp1, gc.Types[gc.Tptr], nil)
 
 	// set up end marker
 	var nend gc.Node
@@ -110,42 +111,53 @@ func blockcopy(n, res *gc.Node, osrc, odst, w int64) {
 	// move
 	// TODO: enable duffcopy for larger copies.
 	if c >= 4 {
+		// TODO(aram): instead of manually updating both src and dst, update
+		// only the index register and change the comparison.
+		ginscon(sparc64.AMOVD, int64(dir), &tmp1)
+
 		p := gins(op, &src, &tmp)
 		p.From.Type = obj.TYPE_MEM
-		p.From.Offset = int64(dir)
-		p.Scond = sparc64.C_XPRE
+		p.From.Index = tmp1.Reg
+		p.From.Scale = 1
 		ploop := p
+
+		p = gins(sparc64.AADD, &tmp1, &src)
 
 		p = gins(op, &tmp, &dst)
 		p.To.Type = obj.TYPE_MEM
-		p.To.Offset = int64(dir)
-		p.Scond = sparc64.C_XPRE
+		p.To.Index = tmp1.Reg
+		p.To.Scale = 1
+
+		p = gins(sparc64.AADD, &tmp1, &dst)
 
 		p = gcmp(sparc64.ACMP, &src, &nend)
 
 		gc.Patch(gc.Gbranch(sparc64.ABNE, nil, 0), ploop)
 		gc.Regfree(&nend)
 	} else {
-		// TODO(austin): Instead of generating ADD $-8,R8; ADD
-		// $-8,R7; n*(MOVDU 8(R8),R9; MOVDU R9,8(R7);) just
-		// generate the offsets directly and eliminate the
-		// ADDs.  That will produce shorter, more
-		// pipeline-able code.
+		// TODO(aram): instead of manually updating both src and dst, update
+		// only the index register.
+		ginscon(sparc64.AMOVD, int64(dir), &tmp1)
 		var p *obj.Prog
 		for ; c > 0; c-- {
 			p = gins(op, &src, &tmp)
 			p.From.Type = obj.TYPE_MEM
-			p.From.Offset = int64(dir)
-			p.Scond = sparc64.C_XPRE
+			p.From.Index = tmp1.Reg
+			p.From.Scale = 1
+
+			p = gins(sparc64.AADD, &tmp1, &src)
 
 			p = gins(op, &tmp, &dst)
 			p.To.Type = obj.TYPE_MEM
-			p.To.Offset = int64(dir)
-			p.Scond = X.C_XPRE
+			p.To.Index = tmp1.Reg
+			p.To.Scale = 1
+
+			p = gins(sparc64.AADD, &tmp1, &dst)
 		}
 	}
 
 	gc.Regfree(&dst)
 	gc.Regfree(&src)
 	gc.Regfree(&tmp)
+	gc.Regfree(&tmp1)
 }
