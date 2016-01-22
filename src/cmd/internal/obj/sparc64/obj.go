@@ -37,6 +37,36 @@ var isCondJump = map[int16]bool{
 	ABNEG:  true,
 	ABVC:   true,
 	ABVS:   true,
+	ABNW:   true,
+	ABNEW:  true,
+	ABEW:   true,
+	ABGW:   true,
+	ABLEW:  true,
+	ABGEW:  true,
+	ABLW:   true,
+	ABGUW:  true,
+	ABLEUW: true,
+	ABCCW:  true,
+	ABCSW:  true,
+	ABPOSW: true,
+	ABNEGW: true,
+	ABVCW:  true,
+	ABVSW:  true,
+	ABND:   true,
+	ABNED:  true,
+	ABED:   true,
+	ABGD:   true,
+	ABLED:  true,
+	ABGED:  true,
+	ABLD:   true,
+	ABGUD:  true,
+	ABLEUD: true,
+	ABCCD:  true,
+	ABCSD:  true,
+	ABPOSD: true,
+	ABNEGD: true,
+	ABVCD:  true,
+	ABVSD:  true,
 	ABRZ:   true,
 	ABRLEZ: true,
 	ABRLZ:  true,
@@ -534,6 +564,66 @@ func relinv(a int) int {
 		return ABVS
 	case ABVS:
 		return ABVC
+	case ABNW:
+		return obj.AJMP
+	case ABEW:
+		return ABNEW
+	case ABNEW:
+		return ABEW
+	case ABGW:
+		return ABLEW
+	case ABLEW:
+		return ABGW
+	case ABGEW:
+		return ABLW
+	case ABLW:
+		return ABGEW
+	case ABGUW:
+		return ABLEUW
+	case ABLEUW:
+		return ABGUW
+	case ABCCW:
+		return ABCSW
+	case ABCSW:
+		return ABCCW
+	case ABPOSW:
+		return ABNEGW
+	case ABNEGW:
+		return ABPOSW
+	case ABVCW:
+		return ABVSW
+	case ABVSW:
+		return ABVCW
+	case ABND:
+		return obj.AJMP
+	case ABED:
+		return ABNED
+	case ABNED:
+		return ABED
+	case ABGD:
+		return ABLED
+	case ABLED:
+		return ABGD
+	case ABGED:
+		return ABLD
+	case ABLD:
+		return ABGED
+	case ABGUD:
+		return ABLEUD
+	case ABLEUD:
+		return ABGUD
+	case ABCCD:
+		return ABCSD
+	case ABCSD:
+		return ABCCD
+	case ABPOSD:
+		return ABNEGD
+	case ABNEGD:
+		return ABPOSD
+	case ABVCD:
+		return ABVSD
+	case ABVSD:
+		return ABVCD
 	}
 
 	log.Fatalf("unknown relation: %s", Anames[a])
@@ -545,6 +635,36 @@ var unaryDst = map[int]bool{
 	obj.AJMP:  true,
 	AWORD:     true,
 	ADWORD:    true,
+	ABNW:      true,
+	ABNEW:     true,
+	ABEW:      true,
+	ABGW:      true,
+	ABLEW:     true,
+	ABGEW:     true,
+	ABLW:      true,
+	ABGUW:     true,
+	ABLEUW:    true,
+	ABCCW:     true,
+	ABCSW:     true,
+	ABPOSW:    true,
+	ABNEGW:    true,
+	ABVCW:     true,
+	ABVSW:     true,
+	ABND:      true,
+	ABNED:     true,
+	ABED:      true,
+	ABGD:      true,
+	ABLED:     true,
+	ABGED:     true,
+	ABLD:      true,
+	ABGUD:     true,
+	ABLEUD:    true,
+	ABCCD:     true,
+	ABCSD:     true,
+	ABPOSD:    true,
+	ABNEGD:    true,
+	ABVCD:     true,
+	ABVSD:     true,
 }
 
 var Linksparc64 = obj.LinkArch{

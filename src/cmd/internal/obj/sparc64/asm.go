@@ -91,6 +91,7 @@ var optab = map[Optab]Opval{
 
 	Optab{obj.AJMP, ClassNone, ClassNone, ClassShortBranch}: {17, 4},
 	Optab{ABN, ClassCond, ClassNone, ClassShortBranch}:      {17, 4},
+	Optab{ABNW, ClassNone, ClassNone, ClassShortBranch}:     {17, 4},
 	Optab{ABRZ, ClassReg, ClassNone, ClassShortBranch}:      {18, 4},
 	Optab{AFBA, ClassNone, ClassNone, ClassShortBranch}:     {19, 4},
 
@@ -124,6 +125,8 @@ var optab = map[Optab]Opval{
 	Optab{ANEG, ClassReg, ClassNone, ClassReg}: {35, 4},
 
 	Optab{ACMP, ClassReg, ClassReg, ClassNone}: {36, 4},
+
+	Optab{ABND, ClassNone, ClassNone, ClassShortBranch}: {37, 4},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -174,6 +177,8 @@ var ci = map[int16][]int16{
 	AADD:   {AADDCC, AADDC, AADDCCC, ASUB, ASUBCC, ASUBC, ASUBCCC},
 	AAND:   {AANDCC, AANDN, AANDNCC, AOR, AORCC, AORN, AORNCC, AXOR, AXORCC, AXNOR, AXNORCC},
 	ABN:    {ABNE, ABE, ABG, ABLE, ABGE, ABL, ABGU, ABLEU, ABCC, ABCS, ABPOS, ABNEG, ABVC, ABVS},
+	ABNW:   {ABNEW, ABEW, ABGW, ABLEW, ABGEW, ABLW, ABGUW, ABLEUW, ABCCW, ABCSW, ABPOSW, ABNEGW, ABVCW, ABVSW},
+	ABND:   {ABNED, ABED, ABGD, ABLED, ABGED, ABLD, ABGUD, ABLEUD, ABCCD, ABCSD, ABPOSD, ABNEGD, ABVCD, ABVSD},
 	ABRZ:   {ABRLEZ, ABRLZ, ABRNZ, ABRGZ, ABRGEZ},
 	ACASD:  {ACASW},
 	AFABSD: {AFABSS, AFNEGD, AFNEGS, AFSQRTD, AFNEGS},
@@ -489,35 +494,35 @@ func opcode(a int16) uint32 {
 	// Branch on integer condition codes with prediction (BPcc).
 	case obj.AJMP:
 		return cond(8) | op2(1)
-	case ABN:
+	case ABN, ABNW, ABND:
 		return cond(0) | op2(1)
-	case ABNE:
+	case ABNE, ABNEW, ABNED:
 		return cond(9) | op2(1)
-	case ABE:
+	case ABE, ABEW, ABED:
 		return cond(1) | op2(1)
-	case ABG:
+	case ABG, ABGW, ABGD:
 		return cond(10) | op2(1)
-	case ABLE:
+	case ABLE, ABLEW, ABLED:
 		return cond(2) | op2(1)
-	case ABGE:
+	case ABGE, ABGEW, ABGED:
 		return cond(11) | op2(1)
-	case ABL:
+	case ABL, ABLW, ABLD:
 		return cond(3) | op2(1)
-	case ABGU:
+	case ABGU, ABGUW, ABGUD:
 		return cond(12) | op2(1)
-	case ABLEU:
+	case ABLEU, ABLEUW, ABLEUD:
 		return cond(4) | op2(1)
-	case ABCC:
+	case ABCC, ABCCW, ABCCD:
 		return cond(13) | op2(1)
-	case ABCS:
+	case ABCS, ABCSW, ABCSD:
 		return cond(5) | op2(1)
-	case ABPOS:
+	case ABPOS, ABPOSW, ABPOSD:
 		return cond(14) | op2(1)
-	case ABNEG:
+	case ABNEG, ABNEGW, ABNEGD:
 		return cond(6) | op2(1)
-	case ABVC:
+	case ABVC, ABVCW, ABVCD:
 		return cond(15) | op2(1)
-	case ABVS:
+	case ABVS, ABVSW, ABVSD:
 		return cond(7) | op2(1)
 
 	// Branch on integer register with prediction (BPr).
@@ -1059,6 +1064,22 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	// CMP R1, R2
 	case 36:
 		*o1 = opalu(ASUBCC) | rrr(p.From.Reg, 0, p.From3.Reg, REG_ZR)
+
+	// BLED, n(PC)
+	// JMP n(PC)
+	case 37:
+		offset := p.Pcond.Pc - p.Pc
+		if offset < -1<<22 || offset > 1<<22-1 {
+			return nil, errors.New("branch target out of range")
+		}
+		if offset%4 != 0 {
+			return nil, errors.New("branch target not mod 4")
+		}
+		*o1 = opcode(p.As) | 2<<20 | uint32(offset>>2)&(1<<19-1)
+		// default is to predict branch taken
+		if p.Scond == 0 {
+			*o1 |= 1 << 19
+		}
 	}
 
 	return out[:o.size/4], nil

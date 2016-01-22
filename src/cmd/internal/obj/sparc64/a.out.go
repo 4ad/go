@@ -387,6 +387,44 @@ const (
 	AMOVD // also the SPARC64 synthetic instruction
 	ARNOP // SETHI $0, ZR
 
+	// These are aliases to two-operand SPARCv9 32-, and 64-bit,
+	// branch on integer condition codes with prediction (BPcc),
+	// with ICC implied.
+	ABNW
+	ABNEW
+	ABEW
+	ABGW
+	ABLEW
+	ABGEW
+	ABLW
+	ABGUW
+	ABLEUW
+	ABCCW
+	ABCSW
+	ABPOSW
+	ABNEGW
+	ABVCW
+	ABVSW
+
+	// These are aliases to two-operand SPARCv9 32-, and 64-bit,
+	// branch on integer condition codes with prediction (BPcc),
+	// with XCC implied.
+	ABND
+	ABNED
+	ABED
+	ABGD
+	ABLED
+	ABGED
+	ABLD
+	ABGUD
+	ABLEUD
+	ABCCD
+	ABCSD
+	ABPOSD
+	ABNEGD
+	ABVCD
+	ABVSD
+
 	AWORD
 	ADWORD
 
