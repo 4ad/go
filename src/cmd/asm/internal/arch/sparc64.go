@@ -61,7 +61,7 @@ var sparc64Jump = map[string]bool{
 // one of the comparison instructions that require special handling.
 func IsSPARC64CMP(op int) bool {
 	switch op {
-	case sparc64.AFCMPD, sparc64.AFCMPS:
+	case sparc64.ACMP, sparc64.AFCMPD, sparc64.AFCMPS:
 		return true
 	}
 	return false

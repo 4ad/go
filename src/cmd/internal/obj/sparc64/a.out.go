@@ -376,6 +376,7 @@ const (
 
 	// Pseudo-instructions, aliases to SPARC64 instructions and
 	// synthetic instructions.
+	ACMP // SUBCC R1, R2, ZR
 	ANEG
 	AMOVUB
 	AMOVB
