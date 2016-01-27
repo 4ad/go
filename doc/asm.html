@@ -794,6 +794,10 @@ The toolchain does not support quad-precision (128-bit) floating point yet.
 </p>
 
 <p>
+SPARC64 has two sets of flags, and operations that set flags modify both sets. One set of flags (<code>ICC</code>) is set after interpreting the result as a 32-bit value, the other one (<code>XCC</code>) is set after interpreting the result as a 64-bit value. Unlike other architectures, conditional jumps are two-operand instructions; the first operand specifies which set of condition flags to use (<code>ICC</code> or <code>XCC</code>). To simplify the compiler, the toolchain introduces single-operand aliases for these instructions. For example, <code>BNEW label</code> is an alias for <code>BNE ICC, label</code>, and <code>BGED label</code> is an alias for <code>BGE XCC, label</code>.
+</p>
+
+<p>
 Addressing modes:
 </p>
 
