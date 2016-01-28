@@ -263,12 +263,14 @@ func init() {
 
 func oplook(p *obj.Prog) (Opval, error) {
 	o := Optab{as: p.As, a1: p.From.Class, a2: ClassNone, a3: p.To.Class}
+	var type3 int16
 	if p.From3 != nil {
 		o.a2 = p.From3.Class
+		type3 = p.From3.Type
 	}
 	v, ok := optab[o]
 	if !ok {
-		return Opval{}, fmt.Errorf("illegal combination %v %v %v %v, %d %d", p, DRconv(o.a1), DRconv(o.a2), DRconv(o.a3), p.From.Type, p.To.Type)
+		return Opval{}, fmt.Errorf("illegal combination %v %v %v %v, %d %d %d", p, DRconv(o.a1), DRconv(o.a2), DRconv(o.a3), p.From.Type, type3, p.To.Type)
 	}
 	return v, nil
 }
