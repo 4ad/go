@@ -24,6 +24,7 @@ type Opval struct {
 
 var optab = map[Optab]Opval{
 	Optab{obj.ATEXT, ClassAddr, ClassNone, ClassNone, ClassTextSize}: {0, 0},
+	Optab{obj.AFUNCDATA, ClassConst, ClassNone, ClassNone, ClassMem}: {0, 0},
 
 	Optab{AADD, ClassReg, ClassNone, ClassNone, ClassReg}:  {1, 4},
 	Optab{AAND, ClassReg, ClassNone, ClassNone, ClassReg}:  {1, 4},
