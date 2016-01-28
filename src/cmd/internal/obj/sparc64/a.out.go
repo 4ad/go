@@ -154,7 +154,7 @@ const (
 )
 
 const (
-	REG_MIN = REG_R1
+	REG_MIN = REG_R0
 	REG_MAX = REG_R25
 )
 
