@@ -517,7 +517,7 @@ func (p *Parser) asmInstruction(op int, cond string, a []obj.Addr) {
 			break
 		} else if p.arch.Thechar == 'u' && arch.IsSPARC64CMP(op) {
 			prog.From = a[0]
-			prog.From3 = newAddr(a[1])
+			prog.Reg = p.getRegister(prog, op, &a[1])
 			break
 		}
 		prog.From = a[0]
@@ -586,9 +586,21 @@ func (p *Parser) asmInstruction(op int, cond string, a []obj.Addr) {
 				return
 			}
 		case 'u':
-			prog.From = a[0]
-			prog.From3 = newAddr(a[1])
-			prog.To = a[2]
+			// Choices are:
+			// reg reg reg
+			// reg something reg
+			// If the second argument is a register, use Reg,
+			// otherwise use From3.
+			switch a[1].Type {
+			case obj.TYPE_REG:
+				prog.From = a[0]
+				prog.Reg = p.getRegister(prog, op, &a[1])
+				prog.To = a[2]
+			default:
+				prog.From = a[0]
+				prog.From3 = newAddr(a[1])
+				prog.To = a[2]
+			}
 		default:
 			p.errorf("TODO: implement three-operand instructions for this architecture")
 			return

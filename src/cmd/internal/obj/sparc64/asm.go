@@ -11,11 +11,11 @@ import (
 )
 
 type Optab struct {
-	as int16
-	a1 int8
-	a2 int8
-	a3 int8
-	a4 int8
+	as int16 // instruction
+	a1 int8  // from
+	a2 int8  // reg
+	a3 int8  // from3
+	a4 int8  // to
 }
 
 type Opval struct {
@@ -28,15 +28,15 @@ var optab = map[Optab]Opval{
 	Optab{AADD, ClassReg, ClassNone, ClassNone, ClassReg}:  {1, 4},
 	Optab{AAND, ClassReg, ClassNone, ClassNone, ClassReg}:  {1, 4},
 	Optab{AMULD, ClassReg, ClassNone, ClassNone, ClassReg}: {1, 4},
-	Optab{AADD, ClassReg, ClassNone, ClassReg, ClassReg}:   {1, 4},
-	Optab{AAND, ClassReg, ClassNone, ClassReg, ClassReg}:   {1, 4},
-	Optab{AMULD, ClassReg, ClassNone, ClassReg, ClassReg}:  {1, 4},
-	Optab{ASLLD, ClassReg, ClassNone, ClassReg, ClassReg}:  {1, 4},
-	Optab{ASLLW, ClassReg, ClassNone, ClassReg, ClassReg}:  {1, 4},
+	Optab{AADD, ClassReg, ClassReg, ClassNone, ClassReg}:   {1, 4},
+	Optab{AAND, ClassReg, ClassReg, ClassNone, ClassReg}:   {1, 4},
+	Optab{AMULD, ClassReg, ClassReg, ClassNone, ClassReg}:  {1, 4},
+	Optab{ASLLD, ClassReg, ClassReg, ClassNone, ClassReg}:  {1, 4},
+	Optab{ASLLW, ClassReg, ClassReg, ClassNone, ClassReg}:  {1, 4},
 
 	Optab{AFADDD, ClassDReg, ClassNone, ClassNone, ClassDReg}:  {1, 4},
-	Optab{AFADDD, ClassDReg, ClassNone, ClassDReg, ClassDReg}:  {1, 4},
-	Optab{AFSMULD, ClassFReg, ClassNone, ClassFReg, ClassDReg}: {1, 4},
+	Optab{AFADDD, ClassDReg, ClassDReg, ClassNone, ClassDReg}:  {1, 4},
+	Optab{AFSMULD, ClassFReg, ClassFReg, ClassNone, ClassDReg}: {1, 4},
 
 	Optab{AMOVD, ClassReg, ClassNone, ClassNone, ClassReg}: {2, 4},
 
@@ -84,8 +84,8 @@ var optab = map[Optab]Opval{
 
 	Optab{AMEMBAR, ClassConst, ClassNone, ClassNone, ClassNone}: {13, 4},
 
-	Optab{AFCMPD, ClassDReg, ClassNone, ClassDReg, ClassFCond}: {14, 4},
-	Optab{AFCMPD, ClassDReg, ClassNone, ClassDReg, ClassNone}:  {14, 4},
+	Optab{AFCMPD, ClassDReg, ClassDReg, ClassNone, ClassFCond}: {14, 4},
+	Optab{AFCMPD, ClassDReg, ClassDReg, ClassNone, ClassNone}:  {14, 4},
 
 	Optab{AMOVD, ClassConst32, ClassNone, ClassNone, ClassReg}:  {15, 8},
 	Optab{AMOVD, ClassConst31_, ClassNone, ClassNone, ClassReg}: {16, 8},
@@ -125,7 +125,7 @@ var optab = map[Optab]Opval{
 
 	Optab{ANEG, ClassReg, ClassNone, ClassNone, ClassReg}: {35, 4},
 
-	Optab{ACMP, ClassReg, ClassNone, ClassReg, ClassNone}: {36, 4},
+	Optab{ACMP, ClassReg, ClassReg, ClassNone, ClassNone}: {36, 4},
 
 	Optab{ABND, ClassNone, ClassNone, ClassNone, ClassBranch}: {37, 4},
 }
@@ -135,6 +135,7 @@ var optab = map[Optab]Opval{
 // register, can also accept $0, etc.
 var cc = map[int8][]int8{
 	ClassReg:      {ClassZero},
+	ClassConst6:   {ClassConst5, ClassZero},
 	ClassConst13:  {ClassConst6, ClassConst5, ClassZero},
 	ClassConst31:  {ClassConst6, ClassConst5, ClassZero},
 	ClassConst32:  {ClassConst31_, ClassConst31, ClassConst13, ClassConst6, ClassConst5, ClassZero},
@@ -847,8 +848,8 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	// op Rs1, Rs2, Rd	-> Rd = Rs1 op Rs2
 	case 1:
 		reg := p.To.Reg
-		if p.From3 != nil {
-			reg = p.From3.Reg
+		if p.Reg != 0 {
+			reg = p.Reg
 		}
 		*o1 = opalu(p.As) | rrr(p.From.Reg, 0, reg, p.To.Reg)
 
@@ -907,9 +908,9 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		}
 		*o1 = opcode(p.As) | uint32(p.From.Offset)
 
-	// FCMPD FCC, F, F
+	// FCMPD F, F, FCC
 	case 14:
-		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, p.From3.Reg, p.To.Reg&3)
+		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, p.Reg, p.To.Reg&3)
 
 	// MOVD $imm32, R ->
 	// 	SETHI hi($imm32), R
@@ -1083,7 +1084,7 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 
 	// CMP R1, R2
 	case 36:
-		*o1 = opalu(ASUBCC) | rrr(p.From.Reg, 0, p.From3.Reg, REG_ZR)
+		*o1 = opalu(ASUBCC) | rrr(p.From.Reg, 0, p.Reg, REG_ZR)
 
 	// BLED, n(PC)
 	// JMP n(PC)
