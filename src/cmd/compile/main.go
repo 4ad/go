@@ -9,6 +9,7 @@ import (
 	"cmd/compile/internal/arm"
 	"cmd/compile/internal/arm64"
 	"cmd/compile/internal/ppc64"
+	"cmd/compile/internal/sparc64"
 	"cmd/compile/internal/x86"
 	"cmd/internal/obj"
 	"fmt"
@@ -30,5 +31,7 @@ func main() {
 		arm64.Main()
 	case "ppc64", "ppc64le":
 		ppc64.Main()
+	case "sparc64":
+		sparc64.Main()
 	}
 }
