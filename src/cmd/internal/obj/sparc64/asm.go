@@ -15,6 +15,7 @@ type Optab struct {
 	a1 int8
 	a2 int8
 	a3 int8
+	a4 int8
 }
 
 type Opval struct {
@@ -22,111 +23,111 @@ type Opval struct {
 }
 
 var optab = map[Optab]Opval{
-	Optab{obj.ATEXT, ClassAddr, ClassNone, ClassTextSize}: {0, 0},
+	Optab{obj.ATEXT, ClassAddr, ClassNone, ClassNone, ClassTextSize}: {0, 0},
 
-	Optab{AADD, ClassReg, ClassNone, ClassReg}:  {1, 4},
-	Optab{AAND, ClassReg, ClassNone, ClassReg}:  {1, 4},
-	Optab{AMULD, ClassReg, ClassNone, ClassReg}: {1, 4},
-	Optab{AADD, ClassReg, ClassReg, ClassReg}:   {1, 4},
-	Optab{AAND, ClassReg, ClassReg, ClassReg}:   {1, 4},
-	Optab{AMULD, ClassReg, ClassReg, ClassReg}:  {1, 4},
-	Optab{ASLLD, ClassReg, ClassReg, ClassReg}:  {1, 4},
-	Optab{ASLLW, ClassReg, ClassReg, ClassReg}:  {1, 4},
+	Optab{AADD, ClassReg, ClassNone, ClassNone, ClassReg}:  {1, 4},
+	Optab{AAND, ClassReg, ClassNone, ClassNone, ClassReg}:  {1, 4},
+	Optab{AMULD, ClassReg, ClassNone, ClassNone, ClassReg}: {1, 4},
+	Optab{AADD, ClassReg, ClassNone, ClassReg, ClassReg}:   {1, 4},
+	Optab{AAND, ClassReg, ClassNone, ClassReg, ClassReg}:   {1, 4},
+	Optab{AMULD, ClassReg, ClassNone, ClassReg, ClassReg}:  {1, 4},
+	Optab{ASLLD, ClassReg, ClassNone, ClassReg, ClassReg}:  {1, 4},
+	Optab{ASLLW, ClassReg, ClassNone, ClassReg, ClassReg}:  {1, 4},
 
-	Optab{AFADDD, ClassDoubleReg, ClassNone, ClassDoubleReg}:      {1, 4},
-	Optab{AFADDD, ClassDoubleReg, ClassDoubleReg, ClassDoubleReg}: {1, 4},
-	Optab{AFSMULD, ClassFloatReg, ClassFloatReg, ClassDoubleReg}:  {1, 4},
+	Optab{AFADDD, ClassDoubleReg, ClassNone, ClassNone, ClassDoubleReg}:      {1, 4},
+	Optab{AFADDD, ClassDoubleReg, ClassNone, ClassDoubleReg, ClassDoubleReg}: {1, 4},
+	Optab{AFSMULD, ClassFloatReg, ClassNone, ClassFloatReg, ClassDoubleReg}:  {1, 4},
 
-	Optab{AMOVD, ClassReg, ClassNone, ClassReg}: {2, 4},
+	Optab{AMOVD, ClassReg, ClassNone, ClassNone, ClassReg}: {2, 4},
 
-	Optab{AADD, ClassReg, ClassConst13, ClassReg}:  {3, 4},
-	Optab{AAND, ClassReg, ClassConst13, ClassReg}:  {3, 4},
-	Optab{AMULD, ClassReg, ClassConst13, ClassReg}: {3, 4},
-	Optab{ASLLD, ClassReg, ClassConst6, ClassReg}:  {3, 4},
-	Optab{ASLLW, ClassReg, ClassConst5, ClassReg}:  {3, 4},
+	Optab{AADD, ClassReg, ClassNone, ClassConst13, ClassReg}:  {3, 4},
+	Optab{AAND, ClassReg, ClassNone, ClassConst13, ClassReg}:  {3, 4},
+	Optab{AMULD, ClassReg, ClassNone, ClassConst13, ClassReg}: {3, 4},
+	Optab{ASLLD, ClassReg, ClassNone, ClassConst6, ClassReg}:  {3, 4},
+	Optab{ASLLW, ClassReg, ClassNone, ClassConst5, ClassReg}:  {3, 4},
 
-	Optab{AMOVD, ClassConst13, ClassNone, ClassReg}: {4, 4},
+	Optab{AMOVD, ClassConst13, ClassNone, ClassNone, ClassReg}: {4, 4},
 
-	Optab{ALDD, ClassIndirRegReg, ClassNone, ClassReg}:        {5, 4},
-	Optab{ASTD, ClassReg, ClassNone, ClassIndirRegReg}:        {6, 4},
-	Optab{ALDDF, ClassIndirRegReg, ClassNone, ClassDoubleReg}: {5, 4},
-	Optab{ASTDF, ClassDoubleReg, ClassNone, ClassIndirRegReg}: {6, 4},
+	Optab{ALDD, ClassIndirRegReg, ClassNone, ClassNone, ClassReg}:        {5, 4},
+	Optab{ASTD, ClassReg, ClassNone, ClassNone, ClassIndirRegReg}:        {6, 4},
+	Optab{ALDDF, ClassIndirRegReg, ClassNone, ClassNone, ClassDoubleReg}: {5, 4},
+	Optab{ASTDF, ClassDoubleReg, ClassNone, ClassNone, ClassIndirRegReg}: {6, 4},
 
-	Optab{ALDD, ClassIndir13, ClassNone, ClassReg}:        {7, 4},
-	Optab{ASTD, ClassReg, ClassNone, ClassIndir13}:        {8, 4},
-	Optab{ALDDF, ClassIndir13, ClassNone, ClassDoubleReg}: {7, 4},
-	Optab{ASTDF, ClassDoubleReg, ClassNone, ClassIndir13}: {8, 4},
+	Optab{ALDD, ClassIndir13, ClassNone, ClassNone, ClassReg}:        {7, 4},
+	Optab{ASTD, ClassReg, ClassNone, ClassNone, ClassIndir13}:        {8, 4},
+	Optab{ALDDF, ClassIndir13, ClassNone, ClassNone, ClassDoubleReg}: {7, 4},
+	Optab{ASTDF, ClassDoubleReg, ClassNone, ClassNone, ClassIndir13}: {8, 4},
 
-	Optab{ARD, ClassSpecialReg, ClassNone, ClassReg}: {9, 4},
+	Optab{ARD, ClassSpecialReg, ClassNone, ClassNone, ClassReg}: {9, 4},
 
-	Optab{ACASD, ClassIndir0, ClassReg, ClassReg}: {10, 4},
+	Optab{ACASD, ClassIndir0, ClassNone, ClassReg, ClassReg}: {10, 4},
 
-	Optab{AFSTOD, ClassFloatReg, ClassNone, ClassDoubleReg}: {11, 4},
-	Optab{AFDTOS, ClassDoubleReg, ClassNone, ClassFloatReg}: {11, 4},
+	Optab{AFSTOD, ClassFloatReg, ClassNone, ClassNone, ClassDoubleReg}: {11, 4},
+	Optab{AFDTOS, ClassDoubleReg, ClassNone, ClassNone, ClassFloatReg}: {11, 4},
 
-	Optab{AFMOVD, ClassDoubleReg, ClassNone, ClassDoubleReg}: {11, 4},
+	Optab{AFMOVD, ClassDoubleReg, ClassNone, ClassNone, ClassDoubleReg}: {11, 4},
 
-	Optab{AFXTOD, ClassDoubleReg, ClassNone, ClassDoubleReg}: {11, 4},
-	Optab{AFITOD, ClassDoubleReg, ClassNone, ClassDoubleReg}: {11, 4},
-	Optab{AFXTOS, ClassDoubleReg, ClassNone, ClassFloatReg}:  {11, 4},
-	Optab{AFITOS, ClassFloatReg, ClassNone, ClassFloatReg}:   {11, 4},
+	Optab{AFXTOD, ClassDoubleReg, ClassNone, ClassNone, ClassDoubleReg}: {11, 4},
+	Optab{AFITOD, ClassDoubleReg, ClassNone, ClassNone, ClassDoubleReg}: {11, 4},
+	Optab{AFXTOS, ClassDoubleReg, ClassNone, ClassNone, ClassFloatReg}:  {11, 4},
+	Optab{AFITOS, ClassFloatReg, ClassNone, ClassNone, ClassFloatReg}:   {11, 4},
 
-	Optab{AFSTOX, ClassDoubleReg, ClassNone, ClassDoubleReg}: {11, 4},
-	Optab{AFDTOX, ClassDoubleReg, ClassNone, ClassDoubleReg}: {11, 4},
-	Optab{AFDTOI, ClassDoubleReg, ClassNone, ClassDoubleReg}: {11, 4},
-	Optab{AFSTOI, ClassFloatReg, ClassNone, ClassFloatReg}:   {11, 4},
+	Optab{AFSTOX, ClassDoubleReg, ClassNone, ClassNone, ClassDoubleReg}: {11, 4},
+	Optab{AFDTOX, ClassDoubleReg, ClassNone, ClassNone, ClassDoubleReg}: {11, 4},
+	Optab{AFDTOI, ClassDoubleReg, ClassNone, ClassNone, ClassDoubleReg}: {11, 4},
+	Optab{AFSTOI, ClassFloatReg, ClassNone, ClassNone, ClassFloatReg}:   {11, 4},
 
-	Optab{AFABSD, ClassDoubleReg, ClassNone, ClassDoubleReg}: {11, 4},
+	Optab{AFABSD, ClassDoubleReg, ClassNone, ClassNone, ClassDoubleReg}: {11, 4},
 
-	Optab{ASETHI, ClassConst32, ClassNone, ClassReg}: {12, 4},
-	Optab{ARNOP, ClassNone, ClassNone, ClassNone}:    {12, 4},
+	Optab{ASETHI, ClassConst32, ClassNone, ClassNone, ClassReg}: {12, 4},
+	Optab{ARNOP, ClassNone, ClassNone, ClassNone, ClassNone}:    {12, 4},
 
-	Optab{AMEMBAR, ClassConst, ClassNone, ClassNone}: {13, 4},
+	Optab{AMEMBAR, ClassConst, ClassNone, ClassNone, ClassNone}: {13, 4},
 
-	Optab{AFCMPD, ClassDoubleReg, ClassDoubleReg, ClassFloatCond}: {14, 4},
-	Optab{AFCMPD, ClassDoubleReg, ClassDoubleReg, ClassNone}:      {14, 4},
+	Optab{AFCMPD, ClassDoubleReg, ClassNone, ClassDoubleReg, ClassFloatCond}: {14, 4},
+	Optab{AFCMPD, ClassDoubleReg, ClassNone, ClassDoubleReg, ClassNone}:      {14, 4},
 
-	Optab{AMOVD, ClassConst32, ClassNone, ClassReg}:  {15, 8},
-	Optab{AMOVD, ClassConst31_, ClassNone, ClassReg}: {16, 8},
+	Optab{AMOVD, ClassConst32, ClassNone, ClassNone, ClassReg}:  {15, 8},
+	Optab{AMOVD, ClassConst31_, ClassNone, ClassNone, ClassReg}: {16, 8},
 
-	Optab{obj.AJMP, ClassNone, ClassNone, ClassShortBranch}: {17, 4},
-	Optab{ABN, ClassCond, ClassNone, ClassShortBranch}:      {17, 4},
-	Optab{ABNW, ClassNone, ClassNone, ClassShortBranch}:     {17, 4},
-	Optab{ABRZ, ClassReg, ClassNone, ClassShortBranch}:      {18, 4},
-	Optab{AFBA, ClassNone, ClassNone, ClassShortBranch}:     {19, 4},
+	Optab{obj.AJMP, ClassNone, ClassNone, ClassNone, ClassShortBranch}: {17, 4},
+	Optab{ABN, ClassCond, ClassNone, ClassNone, ClassShortBranch}:      {17, 4},
+	Optab{ABNW, ClassNone, ClassNone, ClassNone, ClassShortBranch}:     {17, 4},
+	Optab{ABRZ, ClassReg, ClassNone, ClassNone, ClassShortBranch}:      {18, 4},
+	Optab{AFBA, ClassNone, ClassNone, ClassNone, ClassShortBranch}:     {19, 4},
 
-	Optab{AJMPL, ClassReg, ClassNone, ClassReg}:        {20, 4},
-	Optab{AJMPL, ClassRegConst13, ClassNone, ClassReg}: {20, 4},
-	Optab{AJMPL, ClassRegReg, ClassNone, ClassReg}:     {21, 4},
+	Optab{AJMPL, ClassReg, ClassNone, ClassNone, ClassReg}:        {20, 4},
+	Optab{AJMPL, ClassRegConst13, ClassNone, ClassNone, ClassReg}: {20, 4},
+	Optab{AJMPL, ClassRegReg, ClassNone, ClassNone, ClassReg}:     {21, 4},
 
-	Optab{obj.ACALL, ClassNone, ClassNone, ClassMem}: {22, 4},
+	Optab{obj.ACALL, ClassNone, ClassNone, ClassNone, ClassMem}: {22, 4},
 
-	Optab{AMOVD, ClassAddr, ClassNone, ClassReg}: {23, 8},
+	Optab{AMOVD, ClassAddr, ClassNone, ClassNone, ClassReg}: {23, 8},
 
-	Optab{ALDD, ClassMem, ClassNone, ClassReg}:        {24, 12},
-	Optab{ALDDF, ClassMem, ClassNone, ClassDoubleReg}: {24, 12},
-	Optab{ASTD, ClassReg, ClassNone, ClassMem}:        {25, 12},
-	Optab{ASTDF, ClassDoubleReg, ClassNone, ClassMem}: {25, 12},
+	Optab{ALDD, ClassMem, ClassNone, ClassNone, ClassReg}:        {24, 12},
+	Optab{ALDDF, ClassMem, ClassNone, ClassNone, ClassDoubleReg}: {24, 12},
+	Optab{ASTD, ClassReg, ClassNone, ClassNone, ClassMem}:        {25, 12},
+	Optab{ASTDF, ClassDoubleReg, ClassNone, ClassNone, ClassMem}: {25, 12},
 
-	Optab{obj.ARET, ClassNone, ClassNone, ClassNone}: {26, 4},
+	Optab{obj.ARET, ClassNone, ClassNone, ClassNone, ClassNone}: {26, 4},
 
-	Optab{ATA, ClassConst13, ClassNone, ClassNone}: {27, 4},
+	Optab{ATA, ClassConst13, ClassNone, ClassNone, ClassNone}: {27, 4},
 
-	Optab{AMOVD, ClassRegConst13, ClassNone, ClassReg}: {28, 4},
+	Optab{AMOVD, ClassRegConst13, ClassNone, ClassNone, ClassReg}: {28, 4},
 
-	Optab{AMOVUB, ClassReg, ClassNone, ClassReg}: {29, 4},
-	Optab{AMOVUH, ClassReg, ClassNone, ClassReg}: {30, 8},
-	Optab{AMOVUW, ClassReg, ClassNone, ClassReg}: {31, 4},
+	Optab{AMOVUB, ClassReg, ClassNone, ClassNone, ClassReg}: {29, 4},
+	Optab{AMOVUH, ClassReg, ClassNone, ClassNone, ClassReg}: {30, 8},
+	Optab{AMOVUW, ClassReg, ClassNone, ClassNone, ClassReg}: {31, 4},
 
-	Optab{AMOVB, ClassReg, ClassNone, ClassReg}: {32, 8},
-	Optab{AMOVH, ClassReg, ClassNone, ClassReg}: {33, 8},
-	Optab{AMOVW, ClassReg, ClassNone, ClassReg}: {34, 4},
+	Optab{AMOVB, ClassReg, ClassNone, ClassNone, ClassReg}: {32, 8},
+	Optab{AMOVH, ClassReg, ClassNone, ClassNone, ClassReg}: {33, 8},
+	Optab{AMOVW, ClassReg, ClassNone, ClassNone, ClassReg}: {34, 4},
 
-	Optab{ANEG, ClassReg, ClassNone, ClassReg}: {35, 4},
+	Optab{ANEG, ClassReg, ClassNone, ClassNone, ClassReg}: {35, 4},
 
-	Optab{ACMP, ClassReg, ClassReg, ClassNone}: {36, 4},
+	Optab{ACMP, ClassReg, ClassNone, ClassReg, ClassNone}: {36, 4},
 
-	Optab{ABND, ClassNone, ClassNone, ClassShortBranch}: {37, 4},
+	Optab{ABND, ClassNone, ClassNone, ClassNone, ClassShortBranch}: {37, 4},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -218,6 +219,9 @@ func init() {
 				if do.a3 == ClassDoubleReg {
 					do.a3 = ClassFloatReg
 				}
+				if do.a4 == ClassDoubleReg {
+					do.a4 = ClassFloatReg
+				}
 			}
 			_, ok := optab[do]
 			if !ok {
@@ -259,18 +263,32 @@ func init() {
 			}
 		}
 	}
+	for o, v := range optab {
+		for _, c := range cc[o.a4] {
+			do := o
+			do.a4 = c
+			_, ok := optab[do]
+			if !ok {
+				optab[do] = v
+			}
+		}
+	}
 }
 
 func oplook(p *obj.Prog) (Opval, error) {
-	o := Optab{as: p.As, a1: p.From.Class, a2: ClassNone, a3: p.To.Class}
+	var a2, a3 int8 = ClassNone, ClassNone
+	if p.Reg != 0 {
+		a2 = rclass(p.Reg)
+	}
 	var type3 int16
 	if p.From3 != nil {
-		o.a2 = p.From3.Class
+		a3 = p.From3.Class
 		type3 = p.From3.Type
 	}
+	o := Optab{as: p.As, a1: p.From.Class, a2: a2, a3: a3, a4: p.To.Class}
 	v, ok := optab[o]
 	if !ok {
-		return Opval{}, fmt.Errorf("illegal combination %v %v %v %v, %d %d %d", p, DRconv(o.a1), DRconv(o.a2), DRconv(o.a3), p.From.Type, type3, p.To.Type)
+		return Opval{}, fmt.Errorf("illegal combination %v %v %v %v %v, %d %d %d %d", p, DRconv(o.a1), DRconv(o.a2), DRconv(o.a3), DRconv(o.a4), p.From.Type, p.Reg, type3, p.To.Type)
 	}
 	return v, nil
 }
