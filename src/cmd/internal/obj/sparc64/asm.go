@@ -34,9 +34,9 @@ var optab = map[Optab]Opval{
 	Optab{ASLLD, ClassReg, ClassNone, ClassReg, ClassReg}:  {1, 4},
 	Optab{ASLLW, ClassReg, ClassNone, ClassReg, ClassReg}:  {1, 4},
 
-	Optab{AFADDD, ClassDoubleReg, ClassNone, ClassNone, ClassDoubleReg}:      {1, 4},
-	Optab{AFADDD, ClassDoubleReg, ClassNone, ClassDoubleReg, ClassDoubleReg}: {1, 4},
-	Optab{AFSMULD, ClassFloatReg, ClassNone, ClassFloatReg, ClassDoubleReg}:  {1, 4},
+	Optab{AFADDD, ClassDReg, ClassNone, ClassNone, ClassDReg}:  {1, 4},
+	Optab{AFADDD, ClassDReg, ClassNone, ClassDReg, ClassDReg}:  {1, 4},
+	Optab{AFSMULD, ClassFReg, ClassNone, ClassFReg, ClassDReg}: {1, 4},
 
 	Optab{AMOVD, ClassReg, ClassNone, ClassNone, ClassReg}: {2, 4},
 
@@ -48,53 +48,53 @@ var optab = map[Optab]Opval{
 
 	Optab{AMOVD, ClassConst13, ClassNone, ClassNone, ClassReg}: {4, 4},
 
-	Optab{ALDD, ClassIndirRegReg, ClassNone, ClassNone, ClassReg}:        {5, 4},
-	Optab{ASTD, ClassReg, ClassNone, ClassNone, ClassIndirRegReg}:        {6, 4},
-	Optab{ALDDF, ClassIndirRegReg, ClassNone, ClassNone, ClassDoubleReg}: {5, 4},
-	Optab{ASTDF, ClassDoubleReg, ClassNone, ClassNone, ClassIndirRegReg}: {6, 4},
+	Optab{ALDD, ClassIndirRegReg, ClassNone, ClassNone, ClassReg}:   {5, 4},
+	Optab{ASTD, ClassReg, ClassNone, ClassNone, ClassIndirRegReg}:   {6, 4},
+	Optab{ALDDF, ClassIndirRegReg, ClassNone, ClassNone, ClassDReg}: {5, 4},
+	Optab{ASTDF, ClassDReg, ClassNone, ClassNone, ClassIndirRegReg}: {6, 4},
 
-	Optab{ALDD, ClassIndir13, ClassNone, ClassNone, ClassReg}:        {7, 4},
-	Optab{ASTD, ClassReg, ClassNone, ClassNone, ClassIndir13}:        {8, 4},
-	Optab{ALDDF, ClassIndir13, ClassNone, ClassNone, ClassDoubleReg}: {7, 4},
-	Optab{ASTDF, ClassDoubleReg, ClassNone, ClassNone, ClassIndir13}: {8, 4},
+	Optab{ALDD, ClassIndir13, ClassNone, ClassNone, ClassReg}:   {7, 4},
+	Optab{ASTD, ClassReg, ClassNone, ClassNone, ClassIndir13}:   {8, 4},
+	Optab{ALDDF, ClassIndir13, ClassNone, ClassNone, ClassDReg}: {7, 4},
+	Optab{ASTDF, ClassDReg, ClassNone, ClassNone, ClassIndir13}: {8, 4},
 
-	Optab{ARD, ClassSpecialReg, ClassNone, ClassNone, ClassReg}: {9, 4},
+	Optab{ARD, ClassSpcReg, ClassNone, ClassNone, ClassReg}: {9, 4},
 
 	Optab{ACASD, ClassIndir0, ClassNone, ClassReg, ClassReg}: {10, 4},
 
-	Optab{AFSTOD, ClassFloatReg, ClassNone, ClassNone, ClassDoubleReg}: {11, 4},
-	Optab{AFDTOS, ClassDoubleReg, ClassNone, ClassNone, ClassFloatReg}: {11, 4},
+	Optab{AFSTOD, ClassFReg, ClassNone, ClassNone, ClassDReg}: {11, 4},
+	Optab{AFDTOS, ClassDReg, ClassNone, ClassNone, ClassFReg}: {11, 4},
 
-	Optab{AFMOVD, ClassDoubleReg, ClassNone, ClassNone, ClassDoubleReg}: {11, 4},
+	Optab{AFMOVD, ClassDReg, ClassNone, ClassNone, ClassDReg}: {11, 4},
 
-	Optab{AFXTOD, ClassDoubleReg, ClassNone, ClassNone, ClassDoubleReg}: {11, 4},
-	Optab{AFITOD, ClassDoubleReg, ClassNone, ClassNone, ClassDoubleReg}: {11, 4},
-	Optab{AFXTOS, ClassDoubleReg, ClassNone, ClassNone, ClassFloatReg}:  {11, 4},
-	Optab{AFITOS, ClassFloatReg, ClassNone, ClassNone, ClassFloatReg}:   {11, 4},
+	Optab{AFXTOD, ClassDReg, ClassNone, ClassNone, ClassDReg}: {11, 4},
+	Optab{AFITOD, ClassDReg, ClassNone, ClassNone, ClassDReg}: {11, 4},
+	Optab{AFXTOS, ClassDReg, ClassNone, ClassNone, ClassFReg}: {11, 4},
+	Optab{AFITOS, ClassFReg, ClassNone, ClassNone, ClassFReg}: {11, 4},
 
-	Optab{AFSTOX, ClassDoubleReg, ClassNone, ClassNone, ClassDoubleReg}: {11, 4},
-	Optab{AFDTOX, ClassDoubleReg, ClassNone, ClassNone, ClassDoubleReg}: {11, 4},
-	Optab{AFDTOI, ClassDoubleReg, ClassNone, ClassNone, ClassDoubleReg}: {11, 4},
-	Optab{AFSTOI, ClassFloatReg, ClassNone, ClassNone, ClassFloatReg}:   {11, 4},
+	Optab{AFSTOX, ClassDReg, ClassNone, ClassNone, ClassDReg}: {11, 4},
+	Optab{AFDTOX, ClassDReg, ClassNone, ClassNone, ClassDReg}: {11, 4},
+	Optab{AFDTOI, ClassDReg, ClassNone, ClassNone, ClassDReg}: {11, 4},
+	Optab{AFSTOI, ClassFReg, ClassNone, ClassNone, ClassFReg}: {11, 4},
 
-	Optab{AFABSD, ClassDoubleReg, ClassNone, ClassNone, ClassDoubleReg}: {11, 4},
+	Optab{AFABSD, ClassDReg, ClassNone, ClassNone, ClassDReg}: {11, 4},
 
 	Optab{ASETHI, ClassConst32, ClassNone, ClassNone, ClassReg}: {12, 4},
 	Optab{ARNOP, ClassNone, ClassNone, ClassNone, ClassNone}:    {12, 4},
 
 	Optab{AMEMBAR, ClassConst, ClassNone, ClassNone, ClassNone}: {13, 4},
 
-	Optab{AFCMPD, ClassDoubleReg, ClassNone, ClassDoubleReg, ClassFloatCond}: {14, 4},
-	Optab{AFCMPD, ClassDoubleReg, ClassNone, ClassDoubleReg, ClassNone}:      {14, 4},
+	Optab{AFCMPD, ClassDReg, ClassNone, ClassDReg, ClassFCond}: {14, 4},
+	Optab{AFCMPD, ClassDReg, ClassNone, ClassDReg, ClassNone}:  {14, 4},
 
 	Optab{AMOVD, ClassConst32, ClassNone, ClassNone, ClassReg}:  {15, 8},
 	Optab{AMOVD, ClassConst31_, ClassNone, ClassNone, ClassReg}: {16, 8},
 
-	Optab{obj.AJMP, ClassNone, ClassNone, ClassNone, ClassShortBranch}: {17, 4},
-	Optab{ABN, ClassCond, ClassNone, ClassNone, ClassShortBranch}:      {17, 4},
-	Optab{ABNW, ClassNone, ClassNone, ClassNone, ClassShortBranch}:     {17, 4},
-	Optab{ABRZ, ClassReg, ClassNone, ClassNone, ClassShortBranch}:      {18, 4},
-	Optab{AFBA, ClassNone, ClassNone, ClassNone, ClassShortBranch}:     {19, 4},
+	Optab{obj.AJMP, ClassNone, ClassNone, ClassNone, ClassBranch}: {17, 4},
+	Optab{ABN, ClassCond, ClassNone, ClassNone, ClassBranch}:      {17, 4},
+	Optab{ABNW, ClassNone, ClassNone, ClassNone, ClassBranch}:     {17, 4},
+	Optab{ABRZ, ClassReg, ClassNone, ClassNone, ClassBranch}:      {18, 4},
+	Optab{AFBA, ClassNone, ClassNone, ClassNone, ClassBranch}:     {19, 4},
 
 	Optab{AJMPL, ClassReg, ClassNone, ClassNone, ClassReg}:        {20, 4},
 	Optab{AJMPL, ClassRegConst13, ClassNone, ClassNone, ClassReg}: {20, 4},
@@ -104,10 +104,10 @@ var optab = map[Optab]Opval{
 
 	Optab{AMOVD, ClassAddr, ClassNone, ClassNone, ClassReg}: {23, 8},
 
-	Optab{ALDD, ClassMem, ClassNone, ClassNone, ClassReg}:        {24, 12},
-	Optab{ALDDF, ClassMem, ClassNone, ClassNone, ClassDoubleReg}: {24, 12},
-	Optab{ASTD, ClassReg, ClassNone, ClassNone, ClassMem}:        {25, 12},
-	Optab{ASTDF, ClassDoubleReg, ClassNone, ClassNone, ClassMem}: {25, 12},
+	Optab{ALDD, ClassMem, ClassNone, ClassNone, ClassReg}:   {24, 12},
+	Optab{ALDDF, ClassMem, ClassNone, ClassNone, ClassDReg}: {24, 12},
+	Optab{ASTD, ClassReg, ClassNone, ClassNone, ClassMem}:   {25, 12},
+	Optab{ASTDF, ClassDReg, ClassNone, ClassNone, ClassMem}: {25, 12},
 
 	Optab{obj.ARET, ClassNone, ClassNone, ClassNone, ClassNone}: {26, 4},
 
@@ -127,7 +127,7 @@ var optab = map[Optab]Opval{
 
 	Optab{ACMP, ClassReg, ClassNone, ClassReg, ClassNone}: {36, 4},
 
-	Optab{ABND, ClassNone, ClassNone, ClassNone, ClassShortBranch}: {37, 4},
+	Optab{ABND, ClassNone, ClassNone, ClassNone, ClassBranch}: {37, 4},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -210,17 +210,17 @@ func init() {
 			do := o
 			do.as = c
 			if isInstDouble[o.as] && isInstFloat[do.as] {
-				if do.a1 == ClassDoubleReg {
-					do.a1 = ClassFloatReg
+				if do.a1 == ClassDReg {
+					do.a1 = ClassFReg
 				}
-				if do.a2 == ClassDoubleReg {
-					do.a2 = ClassFloatReg
+				if do.a2 == ClassDReg {
+					do.a2 = ClassFReg
 				}
-				if do.a3 == ClassDoubleReg {
-					do.a3 = ClassFloatReg
+				if do.a3 == ClassDReg {
+					do.a3 = ClassFReg
 				}
-				if do.a4 == ClassDoubleReg {
-					do.a4 = ClassFloatReg
+				if do.a4 == ClassDReg {
+					do.a4 = ClassFReg
 				}
 			}
 			_, ok := optab[do]
@@ -728,15 +728,15 @@ func rclass(r int16) int8 {
 	case REG_R1 <= r && r <= REG_R31:
 		return ClassReg
 	case REG_F0 <= r && r <= REG_F31:
-		return ClassFloatReg
+		return ClassFReg
 	case REG_D0 <= r && r <= REG_D62:
-		return ClassDoubleReg
+		return ClassDReg
 	case r == REG_ICC || r == REG_XCC:
 		return ClassCond
 	case REG_FCC0 <= r && r <= REG_FCC3:
-		return ClassFloatCond
+		return ClassFCond
 	case r >= REG_SPECIAL:
-		return ClassSpecialReg
+		return ClassSpcReg
 	}
 	return ClassUnknown
 }
@@ -768,7 +768,7 @@ func aclass(a *obj.Addr) int8 {
 		}
 
 	case obj.TYPE_FCONST:
-		return ClassFloatConst
+		return ClassFConst
 
 	case obj.TYPE_TEXTSIZE:
 		return ClassTextSize
@@ -797,7 +797,7 @@ func aclass(a *obj.Addr) int8 {
 			panic("unimplemented")
 		}
 	case obj.TYPE_BRANCH:
-		return ClassShortBranch
+		return ClassBranch
 	}
 	return ClassUnknown
 }

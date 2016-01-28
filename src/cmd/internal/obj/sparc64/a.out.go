@@ -180,22 +180,22 @@ const (
 const (
 	ClassUnknown = iota
 
-	ClassReg        // R1..R31
-	ClassFloatReg   // F0..F31
-	ClassDoubleReg  // D0..D62
-	ClassCond       // ICC, XCC
-	ClassFloatCond  // FCC0..FCC3
-	ClassSpecialReg // TICK, CCR, etc
+	ClassReg    // R1..R31
+	ClassFReg   // F0..F31
+	ClassDReg   // D0..D62
+	ClassCond   // ICC, XCC
+	ClassFCond  // FCC0..FCC3
+	ClassSpcReg // TICK, CCR, etc
 
-	ClassZero       // $0 or ZR
-	ClassConst5     // unsigned 5-bit constant
-	ClassConst6     // unsigned 6-bit constant
-	ClassConst13    // signed 13-bit constant
-	ClassConst31_   // signed 32-bit constant, negative
-	ClassConst31    // signed 32-bit constant, positive or zero
-	ClassConst32    // 32-bit constant
-	ClassConst      // 64-bit constant
-	ClassFloatConst // floating-point constant
+	ClassZero     // $0 or ZR
+	ClassConst5   // unsigned 5-bit constant
+	ClassConst6   // unsigned 6-bit constant
+	ClassConst13  // signed 13-bit constant
+	ClassConst31_ // signed 32-bit constant, negative
+	ClassConst31  // signed 32-bit constant, positive or zero
+	ClassConst32  // 32-bit constant
+	ClassConst    // 64-bit constant
+	ClassFConst   // floating-point constant
 
 	ClassRegReg     // $(Rn+Rm) or $(Rn)(Rm*1)
 	ClassRegConst13 // $n(R), n is 13-bit signed
@@ -206,7 +206,7 @@ const (
 	ClassIndir13     // n(R), n is 13-bit signed
 	ClassIndir       // n(R), n large
 
-	ClassShortBranch // n(PC) branch target, n is 21-bit signed, mod 4
+	ClassBranch // n(PC) branch target, n is 21-bit signed, mod 4
 
 	ClassAddr // $sym(SB)
 	ClassMem  // sym(SB)
@@ -218,11 +218,11 @@ const (
 var cnames = []string{
 	ClassUnknown:     "ClassUnknown",
 	ClassReg:         "ClassReg",
-	ClassFloatReg:    "ClassFloatReg",
-	ClassDoubleReg:   "ClassDoubleReg",
+	ClassFReg:        "ClassFReg",
+	ClassDReg:        "ClassDReg",
 	ClassCond:        "ClassCond",
-	ClassFloatCond:   "ClassFloatCond",
-	ClassSpecialReg:  "ClassSpecialReg",
+	ClassFCond:       "ClassFCond",
+	ClassSpcReg:      "ClassSpcReg",
 	ClassZero:        "ClassZero",
 	ClassConst5:      "ClassConst5",
 	ClassConst6:      "ClassConst6",
@@ -231,7 +231,7 @@ var cnames = []string{
 	ClassConst31:     "ClassConst31+",
 	ClassConst32:     "ClassConst32",
 	ClassConst:       "ClassConst",
-	ClassFloatConst:  "ClassFloatConst",
+	ClassFConst:      "ClassFConst",
 	ClassRegReg:      "ClassRegReg",
 	ClassRegConst13:  "ClassRegConst13",
 	ClassRegConst:    "ClassRegConst",
@@ -239,7 +239,7 @@ var cnames = []string{
 	ClassIndir0:      "ClassIndir0",
 	ClassIndir13:     "ClassIndir13",
 	ClassIndir:       "ClassIndir",
-	ClassShortBranch: "ClassShortBranch",
+	ClassBranch:      "ClassBranch",
 	ClassAddr:        "ClassAddr",
 	ClassMem:         "ClassMem",
 	ClassTextSize:    "ClassTextSize",
