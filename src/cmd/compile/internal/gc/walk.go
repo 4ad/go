@@ -640,7 +640,7 @@ func walkexpr(np **Node, init **NodeList) {
 
 		if n.Left.Op == ONAME && n.Left.Sym.Name == "Sqrt" && n.Left.Sym.Pkg.Path == "math" {
 			switch Thearch.Thechar {
-			case '5', '6', '7':
+			case '5', '6', '7', 'u':
 				n.Op = OSQRT
 				n.Left = n.List.N
 				n.List = nil
@@ -3402,7 +3402,7 @@ func samecheap(a *Node, b *Node) bool {
 }
 
 func walkrotate(np **Node) {
-	if Thearch.Thechar == '7' || Thearch.Thechar == '9' {
+	if Thearch.Thechar == '7' || Thearch.Thechar == '9' || Ctxt.Arch.Thechar == 'u' {
 		return
 	}
 
@@ -3534,7 +3534,7 @@ func walkdiv(np **Node, init **NodeList) {
 	// if >= 0, nr is 1<<pow // 1 if nr is negative.
 
 	// TODO(minux)
-	if Thearch.Thechar == '7' || Thearch.Thechar == '9' {
+	if Thearch.Thechar == '7' || Thearch.Thechar == '9' || Ctxt.Arch.Thechar == 'u' {
 		return
 	}
 
