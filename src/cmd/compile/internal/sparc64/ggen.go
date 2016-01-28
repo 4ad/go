@@ -102,7 +102,7 @@ func zerorange(p *obj.Prog, frame int64, lo int64, hi int64) *obj.Prog {
 		p = appendpp(p, sparc64.AADD, obj.TYPE_CONST, 0, int64(gc.Widthptr), obj.TYPE_REG, sparc64.REG_RT1, 0)
 		p = appendpp(p, sparc64.ACMP, obj.TYPE_REG, sparc64.REG_RT1, 0, obj.TYPE_NONE, 0, 0)
 		p.Reg = sparc64.REG_RT2
-		p = appendpp(p, sparc64.ABNE, obj.TYPE_NONE, 0, 0, obj.TYPE_BRANCH, 0, 0)
+		p = appendpp(p, sparc64.ABNED, obj.TYPE_NONE, 0, 0, obj.TYPE_BRANCH, 0, 0)
 		gc.Patch(p, p1)
 	}
 
@@ -448,7 +448,7 @@ func clearfat(nl *gc.Node) {
 		pl := (*obj.Prog)(p)
 
 		p = gcmp(sparc64.ACMP, &dst, &end)
-		gc.Patch(gc.Gbranch(sparc64.ABNE, nil, 0), pl)
+		gc.Patch(gc.Gbranch(sparc64.ABNED, nil, 0), pl)
 
 		gc.Regfree(&end)
 
