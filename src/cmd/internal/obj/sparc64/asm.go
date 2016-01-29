@@ -25,6 +25,7 @@ type Opval struct {
 var optab = map[Optab]Opval{
 	Optab{obj.ATEXT, ClassAddr, ClassNone, ClassNone, ClassTextSize}: {0, 0},
 	Optab{obj.AFUNCDATA, ClassConst, ClassNone, ClassNone, ClassMem}: {0, 0},
+	Optab{obj.APCDATA, ClassConst, ClassNone, ClassNone, ClassConst}: {0, 0},
 
 	Optab{AADD, ClassReg, ClassNone, ClassNone, ClassReg}:  {1, 4},
 	Optab{AAND, ClassReg, ClassNone, ClassNone, ClassReg}:  {1, 4},
@@ -129,6 +130,8 @@ var optab = map[Optab]Opval{
 	Optab{ACMP, ClassReg, ClassReg, ClassNone, ClassNone}: {36, 4},
 
 	Optab{ABND, ClassNone, ClassNone, ClassNone, ClassBranch}: {37, 4},
+
+	Optab{obj.AUNDEF, ClassNone, ClassNone, ClassNone, ClassNone}: {38, 4},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -1102,6 +1105,15 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		if p.Scond == 0 {
 			*o1 |= 1 << 19
 		}
+
+	// UNDEF
+	// This is supposed to be something that stops execution.
+	// It's not supposed to be reached, ever, but if it is, we'd
+	// like to be able to tell how we got there.  Assemble as
+	// 0xdead0 which is guaranteed to raise undefined instruction
+	// exception.
+	case 38:
+		*o1 = 0xdead0 // ILLTRAP
 	}
 
 	return out[:o.size/4], nil
