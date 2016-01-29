@@ -102,6 +102,7 @@ var progtable = [sparc64.ALAST]obj.ProgInfo{
 
 	// Jumps
 	obj.AJMP:       {Flags: gc.Jump | gc.Break},
+	obj.ACALL:      {Flags: gc.Call},
 	sparc64.ABRNZ:  {Flags: gc.Cjmp},
 	sparc64.ABCCD:  {Flags: gc.Cjmp},
 	sparc64.ABCCW:  {Flags: gc.Cjmp},
