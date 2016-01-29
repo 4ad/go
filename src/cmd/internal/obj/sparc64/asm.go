@@ -102,7 +102,9 @@ var optab = map[Optab]Opval{
 	Optab{AJMPL, ClassRegConst13, ClassNone, ClassNone, ClassReg}: {20, 4},
 	Optab{AJMPL, ClassRegReg, ClassNone, ClassNone, ClassReg}:     {21, 4},
 
-	Optab{obj.ACALL, ClassNone, ClassNone, ClassNone, ClassMem}: {22, 4},
+	Optab{obj.ACALL, ClassNone, ClassNone, ClassNone, ClassMem}:     {22, 4},
+	Optab{obj.ADUFFZERO, ClassNone, ClassNone, ClassNone, ClassMem}: {22, 4},
+	Optab{obj.ADUFFCOPY, ClassNone, ClassNone, ClassNone, ClassMem}: {22, 4},
 
 	Optab{AMOVD, ClassAddr, ClassNone, ClassNone, ClassReg}: {23, 8},
 
@@ -565,7 +567,7 @@ func opcode(a int16) uint32 {
 		return cond(7) | op2(3)
 
 	// Call and link
-	case obj.ACALL:
+	case obj.ACALL, obj.ADUFFCOPY, obj.ADUFFZERO:
 		return op(1)
 
 	case ACASW:
@@ -988,6 +990,7 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, p.From.Index, p.To.Reg)
 
 	// CALL sym(SB)
+	// DUFFCOPY, DUFFZERO
 	case 22:
 		*o1 = opcode(p.As)
 		rel := obj.Addrel(cursym)
