@@ -297,25 +297,20 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			// 	p.To.Reg = REG_RSP
 			// 	p.To.Offset = int64(112 + StackBias)
 
-			// 	// ADD RSP, -(frame+128), RSP
+			// 	// ADD -(frame+128), RSP
 			// 	p = obj.Appendp(ctxt, p)
 			// 	p.As = AADD
-			// 	p.From.Type = obj.TYPE_REG
-			// 	p.From.Reg = REG_RSP
-			// 	p.From3 = new(obj.Addr)
-			// 	p.From3.Type = obj.TYPE_CONST
-			// 	p.From3.Offset = -int64(frameSize + WindowSaveAreaSize)
+			// 	p.From.Type = obj.TYPE_CONST
+			// 	p.From.Offset = -int64(frameSize + WindowSaveAreaSize)
 			// 	p.To.Type = obj.TYPE_REG
 			// 	p.To.Reg = REG_RSP
 
-			// 	// SUB RSP, -(frame+128), RFP
+			// 	// SUB -(frame+128), RSP, RFP
 			// 	p = obj.Appendp(ctxt, p)
 			// 	p.As = ASUB
-			// 	p.From.Type = obj.TYPE_REG
-			// 	p.From.Reg = REG_RSP
-			// 	p.From3 = new(obj.Addr)
-			// 	p.From3.Type = obj.TYPE_CONST
-			// 	p.From3.Offset = -int64(frameSize + WindowSaveAreaSize)
+			// 	p.From.Type = obj.TYPE_CONST
+			// 	p.From.Offset = -int64(frameSize + WindowSaveAreaSize)
+			// 	p.Reg = REG_RSP
 			// 	p.To.Type = obj.TYPE_REG
 			// 	p.To.Reg = REG_RFP
 
@@ -348,25 +343,20 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			p.To.Reg = REG_RSP
 			p.To.Offset = int64(120 + StackBias)
 
-			// ADD RSP, -(frame+128|176), RSP
+			// ADD -(frame+128|176), RSP
 			p = obj.Appendp(ctxt, p)
 			p.As = AADD
-			p.From.Type = obj.TYPE_REG
-			p.From.Reg = REG_RSP
-			p.From3 = new(obj.Addr)
-			p.From3.Type = obj.TYPE_CONST
-			p.From3.Offset = -int64(frameSize + MinStackFrameSize)
+			p.From.Type = obj.TYPE_CONST
+			p.From.Offset = -int64(frameSize + MinStackFrameSize)
 			p.To.Type = obj.TYPE_REG
 			p.To.Reg = REG_RSP
 
-			// SUB RSP, -(frame+128|176), RFP
+			// SUB -(frame+128|176), RSP, RFP
 			p = obj.Appendp(ctxt, p)
 			p.As = ASUB
-			p.From.Type = obj.TYPE_REG
-			p.From.Reg = REG_RSP
-			p.From3 = new(obj.Addr)
-			p.From3.Type = obj.TYPE_CONST
-			p.From3.Offset = -int64(frameSize + MinStackFrameSize)
+			p.From.Type = obj.TYPE_CONST
+			p.From.Offset = -int64(frameSize + MinStackFrameSize)
+			p.Reg = REG_RSP
 			p.To.Type = obj.TYPE_REG
 			p.To.Reg = REG_RFP
 

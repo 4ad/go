@@ -42,11 +42,16 @@ var optab = map[Optab]Opval{
 
 	Optab{AMOVD, ClassReg, ClassNone, ClassNone, ClassReg}: {2, 4},
 
-	Optab{AADD, ClassReg, ClassNone, ClassConst13, ClassReg}:  {3, 4},
-	Optab{AAND, ClassReg, ClassNone, ClassConst13, ClassReg}:  {3, 4},
-	Optab{AMULD, ClassReg, ClassNone, ClassConst13, ClassReg}: {3, 4},
-	Optab{ASLLD, ClassReg, ClassNone, ClassConst6, ClassReg}:  {3, 4},
-	Optab{ASLLW, ClassReg, ClassNone, ClassConst5, ClassReg}:  {3, 4},
+	Optab{AADD, ClassConst13, ClassNone, ClassNone, ClassReg}:  {3, 4},
+	Optab{AAND, ClassConst13, ClassNone, ClassNone, ClassReg}:  {3, 4},
+	Optab{AMULD, ClassConst13, ClassNone, ClassNone, ClassReg}: {3, 4},
+	Optab{ASLLD, ClassConst6, ClassNone, ClassNone, ClassReg}:  {3, 4},
+	Optab{ASLLW, ClassConst5, ClassNone, ClassNone, ClassReg}:  {3, 4},
+	Optab{AADD, ClassConst13, ClassReg, ClassNone, ClassReg}:   {3, 4},
+	Optab{AAND, ClassConst13, ClassReg, ClassNone, ClassReg}:   {3, 4},
+	Optab{AMULD, ClassConst13, ClassReg, ClassNone, ClassReg}:  {3, 4},
+	Optab{ASLLD, ClassConst6, ClassReg, ClassNone, ClassReg}:   {3, 4},
+	Optab{ASLLW, ClassConst5, ClassReg, ClassNone, ClassReg}:   {3, 4},
 
 	Optab{AMOVD, ClassConst13, ClassNone, ClassNone, ClassReg}: {4, 4},
 
@@ -62,7 +67,7 @@ var optab = map[Optab]Opval{
 
 	Optab{ARD, ClassSpcReg, ClassNone, ClassNone, ClassReg}: {9, 4},
 
-	Optab{ACASD, ClassIndir0, ClassNone, ClassReg, ClassReg}: {10, 4},
+	Optab{ACASD, ClassIndir0, ClassReg, ClassNone, ClassReg}: {10, 4},
 
 	Optab{AFSTOD, ClassFReg, ClassNone, ClassNone, ClassDReg}: {11, 4},
 	Optab{AFDTOS, ClassDReg, ClassNone, ClassNone, ClassFReg}: {11, 4},
@@ -851,21 +856,25 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		return nil, fmt.Errorf("unknown asm %d", o)
 
 	// op Rs,       Rd	-> Rd = Rs op Rd
-	// op Rs1, Rs2, Rd	-> Rd = Rs1 op Rs2
+	// op Rs1, Rs2, Rd	-> Rd = Rs2 op Rs1
 	case 1:
 		reg := p.To.Reg
 		if p.Reg != 0 {
 			reg = p.Reg
 		}
-		*o1 = opalu(p.As) | rrr(p.From.Reg, 0, reg, p.To.Reg)
+		*o1 = opalu(p.As) | rrr(reg, 0, p.From.Reg, p.To.Reg)
 
 	// MOVD Rs, Rd
 	case 2:
 		*o1 = opalu(p.As) | rrr(REG_ZR, 0, p.From.Reg, p.To.Reg)
 
-	// op Rs, $imm13, Rd	-> Rd = Rs op $imm13
+	// op $imm13, Rs, Rd	-> Rd = Rs op $imm13
 	case 3:
-		*o1 = opalu(p.As) | rsr(p.From.Reg, p.From3.Offset, p.To.Reg)
+		reg := p.To.Reg
+		if p.Reg != 0 {
+			reg = p.Reg
+		}
+		*o1 = opalu(p.As) | rsr(reg, p.From.Offset, p.To.Reg)
 
 	// MOVD $imm13, Rd
 	case 4:
@@ -893,7 +902,7 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 
 	// CASD/CASW
 	case 10:
-		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, p.From3.Reg, p.To.Reg)
+		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, p.Reg, p.To.Reg)
 
 	// fop Fs, Fd
 	case 11:
