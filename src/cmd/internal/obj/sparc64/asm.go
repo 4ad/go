@@ -30,6 +30,8 @@ var optab = map[Optab]Opval{
 	Optab{AADD, ClassReg, ClassNone, ClassNone, ClassReg}:  {1, 4},
 	Optab{AAND, ClassReg, ClassNone, ClassNone, ClassReg}:  {1, 4},
 	Optab{AMULD, ClassReg, ClassNone, ClassNone, ClassReg}: {1, 4},
+	Optab{ASLLD, ClassReg, ClassNone, ClassNone, ClassReg}: {1, 4},
+	Optab{ASLLW, ClassReg, ClassNone, ClassNone, ClassReg}: {1, 4},
 	Optab{AADD, ClassReg, ClassReg, ClassNone, ClassReg}:   {1, 4},
 	Optab{AAND, ClassReg, ClassReg, ClassNone, ClassReg}:   {1, 4},
 	Optab{AMULD, ClassReg, ClassReg, ClassNone, ClassReg}:  {1, 4},
@@ -209,7 +211,7 @@ var ci = map[int16][]int16{
 	ARD:    {AMOVD},
 	ASLLD:  {ASRLD, ASRAD},
 	ASLLW:  {ASLLW, ASRLW, ASRAW},
-	ASTD:   {ASTB, ASTH, ASTW, AMOVUB, AMOVUH, AMOVUW, AMOVD},
+	ASTD:   {ASTB, ASTH, ASTW, AMOVB, AMOVH, AMOVW, AMOVUB, AMOVUH, AMOVUW, AMOVD},
 	ASTDF:  {ASTSF, AFMOVD, AFMOVS},
 }
 
@@ -386,11 +388,11 @@ func opload(a int16) uint32 {
 func opstore(a int16) uint32 {
 	switch a {
 	// Store Integer.
-	case ASTB, AMOVUB:
+	case ASTB, AMOVB, AMOVUB:
 		return op3(3, 5)
-	case ASTH, AMOVUH:
+	case ASTH, AMOVH, AMOVUH:
 		return op3(3, 6)
-	case ASTW, AMOVUW:
+	case ASTW, AMOVW, AMOVUW:
 		return op3(3, 4)
 	case ASTD, AMOVD:
 		return op3(3, 14)
