@@ -852,6 +852,34 @@ func span(ctxt *obj.Link, cursym *obj.LSym) {
 	}
 }
 
+// bigmove assembles a move of const into reg.
+func bigmove(class int, imm int64, reg int16) (out []uint32) {
+	out = make([]uint32, 2)
+	switch class {
+	// MOVD $imm32, R ->
+	// 	SETHI hi($imm32), R
+	// 	OR R, lo($imm32), R
+	case ClassConst32:
+		out[0] = opcode(ASETHI) | ir(uint32(imm)>>10, reg)
+		if imm&0x3FF == 0 {
+			return out[:1]
+		}
+		out[1] = opalu(AOR) | rsr(reg, int64(imm&0x3FF), reg)
+
+	// MOVD -$imm31, R ->
+	// 	SETHI hi(^$imm32), R
+	// 	XOR R, lo($imm32)|0x1C00, R
+	case ClassConst31_:
+		out[0] = opcode(ASETHI) | ir(^(uint32(imm))>>10, reg)
+		if imm&0x3FF == 0 {
+			out[1] = opalu(ASRAD) | rrr(reg, 0, REG_ZR, reg)
+			return out
+		}
+		out[1] = opalu(AXOR) | rsr(reg, int64(uint32(imm)&0x3ff|0x1C00), reg)
+	}
+	return out
+}
+
 func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	out = make([]uint32, 3)
 	o1 := &out[0]
@@ -933,26 +961,25 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	case 14:
 		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, p.Reg, p.To.Reg&3)
 
-	// MOVD $imm32, R ->
-	// 	SETHI hi($imm32), R
-	// 	OR R, lo($imm32), R
+	// MOVD $imm32, R
 	case 15:
-		*o1 = opcode(ASETHI) | ir(uint32(p.From.Offset)>>10, p.To.Reg)
-		if p.From.Offset&0x3FF == 0 {
+		move := bigmove(ClassConst32, p.From.Offset, p.To.Reg)
+		if len(move) == 1 {
+			o.size = 4
+			*o1 = move[0]
 			break
 		}
-		*o2 = opalu(AOR) | rsr(p.To.Reg, int64(p.From.Offset&0x3FF), p.To.Reg)
+		*o1, *o2 = move[0], move[1]
 
-	// MOVD -$imm31, R ->
-	// 	SETHI hi(^$imm32), R
-	// 	XOR R, lo($imm32)|0x1C00, R
+	// MOVD -$imm31, R
 	case 16:
-		*o1 = opcode(ASETHI) | ir(^(uint32(p.From.Offset))>>10, p.To.Reg)
-		if p.From.Offset&0x3FF == 0 {
-			*o2 = opalu(ASRAD) | rrr(p.To.Reg, 0, REG_ZR, p.To.Reg)
+		move := bigmove(ClassConst31_, p.From.Offset, p.To.Reg)
+		if len(move) == 1 {
+			o.size = 4
+			*o1 = move[0]
 			break
 		}
-		*o2 = opalu(AXOR) | rsr(p.To.Reg, int64(uint32(p.From.Offset)&0x3ff|0x1C00), p.To.Reg)
+		*o1, *o2 = move[0], move[1]
 
 	// BLE XCC, n(PC)
 	// JMP n(PC)
