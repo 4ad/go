@@ -852,32 +852,32 @@ func span(ctxt *obj.Link, cursym *obj.LSym) {
 	}
 }
 
-// bigmove assembles a move of const into reg.
-func bigmove(class int, imm int64, reg int16) (out []uint32) {
+// bigmove assembles a move of addr (which must be a constant) into reg.
+func bigmove(addr *obj.Addr, reg int16) (out []uint32) {
 	out = make([]uint32, 2)
-	switch class {
+	switch aclass(addr) {
 	// MOVD $imm32, R ->
 	// 	SETHI hi($imm32), R
 	// 	OR R, lo($imm32), R
 	case ClassConst32:
-		out[0] = opcode(ASETHI) | ir(uint32(imm)>>10, reg)
-		if imm&0x3FF == 0 {
+		out[0] = opcode(ASETHI) | ir(uint32(addr.Offset)>>10, reg)
+		if addr.Offset&0x3FF == 0 {
 			return out[:1]
 		}
-		out[1] = opalu(AOR) | rsr(reg, int64(imm&0x3FF), reg)
+		out[1] = opalu(AOR) | rsr(reg, int64(addr.Offset&0x3FF), reg)
 
 	// MOVD -$imm31, R ->
 	// 	SETHI hi(^$imm32), R
 	// 	XOR R, lo($imm32)|0x1C00, R
 	case ClassConst31_:
-		out[0] = opcode(ASETHI) | ir(^(uint32(imm))>>10, reg)
-		if imm&0x3FF == 0 {
+		out[0] = opcode(ASETHI) | ir(^(uint32(addr.Offset))>>10, reg)
+		if addr.Offset&0x3FF == 0 {
 			out[1] = opalu(ASRAD) | rrr(reg, 0, REG_ZR, reg)
 			return out
 		}
-		out[1] = opalu(AXOR) | rsr(reg, int64(uint32(imm)&0x3ff|0x1C00), reg)
+		out[1] = opalu(AXOR) | rsr(reg, int64(uint32(addr.Offset)&0x3ff|0x1C00), reg)
 	}
-	return out
+	panic("unexpected class")
 }
 
 func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
@@ -962,24 +962,10 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, p.Reg, p.To.Reg&3)
 
 	// MOVD $imm32, R
-	case 15:
-		move := bigmove(ClassConst32, p.From.Offset, p.To.Reg)
-		if len(move) == 1 {
-			o.size = 4
-			*o1 = move[0]
-			break
-		}
-		*o1, *o2 = move[0], move[1]
-
 	// MOVD -$imm31, R
-	case 16:
-		move := bigmove(ClassConst31_, p.From.Offset, p.To.Reg)
-		if len(move) == 1 {
-			o.size = 4
-			*o1 = move[0]
-			break
-		}
-		*o1, *o2 = move[0], move[1]
+	case 15, 16:
+		out := bigmove(&p.From, p.To.Reg)
+		return out, nil
 
 	// BLE XCC, n(PC)
 	// JMP n(PC)
