@@ -134,11 +134,12 @@ var optab = map[Optab]Opval{
 
 	Optab{ANEG, ClassReg, ClassNone, ClassNone, ClassReg}: {35, 4},
 
-	Optab{ACMP, ClassReg, ClassReg, ClassNone, ClassNone}: {36, 4},
+	Optab{ACMP, ClassReg, ClassReg, ClassNone, ClassNone}:     {36, 4},
+	Optab{ACMP, ClassConst13, ClassReg, ClassNone, ClassNone}: {37, 4},
 
-	Optab{ABND, ClassNone, ClassNone, ClassNone, ClassBranch}: {37, 4},
+	Optab{ABND, ClassNone, ClassNone, ClassNone, ClassBranch}: {38, 4},
 
-	Optab{obj.AUNDEF, ClassNone, ClassNone, ClassNone, ClassNone}: {38, 4},
+	Optab{obj.AUNDEF, ClassNone, ClassNone, ClassNone, ClassNone}: {39, 4},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -1100,11 +1101,15 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 
 	// CMP R1, R2
 	case 36:
-		*o1 = opalu(ASUBCC) | rrr(p.From.Reg, 0, p.Reg, REG_ZR)
+		*o1 = opalu(ASUBCC) | rrr(p.Reg, 0, p.From.Reg, REG_ZR)
+
+	// CMP $42, R2
+	case 37:
+		*o1 = opalu(ASUBCC) | rsr(p.Reg, p.From.Offset, REG_ZR)
 
 	// BLED, n(PC)
 	// JMP n(PC)
-	case 37:
+	case 38:
 		offset := p.Pcond.Pc - p.Pc
 		if offset < -1<<22 || offset > 1<<22-1 {
 			return nil, errors.New("branch target out of range")
@@ -1124,7 +1129,7 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	// like to be able to tell how we got there.  Assemble as
 	// 0xdead0 which is guaranteed to raise undefined instruction
 	// exception.
-	case 38:
+	case 39:
 		*o1 = 0xdead0 // ILLTRAP
 	}
 
