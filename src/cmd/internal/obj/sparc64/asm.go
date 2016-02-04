@@ -142,6 +142,9 @@ var optab = map[Optab]Opval{
 	Optab{ABND, ClassNone, ClassNone, ClassNone, ClassBranch}: {38, 4},
 
 	Optab{obj.AUNDEF, ClassNone, ClassNone, ClassNone, ClassNone}: {39, 4},
+
+	Optab{obj.ACALL, ClassNone, ClassNone, ClassNone, ClassReg}:    {40, 4},
+	Optab{obj.ACALL, ClassNone, ClassNone, ClassNone, ClassIndir0}: {40, 4},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -1133,6 +1136,11 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	// exception.
 	case 39:
 		*o1 = 0xdead0 // ILLTRAP
+
+	// CALL R
+	// CALL (R)
+	case 40:
+		*o1 = opcode(AJMPL) | rsr(p.To.Reg, 0, REG_LR)
 	}
 
 	return out[:o.size/4], nil
