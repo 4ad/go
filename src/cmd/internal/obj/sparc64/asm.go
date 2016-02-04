@@ -145,6 +145,11 @@ var optab = map[Optab]Opval{
 
 	Optab{obj.ACALL, ClassNone, ClassNone, ClassNone, ClassReg}:    {40, 4},
 	Optab{obj.ACALL, ClassNone, ClassNone, ClassNone, ClassIndir0}: {40, 4},
+
+	Optab{AADD, ClassConst32, ClassNone, ClassNone, ClassReg}: {41, 12},
+	Optab{AAND, ClassConst32, ClassNone, ClassNone, ClassReg}: {41, 12},
+	Optab{AADD, ClassConst32, ClassReg, ClassNone, ClassReg}:  {41, 12},
+	Optab{AAND, ClassConst32, ClassReg, ClassNone, ClassReg}:  {41, 12},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -855,15 +860,13 @@ func span(ctxt *obj.Link, cursym *obj.LSym) {
 // bigmove assembles a move of addr (which must be a constant) into reg.
 func bigmove(addr *obj.Addr, reg int16) (out []uint32) {
 	out = make([]uint32, 2)
-	switch aclass(addr) {
+	class := aclass(addr)
+	switch class {
 	// MOVD $imm32, R ->
 	// 	SETHI hi($imm32), R
 	// 	OR R, lo($imm32), R
 	case ClassConst32:
 		out[0] = opcode(ASETHI) | ir(uint32(addr.Offset)>>10, reg)
-		if addr.Offset&0x3FF == 0 {
-			return out[:1]
-		}
 		out[1] = opalu(AOR) | rsr(reg, int64(addr.Offset&0x3FF), reg)
 
 	// MOVD -$imm31, R ->
@@ -876,8 +879,10 @@ func bigmove(addr *obj.Addr, reg int16) (out []uint32) {
 			return out
 		}
 		out[1] = opalu(AXOR) | rsr(reg, int64(uint32(addr.Offset)&0x3ff|0x1C00), reg)
+	default:
+		panic("unexpected operand class: " + DRconv(class))
 	}
-	panic("unexpected class")
+	return out
 }
 
 func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
@@ -1154,6 +1159,17 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	// CALL (R)
 	case 40:
 		*o1 = opcode(AJMPL) | rsr(p.To.Reg, 0, REG_LR)
+
+	// ADD $huge, Rd
+	// AND $huge, Rs, Rd
+	case 41:
+		move := bigmove(&p.From, REG_TMP)
+		*o1, *o2 = move[0], move[1]
+		reg := p.To.Reg
+		if p.Reg != 0 {
+			reg = p.Reg
+		}
+		*o3 = opalu(p.As) | rrr(reg, 0, REG_TMP, p.To.Reg)
 	}
 
 	return out[:o.size/4], nil
