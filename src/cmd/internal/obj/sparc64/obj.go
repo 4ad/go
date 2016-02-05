@@ -614,9 +614,25 @@ func relinv(a int) int {
 		return ABVSD
 	case ABVSD:
 		return ABVCD
+	case AFBN:
+		return AFBA
+	case AFBA:
+		return AFBN
+	case AFBE:
+		return AFBLG
+	case AFBLG:
+		return AFBE
+	case AFBG:
+		return AFBLE
+	case AFBLE:
+		return AFBG
+	case AFBGE:
+		return AFBL
+	case AFBL:
+		return AFBGE
 	}
 
-	log.Fatalf("unknown relation: %s", Anames[a])
+	log.Fatalf("unknown relation: %s", obj.Aconv(a))
 	return 0
 }
 
