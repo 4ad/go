@@ -8,6 +8,7 @@ import (
 	"cmd/internal/obj"
 	"errors"
 	"fmt"
+	"sort"
 )
 
 type Optab struct {
@@ -18,8 +19,35 @@ type Optab struct {
 	a4 int8  // to
 }
 
+type OptabSlice []Optab
+
+func (tab OptabSlice) Len() int { return len(tab) }
+
+func (tab OptabSlice) Swap(i, j int) { tab[i], tab[j] = tab[j], tab[i] }
+
+func (tab OptabSlice) Less(i, j int) bool {
+	return ocmp(tab[i], tab[j])
+}
+
+func ocmp(o1, o2 Optab) bool {
+	if o1.as != o2.as {
+		return o1.as < o2.as
+	}
+	if o1.a1 != o2.a1 {
+		return o1.a1 < o2.a1
+	}
+	if o1.a2 != o2.a2 {
+		return o1.a2 < o2.a2
+	}
+	if o1.a3 != o2.a3 {
+		return o1.a3 < o2.a3
+	}
+	return o1.a4 < o2.a4
+}
+
 type Opval struct {
-	op, size int8
+	op   int8 // selects case in asmout switch
+	size int8 // *not* including delay-slot
 }
 
 var optab = map[Optab]Opval{
@@ -223,12 +251,22 @@ var ci = map[int16][]int16{
 	ASTDF:  {ASTSF, AFMOVD, AFMOVS},
 }
 
+func opkeys() OptabSlice {
+	keys := make(OptabSlice, 0, len(optab))
+	// create sorted map index by keys
+	for k := range optab {
+		keys = append(keys, k)
+	}
+	sort.Sort(keys)
+	return keys
+}
+
 func init() {
 	// For each line in optab, duplicate it so that we'll also
 	// have a line that will accept compatible instructions, but
 	// only if there isn't an already existent line with the same
 	// key. Also change operand type, if the instruction is a double.
-	for o, v := range optab {
+	for _, o := range opkeys() {
 		for _, c := range ci[o.as] {
 			do := o
 			do.as = c
@@ -248,7 +286,7 @@ func init() {
 			}
 			_, ok := optab[do]
 			if !ok {
-				optab[do] = v
+				optab[do] = optab[o]
 			}
 		}
 	}
@@ -256,43 +294,43 @@ func init() {
 	// duplicate it so that we'll also have a line that accepts a
 	// small-class operand, but do it only if there isn't an already
 	// existent line with the same key.
-	for o, v := range optab {
+	for _, o := range opkeys() {
 		for _, c := range cc[o.a1] {
 			do := o
 			do.a1 = c
 			_, ok := optab[do]
 			if !ok {
-				optab[do] = v
+				optab[do] = optab[o]
 			}
 		}
 	}
-	for o, v := range optab {
+	for _, o := range opkeys() {
 		for _, c := range cc[o.a2] {
 			do := o
 			do.a2 = c
 			_, ok := optab[do]
 			if !ok {
-				optab[do] = v
+				optab[do] = optab[o]
 			}
 		}
 	}
-	for o, v := range optab {
+	for _, o := range opkeys() {
 		for _, c := range cc[o.a3] {
 			do := o
 			do.a3 = c
 			_, ok := optab[do]
 			if !ok {
-				optab[do] = v
+				optab[do] = optab[o]
 			}
 		}
 	}
-	for o, v := range optab {
+	for _, o := range opkeys() {
 		for _, c := range cc[o.a4] {
 			do := o
 			do.a4 = c
 			_, ok := optab[do]
 			if !ok {
-				optab[do] = v
+				optab[do] = optab[o]
 			}
 		}
 	}
@@ -865,7 +903,7 @@ func bigmove(addr *obj.Addr, reg int16) (out []uint32) {
 	// MOVD $imm32, R ->
 	// 	SETHI hi($imm32), R
 	// 	OR R, lo($imm32), R
-	case ClassConst32:
+	case ClassConst31, ClassConst32:
 		out[0] = opcode(ASETHI) | ir(uint32(addr.Offset)>>10, reg)
 		out[1] = opalu(AOR) | rsr(reg, int64(addr.Offset&0x3FF), reg)
 
