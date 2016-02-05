@@ -180,6 +180,8 @@ var optab = map[Optab]Opval{
 	Optab{AAND, ClassConst32, ClassReg, ClassNone, ClassReg}:  {41, 12},
 
 	Optab{AMOVD, ClassRegConst, ClassNone, ClassNone, ClassReg}: {42, 12},
+
+	Optab{AMOVD, ClassReg, ClassNone, ClassNone, ClassIndir}: {43, 12},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -897,15 +899,19 @@ func span(ctxt *obj.Link, cursym *obj.LSym) {
 	}
 }
 
-// bigmove assembles a move of addr (which must be a constant) into reg.
+// bigmove assembles a move of the constant part of addr into reg.
 func bigmove(addr *obj.Addr, reg int16) (out []uint32) {
 	out = make([]uint32, 2)
 	class := aclass(addr)
 	switch class {
+	case ClassRegConst, ClassIndir:
+		class = constclass(addr.Offset)
+	}
+	switch class {
 	// MOVD $imm32, R ->
 	// 	SETHI hi($imm32), R
 	// 	OR R, lo($imm32), R
-	case ClassConst31, ClassConst32, ClassRegConst:
+	case ClassConst31, ClassConst32:
 		out[0] = opcode(ASETHI) | ir(uint32(addr.Offset)>>10, reg)
 		out[1] = opalu(AOR) | rsr(reg, int64(addr.Offset&0x3FF), reg)
 
@@ -1216,6 +1222,12 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		move := bigmove(&p.From, REG_TMP)
 		*o1, *o2 = move[0], move[1]
 		*o3 = opalu(AADD) | rrr(p.From.Reg, 0, REG_TMP, p.To.Reg)
+
+	// AMOVD R, huge(R)
+	case 43:
+		move := bigmove(&p.To, REG_TMP)
+		*o1, *o2 = move[0], move[1]
+		*o3 = opstore(p.As) | rrr(p.To.Reg, 0, REG_TMP, p.From.Reg)
 	}
 
 	return out[:o.size/4], nil
