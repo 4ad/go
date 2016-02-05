@@ -10,7 +10,7 @@ import (
 	"cmd/internal/obj/sparc64"
 )
 
-var thechar int = '7'
+var thechar int = 'u'
 
 var thestring string = "sparc64"
 
