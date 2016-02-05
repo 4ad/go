@@ -35,6 +35,7 @@ var bootstrapDirs = []string{
 	"compile/internal/big",
 	"compile/internal/gc",
 	"compile/internal/ppc64",
+	"compile/internal/sparc64",
 	"compile/internal/x86",
 	"internal/gcprog",
 	"internal/obj",
