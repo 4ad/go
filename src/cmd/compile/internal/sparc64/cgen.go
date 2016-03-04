@@ -2,12 +2,12 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package arm64
+package sparc64
 
 import (
 	"cmd/compile/internal/gc"
 	"cmd/internal/obj"
-	"cmd/internal/obj/arm64"
+	"cmd/internal/obj/sparc64"
 )
 
 func blockcopy(n, res *gc.Node, osrc, odst, w int64) {
@@ -23,16 +23,16 @@ func blockcopy(n, res *gc.Node, osrc, odst, w int64) {
 		gc.Fatalf("sgen: invalid alignment %d for %v", align, n.Type)
 
 	case 1:
-		op = arm64.AMOVB
+		op = sparc64.AMOVB
 
 	case 2:
-		op = arm64.AMOVH
+		op = sparc64.AMOVH
 
 	case 4:
-		op = arm64.AMOVW
+		op = sparc64.AMOVW
 
 	case 8:
-		op = arm64.AMOVD
+		op = sparc64.AMOVD
 	}
 
 	if w%int64(align) != 0 {
@@ -57,7 +57,7 @@ func blockcopy(n, res *gc.Node, osrc, odst, w int64) {
 	if n.Ullman >= res.Ullman {
 		gc.Agenr(n, &dst, res) // temporarily use dst
 		gc.Regalloc(&src, gc.Types[gc.Tptr], nil)
-		gins(arm64.AMOVD, &dst, &src)
+		gins(sparc64.AMOVD, &dst, &src)
 		if res.Op == gc.ONAME {
 			gc.Gvardef(res)
 		}
@@ -80,28 +80,28 @@ func blockcopy(n, res *gc.Node, osrc, odst, w int64) {
 	if dir < 0 {
 		if c >= 4 {
 			gc.Regalloc(&nend, gc.Types[gc.Tptr], nil)
-			gins(arm64.AMOVD, &src, &nend)
+			gins(sparc64.AMOVD, &src, &nend)
 		}
 
-		p := gins(arm64.AADD, nil, &src)
+		p := gins(sparc64.AADD, nil, &src)
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = w
 
-		p = gins(arm64.AADD, nil, &dst)
+		p = gins(sparc64.AADD, nil, &dst)
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = w
 	} else {
-		p := gins(arm64.AADD, nil, &src)
+		p := gins(sparc64.AADD, nil, &src)
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = int64(-dir)
 
-		p = gins(arm64.AADD, nil, &dst)
+		p = gins(sparc64.AADD, nil, &dst)
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = int64(-dir)
 
 		if c >= 4 {
 			gc.Regalloc(&nend, gc.Types[gc.Tptr], nil)
-			p := gins(arm64.AMOVD, &src, &nend)
+			p := gins(sparc64.AMOVD, &src, &nend)
 			p.From.Type = obj.TYPE_ADDR
 			p.From.Offset = w
 		}
@@ -113,17 +113,17 @@ func blockcopy(n, res *gc.Node, osrc, odst, w int64) {
 		p := gins(op, &src, &tmp)
 		p.From.Type = obj.TYPE_MEM
 		p.From.Offset = int64(dir)
-		p.Scond = arm64.C_XPRE
+		p.Scond = sparc64.C_XPRE
 		ploop := p
 
 		p = gins(op, &tmp, &dst)
 		p.To.Type = obj.TYPE_MEM
 		p.To.Offset = int64(dir)
-		p.Scond = arm64.C_XPRE
+		p.Scond = sparc64.C_XPRE
 
-		p = gcmp(arm64.ACMP, &src, &nend)
+		p = gcmp(sparc64.ACMP, &src, &nend)
 
-		gc.Patch(gc.Gbranch(arm64.ABNE, nil, 0), ploop)
+		gc.Patch(gc.Gbranch(sparc64.ABNE, nil, 0), ploop)
 		gc.Regfree(&nend)
 	} else {
 		// TODO(austin): Instead of generating ADD $-8,R8; ADD
@@ -136,12 +136,12 @@ func blockcopy(n, res *gc.Node, osrc, odst, w int64) {
 			p = gins(op, &src, &tmp)
 			p.From.Type = obj.TYPE_MEM
 			p.From.Offset = int64(dir)
-			p.Scond = arm64.C_XPRE
+			p.Scond = sparc64.C_XPRE
 
 			p = gins(op, &tmp, &dst)
 			p.To.Type = obj.TYPE_MEM
 			p.To.Offset = int64(dir)
-			p.Scond = arm64.C_XPRE
+			p.Scond = sparc64.C_XPRE
 		}
 	}
 

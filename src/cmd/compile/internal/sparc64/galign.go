@@ -2,19 +2,19 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package arm64
+package sparc64
 
 import (
 	"cmd/compile/internal/gc"
 	"cmd/internal/obj"
-	"cmd/internal/obj/arm64"
+	"cmd/internal/obj/sparc64"
 )
 
 var thechar int = '7'
 
-var thestring string = "arm64"
+var thestring string = "sparc64"
 
-var thelinkarch *obj.LinkArch = &arm64.Linkarm64
+var thelinkarch *obj.LinkArch = &sparc64.Linksparc64
 
 func linkarchinit() {
 }
@@ -31,16 +31,16 @@ func Main() {
 	gc.Thearch.Thechar = thechar
 	gc.Thearch.Thestring = thestring
 	gc.Thearch.Thelinkarch = thelinkarch
-	gc.Thearch.REGSP = arm64.REGSP
-	gc.Thearch.REGCTXT = arm64.REGCTXT
-	gc.Thearch.REGCALLX = arm64.REGRT1
-	gc.Thearch.REGCALLX2 = arm64.REGRT2
-	gc.Thearch.REGRETURN = arm64.REG_R0
-	gc.Thearch.REGMIN = arm64.REG_R0
-	gc.Thearch.REGMAX = arm64.REG_R31
-	gc.Thearch.REGZERO = arm64.REGZERO
-	gc.Thearch.FREGMIN = arm64.REG_F0
-	gc.Thearch.FREGMAX = arm64.REG_F31
+	gc.Thearch.REGSP = sparc64.REG_RSP
+	gc.Thearch.REGCTXT = sparc64.REG_CTXT
+	gc.Thearch.REGCALLX = sparc64.REG_RT1
+	gc.Thearch.REGCALLX2 = sparc64.REG_RT2
+	gc.Thearch.REGRETURN = sparc64.REG_R0
+	gc.Thearch.REGMIN = sparc64.REG_R0
+	gc.Thearch.REGMAX = sparc64.REG_R31
+	gc.Thearch.REGZERO = sparc64.REG_ZR
+	gc.Thearch.FREGMIN = sparc64.REG_F0
+	gc.Thearch.FREGMAX = sparc64.REG_F31
 	gc.Thearch.MAXWIDTH = MAXWIDTH
 	gc.Thearch.ReservedRegs = resvd
 

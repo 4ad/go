@@ -28,25 +28,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-package arm64
+package sparc64
 
 import (
 	"cmd/compile/internal/gc"
 	"cmd/internal/obj"
-	"cmd/internal/obj/arm64"
+	"cmd/internal/obj/sparc64"
 	"fmt"
 )
 
 var resvd = []int{
-	arm64.REGTMP,
-	arm64.REGG,
-	arm64.REGRT1,
-	arm64.REGRT2,
-	arm64.REG_R31, // REGZERO and REGSP
-	arm64.FREGZERO,
-	arm64.FREGHALF,
-	arm64.FREGONE,
-	arm64.FREGTWO,
+	sparc64.REG_TMP,
+	sparc64.REG_G,
+	sparc64.REG_RT1,
+	sparc64.REG_RT2,
+	sparc64.REG_R31, // REGZERO and REGSP
+	sparc64.FREGZERO,
+	sparc64.FREGHALF,
+	sparc64.FREGONE,
+	sparc64.FREGTWO,
 }
 
 /*
@@ -58,13 +58,13 @@ func ginscon(as int, c int64, n2 *gc.Node) {
 
 	gc.Nodconst(&n1, gc.Types[gc.TINT64], c)
 
-	if as != arm64.AMOVD && (c < -arm64.BIG || c > arm64.BIG) || as == arm64.AMUL || n2 != nil && n2.Op != gc.OREGISTER {
+	if as != sparc64.AMOVD && (c < -sparc64.BIG || c > sparc64.BIG) || as == sparc64.AMUL || n2 != nil && n2.Op != gc.OREGISTER {
 		// cannot have more than 16-bit of immediate in ADD, etc.
 		// instead, MOV into register first.
 		var ntmp gc.Node
 		gc.Regalloc(&ntmp, gc.Types[gc.TINT64], nil)
 
-		gins(arm64.AMOVD, &n1, &ntmp)
+		gins(sparc64.AMOVD, &n1, &ntmp)
 		gins(as, &ntmp, n2)
 		gc.Regfree(&ntmp)
 		return
@@ -86,8 +86,8 @@ func ginscon2(as int, n2 *gc.Node, c int64) {
 	default:
 		gc.Fatalf("ginscon2")
 
-	case arm64.ACMP:
-		if -arm64.BIG <= c && c <= arm64.BIG {
+	case sparc64.ACMP:
+		if -sparc64.BIG <= c && c <= sparc64.BIG {
 			gcmp(as, n2, &n1)
 			return
 		}
@@ -97,7 +97,7 @@ func ginscon2(as int, n2 *gc.Node, c int64) {
 	var ntmp gc.Node
 	gc.Regalloc(&ntmp, gc.Types[gc.TINT64], nil)
 
-	rawgins(arm64.AMOVD, &n1, &ntmp)
+	rawgins(sparc64.AMOVD, &n1, &ntmp)
 	gcmp(as, n2, &ntmp)
 	gc.Regfree(&ntmp)
 }
@@ -170,7 +170,7 @@ func gmove(f *gc.Node, t *gc.Node) {
 			f.Convconst(&con, gc.Types[gc.TINT64])
 			var r1 gc.Node
 			gc.Regalloc(&r1, con.Type, t)
-			gins(arm64.AMOVD, &con, &r1)
+			gins(sparc64.AMOVD, &con, &r1)
 			gmove(&r1, t)
 			gc.Regfree(&r1)
 			return
@@ -182,7 +182,7 @@ func gmove(f *gc.Node, t *gc.Node) {
 			f.Convconst(&con, gc.Types[gc.TUINT64])
 			var r1 gc.Node
 			gc.Regalloc(&r1, con.Type, t)
-			gins(arm64.AMOVD, &con, &r1)
+			gins(sparc64.AMOVD, &con, &r1)
 			gmove(&r1, t)
 			gc.Regfree(&r1)
 			return
@@ -228,7 +228,7 @@ func gmove(f *gc.Node, t *gc.Node) {
 		gc.TUINT32<<16 | gc.TINT8,
 		gc.TINT64<<16 | gc.TINT8,
 		gc.TUINT64<<16 | gc.TINT8:
-		a = arm64.AMOVB
+		a = sparc64.AMOVB
 
 	case gc.TINT8<<16 | gc.TUINT8, // same size
 		gc.TUINT8<<16 | gc.TUINT8,
@@ -239,7 +239,7 @@ func gmove(f *gc.Node, t *gc.Node) {
 		gc.TUINT32<<16 | gc.TUINT8,
 		gc.TINT64<<16 | gc.TUINT8,
 		gc.TUINT64<<16 | gc.TUINT8:
-		a = arm64.AMOVBU
+		a = sparc64.AMOVBU
 
 	case gc.TINT16<<16 | gc.TINT16, // same size
 		gc.TUINT16<<16 | gc.TINT16,
@@ -248,7 +248,7 @@ func gmove(f *gc.Node, t *gc.Node) {
 		gc.TUINT32<<16 | gc.TINT16,
 		gc.TINT64<<16 | gc.TINT16,
 		gc.TUINT64<<16 | gc.TINT16:
-		a = arm64.AMOVH
+		a = sparc64.AMOVH
 
 	case gc.TINT16<<16 | gc.TUINT16, // same size
 		gc.TUINT16<<16 | gc.TUINT16,
@@ -257,26 +257,26 @@ func gmove(f *gc.Node, t *gc.Node) {
 		gc.TUINT32<<16 | gc.TUINT16,
 		gc.TINT64<<16 | gc.TUINT16,
 		gc.TUINT64<<16 | gc.TUINT16:
-		a = arm64.AMOVHU
+		a = sparc64.AMOVHU
 
 	case gc.TINT32<<16 | gc.TINT32, // same size
 		gc.TUINT32<<16 | gc.TINT32,
 		gc.TINT64<<16 | gc.TINT32,
 		// truncate
 		gc.TUINT64<<16 | gc.TINT32:
-		a = arm64.AMOVW
+		a = sparc64.AMOVW
 
 	case gc.TINT32<<16 | gc.TUINT32, // same size
 		gc.TUINT32<<16 | gc.TUINT32,
 		gc.TINT64<<16 | gc.TUINT32,
 		gc.TUINT64<<16 | gc.TUINT32:
-		a = arm64.AMOVWU
+		a = sparc64.AMOVWU
 
 	case gc.TINT64<<16 | gc.TINT64, // same size
 		gc.TINT64<<16 | gc.TUINT64,
 		gc.TUINT64<<16 | gc.TINT64,
 		gc.TUINT64<<16 | gc.TUINT64:
-		a = arm64.AMOVD
+		a = sparc64.AMOVD
 
 		/*
 		 * integer up-conversions
@@ -287,7 +287,7 @@ func gmove(f *gc.Node, t *gc.Node) {
 		gc.TINT8<<16 | gc.TUINT32,
 		gc.TINT8<<16 | gc.TINT64,
 		gc.TINT8<<16 | gc.TUINT64:
-		a = arm64.AMOVB
+		a = sparc64.AMOVB
 
 		goto rdst
 
@@ -297,7 +297,7 @@ func gmove(f *gc.Node, t *gc.Node) {
 		gc.TUINT8<<16 | gc.TUINT32,
 		gc.TUINT8<<16 | gc.TINT64,
 		gc.TUINT8<<16 | gc.TUINT64:
-		a = arm64.AMOVBU
+		a = sparc64.AMOVBU
 
 		goto rdst
 
@@ -305,7 +305,7 @@ func gmove(f *gc.Node, t *gc.Node) {
 		gc.TINT16<<16 | gc.TUINT32,
 		gc.TINT16<<16 | gc.TINT64,
 		gc.TINT16<<16 | gc.TUINT64:
-		a = arm64.AMOVH
+		a = sparc64.AMOVH
 
 		goto rdst
 
@@ -313,19 +313,19 @@ func gmove(f *gc.Node, t *gc.Node) {
 		gc.TUINT16<<16 | gc.TUINT32,
 		gc.TUINT16<<16 | gc.TINT64,
 		gc.TUINT16<<16 | gc.TUINT64:
-		a = arm64.AMOVHU
+		a = sparc64.AMOVHU
 
 		goto rdst
 
 	case gc.TINT32<<16 | gc.TINT64, // sign extend int32
 		gc.TINT32<<16 | gc.TUINT64:
-		a = arm64.AMOVW
+		a = sparc64.AMOVW
 
 		goto rdst
 
 	case gc.TUINT32<<16 | gc.TINT64, // zero extend uint32
 		gc.TUINT32<<16 | gc.TUINT64:
-		a = arm64.AMOVWU
+		a = sparc64.AMOVWU
 
 		goto rdst
 
@@ -333,35 +333,35 @@ func gmove(f *gc.Node, t *gc.Node) {
 	* float to integer
 	 */
 	case gc.TFLOAT32<<16 | gc.TINT32:
-		a = arm64.AFCVTZSSW
+		a = sparc64.AFCVTZSSW
 		goto rdst
 
 	case gc.TFLOAT64<<16 | gc.TINT32:
-		a = arm64.AFCVTZSDW
+		a = sparc64.AFCVTZSDW
 		goto rdst
 
 	case gc.TFLOAT32<<16 | gc.TINT64:
-		a = arm64.AFCVTZSS
+		a = sparc64.AFCVTZSS
 		goto rdst
 
 	case gc.TFLOAT64<<16 | gc.TINT64:
-		a = arm64.AFCVTZSD
+		a = sparc64.AFCVTZSD
 		goto rdst
 
 	case gc.TFLOAT32<<16 | gc.TUINT32:
-		a = arm64.AFCVTZUSW
+		a = sparc64.AFCVTZUSW
 		goto rdst
 
 	case gc.TFLOAT64<<16 | gc.TUINT32:
-		a = arm64.AFCVTZUDW
+		a = sparc64.AFCVTZUDW
 		goto rdst
 
 	case gc.TFLOAT32<<16 | gc.TUINT64:
-		a = arm64.AFCVTZUS
+		a = sparc64.AFCVTZUS
 		goto rdst
 
 	case gc.TFLOAT64<<16 | gc.TUINT64:
-		a = arm64.AFCVTZUD
+		a = sparc64.AFCVTZUD
 		goto rdst
 
 	case gc.TFLOAT32<<16 | gc.TINT16,
@@ -386,62 +386,62 @@ func gmove(f *gc.Node, t *gc.Node) {
 	case gc.TINT8<<16 | gc.TFLOAT32,
 		gc.TINT16<<16 | gc.TFLOAT32,
 		gc.TINT32<<16 | gc.TFLOAT32:
-		a = arm64.ASCVTFWS
+		a = sparc64.ASCVTFWS
 
 		goto rdst
 
 	case gc.TINT8<<16 | gc.TFLOAT64,
 		gc.TINT16<<16 | gc.TFLOAT64,
 		gc.TINT32<<16 | gc.TFLOAT64:
-		a = arm64.ASCVTFWD
+		a = sparc64.ASCVTFWD
 
 		goto rdst
 
 	case gc.TINT64<<16 | gc.TFLOAT32:
-		a = arm64.ASCVTFS
+		a = sparc64.ASCVTFS
 		goto rdst
 
 	case gc.TINT64<<16 | gc.TFLOAT64:
-		a = arm64.ASCVTFD
+		a = sparc64.ASCVTFD
 		goto rdst
 
 	case gc.TUINT8<<16 | gc.TFLOAT32,
 		gc.TUINT16<<16 | gc.TFLOAT32,
 		gc.TUINT32<<16 | gc.TFLOAT32:
-		a = arm64.AUCVTFWS
+		a = sparc64.AUCVTFWS
 
 		goto rdst
 
 	case gc.TUINT8<<16 | gc.TFLOAT64,
 		gc.TUINT16<<16 | gc.TFLOAT64,
 		gc.TUINT32<<16 | gc.TFLOAT64:
-		a = arm64.AUCVTFWD
+		a = sparc64.AUCVTFWD
 
 		goto rdst
 
 	case gc.TUINT64<<16 | gc.TFLOAT32:
-		a = arm64.AUCVTFS
+		a = sparc64.AUCVTFS
 		goto rdst
 
 	case gc.TUINT64<<16 | gc.TFLOAT64:
-		a = arm64.AUCVTFD
+		a = sparc64.AUCVTFD
 		goto rdst
 
 		/*
 		 * float to float
 		 */
 	case gc.TFLOAT32<<16 | gc.TFLOAT32:
-		a = arm64.AFMOVS
+		a = sparc64.AFMOVS
 
 	case gc.TFLOAT64<<16 | gc.TFLOAT64:
-		a = arm64.AFMOVD
+		a = sparc64.AFMOVD
 
 	case gc.TFLOAT32<<16 | gc.TFLOAT64:
-		a = arm64.AFCVTSD
+		a = sparc64.AFCVTSD
 		goto rdst
 
 	case gc.TFLOAT64<<16 | gc.TFLOAT32:
-		a = arm64.AFCVTDS
+		a = sparc64.AFCVTDS
 		goto rdst
 	}
 
@@ -477,7 +477,7 @@ func gins(as int, f, t *gc.Node) *obj.Prog {
 			return nil // caller must not use
 		}
 	}
-	if as == arm64.ACMP {
+	if as == sparc64.ACMP {
 		if x, ok := t.IntLiteral(); ok {
 			ginscon2(as, f, x)
 			return nil // caller must not use
@@ -499,7 +499,7 @@ func rawgins(as int, f *gc.Node, t *gc.Node) *obj.Prog {
 	gc.Naddr(&p.To, t)
 
 	switch as {
-	case arm64.ACMP, arm64.AFCMPS, arm64.AFCMPD:
+	case sparc64.ACMP, sparc64.AFCMPS, sparc64.AFCMPD:
 		if t != nil {
 			if f.Op != gc.OREGISTER {
 				gc.Fatalf("bad operands to gcmp")
@@ -512,12 +512,12 @@ func rawgins(as int, f *gc.Node, t *gc.Node) *obj.Prog {
 
 	// Bad things the front end has done to us. Crash to find call stack.
 	switch as {
-	case arm64.AAND, arm64.AMUL:
+	case sparc64.AAND, sparc64.AMUL:
 		if p.From.Type == obj.TYPE_CONST {
 			gc.Debug['h'] = 1
 			gc.Fatalf("bad inst: %v", p)
 		}
-	case arm64.ACMP:
+	case sparc64.ACMP:
 		if p.From.Type == obj.TYPE_MEM || p.To.Type == obj.TYPE_MEM {
 			gc.Debug['h'] = 1
 			gc.Fatalf("bad inst: %v", p)
@@ -530,19 +530,19 @@ func rawgins(as int, f *gc.Node, t *gc.Node) *obj.Prog {
 
 	w := int32(0)
 	switch as {
-	case arm64.AMOVB,
-		arm64.AMOVBU:
+	case sparc64.AMOVB,
+		sparc64.AMOVBU:
 		w = 1
 
-	case arm64.AMOVH,
-		arm64.AMOVHU:
+	case sparc64.AMOVH,
+		sparc64.AMOVHU:
 		w = 2
 
-	case arm64.AMOVW,
-		arm64.AMOVWU:
+	case sparc64.AMOVW,
+		sparc64.AMOVWU:
 		w = 4
 
-	case arm64.AMOVD:
+	case sparc64.AMOVD:
 		if p.From.Type == obj.TYPE_CONST || p.From.Type == obj.TYPE_ADDR {
 			break
 		}
@@ -637,7 +637,7 @@ func optoas(op gc.Op, t *gc.Type) int {
 		OEQ_ | gc.TPTR64,
 		OEQ_ | gc.TFLOAT32,
 		OEQ_ | gc.TFLOAT64:
-		a = arm64.ABEQ
+		a = sparc64.ABEQ
 
 	case ONE_ | gc.TBOOL,
 		ONE_ | gc.TINT8,
@@ -652,13 +652,13 @@ func optoas(op gc.Op, t *gc.Type) int {
 		ONE_ | gc.TPTR64,
 		ONE_ | gc.TFLOAT32,
 		ONE_ | gc.TFLOAT64:
-		a = arm64.ABNE
+		a = sparc64.ABNE
 
 	case OLT_ | gc.TINT8,
 		OLT_ | gc.TINT16,
 		OLT_ | gc.TINT32,
 		OLT_ | gc.TINT64:
-		a = arm64.ABLT
+		a = sparc64.ABLT
 
 	case OLT_ | gc.TUINT8,
 		OLT_ | gc.TUINT16,
@@ -666,13 +666,13 @@ func optoas(op gc.Op, t *gc.Type) int {
 		OLT_ | gc.TUINT64,
 		OLT_ | gc.TFLOAT32,
 		OLT_ | gc.TFLOAT64:
-		a = arm64.ABLO
+		a = sparc64.ABLO
 
 	case OLE_ | gc.TINT8,
 		OLE_ | gc.TINT16,
 		OLE_ | gc.TINT32,
 		OLE_ | gc.TINT64:
-		a = arm64.ABLE
+		a = sparc64.ABLE
 
 	case OLE_ | gc.TUINT8,
 		OLE_ | gc.TUINT16,
@@ -680,7 +680,7 @@ func optoas(op gc.Op, t *gc.Type) int {
 		OLE_ | gc.TUINT64,
 		OLE_ | gc.TFLOAT32,
 		OLE_ | gc.TFLOAT64:
-		a = arm64.ABLS
+		a = sparc64.ABLS
 
 	case OGT_ | gc.TINT8,
 		OGT_ | gc.TINT16,
@@ -688,13 +688,13 @@ func optoas(op gc.Op, t *gc.Type) int {
 		OGT_ | gc.TINT64,
 		OGT_ | gc.TFLOAT32,
 		OGT_ | gc.TFLOAT64:
-		a = arm64.ABGT
+		a = sparc64.ABGT
 
 	case OGT_ | gc.TUINT8,
 		OGT_ | gc.TUINT16,
 		OGT_ | gc.TUINT32,
 		OGT_ | gc.TUINT64:
-		a = arm64.ABHI
+		a = sparc64.ABHI
 
 	case OGE_ | gc.TINT8,
 		OGE_ | gc.TINT16,
@@ -702,13 +702,13 @@ func optoas(op gc.Op, t *gc.Type) int {
 		OGE_ | gc.TINT64,
 		OGE_ | gc.TFLOAT32,
 		OGE_ | gc.TFLOAT64:
-		a = arm64.ABGE
+		a = sparc64.ABGE
 
 	case OGE_ | gc.TUINT8,
 		OGE_ | gc.TUINT16,
 		OGE_ | gc.TUINT32,
 		OGE_ | gc.TUINT64:
-		a = arm64.ABHS
+		a = sparc64.ABHS
 
 	case OCMP_ | gc.TBOOL,
 		OCMP_ | gc.TINT8,
@@ -721,44 +721,44 @@ func optoas(op gc.Op, t *gc.Type) int {
 		OCMP_ | gc.TUINT32,
 		OCMP_ | gc.TUINT64,
 		OCMP_ | gc.TPTR64:
-		a = arm64.ACMP
+		a = sparc64.ACMP
 
 	case OCMP_ | gc.TFLOAT32:
-		a = arm64.AFCMPS
+		a = sparc64.AFCMPS
 
 	case OCMP_ | gc.TFLOAT64:
-		a = arm64.AFCMPD
+		a = sparc64.AFCMPD
 
 	case OAS_ | gc.TBOOL,
 		OAS_ | gc.TINT8:
-		a = arm64.AMOVB
+		a = sparc64.AMOVB
 
 	case OAS_ | gc.TUINT8:
-		a = arm64.AMOVBU
+		a = sparc64.AMOVBU
 
 	case OAS_ | gc.TINT16:
-		a = arm64.AMOVH
+		a = sparc64.AMOVH
 
 	case OAS_ | gc.TUINT16:
-		a = arm64.AMOVHU
+		a = sparc64.AMOVHU
 
 	case OAS_ | gc.TINT32:
-		a = arm64.AMOVW
+		a = sparc64.AMOVW
 
 	case OAS_ | gc.TUINT32,
 		OAS_ | gc.TPTR32:
-		a = arm64.AMOVWU
+		a = sparc64.AMOVWU
 
 	case OAS_ | gc.TINT64,
 		OAS_ | gc.TUINT64,
 		OAS_ | gc.TPTR64:
-		a = arm64.AMOVD
+		a = sparc64.AMOVD
 
 	case OAS_ | gc.TFLOAT32:
-		a = arm64.AFMOVS
+		a = sparc64.AFMOVS
 
 	case OAS_ | gc.TFLOAT64:
-		a = arm64.AFMOVD
+		a = sparc64.AFMOVD
 
 	case OADD_ | gc.TINT8,
 		OADD_ | gc.TUINT8,
@@ -770,13 +770,13 @@ func optoas(op gc.Op, t *gc.Type) int {
 		OADD_ | gc.TINT64,
 		OADD_ | gc.TUINT64,
 		OADD_ | gc.TPTR64:
-		a = arm64.AADD
+		a = sparc64.AADD
 
 	case OADD_ | gc.TFLOAT32:
-		a = arm64.AFADDS
+		a = sparc64.AFADDS
 
 	case OADD_ | gc.TFLOAT64:
-		a = arm64.AFADDD
+		a = sparc64.AFADDD
 
 	case OSUB_ | gc.TINT8,
 		OSUB_ | gc.TUINT8,
@@ -788,13 +788,13 @@ func optoas(op gc.Op, t *gc.Type) int {
 		OSUB_ | gc.TINT64,
 		OSUB_ | gc.TUINT64,
 		OSUB_ | gc.TPTR64:
-		a = arm64.ASUB
+		a = sparc64.ASUB
 
 	case OSUB_ | gc.TFLOAT32:
-		a = arm64.AFSUBS
+		a = sparc64.AFSUBS
 
 	case OSUB_ | gc.TFLOAT64:
-		a = arm64.AFSUBD
+		a = sparc64.AFSUBD
 
 	case OMINUS_ | gc.TINT8,
 		OMINUS_ | gc.TUINT8,
@@ -806,13 +806,13 @@ func optoas(op gc.Op, t *gc.Type) int {
 		OMINUS_ | gc.TINT64,
 		OMINUS_ | gc.TUINT64,
 		OMINUS_ | gc.TPTR64:
-		a = arm64.ANEG
+		a = sparc64.ANEG
 
 	case OMINUS_ | gc.TFLOAT32:
-		a = arm64.AFNEGS
+		a = sparc64.AFNEGS
 
 	case OMINUS_ | gc.TFLOAT64:
-		a = arm64.AFNEGD
+		a = sparc64.AFNEGD
 
 	case OAND_ | gc.TINT8,
 		OAND_ | gc.TUINT8,
@@ -824,7 +824,7 @@ func optoas(op gc.Op, t *gc.Type) int {
 		OAND_ | gc.TINT64,
 		OAND_ | gc.TUINT64,
 		OAND_ | gc.TPTR64:
-		a = arm64.AAND
+		a = sparc64.AAND
 
 	case OOR_ | gc.TINT8,
 		OOR_ | gc.TUINT8,
@@ -836,7 +836,7 @@ func optoas(op gc.Op, t *gc.Type) int {
 		OOR_ | gc.TINT64,
 		OOR_ | gc.TUINT64,
 		OOR_ | gc.TPTR64:
-		a = arm64.AORR
+		a = sparc64.AORR
 
 	case OXOR_ | gc.TINT8,
 		OXOR_ | gc.TUINT8,
@@ -848,7 +848,7 @@ func optoas(op gc.Op, t *gc.Type) int {
 		OXOR_ | gc.TINT64,
 		OXOR_ | gc.TUINT64,
 		OXOR_ | gc.TPTR64:
-		a = arm64.AEOR
+		a = sparc64.AEOR
 
 		// TODO(minux): handle rotates
 	//case CASE(OLROT, TINT8):
@@ -874,7 +874,7 @@ func optoas(op gc.Op, t *gc.Type) int {
 		OLSH_ | gc.TINT64,
 		OLSH_ | gc.TUINT64,
 		OLSH_ | gc.TPTR64:
-		a = arm64.ALSL
+		a = sparc64.ALSL
 
 	case ORSH_ | gc.TUINT8,
 		ORSH_ | gc.TUINT16,
@@ -882,13 +882,13 @@ func optoas(op gc.Op, t *gc.Type) int {
 		ORSH_ | gc.TPTR32,
 		ORSH_ | gc.TUINT64,
 		ORSH_ | gc.TPTR64:
-		a = arm64.ALSR
+		a = sparc64.ALSR
 
 	case ORSH_ | gc.TINT8,
 		ORSH_ | gc.TINT16,
 		ORSH_ | gc.TINT32,
 		ORSH_ | gc.TINT64:
-		a = arm64.AASR
+		a = sparc64.AASR
 
 		// TODO(minux): handle rotates
 	//case CASE(ORROTC, TINT8):
@@ -903,42 +903,42 @@ func optoas(op gc.Op, t *gc.Type) int {
 	//	break;
 
 	case OHMUL_ | gc.TINT64:
-		a = arm64.ASMULH
+		a = sparc64.ASMULH
 
 	case OHMUL_ | gc.TUINT64,
 		OHMUL_ | gc.TPTR64:
-		a = arm64.AUMULH
+		a = sparc64.AUMULH
 
 	case OMUL_ | gc.TINT8,
 		OMUL_ | gc.TINT16,
 		OMUL_ | gc.TINT32:
-		a = arm64.ASMULL
+		a = sparc64.ASMULL
 
 	case OMUL_ | gc.TINT64:
-		a = arm64.AMUL
+		a = sparc64.AMUL
 
 	case OMUL_ | gc.TUINT8,
 		OMUL_ | gc.TUINT16,
 		OMUL_ | gc.TUINT32,
 		OMUL_ | gc.TPTR32:
 		// don't use word multiply, the high 32-bit are undefined.
-		a = arm64.AUMULL
+		a = sparc64.AUMULL
 
 	case OMUL_ | gc.TUINT64,
 		OMUL_ | gc.TPTR64:
-		a = arm64.AMUL // for 64-bit multiplies, signedness doesn't matter.
+		a = sparc64.AMUL // for 64-bit multiplies, signedness doesn't matter.
 
 	case OMUL_ | gc.TFLOAT32:
-		a = arm64.AFMULS
+		a = sparc64.AFMULS
 
 	case OMUL_ | gc.TFLOAT64:
-		a = arm64.AFMULD
+		a = sparc64.AFMULD
 
 	case ODIV_ | gc.TINT8,
 		ODIV_ | gc.TINT16,
 		ODIV_ | gc.TINT32,
 		ODIV_ | gc.TINT64:
-		a = arm64.ASDIV
+		a = sparc64.ASDIV
 
 	case ODIV_ | gc.TUINT8,
 		ODIV_ | gc.TUINT16,
@@ -946,16 +946,16 @@ func optoas(op gc.Op, t *gc.Type) int {
 		ODIV_ | gc.TPTR32,
 		ODIV_ | gc.TUINT64,
 		ODIV_ | gc.TPTR64:
-		a = arm64.AUDIV
+		a = sparc64.AUDIV
 
 	case ODIV_ | gc.TFLOAT32:
-		a = arm64.AFDIVS
+		a = sparc64.AFDIVS
 
 	case ODIV_ | gc.TFLOAT64:
-		a = arm64.AFDIVD
+		a = sparc64.AFDIVD
 
 	case OSQRT_ | gc.TFLOAT64:
-		a = arm64.AFSQRTD
+		a = sparc64.AFSQRTD
 	}
 
 	return a
