@@ -120,8 +120,8 @@ func excludedregs() uint64 {
 		regbits |= RtoB(r)
 	}
 
-	// Also exclude floating point registers with fixed constants
-	regbits |= RtoB(sparc64.REG_F27) | RtoB(sparc64.REG_F28) | RtoB(sparc64.REG_F29) | RtoB(sparc64.REG_F30) | RtoB(sparc64.REG_F31)
+	// Exclude floating point registers with fixed functions
+	regbits = RtoB(sparc64.REG_FTMP) | RtoB(sparc64.REG_DTMP)
 
 	return regbits
 }
