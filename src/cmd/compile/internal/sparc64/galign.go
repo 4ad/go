@@ -36,8 +36,8 @@ func Main() {
 	gc.Thearch.REGCALLX = sparc64.REG_RT1
 	gc.Thearch.REGCALLX2 = sparc64.REG_RT2
 	gc.Thearch.REGRETURN = sparc64.REG_R0
-	gc.Thearch.REGMIN = sparc64.REG_R0
-	gc.Thearch.REGMAX = sparc64.REG_R31
+	gc.Thearch.REGMIN = sparc64.REG_MIN
+	gc.Thearch.REGMAX = sparc64.REG_MAX
 	gc.Thearch.REGZERO = sparc64.REG_ZR
 	gc.Thearch.FREGMIN = sparc64.REG_F0
 	gc.Thearch.FREGMAX = sparc64.REG_F31
