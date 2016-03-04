@@ -125,7 +125,7 @@ func appendpp(p *obj.Prog, as int, ftype int, freg int, foffset int64, ttype int
 func ginsnop() {
 	var con gc.Node
 	gc.Nodconst(&con, gc.Types[gc.TINT], 0)
-	gins(sparc64.AHINT, &con, nil)
+	gins(sparc64.ARNOP, &con, nil)
 }
 
 var panicdiv *gc.Node
@@ -273,7 +273,7 @@ func cgen_hmul(nl *gc.Node, nr *gc.Node, res *gc.Node) {
 		gc.TINT16,
 		gc.TINT32:
 		gins(optoas(gc.OMUL, t), &n2, &n1)
-		p := gins(sparc64.AASR, nil, &n1)
+		p := gins(sparc64.ASRA, nil, &n1)
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = w
 
@@ -281,7 +281,7 @@ func cgen_hmul(nl *gc.Node, nr *gc.Node, res *gc.Node) {
 		gc.TUINT16,
 		gc.TUINT32:
 		gins(optoas(gc.OMUL, t), &n2, &n1)
-		p := gins(sparc64.ALSR, nil, &n1)
+		p := gins(sparc64.ASRL, nil, &n1)
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = w
 

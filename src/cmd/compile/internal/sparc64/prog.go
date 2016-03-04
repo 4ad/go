@@ -39,25 +39,25 @@ var progtable = [sparc64.ALAST]obj.ProgInfo{
 	// NOP is an internal no-op that also stands
 	// for USED and SET annotations, not the Power opcode.
 	obj.ANOP:    {Flags: gc.LeftRead | gc.RightWrite},
-	sparc64.AHINT: {Flags: gc.OK},
+	sparc64.ARNOP: {Flags: gc.OK},
 
 	// Integer
 	sparc64.AADD:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
 	sparc64.ASUB:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
 	sparc64.ANEG:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
 	sparc64.AAND:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
-	sparc64.AORR:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
-	sparc64.AEOR:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
+	sparc64.AOR:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
+	sparc64.AXOR:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
 	sparc64.AMUL:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
 	sparc64.ASMULL: {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
 	sparc64.AUMULL: {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
 	sparc64.ASMULH: {Flags: gc.SizeL | gc.LeftRead | gc.RegRead | gc.RightWrite},
 	sparc64.AUMULH: {Flags: gc.SizeL | gc.LeftRead | gc.RegRead | gc.RightWrite},
-	sparc64.ASDIV:  {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
-	sparc64.AUDIV:  {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
-	sparc64.ALSL:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
-	sparc64.ALSR:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
-	sparc64.AASR:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
+	sparc64.ASDIVD:  {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
+	sparc64.AUDIVD:  {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
+	sparc64.ASLA:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
+	sparc64.ASRL:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
+	sparc64.ASRA:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite},
 	sparc64.ACMP:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead},
 
 	// Floating point.
@@ -76,24 +76,24 @@ var progtable = [sparc64.ALAST]obj.ProgInfo{
 	sparc64.AFCMPS:  {Flags: gc.SizeF | gc.LeftRead | gc.RegRead},
 
 	// float -> integer
-	sparc64.AFCVTZSD:  {Flags: gc.SizeD | gc.LeftRead | gc.RightWrite | gc.Conv},
-	sparc64.AFCVTZSS:  {Flags: gc.SizeF | gc.LeftRead | gc.RightWrite | gc.Conv},
-	sparc64.AFCVTZSDW: {Flags: gc.SizeD | gc.LeftRead | gc.RightWrite | gc.Conv},
-	sparc64.AFCVTZSSW: {Flags: gc.SizeF | gc.LeftRead | gc.RightWrite | gc.Conv},
+	sparc64.AFDTOX:  {Flags: gc.SizeD | gc.LeftRead | gc.RightWrite | gc.Conv},
+	sparc64.AFSTOX:  {Flags: gc.SizeF | gc.LeftRead | gc.RightWrite | gc.Conv},
+	sparc64.AFDTOI: {Flags: gc.SizeD | gc.LeftRead | gc.RightWrite | gc.Conv},
+	sparc64.AFSTOXW: {Flags: gc.SizeF | gc.LeftRead | gc.RightWrite | gc.Conv},
 	sparc64.AFCVTZUD:  {Flags: gc.SizeD | gc.LeftRead | gc.RightWrite | gc.Conv},
 	sparc64.AFCVTZUS:  {Flags: gc.SizeF | gc.LeftRead | gc.RightWrite | gc.Conv},
 	sparc64.AFCVTZUDW: {Flags: gc.SizeD | gc.LeftRead | gc.RightWrite | gc.Conv},
 	sparc64.AFCVTZUSW: {Flags: gc.SizeF | gc.LeftRead | gc.RightWrite | gc.Conv},
 
 	// float -> float
-	sparc64.AFCVTSD: {Flags: gc.SizeD | gc.LeftRead | gc.RightWrite | gc.Conv},
-	sparc64.AFCVTDS: {Flags: gc.SizeD | gc.LeftRead | gc.RightWrite | gc.Conv},
+	sparc64.AFSTOD: {Flags: gc.SizeD | gc.LeftRead | gc.RightWrite | gc.Conv},
+	sparc64.AFDTOS: {Flags: gc.SizeD | gc.LeftRead | gc.RightWrite | gc.Conv},
 
 	// integer -> float
-	sparc64.ASCVTFD:  {Flags: gc.SizeQ | gc.LeftRead | gc.RightWrite | gc.Conv},
-	sparc64.ASCVTFS:  {Flags: gc.SizeQ | gc.LeftRead | gc.RightWrite | gc.Conv},
-	sparc64.ASCVTFWD: {Flags: gc.SizeL | gc.LeftRead | gc.RightWrite | gc.Conv},
-	sparc64.ASCVTFWS: {Flags: gc.SizeL | gc.LeftRead | gc.RightWrite | gc.Conv},
+	sparc64.AFXTOD:  {Flags: gc.SizeQ | gc.LeftRead | gc.RightWrite | gc.Conv},
+	sparc64.AFXTOS:  {Flags: gc.SizeQ | gc.LeftRead | gc.RightWrite | gc.Conv},
+	sparc64.AFITOD: {Flags: gc.SizeL | gc.LeftRead | gc.RightWrite | gc.Conv},
+	sparc64.AFITOS: {Flags: gc.SizeL | gc.LeftRead | gc.RightWrite | gc.Conv},
 	sparc64.AUCVTFD:  {Flags: gc.SizeQ | gc.LeftRead | gc.RightWrite | gc.Conv},
 	sparc64.AUCVTFS:  {Flags: gc.SizeQ | gc.LeftRead | gc.RightWrite | gc.Conv},
 	sparc64.AUCVTFWD: {Flags: gc.SizeL | gc.LeftRead | gc.RightWrite | gc.Conv},
@@ -101,11 +101,11 @@ var progtable = [sparc64.ALAST]obj.ProgInfo{
 
 	// Moves
 	sparc64.AMOVB:  {Flags: gc.SizeB | gc.LeftRead | gc.RightWrite | gc.Move | gc.Conv},
-	sparc64.AMOVBU: {Flags: gc.SizeB | gc.LeftRead | gc.RightWrite | gc.Move | gc.Conv},
+	sparc64.AMOVUB: {Flags: gc.SizeB | gc.LeftRead | gc.RightWrite | gc.Move | gc.Conv},
 	sparc64.AMOVH:  {Flags: gc.SizeW | gc.LeftRead | gc.RightWrite | gc.Move | gc.Conv},
-	sparc64.AMOVHU: {Flags: gc.SizeW | gc.LeftRead | gc.RightWrite | gc.Move | gc.Conv},
+	sparc64.AMOVUH: {Flags: gc.SizeW | gc.LeftRead | gc.RightWrite | gc.Move | gc.Conv},
 	sparc64.AMOVW:  {Flags: gc.SizeL | gc.LeftRead | gc.RightWrite | gc.Move | gc.Conv},
-	sparc64.AMOVWU: {Flags: gc.SizeL | gc.LeftRead | gc.RightWrite | gc.Move | gc.Conv},
+	sparc64.AMOVUW: {Flags: gc.SizeL | gc.LeftRead | gc.RightWrite | gc.Move | gc.Conv},
 	sparc64.AMOVD:  {Flags: gc.SizeQ | gc.LeftRead | gc.RightWrite | gc.Move},
 	sparc64.AFMOVS: {Flags: gc.SizeF | gc.LeftRead | gc.RightWrite | gc.Move | gc.Conv},
 	sparc64.AFMOVD: {Flags: gc.SizeD | gc.LeftRead | gc.RightWrite | gc.Move},
