@@ -1,0 +1,87 @@
+Edit ,d
+git diff origin/master..HEAD |wc
+git push -f 4ad sparc64
+go install -v cmd/asm cmd/link
+go install -v cmd/compile
+go install -gcflags='-e' -v cmd/compile/internal/sparc64
+cd cmd/link/internal/sparc64
+cd cmd/compile/internal/sparc64
+cd cmd/compile/internal/gc
+cd alt && mk
+egrep -h sparc64.A cgen.go ggen.go galign.go gsubr.go reg.go | egrep -v '	+//' | ssam 'y/sparc64\.A[A-Z]+/ c/\n/' |sort -u >/tmp/one
+egrep -h sparc64.A prog.go | egrep -v '	+//' | ssam 'y/sparc64\.A[A-Z]+/ c/\n/' |sort -u >/tmp/two
+diff -u /tmp/one /tmp/two
+cd tmp && GOOS=linux GOARCH=arm64 go tool compile -S cmp.go
+cd tmp && GOOS=linux GOARCH=arm64 go tool compile -S shift.go
+cd tmp && GOOS=solaris GOARCH=sparc64 go tool compile -S cmp.go
+cd tmp && GOOS=solaris GOARCH=sparc64 go tool compile -S shift.go
+cd /tmp && lsr /Users/aram/go/test | grep \.go$ | xargs egrep -L 'ERROR' | xargs egrep -L 'import' | GOOS=solaris GOARCH=sparc64 xargs -n1 go tool compile >/tmp/errors
+
+!!!
+NO DYNAMIC SIZED INSTRUCTIONS
+!!!
+
+Stack management
+RET
+Auto/param references.
+
+Check resvd.
+!ASMULL
+!AUMULL
+	-> AMULD
+*ASMULH
+*AUMULH
+
+!AHINT -> ARNOP
+
+!ASDIV ->? ASDIVD
+!AUDIV ->? AUDIVD
+!AMUL -> AMULD
+
+!ALSL -> ASLL
+!ALSR -> ASRL
+!AASR -> ASRA
+
+CMP check operand order
+
+!AFCVTZSD -> AFDTOX
+!AFCVTZSS -> AFSTOX
+!AFCVTZSDW -> AFDTOI
+!AFCVTZSSW -> AFSTOI
+	what about float -> unsigned?
+
+!AFCVTSD -> AFSTOD
+!AFCVTDS -> AFDTOS
+
+!ASCVTFD -> AFXTOD
+!ASCVTFS -> AFXTOS
+!ASCVTFWD -> AFITOD
+!ASCVTFWS -> AFITOS
+	what about unsigned -> float?
+
+===
+
+0(FP), first argument
+8(FP), 2nd argument
+
+[-frame, 0)(SP), automatics
+
+// automatic N at -(8+8N)(RFP)
+// incoming argument N at (176+8N)(RFP)
+// outgoing argument N at (176+8N)(RSP)
+
+==
+!sparc64.BIG
+for small integer multiplication, maybe we need conversion to clear high bits
+
+==
+
+OLT for TFLOAT
+
+==
+
+Check Prog.Reg
+
+==
+
+Optimize duffcopy
