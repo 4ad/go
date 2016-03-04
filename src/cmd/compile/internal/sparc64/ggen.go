@@ -273,7 +273,7 @@ func cgen_hmul(nl *gc.Node, nr *gc.Node, res *gc.Node) {
 		gc.TINT16,
 		gc.TINT32:
 		gins(optoas(gc.OMUL, t), &n2, &n1)
-		p := gins(sparc64.ASRA, nil, &n1)
+		p := gins(sparc64.ASRAW, nil, &n1)
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = w
 
@@ -281,7 +281,7 @@ func cgen_hmul(nl *gc.Node, nr *gc.Node, res *gc.Node) {
 		gc.TUINT16,
 		gc.TUINT32:
 		gins(optoas(gc.OMUL, t), &n2, &n1)
-		p := gins(sparc64.ASRL, nil, &n1)
+		p := gins(sparc64.ASRLW, nil, &n1)
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = w
 

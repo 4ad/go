@@ -864,25 +864,31 @@ func optoas(op gc.Op, t *gc.Type) int {
 		OLSH_ | gc.TUINT16,
 		OLSH_ | gc.TINT32,
 		OLSH_ | gc.TUINT32,
-		OLSH_ | gc.TPTR32,
-		OLSH_ | gc.TINT64,
+		OLSH_ | gc.TPTR32:
+		a = sparc64.ASLLW
+
+	case OLSH_ | gc.TINT64,
 		OLSH_ | gc.TUINT64,
 		OLSH_ | gc.TPTR64:
-		a = sparc64.ASLA
+		a = sparc64.ASLLD
 
 	case ORSH_ | gc.TUINT8,
 		ORSH_ | gc.TUINT16,
 		ORSH_ | gc.TUINT32,
-		ORSH_ | gc.TPTR32,
-		ORSH_ | gc.TUINT64,
+		ORSH_ | gc.TPTR32:
+		a = sparc64.ASRLW
+
+	case ORSH_ | gc.TUINT64,
 		ORSH_ | gc.TPTR64:
-		a = sparc64.ASRL
+		a = sparc64.ASRLD
 
 	case ORSH_ | gc.TINT8,
 		ORSH_ | gc.TINT16,
-		ORSH_ | gc.TINT32,
-		ORSH_ | gc.TINT64:
-		a = sparc64.ASRA
+		ORSH_ | gc.TINT32:
+		a = sparc64.ASRAW
+
+	case ORSH_ | gc.TINT64:
+		a = sparc64.ASRAD
 
 		// TODO(minux): handle rotates
 	//case CASE(ORROTC, TINT8):
