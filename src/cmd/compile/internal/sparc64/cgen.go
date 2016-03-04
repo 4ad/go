@@ -123,7 +123,7 @@ func blockcopy(n, res *gc.Node, osrc, odst, w int64) {
 
 		p = gcmp(sparc64.ACMP, &src, &nend)
 
-		gc.Patch(gc.Gbranch(sparc64.ABNE, nil, 0), ploop)
+		gc.Patch(gc.Gbranch(sparc64.ABNED, nil, 0), ploop)
 		gc.Regfree(&nend)
 	} else {
 		// TODO(austin): Instead of generating ADD $-8,R8; ADD

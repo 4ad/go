@@ -625,13 +625,17 @@ func optoas(op gc.Op, t *gc.Type) int {
 		OEQ_ | gc.TUINT16,
 		OEQ_ | gc.TINT32,
 		OEQ_ | gc.TUINT32,
-		OEQ_ | gc.TINT64,
+		OEQ_ | gc.TPTR32:
+		a = sparc64.ABEW
+
+	case OEQ_ | gc.TINT64,
 		OEQ_ | gc.TUINT64,
-		OEQ_ | gc.TPTR32,
-		OEQ_ | gc.TPTR64,
-		OEQ_ | gc.TFLOAT32,
+		OEQ_ | gc.TPTR64:
+		a = sparc64.ABED
+
+	case OEQ_ | gc.TFLOAT32,
 		OEQ_ | gc.TFLOAT64:
-		a = sparc64.ABEQ
+		a = sparc64.AFBE
 
 	case ONE_ | gc.TBOOL,
 		ONE_ | gc.TINT8,
@@ -640,69 +644,97 @@ func optoas(op gc.Op, t *gc.Type) int {
 		ONE_ | gc.TUINT16,
 		ONE_ | gc.TINT32,
 		ONE_ | gc.TUINT32,
-		ONE_ | gc.TINT64,
+		ONE_ | gc.TPTR32:
+		a = sparc64.ABNEW
+
+	case ONE_ | gc.TINT64,
 		ONE_ | gc.TUINT64,
-		ONE_ | gc.TPTR32,
-		ONE_ | gc.TPTR64,
-		ONE_ | gc.TFLOAT32,
+		ONE_ | gc.TPTR64:
+		a = sparc64.ABNED
+
+	case ONE_ | gc.TFLOAT32,
 		ONE_ | gc.TFLOAT64:
-		a = sparc64.ABNE
+		a = sparc64.AFBNE
 
 	case OLT_ | gc.TINT8,
 		OLT_ | gc.TINT16,
-		OLT_ | gc.TINT32,
-		OLT_ | gc.TINT64:
-		a = sparc64.ABLT
+		OLT_ | gc.TINT32:
+		a = sparc64.ABLW
+
+	case OLT_ | gc.TINT64:
+		a = sparc64.ABLD
 
 	case OLT_ | gc.TUINT8,
 		OLT_ | gc.TUINT16,
-		OLT_ | gc.TUINT32,
-		OLT_ | gc.TUINT64,
-		OLT_ | gc.TFLOAT32,
+		OLT_ | gc.TUINT32:
+		a = sparc64.ABCSW
+
+	case OLT_ | gc.TUINT64:
+		a = sparc64.ABCSD
+
+	case OLT_ | gc.TFLOAT32,
 		OLT_ | gc.TFLOAT64:
-		a = sparc64.ABLO
+		a = sparc64.AFBL
 
 	case OLE_ | gc.TINT8,
 		OLE_ | gc.TINT16,
-		OLE_ | gc.TINT32,
-		OLE_ | gc.TINT64:
-		a = sparc64.ABLE
+		OLE_ | gc.TINT32:
+		a = sparc64.ABLEW
+
+	case OLE_ | gc.TINT64:
+		a = sparc64.ABLED
 
 	case OLE_ | gc.TUINT8,
 		OLE_ | gc.TUINT16,
-		OLE_ | gc.TUINT32,
-		OLE_ | gc.TUINT64,
-		OLE_ | gc.TFLOAT32,
+		OLE_ | gc.TUINT32:
+		a = sparc64.ABLEUW
+
+	case OLE_ | gc.TUINT64:
+		a = sparc64.ABLEUD
+
+	case OLE_ | gc.TFLOAT32,
 		OLE_ | gc.TFLOAT64:
-		a = sparc64.ABLS
+		a = sparc64.AFBLE
 
 	case OGT_ | gc.TINT8,
 		OGT_ | gc.TINT16,
-		OGT_ | gc.TINT32,
-		OGT_ | gc.TINT64,
-		OGT_ | gc.TFLOAT32,
+		OGT_ | gc.TINT32:
+		a = sparc64.ABGW
+
+	case OGT_ | gc.TINT64:
+		a = sparc64.ABGD
+
+	case OGT_ | gc.TFLOAT32,
 		OGT_ | gc.TFLOAT64:
-		a = sparc64.ABGT
+		a = sparc64.AFBG
 
 	case OGT_ | gc.TUINT8,
 		OGT_ | gc.TUINT16,
-		OGT_ | gc.TUINT32,
-		OGT_ | gc.TUINT64:
-		a = sparc64.ABHI
+		OGT_ | gc.TUINT32:
+		a = sparc64.ABGUW
+
+	case OGT_ | gc.TUINT64:
+		a = sparc64.ABGUD
 
 	case OGE_ | gc.TINT8,
 		OGE_ | gc.TINT16,
-		OGE_ | gc.TINT32,
-		OGE_ | gc.TINT64,
-		OGE_ | gc.TFLOAT32,
+		OGE_ | gc.TINT32:
+		a = sparc64.ABGEW
+
+	case OGE_ | gc.TINT64:
+		a = sparc64.ABGED
+
+	case OGE_ | gc.TFLOAT32,
 		OGE_ | gc.TFLOAT64:
-		a = sparc64.ABGE
+		a = sparc64.AFBGE
 
 	case OGE_ | gc.TUINT8,
 		OGE_ | gc.TUINT16,
-		OGE_ | gc.TUINT32,
-		OGE_ | gc.TUINT64:
-		a = sparc64.ABHS
+		OGE_ | gc.TUINT32:
+		a = sparc64.ABCCW
+
+	case OGE_ | gc.TUINT64:
+		a = sparc64.ABCCD
 
 	case OCMP_ | gc.TBOOL,
 		OCMP_ | gc.TINT8,
