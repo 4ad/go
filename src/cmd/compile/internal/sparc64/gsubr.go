@@ -902,12 +902,13 @@ func optoas(op gc.Op, t *gc.Type) int {
 	//	a = 0//??? RLDC??
 	//	break;
 
-	case OHMUL_ | gc.TINT64:
-		a = sparc64.ASMULH
-
-	case OHMUL_ | gc.TUINT64,
-		OHMUL_ | gc.TPTR64:
-		a = sparc64.AUMULH
+	// TODO(aram): handle high-multiply
+	//case OHMUL_ | gc.TINT64:
+	//	a = sparc64.ASMULH
+	//
+	//case OHMUL_ | gc.TUINT64,
+	//	OHMUL_ | gc.TPTR64:
+	//	a = sparc64.AUMULH
 
 	case OMUL_ | gc.TINT8,
 		OMUL_ | gc.TINT16,

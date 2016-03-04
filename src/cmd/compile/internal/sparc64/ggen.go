@@ -285,13 +285,14 @@ func cgen_hmul(nl *gc.Node, nr *gc.Node, res *gc.Node) {
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = w
 
-	case gc.TINT64,
-		gc.TUINT64:
-		if gc.Issigned[t.Etype] {
-			gins(sparc64.ASMULH, &n2, &n1)
-		} else {
-			gins(sparc64.AUMULH, &n2, &n1)
-		}
+	// TODO(aram):
+	//case gc.TINT64,
+	//	gc.TUINT64:
+	//	if gc.Issigned[t.Etype] {
+	//		gins(sparc64.ASMULH, &n2, &n1)
+	//	} else {
+	//		gins(sparc64.AUMULH, &n2, &n1)
+	//	}
 
 	default:
 		gc.Fatalf("cgen_hmul %v", t)
