@@ -385,51 +385,44 @@ func gmove(f *gc.Node, t *gc.Node) {
 	 */
 	case gc.TINT8<<16 | gc.TFLOAT32,
 		gc.TINT16<<16 | gc.TFLOAT32,
-		gc.TINT32<<16 | gc.TFLOAT32:
+		gc.TINT32<<16 | gc.TFLOAT32,
+		gc.TUINT8<<16 | gc.TFLOAT32,
+		gc.TUINT16<<16 | gc.TFLOAT32:
 		a = sparc64.AFITOS
 
 		goto rdst
 
 	case gc.TINT8<<16 | gc.TFLOAT64,
 		gc.TINT16<<16 | gc.TFLOAT64,
-		gc.TINT32<<16 | gc.TFLOAT64:
+		gc.TINT32<<16 | gc.TFLOAT64,
+		gc.TUINT8<<16 | gc.TFLOAT64,
+		gc.TUINT16<<16 | gc.TFLOAT64:
 		a = sparc64.AFITOD
 
 		goto rdst
 
-	case gc.TINT64<<16 | gc.TFLOAT32:
+	case gc.TINT64<<16 | gc.TFLOAT32,
+		gc.TUINT32<<16 | gc.TFLOAT32:
 		a = sparc64.AFXTOS
 		goto rdst
 
-	case gc.TINT64<<16 | gc.TFLOAT64:
+	case gc.TINT64<<16 | gc.TFLOAT64,
+		gc.TUINT32<<16 | gc.TFLOAT64:
 		a = sparc64.AFXTOD
 		goto rdst
 
-	case gc.TUINT8<<16 | gc.TFLOAT32,
-		gc.TUINT16<<16 | gc.TFLOAT32,
-		gc.TUINT32<<16 | gc.TFLOAT32:
-		a = sparc64.AUCVTFWS
+	// TODO(aram):
+	//case gc.TUINT64<<16 | gc.TFLOAT32:
+	//	a = sparc64.AUCVTFS
+	//	goto rdst
+	//
+	//case gc.TUINT64<<16 | gc.TFLOAT64:
+	//	a = sparc64.AUCVTFD
+	//	goto rdst
 
-		goto rdst
-
-	case gc.TUINT8<<16 | gc.TFLOAT64,
-		gc.TUINT16<<16 | gc.TFLOAT64,
-		gc.TUINT32<<16 | gc.TFLOAT64:
-		a = sparc64.AUCVTFWD
-
-		goto rdst
-
-	case gc.TUINT64<<16 | gc.TFLOAT32:
-		a = sparc64.AUCVTFS
-		goto rdst
-
-	case gc.TUINT64<<16 | gc.TFLOAT64:
-		a = sparc64.AUCVTFD
-		goto rdst
-
-		/*
-		 * float to float
-		 */
+	/*
+	 * float to float
+	 */
 	case gc.TFLOAT32<<16 | gc.TFLOAT32:
 		a = sparc64.AFMOVS
 
