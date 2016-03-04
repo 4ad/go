@@ -54,6 +54,7 @@ func linkarchinit() {
 	ld.Thearch.Regsize = ld.Thelinkarch.Regsize
 	ld.Thearch.Funcalign = FuncAlign
 	ld.Thearch.Maxalign = MaxAlign
+	ld.Thearch.Minalign = MinAlign
 	ld.Thearch.Minlc = MINLC
 	ld.Thearch.Dwarfregsp = DWARFREGSP
 	ld.Thearch.Dwarfreglr = DWARFREGLR
@@ -71,6 +72,9 @@ func linkarchinit() {
 	ld.Thearch.Lput = ld.Lputl
 	ld.Thearch.Wput = ld.Wputl
 	ld.Thearch.Vput = ld.Vputl
+	ld.Thearch.Append16 = ld.Append16l
+	ld.Thearch.Append32 = ld.Append32l
+	ld.Thearch.Append64 = ld.Append64l
 
 	ld.Thearch.Linuxdynld = "/lib/ld-linux.so.2"
 	ld.Thearch.Freebsddynld = "/usr/libexec/ld-elf.so.1"
@@ -84,6 +88,13 @@ func archinit() {
 	// Go was built; see ../../make.bash.
 	if ld.Linkmode == ld.LinkAuto && obj.Getgoextlinkenabled() == "0" {
 		ld.Linkmode = ld.LinkInternal
+	}
+
+	if ld.Buildmode == ld.BuildmodeCShared || ld.Buildmode == ld.BuildmodePIE || ld.DynlinkingGo() {
+		ld.Linkmode = ld.LinkExternal
+		got := ld.Linklookup(ld.Ctxt, "_GLOBAL_OFFSET_TABLE_", 0)
+		got.Type = obj.SDYNIMPORT
+		got.Attr |= ld.AttrReachable
 	}
 
 	switch ld.HEADTYPE {

@@ -24,9 +24,38 @@ type _type struct {
 	// If the KindGCProg bit is set in kind, gcdata is a GC program.
 	// Otherwise it is a ptrmask bitmap. See mbitmap.go for details.
 	gcdata  *byte
-	_string *string
+	_string string
 	x       *uncommontype
-	ptrto   *_type
+}
+
+func hasPrefix(s, prefix string) bool {
+	return len(s) >= len(prefix) && s[:len(prefix)] == prefix
+}
+
+func (t *_type) name() string {
+	if hasPrefix(t._string, "map[") {
+		return ""
+	}
+	if hasPrefix(t._string, "struct {") {
+		return ""
+	}
+	if hasPrefix(t._string, "chan ") {
+		return ""
+	}
+	if hasPrefix(t._string, "func(") {
+		return ""
+	}
+	if t._string[0] == '[' || t._string[0] == '*' {
+		return ""
+	}
+	i := len(t._string) - 1
+	for i >= 0 {
+		if t._string[i] == '.' {
+			break
+		}
+		i--
+	}
+	return t._string[i+1:]
 }
 
 type method struct {
@@ -39,7 +68,6 @@ type method struct {
 }
 
 type uncommontype struct {
-	name    *string
 	pkgpath *string
 	mhdr    []method
 }
@@ -70,6 +98,13 @@ type maptype struct {
 	needkeyupdate bool   // true if we need to update key on an overwrite
 }
 
+type arraytype struct {
+	typ   _type
+	elem  *_type
+	slice *_type
+	len   uintptr
+}
+
 type chantype struct {
 	typ  _type
 	elem *_type
@@ -84,11 +119,24 @@ type slicetype struct {
 type functype struct {
 	typ       _type
 	dotdotdot bool
-	in        slice
-	out       slice
+	in        []*_type
+	out       []*_type
 }
 
 type ptrtype struct {
 	typ  _type
 	elem *_type
+}
+
+type structfield struct {
+	name    *string
+	pkgpath *string
+	typ     *_type
+	tag     *string
+	offset  uintptr
+}
+
+type structtype struct {
+	typ    _type
+	fields []structfield
 }

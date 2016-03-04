@@ -47,7 +47,7 @@ func putelfstr(s string) int {
 
 	// When dynamically linking, we create LSym's by reading the names from
 	// the symbol tables of the shared libraries and so the names need to
-	// match exactly.  Tools like DTrace will have to wait for now.
+	// match exactly. Tools like DTrace will have to wait for now.
 	if !DynlinkingGo() {
 		// Rewrite · to . for ASCII-only tools like DTrace (sigh)
 		s = strings.Replace(s, "·", ".", -1)
@@ -67,7 +67,7 @@ func putelfstr(s string) int {
 
 func putelfsyment(off int, addr int64, size int64, info int, shndx int, other int) {
 	switch Thearch.Thechar {
-	case 'u', '6', '7', '9':
+	case '0', '6', '7', '9', 'u':
 		Thearch.Lput(uint32(off))
 		Cput(uint8(info))
 		Cput(uint8(other))
@@ -142,7 +142,7 @@ func putelfsym(x *LSym, s string, t int, addr int64, size int64, ver int, go_ *L
 	// maybe one day STB_WEAK.
 	bind := STB_GLOBAL
 
-	if ver != 0 || (x.Type&obj.SHIDDEN != 0) || x.Local {
+	if ver != 0 || (x.Type&obj.SHIDDEN != 0) || x.Attr.Local() {
 		bind = STB_LOCAL
 	}
 
@@ -151,15 +151,10 @@ func putelfsym(x *LSym, s string, t int, addr int64, size int64, ver int, go_ *L
 	// To avoid filling the dynamic table with lots of unnecessary symbols,
 	// mark all Go symbols local (not global) in the final executable.
 	// But when we're dynamically linking, we need all those global symbols.
-	if !DynlinkingGo() && Linkmode == LinkExternal && x.Cgoexport&CgoExportStatic == 0 && elfshnum != SHN_UNDEF {
+	if !DynlinkingGo() && Linkmode == LinkExternal && !x.Attr.CgoExportStatic() && elfshnum != SHN_UNDEF {
 		bind = STB_LOCAL
 	}
 
-	if bind != elfbind {
-		return
-	}
-
-	off := putelfstr(s)
 	if Linkmode == LinkExternal && elfshnum != SHN_UNDEF {
 		addr -= int64(xo.Sect.Vaddr)
 	}
@@ -167,7 +162,31 @@ func putelfsym(x *LSym, s string, t int, addr int64, size int64, ver int, go_ *L
 	if x.Type&obj.SHIDDEN != 0 {
 		other = STV_HIDDEN
 	}
-	putelfsyment(off, addr, size, bind<<4|type_&0xf, elfshnum, other)
+	if (Buildmode == BuildmodePIE || DynlinkingGo()) && Thearch.Thechar == '9' && type_ == STT_FUNC && x.Name != "runtime.duffzero" && x.Name != "runtime.duffcopy" {
+		// On ppc64 the top three bits of the st_other field indicate how
+		// many instructions separate the global and local entry points. In
+		// our case it is two instructions, indicated by the value 3.
+		other |= 3 << 5
+	}
+
+	if DynlinkingGo() && bind == STB_GLOBAL && elfbind == STB_LOCAL && x.Type == obj.STEXT {
+		// When dynamically linking, we want references to functions defined
+		// in this module to always be to the function object, not to the
+		// PLT. We force this by writing an additional local symbol for every
+		// global function symbol and making all relocations against the
+		// global symbol refer to this local symbol instead (see
+		// (*LSym).ElfsymForReloc). This is approximately equivalent to the
+		// ELF linker -Bsymbolic-functions option, but that is buggy on
+		// several platforms.
+		putelfsyment(putelfstr("local."+s), addr, size, STB_LOCAL<<4|type_&0xf, elfshnum, other)
+		x.LocalElfsym = int32(numelfsym)
+		numelfsym++
+		return
+	} else if bind != elfbind {
+		return
+	}
+
+	putelfsyment(putelfstr(s), addr, size, bind<<4|type_&0xf, elfshnum, other)
 	x.Elfsym = int32(numelfsym)
 	numelfsym++
 }
@@ -195,6 +214,11 @@ func Asmelfsym() {
 	putelfsyment(0, 0, 0, STB_LOCAL<<4|STT_NOTYPE, 0, 0)
 
 	dwarfaddelfsectionsyms()
+
+	// Some linkers will add a FILE sym if one is not present.
+	// Avoid having the working directory inserted into the symbol table.
+	putelfsyment(0, 0, 0, STB_LOCAL<<4|STT_FILE, SHN_ABS, 0)
+	numelfsym++
 
 	elfbind = STB_LOCAL
 	genasmsym(putelfsym)
@@ -272,6 +296,13 @@ func Wputb(w uint16) {
 	Cput(uint8(w))
 }
 
+func Append16b(b []byte, v uint16) []byte {
+	return append(b, uint8(v>>8), uint8(v))
+}
+func Append16l(b []byte, v uint16) []byte {
+	return append(b, uint8(v), uint8(v>>8))
+}
+
 func Lputb(l uint32) {
 	Cput(uint8(l >> 24))
 	Cput(uint8(l >> 16))
@@ -286,6 +317,13 @@ func Lputl(l uint32) {
 	Cput(uint8(l >> 24))
 }
 
+func Append32b(b []byte, v uint32) []byte {
+	return append(b, uint8(v>>24), uint8(v>>16), uint8(v>>8), uint8(v))
+}
+func Append32l(b []byte, v uint32) []byte {
+	return append(b, uint8(v), uint8(v>>8), uint8(v>>16), uint8(v>>24))
+}
+
 func Vputb(v uint64) {
 	Lputb(uint32(v >> 32))
 	Lputb(uint32(v))
@@ -294,6 +332,18 @@ func Vputb(v uint64) {
 func Vputl(v uint64) {
 	Lputl(uint32(v))
 	Lputl(uint32(v >> 32))
+}
+
+func Append64b(b []byte, v uint64) []byte {
+	b = Append32b(b, uint32(v>>32))
+	b = Append32b(b, uint32(v))
+	return b
+}
+
+func Append64l(b []byte, v uint64) []byte {
+	b = Append32l(b, uint32(v))
+	b = Append32l(b, uint32(v>>32))
+	return b
 }
 
 type byPkg []*Library
@@ -339,71 +389,71 @@ func symtab() {
 
 	s.Type = obj.SRODATA
 	s.Size = 0
-	s.Reachable = true
+	s.Attr |= AttrReachable
 	xdefine("runtime.egcdata", obj.SRODATA, 0)
 
 	s = Linklookup(Ctxt, "runtime.gcbss", 0)
 	s.Type = obj.SRODATA
 	s.Size = 0
-	s.Reachable = true
+	s.Attr |= AttrReachable
 	xdefine("runtime.egcbss", obj.SRODATA, 0)
 
 	// pseudo-symbols to mark locations of type, string, and go string data.
 	var symtype *LSym
 	var symtyperel *LSym
-	if UseRelro() && Buildmode == BuildmodeCShared {
+	if UseRelro() && (Buildmode == BuildmodeCShared || Buildmode == BuildmodePIE) {
 		s = Linklookup(Ctxt, "type.*", 0)
 
 		s.Type = obj.STYPE
 		s.Size = 0
-		s.Reachable = true
+		s.Attr |= AttrReachable
 		symtype = s
 
 		s = Linklookup(Ctxt, "typerel.*", 0)
 
 		s.Type = obj.STYPERELRO
 		s.Size = 0
-		s.Reachable = true
+		s.Attr |= AttrReachable
 		symtyperel = s
 	} else if !DynlinkingGo() {
 		s = Linklookup(Ctxt, "type.*", 0)
 
 		s.Type = obj.STYPE
 		s.Size = 0
-		s.Reachable = true
+		s.Attr |= AttrReachable
 		symtype = s
 		symtyperel = s
 	}
 
 	s = Linklookup(Ctxt, "go.string.*", 0)
 	s.Type = obj.SGOSTRING
-	s.Local = true
+	s.Attr |= AttrLocal
 	s.Size = 0
-	s.Reachable = true
+	s.Attr |= AttrReachable
 	symgostring := s
 
 	s = Linklookup(Ctxt, "go.func.*", 0)
 	s.Type = obj.SGOFUNC
-	s.Local = true
+	s.Attr |= AttrLocal
 	s.Size = 0
-	s.Reachable = true
+	s.Attr |= AttrReachable
 	symgofunc := s
 
 	s = Linklookup(Ctxt, "runtime.gcbits.*", 0)
 	s.Type = obj.SGCBITS
-	s.Local = true
+	s.Attr |= AttrLocal
 	s.Size = 0
-	s.Reachable = true
+	s.Attr |= AttrReachable
 	symgcbits := s
 
 	symtypelink := Linklookup(Ctxt, "runtime.typelink", 0)
 	symtypelink.Type = obj.STYPELINK
 
 	symt = Linklookup(Ctxt, "runtime.symtab", 0)
-	symt.Local = true
+	symt.Attr |= AttrLocal
 	symt.Type = obj.SSYMTAB
 	symt.Size = 0
-	symt.Reachable = true
+	symt.Attr |= AttrReachable
 
 	ntypelinks := 0
 
@@ -411,13 +461,13 @@ func symtab() {
 	// within a type they sort by size, so the .* symbols
 	// just defined above will be first.
 	// hide the specific symbols.
-	for s := Ctxt.Allsym; s != nil; s = s.Allsym {
-		if !s.Reachable || s.Special != 0 || s.Type != obj.SRODATA {
+	for _, s := range Ctxt.Allsym {
+		if !s.Attr.Reachable() || s.Attr.Special() || s.Type != obj.SRODATA {
 			continue
 		}
 
 		if strings.HasPrefix(s.Name, "type.") && !DynlinkingGo() {
-			s.Hide = 1
+			s.Attr |= AttrHidden
 			if UseRelro() && len(s.R) > 0 {
 				s.Type = obj.STYPERELRO
 				s.Outer = symtyperel
@@ -430,31 +480,31 @@ func symtab() {
 		if strings.HasPrefix(s.Name, "go.typelink.") {
 			ntypelinks++
 			s.Type = obj.STYPELINK
-			s.Hide = 1
+			s.Attr |= AttrHidden
 			s.Outer = symtypelink
 		}
 
 		if strings.HasPrefix(s.Name, "go.string.") {
 			s.Type = obj.SGOSTRING
-			s.Hide = 1
+			s.Attr |= AttrHidden
 			s.Outer = symgostring
 		}
 
 		if strings.HasPrefix(s.Name, "runtime.gcbits.") {
 			s.Type = obj.SGCBITS
-			s.Hide = 1
+			s.Attr |= AttrHidden
 			s.Outer = symgcbits
 		}
 
 		if strings.HasPrefix(s.Name, "go.func.") {
 			s.Type = obj.SGOFUNC
-			s.Hide = 1
+			s.Attr |= AttrHidden
 			s.Outer = symgofunc
 		}
 
 		if strings.HasPrefix(s.Name, "gcargs.") || strings.HasPrefix(s.Name, "gclocals.") || strings.HasPrefix(s.Name, "gclocals·") {
 			s.Type = obj.SGOFUNC
-			s.Hide = 1
+			s.Attr |= AttrHidden
 			s.Outer = symgofunc
 			s.Align = 4
 			liveness += (s.Size + int64(s.Align) - 1) &^ (int64(s.Align) - 1)
@@ -463,7 +513,7 @@ func symtab() {
 
 	if Buildmode == BuildmodeShared {
 		abihashgostr := Linklookup(Ctxt, "go.link.abihash."+filepath.Base(outfile), 0)
-		abihashgostr.Reachable = true
+		abihashgostr.Attr |= AttrReachable
 		abihashgostr.Type = obj.SRODATA
 		hashsym := Linklookup(Ctxt, "go.link.abihashbytes", 0)
 		Addaddr(Ctxt, abihashgostr, hashsym)
@@ -485,8 +535,8 @@ func symtab() {
 	adduint(Ctxt, moduledata, uint64(pclntabNfunc+1))
 	// The filetab slice
 	Addaddrplus(Ctxt, moduledata, Linklookup(Ctxt, "runtime.pclntab", 0), int64(pclntabFiletabOffset))
-	adduint(Ctxt, moduledata, uint64(Ctxt.Nhistfile))
-	adduint(Ctxt, moduledata, uint64(Ctxt.Nhistfile))
+	adduint(Ctxt, moduledata, uint64(Ctxt.Nhistfile)+1)
+	adduint(Ctxt, moduledata, uint64(Ctxt.Nhistfile)+1)
 	// findfunctab
 	Addaddr(Ctxt, moduledata, Linklookup(Ctxt, "runtime.findfunctab", 0))
 	// minpc, maxpc
@@ -512,7 +562,8 @@ func symtab() {
 	adduint(Ctxt, moduledata, uint64(ntypelinks))
 	if len(Ctxt.Shlibs) > 0 {
 		thismodulename := filepath.Base(outfile)
-		if Buildmode == BuildmodeExe {
+		switch Buildmode {
+		case BuildmodeExe, BuildmodePIE:
 			// When linking an executable, outfile is just "a.out". Make
 			// it something slightly more comprehensible.
 			thismodulename = "the executable"
@@ -520,8 +571,8 @@ func symtab() {
 		addgostring(moduledata, "go.link.thismodulename", thismodulename)
 
 		modulehashes := Linklookup(Ctxt, "go.link.abihashes", 0)
-		modulehashes.Reachable = true
-		modulehashes.Local = true
+		modulehashes.Attr |= AttrReachable
+		modulehashes.Attr |= AttrLocal
 		modulehashes.Type = obj.SRODATA
 
 		for i, shlib := range Ctxt.Shlibs {
@@ -534,7 +585,7 @@ func symtab() {
 
 			// modulehashes[i].runtimehash
 			abihash := Linklookup(Ctxt, "go.link.abihash."+modulename, 0)
-			abihash.Reachable = true
+			abihash.Attr |= AttrReachable
 			Addaddr(Ctxt, modulehashes, abihash)
 		}
 

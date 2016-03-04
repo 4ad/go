@@ -30,7 +30,7 @@ type Input struct {
 	peekText        string
 }
 
-// NewInput returns a
+// NewInput returns an Input from the given path.
 func NewInput(name string) *Input {
 	return &Input{
 		// include directories: look in source dir, then -I directories.
@@ -261,7 +261,7 @@ func (in *Input) macroDefinition(name string) ([]string, []Token) {
 	// Scan to newline. Backslashes escape newlines.
 	for tok != '\n' {
 		if tok == scanner.EOF {
-			in.Error("missing newline in macro definition for %q\n", name)
+			in.Error("missing newline in definition for macro:", name)
 		}
 		if tok == '\\' {
 			tok = in.Stack.Next()

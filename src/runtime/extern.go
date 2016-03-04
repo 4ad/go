@@ -27,6 +27,13 @@ It is a comma-separated list of name=val pairs setting these named variables:
 	allocfreetrace: setting allocfreetrace=1 causes every allocation to be
 	profiled and a stack trace printed on each object's allocation and free.
 
+	cgocheck: setting cgocheck=0 disables all checks for packages
+	using cgo to incorrectly pass Go pointers to non-Go code.
+	Setting cgocheck=1 (the default) enables relatively cheap
+	checks that may miss some errors.  Setting cgocheck=2 enables
+	expensive checks that should not miss any errors, but will
+	cause your program to run slower.
+
 	efence: setting efence=1 causes the allocator to run in a mode
 	where each object is allocated on a unique page and addresses are
 	never recycled.
@@ -59,7 +66,7 @@ It is a comma-separated list of name=val pairs setting these named variables:
 	length of the pause. Setting gctrace=2 emits the same summary but also
 	repeats each collection. The format of this line is subject to change.
 	Currently, it is:
-		gc # @#s #%: #+...+# ms clock, #+...+# ms cpu, #->#-># MB, # MB goal, # P
+		gc # @#s #%: #+#+# ms clock, #+#/#/#+# ms cpu, #->#-># MB, # MB goal, # P
 	where the fields are as follows:
 		gc #        the GC number, incremented at each GC
 		@#s         time in seconds since program start
@@ -68,9 +75,9 @@ It is a comma-separated list of name=val pairs setting these named variables:
 		#->#-># MB  heap size at GC start, at GC end, and live heap
 		# MB goal   goal heap size
 		# P         number of processors used
-	The phases are stop-the-world (STW) sweep termination, scan,
-	synchronize Ps, mark, and STW mark termination. The CPU times
-	for mark are broken down in to assist time (GC performed in
+	The phases are stop-the-world (STW) sweep termination, concurrent
+	mark and scan, and STW mark termination. The CPU times
+	for mark/scan are broken down in to assist time (GC performed in
 	line with allocation), background GC time, and idle GC time.
 	If the line ends with "(forced)", this GC was forced by a
 	runtime.GC() call and all phases are STW.
@@ -98,6 +105,9 @@ It is a comma-separated list of name=val pairs setting these named variables:
 	schedtrace: setting schedtrace=X causes the scheduler to emit a single line to standard
 	error every X milliseconds, summarizing the scheduler state.
 
+The net and net/http packages also refer to debugging variables in GODEBUG.
+See the documentation for those packages for details.
+
 The GOMAXPROCS variable limits the number of operating system threads that
 can execute user-level Go code simultaneously. There is no limit to the number of threads
 that can be blocked in system calls on behalf of Go code; those do not count against
@@ -106,15 +116,24 @@ the limit.
 
 The GOTRACEBACK variable controls the amount of output generated when a Go
 program fails due to an unrecovered panic or an unexpected runtime condition.
-By default, a failure prints a stack trace for every extant goroutine, eliding functions
-internal to the run-time system, and then exits with exit code 2.
-If GOTRACEBACK=0, the per-goroutine stack traces are omitted entirely.
-If GOTRACEBACK=1, the default behavior is used.
-If GOTRACEBACK=2, the per-goroutine stack traces include run-time functions.
-If GOTRACEBACK=crash, the per-goroutine stack traces include run-time functions,
-and if possible the program crashes in an operating-specific manner instead of
-exiting. For example, on Unix systems, the program raises SIGABRT to trigger a
-core dump.
+By default, a failure prints a stack trace for the current goroutine,
+eliding functions internal to the run-time system, and then exits with exit code 2.
+The failure prints stack traces for all goroutines if there is no current goroutine
+or the failure is internal to the run-time.
+GOTRACEBACK=none omits the goroutine stack traces entirely.
+GOTRACEBACK=single (the default) behaves as described above.
+GOTRACEBACK=all adds stack traces for all user-created goroutines.
+GOTRACEBACK=system is like ``all'' but adds stack frames for run-time functions
+and shows goroutines created internally by the run-time.
+GOTRACEBACK=crash is like ``system'' but crashes in an operating system-specific
+manner instead of exiting. For example, on Unix systems, the crash raises
+SIGABRT to trigger a core dump.
+For historical reasons, the GOTRACEBACK settings 0, 1, and 2 are synonyms for
+none, all, and system, respectively.
+The runtime/debug package's SetTraceback function allows increasing the
+amount of output at run time, but it cannot reduce the amount below that
+specified by the environment variable.
+See https://golang.org/pkg/runtime/debug/#SetTraceback.
 
 The GOARCH, GOOS, GOPATH, and GOROOT environment variables complete
 the set of Go environment variables. They influence the building of Go programs
@@ -125,12 +144,14 @@ of the run-time system.
 */
 package runtime
 
+import "runtime/internal/sys"
+
 // Caller reports file and line number information about function invocations on
-// the calling goroutine's stack.  The argument skip is the number of stack frames
+// the calling goroutine's stack. The argument skip is the number of stack frames
 // to ascend, with 0 identifying the caller of Caller.  (For historical reasons the
 // meaning of skip differs between Caller and Callers.) The return values report the
 // program counter, file name, and line number within the file of the corresponding
-// call.  The boolean ok is false if it was not possible to recover the information.
+// call. The boolean ok is false if it was not possible to recover the information.
 func Caller(skip int) (pc uintptr, file string, line int, ok bool) {
 	// Ask for two PCs: the one we were asked for
 	// and what it called, so that we can see if it
@@ -163,22 +184,19 @@ func Caller(skip int) (pc uintptr, file string, line int, ok bool) {
 }
 
 // Callers fills the slice pc with the return program counters of function invocations
-// on the calling goroutine's stack.  The argument skip is the number of stack frames
+// on the calling goroutine's stack. The argument skip is the number of stack frames
 // to skip before recording in pc, with 0 identifying the frame for Callers itself and
 // 1 identifying the caller of Callers.
 // It returns the number of entries written to pc.
 //
 // Note that since each slice entry pc[i] is a return program counter,
 // looking up the file and line for pc[i] (for example, using (*Func).FileLine)
-// will return the file and line number of the instruction immediately
+// will normally return the file and line number of the instruction immediately
 // following the call.
-// To look up the file and line number of the call itself, use pc[i]-1.
-// As an exception to this rule, if pc[i-1] corresponds to the function
-// runtime.sigpanic, then pc[i] is the program counter of a faulting
-// instruction and should be used without any subtraction.
+// To easily look up file/line information for the call sequence, use Frames.
 func Callers(skip int, pc []uintptr) int {
 	// runtime.callers uses pc.array==nil as a signal
-	// to print a stack trace.  Pick off 0-length pc here
+	// to print a stack trace. Pick off 0-length pc here
 	// so that we don't let a nil pc slice get to it.
 	if len(pc) == 0 {
 		return 0
@@ -194,20 +212,20 @@ func GOROOT() string {
 	if s != "" {
 		return s
 	}
-	return defaultGoroot
+	return sys.DefaultGoroot
 }
 
 // Version returns the Go tree's version string.
 // It is either the commit hash and date at the time of the build or,
 // when possible, a release tag like "go1.3".
 func Version() string {
-	return theVersion
+	return sys.TheVersion
 }
 
 // GOOS is the running program's operating system target:
 // one of darwin, freebsd, linux, and so on.
-const GOOS string = theGoos
+const GOOS string = sys.TheGoos
 
 // GOARCH is the running program's architecture target:
 // 386, amd64, or arm.
-const GOARCH string = theGoarch
+const GOARCH string = sys.TheGoarch

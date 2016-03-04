@@ -1,4 +1,4 @@
-// Copyright 2010 The Go Authors.  All rights reserved.
+// Copyright 2010 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -14,6 +14,7 @@ import (
 	"bytes"
 	"encoding"
 	"encoding/base64"
+	"fmt"
 	"math"
 	"reflect"
 	"runtime"
@@ -130,7 +131,7 @@ import (
 // an UnsupportedTypeError.
 //
 // JSON cannot represent cyclic data structures and Marshal does not
-// handle them.  Passing cyclic structures to Marshal will result in
+// handle them. Passing cyclic structures to Marshal will result in
 // an infinite recursion.
 //
 func Marshal(v interface{}) ([]byte, error) {
@@ -324,7 +325,7 @@ func typeEncoder(t reflect.Type) encoderFunc {
 
 	// To deal with recursive types, populate the map with an
 	// indirect func before we build it. This type waits on the
-	// real func (f) to be ready and then calls it.  This indirect
+	// real func (f) to be ready and then calls it. This indirect
 	// func is only used for recursive types.
 	encoderCache.Lock()
 	if encoderCache.m == nil {
@@ -529,8 +530,13 @@ var (
 func stringEncoder(e *encodeState, v reflect.Value, quoted bool) {
 	if v.Type() == numberType {
 		numStr := v.String()
+		// In Go1.5 the empty string encodes to "0", while this is not a valid number literal
+		// we keep compatibility so check validity after this.
 		if numStr == "" {
 			numStr = "0" // Number's zero-val
+		}
+		if !isValidNumber(numStr) {
+			e.error(fmt.Errorf("json: invalid number literal %q", numStr))
 		}
 		e.WriteString(numStr)
 		return
@@ -1021,7 +1027,7 @@ func typeFields(t reflect.Type) []field {
 			// Scan f.typ for fields to include.
 			for i := 0; i < f.typ.NumField(); i++ {
 				sf := f.typ.Field(i)
-				if sf.PkgPath != "" { // unexported
+				if sf.PkgPath != "" && !sf.Anonymous { // unexported
 					continue
 				}
 				tag := sf.Tag.Get("json")

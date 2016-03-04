@@ -11,8 +11,6 @@ import (
 )
 
 func defframe(ptxt *obj.Prog) {
-	var n *gc.Node
-
 	// fill in argument size, stack size
 	ptxt.To.Type = obj.TYPE_TEXTSIZE
 
@@ -28,8 +26,7 @@ func defframe(ptxt *obj.Prog) {
 	hi := int64(0)
 	lo := hi
 	r0 := uint32(0)
-	for l := gc.Curfn.Func.Dcl; l != nil; l = l.Next {
-		n = l.N
+	for _, n := range gc.Curfn.Func.Dcl {
 		if !n.Name.Needzero {
 			continue
 		}
@@ -124,7 +121,7 @@ func cgen_hmul(nl *gc.Node, nr *gc.Node, res *gc.Node) {
 	}
 
 	t := nl.Type
-	w := int(t.Width * 8)
+	w := t.Width * 8
 	var n1 gc.Node
 	gc.Regalloc(&n1, t, res)
 	gc.Cgen(nl, &n1)
@@ -173,7 +170,7 @@ func cgen_hmul(nl *gc.Node, nr *gc.Node, res *gc.Node) {
  *	res = nl << nr
  *	res = nl >> nr
  */
-func cgen_shift(op int, bounded bool, nl *gc.Node, nr *gc.Node, res *gc.Node) {
+func cgen_shift(op gc.Op, bounded bool, nl *gc.Node, nr *gc.Node, res *gc.Node) {
 	if nl.Type.Width > 4 {
 		gc.Fatalf("cgen_shift %v", nl.Type)
 	}
@@ -424,7 +421,7 @@ func expandchecks(firstp *obj.Prog) {
 			continue
 		}
 		if gc.Debug_checknil != 0 && p.Lineno > 1 { // p->lineno==1 in generated wrappers
-			gc.Warnl(int(p.Lineno), "generated nil check")
+			gc.Warnl(p.Lineno, "generated nil check")
 		}
 		if p.From.Type != obj.TYPE_REG {
 			gc.Fatalf("invalid nil check %v", p)
@@ -477,7 +474,7 @@ func ginscon(as int, c int64, n *gc.Node) {
 	gc.Regfree(&n2)
 }
 
-func ginscmp(op int, t *gc.Type, n1, n2 *gc.Node, likely int) *obj.Prog {
+func ginscmp(op gc.Op, t *gc.Type, n1, n2 *gc.Node, likely int) *obj.Prog {
 	if gc.Isint[t.Etype] && n1.Op == gc.OLITERAL && n1.Int() == 0 && n2.Op != gc.OLITERAL {
 		op = gc.Brrev(op)
 		n1, n2 = n2, n1

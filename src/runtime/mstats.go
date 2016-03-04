@@ -1,4 +1,4 @@
-// Copyright 2009 The Go Authors.  All rights reserved.
+// Copyright 2009 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -6,7 +6,11 @@
 
 package runtime
 
-import "unsafe"
+import (
+	"runtime/internal/atomic"
+	"runtime/internal/sys"
+	"unsafe"
+)
 
 // Statistics.
 // If you edit this structure, also edit type MemStats below.
@@ -42,7 +46,7 @@ type mstats struct {
 
 	// Statistics about garbage collector.
 	// Protected by mheap or stopping the world during GC.
-	next_gc         uint64 // next gc (in heap_alloc time)
+	next_gc         uint64 // next gc (in heap_live time)
 	last_gc         uint64 // last gc (in absolute time)
 	pause_total_ns  uint64
 	pause_ns        [256]uint64 // circular buffer of recent gc pause lengths
@@ -66,13 +70,33 @@ type mstats struct {
 
 	// heap_live is the number of bytes considered live by the GC.
 	// That is: retained by the most recent GC plus allocated
-	// since then. heap_live <= heap_alloc, since heap_live
-	// excludes unmarked objects that have not yet been swept.
+	// since then. heap_live <= heap_alloc, since heap_alloc
+	// includes unmarked objects that have not yet been swept (and
+	// hence goes up as we allocate and down as we sweep) while
+	// heap_live excludes these objects (and hence only goes up
+	// between GCs).
+	//
+	// This is updated atomically without locking. To reduce
+	// contention, this is updated only when obtaining a span from
+	// an mcentral and at this point it counts all of the
+	// unallocated slots in that span (which will be allocated
+	// before that mcache obtains another span from that
+	// mcentral). Hence, it slightly overestimates the "true" live
+	// heap size. It's better to overestimate than to
+	// underestimate because 1) this triggers the GC earlier than
+	// necessary rather than potentially too late and 2) this
+	// leads to a conservative GC rate rather than a GC rate that
+	// is potentially too low.
+	//
+	// Whenever this is updated, call traceHeapAlloc() and
+	// gcController.revise().
 	heap_live uint64
 
 	// heap_scan is the number of bytes of "scannable" heap. This
 	// is the live heap (as counted by heap_live), but omitting
 	// no-scan objects and no-scan tails of objects.
+	//
+	// Whenever this is updated, call gcController.revise().
 	heap_scan uint64
 
 	// heap_marked is the number of bytes marked by the previous
@@ -141,7 +165,7 @@ type MemStats struct {
 
 // Size of the trailing by_size array differs between Go and C,
 // and all data after by_size is local to runtime, not exported.
-// NumSizeClasses was changed, but we can not change Go struct because of backward compatibility.
+// NumSizeClasses was changed, but we cannot change Go struct because of backward compatibility.
 // sizeof_C_MStats is what C thinks about size of Go struct.
 var sizeof_C_MStats = unsafe.Offsetof(memstats.by_size) + 61*unsafe.Sizeof(memstats.by_size[0])
 
@@ -168,7 +192,7 @@ func readmemstats_m(stats *MemStats) {
 	updatememstats(nil)
 
 	// Size of the trailing by_size array differs between Go and C,
-	// NumSizeClasses was changed, but we can not change Go struct because of backward compatibility.
+	// NumSizeClasses was changed, but we cannot change Go struct because of backward compatibility.
 	memmove(unsafe.Pointer(stats), unsafe.Pointer(&memstats), sizeof_C_MStats)
 
 	// Stack numbers are part of the heap numbers, separate those out for user consumption
@@ -322,7 +346,7 @@ func flushallmcaches() {
 		if c == nil {
 			continue
 		}
-		mCache_ReleaseAll(c)
+		c.releaseAll()
 		stackcache_clear(c)
 	}
 }
@@ -331,11 +355,6 @@ func flushallmcaches() {
 func purgecachedstats(c *mcache) {
 	// Protected by either heap or GC lock.
 	h := &mheap_
-	memstats.heap_live += uint64(c.local_cachealloc)
-	c.local_cachealloc = 0
-	if trace.enabled {
-		traceHeapAlloc()
-	}
 	memstats.heap_scan += uint64(c.local_scan)
 	c.local_scan = 0
 	memstats.tinyallocs += uint64(c.local_tinyallocs)
@@ -352,7 +371,7 @@ func purgecachedstats(c *mcache) {
 	}
 }
 
-// Atomically increases a given *system* memory stat.  We are counting on this
+// Atomically increases a given *system* memory stat. We are counting on this
 // stat never overflowing a uintptr, so this function must only be used for
 // system memory stats.
 //
@@ -366,25 +385,25 @@ func purgecachedstats(c *mcache) {
 // overflow errors.
 //go:nosplit
 func mSysStatInc(sysStat *uint64, n uintptr) {
-	if _BigEndian != 0 {
-		xadd64(sysStat, int64(n))
+	if sys.BigEndian != 0 {
+		atomic.Xadd64(sysStat, int64(n))
 		return
 	}
-	if val := xadduintptr((*uintptr)(unsafe.Pointer(sysStat)), n); val < n {
+	if val := atomic.Xadduintptr((*uintptr)(unsafe.Pointer(sysStat)), n); val < n {
 		print("runtime: stat overflow: val ", val, ", n ", n, "\n")
 		exit(2)
 	}
 }
 
-// Atomically decreases a given *system* memory stat.  Same comments as
+// Atomically decreases a given *system* memory stat. Same comments as
 // mSysStatInc apply.
 //go:nosplit
 func mSysStatDec(sysStat *uint64, n uintptr) {
-	if _BigEndian != 0 {
-		xadd64(sysStat, -int64(n))
+	if sys.BigEndian != 0 {
+		atomic.Xadd64(sysStat, -int64(n))
 		return
 	}
-	if val := xadduintptr((*uintptr)(unsafe.Pointer(sysStat)), uintptr(-int64(n))); val+n < n {
+	if val := atomic.Xadduintptr((*uintptr)(unsafe.Pointer(sysStat)), uintptr(-int64(n))); val+n < n {
 		print("runtime: stat underflow: val ", val, ", n ", n, "\n")
 		exit(2)
 	}

@@ -551,9 +551,9 @@ func ldelf(f *obj.Biobuf, pkg string, length int64, pn string) {
 		Diag("%s: elf %s unimplemented", pn, Thestring)
 		return
 
-	case 'u':
-		if elfobj.machine != ElfMachSparc9 || hdr.Ident[4] != ElfClass64 {
-			Diag("%s: elf object but not sparc64", pn)
+	case '0':
+		if elfobj.machine != ElfMachMips || hdr.Ident[4] != ElfClass64 {
+			Diag("%s: elf object but not mips64", pn)
 			return
 		}
 
@@ -584,6 +584,12 @@ func ldelf(f *obj.Biobuf, pkg string, length int64, pn string) {
 	case '9':
 		if elfobj.machine != ElfMachPower64 || hdr.Ident[4] != ElfClass64 {
 			Diag("%s: elf object but not ppc64", pn)
+			return
+		}
+
+	case 'u':
+		if elfobj.machine != ElfMachSparc9 || hdr.Ident[4] != ElfClass64 {
+			Diag("%s: elf object but not sparc64", pn)
 			return
 		}
 	}
@@ -771,13 +777,20 @@ func ldelf(f *obj.Biobuf, pkg string, length int64, pn string) {
 			if strings.HasPrefix(sym.name, ".Linfo_string") { // clang does this
 				continue
 			}
+
+			if sym.name == "" && sym.type_ == 0 && sect.name == ".debug_str" {
+				// This reportedly happens with clang 3.7 on ARM.
+				// See issue 13139.
+				continue
+			}
+
 			Diag("%s: sym#%d: ignoring %s in section %d (type %d)", pn, i, sym.name, sym.shndx, sym.type_)
 			continue
 		}
 
 		s = sym.sym
 		if s.Outer != nil {
-			if s.Dupok != 0 {
+			if s.Attr.DuplicateOK() {
 				continue
 			}
 			Exitf("%s: duplicate symbol reference: %s in both %s and %s", pn, s.Name, s.Outer.Name, sect.sym.Name)
@@ -786,17 +799,17 @@ func ldelf(f *obj.Biobuf, pkg string, length int64, pn string) {
 		s.Sub = sect.sym.Sub
 		sect.sym.Sub = s
 		s.Type = sect.sym.Type | s.Type&^obj.SMASK | obj.SSUB
-		if s.Cgoexport&CgoExportDynamic == 0 {
+		if !s.Attr.CgoExportDynamic() {
 			s.Dynimplib = "" // satisfy dynimport
 		}
 		s.Value = int64(sym.value)
 		s.Size = int64(sym.size)
 		s.Outer = sect.sym
 		if sect.sym.Type == obj.STEXT {
-			if s.External != 0 && s.Dupok == 0 {
+			if s.Attr.External() && !s.Attr.DuplicateOK() {
 				Diag("%s: duplicate definition of %s", pn, s.Name)
 			}
-			s.External = 1
+			s.Attr |= AttrExternal
 		}
 
 		if elfobj.machine == ElfMachPower64 {
@@ -820,10 +833,10 @@ func ldelf(f *obj.Biobuf, pkg string, length int64, pn string) {
 			s.Sub = listsort(s.Sub, valuecmp, listsubp)
 		}
 		if s.Type == obj.STEXT {
-			if s.Onlist != 0 {
+			if s.Attr.OnList() {
 				log.Fatalf("symbol %s listed multiple times", s.Name)
 			}
-			s.Onlist = 1
+			s.Attr |= AttrOnList
 			if Ctxt.Etextp != nil {
 				Ctxt.Etextp.Next = s
 			} else {
@@ -831,10 +844,10 @@ func ldelf(f *obj.Biobuf, pkg string, length int64, pn string) {
 			}
 			Ctxt.Etextp = s
 			for s = s.Sub; s != nil; s = s.Sub {
-				if s.Onlist != 0 {
+				if s.Attr.OnList() {
 					log.Fatalf("symbol %s listed multiple times", s.Name)
 				}
-				s.Onlist = 1
+				s.Attr |= AttrOnList
 				Ctxt.Etextp.Next = s
 				Ctxt.Etextp = s
 			}
@@ -1036,7 +1049,7 @@ func readelfsym(elfobj *ElfObj, i int, sym *ElfSym, needSym int) (err error) {
 				// comment #5 for details.
 				if s != nil && sym.other == 2 {
 					s.Type |= obj.SHIDDEN
-					s.Dupok = 1
+					s.Attr |= AttrDuplicateOK
 				}
 			}
 
@@ -1059,9 +1072,9 @@ func readelfsym(elfobj *ElfObj, i int, sym *ElfSym, needSym int) (err error) {
 			}
 
 			if needSym != 0 {
-				// local names and hidden visiblity global names are unique
-				// and should only reference by its index, not name, so we
-				// don't bother to add them into hash table
+				// local names and hidden global names are unique
+				// and should only be referenced by their index, not name, so we
+				// don't bother to add them into the hash table
 				s = linknewsym(Ctxt, sym.name, Ctxt.Version)
 
 				s.Type |= obj.SHIDDEN
@@ -1069,7 +1082,7 @@ func readelfsym(elfobj *ElfObj, i int, sym *ElfSym, needSym int) (err error) {
 
 		case ElfSymBindWeak:
 			if needSym != 0 {
-				s = linknewsym(Ctxt, sym.name, 0)
+				s = Linklookup(Ctxt, sym.name, 0)
 				if sym.other == 2 {
 					s.Type |= obj.SHIDDEN
 				}
@@ -1143,13 +1156,17 @@ func reltype(pn string, elftype int, siz *uint8) int {
 		'6' | R_X86_64_PC32<<24,
 		'6' | R_X86_64_PLT32<<24,
 		'6' | R_X86_64_GOTPCREL<<24,
+		'6' | R_X86_64_GOTPCRELX<<24,
+		'6' | R_X86_64_REX_GOTPCRELX<<24,
 		'8' | R_386_32<<24,
 		'8' | R_386_PC32<<24,
 		'8' | R_386_GOT32<<24,
 		'8' | R_386_PLT32<<24,
 		'8' | R_386_GOTOFF<<24,
 		'8' | R_386_GOTPC<<24,
-		'9' | R_PPC64_REL24<<24:
+		'8' | R_386_GOT32X<<24,
+		'9' | R_PPC64_REL24<<24,
+		'9' | R_PPC_REL32<<24:
 		*siz = 4
 
 	case '6' | R_X86_64_64<<24,

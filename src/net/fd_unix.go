@@ -68,7 +68,7 @@ func (fd *netFD) name() string {
 	return fd.net + ":" + ls + "->" + rs
 }
 
-func (fd *netFD) connect(la, ra syscall.Sockaddr, deadline time.Time) error {
+func (fd *netFD) connect(la, ra syscall.Sockaddr, deadline time.Time, cancel <-chan struct{}) error {
 	// Do not need to call fd.writeLock here,
 	// because fd is not yet accessible to user,
 	// so no concurrent operations are possible.
@@ -102,6 +102,19 @@ func (fd *netFD) connect(la, ra syscall.Sockaddr, deadline time.Time) error {
 		fd.setWriteDeadline(deadline)
 		defer fd.setWriteDeadline(noDeadline)
 	}
+	if cancel != nil {
+		done := make(chan bool)
+		defer close(done)
+		go func() {
+			select {
+			case <-cancel:
+				// Force the runtime's poller to immediately give
+				// up waiting for writability.
+				fd.setWriteDeadline(aLongTimeAgo)
+			case <-done:
+			}
+		}()
+	}
 	for {
 		// Performing multiple connect system calls on a
 		// non-blocking socket under Unix variants does not
@@ -112,6 +125,11 @@ func (fd *netFD) connect(la, ra syscall.Sockaddr, deadline time.Time) error {
 		// succeeded or failed. See issue 7474 for further
 		// details.
 		if err := fd.pd.WaitWrite(); err != nil {
+			select {
+			case <-cancel:
+				return errCanceled
+			default:
+			}
 			return err
 		}
 		nerr, err := getsockoptIntFunc(fd.sysfd, syscall.SOL_SOCKET, syscall.SO_ERROR)
@@ -192,7 +210,7 @@ func (fd *netFD) Close() error {
 	}
 	// Unblock any I/O.  Once it all unblocks and returns,
 	// so that it cannot be referring to fd.sysfd anymore,
-	// the final decref will close fd.sysfd.  This should happen
+	// the final decref will close fd.sysfd. This should happen
 	// fairly quickly, since all the I/O is non-blocking, and any
 	// attempts to block in the pollDesc will return errClosing.
 	fd.pd.Evict()
@@ -446,7 +464,7 @@ func dupCloseOnExec(fd int) (newfd int, err error) {
 			// and fcntl there falls back (undocumented)
 			// to doing an ioctl instead, returning EBADF
 			// in this case because fd is not of the
-			// expected device fd type.  Treat it as
+			// expected device fd type. Treat it as
 			// EINVAL instead, so we fall back to the
 			// normal dup path.
 			// TODO: only do this on 10.6 if we can detect 10.6

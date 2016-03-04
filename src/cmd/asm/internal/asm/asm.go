@@ -69,7 +69,7 @@ func (p *Parser) append(prog *obj.Prog, cond string, doLabel bool) {
 		fmt.Println(p.histLineNum, prog)
 	}
 	if testOut != nil {
-		fmt.Fprintln(testOut, p.histLineNum, prog)
+		fmt.Fprintln(testOut, prog)
 	}
 }
 
@@ -379,6 +379,14 @@ func (p *Parser) asmJump(op int, cond string, a []obj.Addr) {
 			prog.Reg = reg
 			break
 		}
+		if p.arch.Thechar == '0' {
+			// 3-operand jumps.
+			// First two must be registers
+			target = &a[2]
+			prog.From = a[0]
+			prog.Reg = p.getRegister(prog, op, &a[1])
+			break
+		}
 		fallthrough
 	default:
 		p.errorf("wrong number of arguments to %s instruction", obj.Aconv(op))
@@ -515,6 +523,12 @@ func (p *Parser) asmInstruction(op int, cond string, a []obj.Addr) {
 			prog.From = a[0]
 			prog.Reg = p.getRegister(prog, op, &a[1])
 			break
+		} else if p.arch.Thechar == '0' {
+			if arch.IsMIPS64CMP(op) || arch.IsMIPS64MUL(op) {
+				prog.From = a[0]
+				prog.Reg = p.getRegister(prog, op, &a[1])
+				break
+			}
 		} else if p.arch.Thechar == 'u' && arch.IsSPARC64CMP(op) {
 			prog.From = a[0]
 			prog.Reg = p.getRegister(prog, op, &a[1])
@@ -524,6 +538,10 @@ func (p *Parser) asmInstruction(op int, cond string, a []obj.Addr) {
 		prog.To = a[1]
 	case 3:
 		switch p.arch.Thechar {
+		case '0':
+			prog.From = a[0]
+			prog.Reg = p.getRegister(prog, op, &a[1])
+			prog.To = a[2]
 		case '5':
 			// Special cases.
 			if arch.IsARMSTREX(op) {

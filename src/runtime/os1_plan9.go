@@ -1,10 +1,15 @@
-// Copyright 2010 The Go Authors.  All rights reserved.
+// Copyright 2010 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
 package runtime
 
-import "unsafe"
+import (
+	"runtime/internal/atomic"
+	"unsafe"
+)
+
+type sigset struct{}
 
 // Called to initialize a new m (including the bootstrap m).
 // Called on the parent thread (main thread in case of bootstrap), can allocate memory.
@@ -21,8 +26,14 @@ func mpreinit(mp *m) {
 func msigsave(mp *m) {
 }
 
+func msigrestore(sigmask sigset) {
+}
+
+func sigblock() {
+}
+
 // Called to initialize a new m (including the bootstrap m).
-// Called on the new thread, can not allocate memory.
+// Called on the new thread, cannot allocate memory.
 func minit() {
 	// Mask all SSE floating-point exceptions
 	// when running on the 64-bit kernel.
@@ -96,7 +107,7 @@ func getRandomData(r []byte) {
 func goenvs() {
 }
 
-func initsig() {
+func initsig(preinit bool) {
 }
 
 //go:nosplit
@@ -143,7 +154,7 @@ func goexitsall(status *byte) {
 	n := copy(buf[:], goexits)
 	n = copy(buf[n:], gostringnocopy(status))
 	pid := getpid()
-	for mp := (*m)(atomicloadp(unsafe.Pointer(&allm))); mp != nil; mp = mp.alllink {
+	for mp := (*m)(atomic.Loadp(unsafe.Pointer(&allm))); mp != nil; mp = mp.alllink {
 		if mp.procid != pid {
 			postnote(mp.procid, buf[:])
 		}
@@ -164,7 +175,7 @@ func postnote(pid uint64, msg []byte) int {
 		return -1
 	}
 	len := findnull(&msg[0])
-	if write(uintptr(fd), (unsafe.Pointer)(&msg[0]), int32(len)) != int64(len) {
+	if write(uintptr(fd), unsafe.Pointer(&msg[0]), int32(len)) != int64(len) {
 		closefd(fd)
 		return -1
 	}
@@ -202,8 +213,7 @@ func newosproc(mp *m, stk unsafe.Pointer) {
 }
 
 //go:nosplit
-func semacreate() uintptr {
-	return 1
+func semacreate(mp *m) {
 }
 
 //go:nosplit
@@ -247,7 +257,7 @@ func memlimit() uint64 {
 
 var _badsignal = []byte("runtime: signal received on thread not created by Go.\n")
 
-// This runs on a foreign stack, without an m or a g.  No stack split.
+// This runs on a foreign stack, without an m or a g. No stack split.
 //go:nosplit
 func badsignal2() {
 	pwrite(2, unsafe.Pointer(&_badsignal[0]), int32(len(_badsignal)), -1)

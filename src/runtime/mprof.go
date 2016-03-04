@@ -8,6 +8,7 @@
 package runtime
 
 import (
+	"runtime/internal/atomic"
 	"unsafe"
 )
 
@@ -250,23 +251,18 @@ func mProf_Malloc(p unsafe.Pointer, size uintptr) {
 }
 
 // Called when freeing a profiled block.
-func mProf_Free(b *bucket, size uintptr, freed bool) {
+func mProf_Free(b *bucket, size uintptr) {
 	lock(&proflock)
 	mp := b.mp()
-	if freed {
-		mp.recent_frees++
-		mp.recent_free_bytes += size
-	} else {
-		mp.prev_frees++
-		mp.prev_free_bytes += size
-	}
+	mp.prev_frees++
+	mp.prev_free_bytes += size
 	unlock(&proflock)
 }
 
 var blockprofilerate uint64 // in CPU ticks
 
 // SetBlockProfileRate controls the fraction of goroutine blocking events
-// that are reported in the blocking profile.  The profiler aims to sample
+// that are reported in the blocking profile. The profiler aims to sample
 // an average of one blocking event per rate nanoseconds spent blocked.
 //
 // To include every blocking event in the profile, pass rate = 1.
@@ -285,14 +281,14 @@ func SetBlockProfileRate(rate int) {
 		}
 	}
 
-	atomicstore64(&blockprofilerate, uint64(r))
+	atomic.Store64(&blockprofilerate, uint64(r))
 }
 
 func blockevent(cycles int64, skip int) {
 	if cycles <= 0 {
 		cycles = 1
 	}
-	rate := int64(atomicload64(&blockprofilerate))
+	rate := int64(atomic.Load64(&blockprofilerate))
 	if rate <= 0 || (rate > cycles && int64(fastrand1())%rate > cycles) {
 		return
 	}
@@ -339,7 +335,7 @@ func (r *StackRecord) Stack() []uintptr {
 //
 // The tools that process the memory profiles assume that the
 // profile rate is constant across the lifetime of the program
-// and equal to the current value.  Programs that change the
+// and equal to the current value. Programs that change the
 // memory profiling rate should do so just once, as early as
 // possible in the execution of the program (for example,
 // at the beginning of main).
@@ -372,6 +368,9 @@ func (r *MemProfileRecord) Stack() []uintptr {
 	return r.Stack0[0:]
 }
 
+// MemProfile returns a profile of memory allocated and freed per allocation
+// site.
+//
 // MemProfile returns n, the number of records in the current memory profile.
 // If len(p) >= n, MemProfile copies the profile into p and returns n, true.
 // If len(p) < n, MemProfile does not change p and returns n, false.
@@ -380,6 +379,12 @@ func (r *MemProfileRecord) Stack() []uintptr {
 // where r.AllocBytes > 0 but r.AllocBytes == r.FreeBytes.
 // These are sites where memory was allocated, but it has all
 // been released back to the runtime.
+//
+// The returned profile may be up to two garbage collection cycles old.
+// This is to avoid skewing the profile toward allocations; because
+// allocations happen in real time but frees are delayed until the garbage
+// collector performs sweeping, the profile only accounts for allocations
+// that have had a chance to be freed by the garbage collector.
 //
 // Most clients should use the runtime/pprof package or
 // the testing package's -test.memprofile flag instead
@@ -493,7 +498,7 @@ func BlockProfile(p []BlockProfileRecord) (n int, ok bool) {
 // Most clients should use the runtime/pprof package instead
 // of calling ThreadCreateProfile directly.
 func ThreadCreateProfile(p []StackRecord) (n int, ok bool) {
-	first := (*m)(atomicloadp(unsafe.Pointer(&allm)))
+	first := (*m)(atomic.Loadp(unsafe.Pointer(&allm)))
 	for mp := first; mp != nil; mp = mp.alllink {
 		n++
 	}
@@ -501,9 +506,7 @@ func ThreadCreateProfile(p []StackRecord) (n int, ok bool) {
 		ok = true
 		i := 0
 		for mp := first; mp != nil; mp = mp.alllink {
-			for s := range mp.createstack {
-				p[i].Stack0[s] = uintptr(mp.createstack[s])
-			}
+			p[i].Stack0 = mp.createstack
 			i++
 		}
 	}
@@ -517,33 +520,50 @@ func ThreadCreateProfile(p []StackRecord) (n int, ok bool) {
 // Most clients should use the runtime/pprof package instead
 // of calling GoroutineProfile directly.
 func GoroutineProfile(p []StackRecord) (n int, ok bool) {
+	gp := getg()
 
-	n = NumGoroutine()
+	isOK := func(gp1 *g) bool {
+		// Checking isSystemGoroutine here makes GoroutineProfile
+		// consistent with both NumGoroutine and Stack.
+		return gp1 != gp && readgstatus(gp1) != _Gdead && !isSystemGoroutine(gp1)
+	}
+
+	stopTheWorld("profile")
+
+	n = 1
+	for _, gp1 := range allgs {
+		if isOK(gp1) {
+			n++
+		}
+	}
+
 	if n <= len(p) {
-		gp := getg()
-		stopTheWorld("profile")
+		ok = true
+		r := p
 
-		n = NumGoroutine()
-		if n <= len(p) {
-			ok = true
-			r := p
-			sp := getcallersp(unsafe.Pointer(&p))
-			pc := getcallerpc(unsafe.Pointer(&p))
-			systemstack(func() {
-				saveg(pc, sp, gp, &r[0])
-			})
-			r = r[1:]
-			for _, gp1 := range allgs {
-				if gp1 == gp || readgstatus(gp1) == _Gdead {
-					continue
+		// Save current goroutine.
+		sp := getcallersp(unsafe.Pointer(&p))
+		pc := getcallerpc(unsafe.Pointer(&p))
+		systemstack(func() {
+			saveg(pc, sp, gp, &r[0])
+		})
+		r = r[1:]
+
+		// Save other goroutines.
+		for _, gp1 := range allgs {
+			if isOK(gp1) {
+				if len(r) == 0 {
+					// Should be impossible, but better to return a
+					// truncated profile than to crash the entire process.
+					break
 				}
 				saveg(^uintptr(0), ^uintptr(0), gp1, &r[0])
 				r = r[1:]
 			}
 		}
-
-		startTheWorld()
 	}
+
+	startTheWorld()
 
 	return n, ok
 }
@@ -571,12 +591,17 @@ func Stack(buf []byte, all bool) int {
 		pc := getcallerpc(unsafe.Pointer(&buf))
 		systemstack(func() {
 			g0 := getg()
+			// Force traceback=1 to override GOTRACEBACK setting,
+			// so that Stack's results are consistent.
+			// GOTRACEBACK is only about crash dumps.
+			g0.m.traceback = 1
 			g0.writebuf = buf[0:0:len(buf)]
 			goroutineheader(gp)
 			traceback(pc, sp, 0, gp)
 			if all {
 				tracebackothers(gp)
 			}
+			g0.m.traceback = 0
 			n = len(g0.writebuf)
 			g0.writebuf = nil
 		})
@@ -599,7 +624,7 @@ func tracealloc(p unsafe.Pointer, size uintptr, typ *_type) {
 	if typ == nil {
 		print("tracealloc(", p, ", ", hex(size), ")\n")
 	} else {
-		print("tracealloc(", p, ", ", hex(size), ", ", *typ._string, ")\n")
+		print("tracealloc(", p, ", ", hex(size), ", ", typ._string, ")\n")
 	}
 	if gp.m.curg == nil || gp == gp.m.curg {
 		goroutineheader(gp)

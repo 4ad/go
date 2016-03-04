@@ -4,7 +4,10 @@
 
 package runtime
 
-import "unsafe"
+import (
+	"runtime/internal/sys"
+	"unsafe"
+)
 
 // Look up symbols in the Linux vDSO.
 
@@ -260,7 +263,7 @@ func vdso_find_version(info *vdso_info, ver *version_key) int32 {
 		def = (*elf64Verdef)(add(unsafe.Pointer(def), uintptr(def.vd_next)))
 	}
 
-	return -1 // can not match any version
+	return -1 // cannot match any version
 }
 
 func vdso_parse_symbols(info *vdso_info, version int32) {
@@ -303,7 +306,7 @@ func sysargs(argc int32, argv **byte) {
 	n++
 
 	// now argv+n is auxv
-	auxv := (*[1 << 32]elf64Auxv)(add(unsafe.Pointer(argv), uintptr(n)*ptrSize))
+	auxv := (*[1 << 32]elf64Auxv)(add(unsafe.Pointer(argv), uintptr(n)*sys.PtrSize))
 
 	for i := 0; auxv[i].a_type != _AT_NULL; i++ {
 		av := &auxv[i]

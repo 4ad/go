@@ -1,4 +1,4 @@
-// Copyright 2013 The Go Authors.  All rights reserved.
+// Copyright 2013 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -33,6 +33,7 @@ var progtable = [arm.ALAST]obj.ProgInfo{
 	obj.ACHECKNIL: {Flags: gc.LeftRead},
 	obj.AVARDEF:   {Flags: gc.Pseudo | gc.RightWrite},
 	obj.AVARKILL:  {Flags: gc.Pseudo | gc.RightWrite},
+	obj.AVARLIVE:  {Flags: gc.Pseudo | gc.LeftRead},
 
 	// NOP is an internal no-op that also stands
 	// for USED and SET annotations, not the Intel opcode.
@@ -97,11 +98,11 @@ var progtable = [arm.ALAST]obj.ProgInfo{
 	arm.AMOVH: {Flags: gc.SizeW | gc.LeftRead | gc.RightWrite | gc.Move},
 	arm.AMOVW: {Flags: gc.SizeL | gc.LeftRead | gc.RightWrite | gc.Move},
 
-	// In addtion, duffzero reads R0,R1 and writes R1.  This fact is
+	// In addition, duffzero reads R0,R1 and writes R1.  This fact is
 	// encoded in peep.c
 	obj.ADUFFZERO: {Flags: gc.Call},
 
-	// In addtion, duffcopy reads R1,R2 and writes R0,R1,R2.  This fact is
+	// In addition, duffcopy reads R1,R2 and writes R0,R1,R2.  This fact is
 	// encoded in peep.c
 	obj.ADUFFCOPY: {Flags: gc.Call},
 

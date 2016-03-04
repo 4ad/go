@@ -487,9 +487,27 @@ func trimUnexportedFields(fields *ast.FieldList, what string) *ast.FieldList {
 	trimmed := false
 	list := make([]*ast.Field, 0, len(fields.List))
 	for _, field := range fields.List {
+		names := field.Names
+		if len(names) == 0 {
+			// Embedded type. Use the name of the type. It must be of type ident or *ident.
+			// Nothing else is allowed.
+			switch ident := field.Type.(type) {
+			case *ast.Ident:
+				names = []*ast.Ident{ident}
+			case *ast.StarExpr:
+				// Must have the form *identifier.
+				if ident, ok := ident.X.(*ast.Ident); ok {
+					names = []*ast.Ident{ident}
+				}
+			}
+			if names == nil {
+				// Can only happen if AST is incorrect. Safe to continue with a nil list.
+				log.Print("invalid program: unexpected type for embedded field")
+			}
+		}
 		// Trims if any is unexported. Good enough in practice.
 		ok := true
-		for _, name := range field.Names {
+		for _, name := range names {
 			if !isExported(name.Name) {
 				trimmed = true
 				ok = false
@@ -504,7 +522,14 @@ func trimUnexportedFields(fields *ast.FieldList, what string) *ast.FieldList {
 		return fields
 	}
 	unexportedField := &ast.Field{
-		Type: ast.NewIdent(""), // Hack: printer will treat this as a field with a named type.
+		Type: &ast.Ident{
+			// Hack: printer will treat this as a field with a named type.
+			// Setting Name and NamePos to ("", fields.Closing-1) ensures that
+			// when Pos and End are called on this field, they return the
+			// position right before closing '}' character.
+			Name:    "",
+			NamePos: fields.Closing - 1,
+		},
 		Comment: &ast.CommentGroup{
 			List: []*ast.Comment{{Text: fmt.Sprintf("// Has unexported %s.\n", what)}},
 		},

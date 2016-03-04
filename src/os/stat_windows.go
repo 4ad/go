@@ -20,7 +20,7 @@ func (file *File) Stat() (FileInfo, error) {
 	}
 	if file.isdir() {
 		// I don't know any better way to do that for directory
-		return Stat(file.name)
+		return Stat(file.dirinfo.path)
 	}
 	if file.name == DevNull {
 		return &devNullStat, nil
@@ -68,7 +68,7 @@ func Stat(name string) (FileInfo, error) {
 
 // Lstat returns the FileInfo structure describing the named file.
 // If the file is a symbolic link, the returned FileInfo
-// describes the symbolic link.  Lstat makes no attempt to follow the link.
+// describes the symbolic link. Lstat makes no attempt to follow the link.
 // If there is an error, it will be of type *PathError.
 func Lstat(name string) (FileInfo, error) {
 	if len(name) == 0 {

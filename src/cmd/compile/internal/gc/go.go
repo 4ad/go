@@ -6,81 +6,15 @@ package gc
 
 import (
 	"bytes"
-	"cmd/compile/internal/big"
 	"cmd/internal/obj"
 )
 
-// avoid <ctype.h>
-
-// The parser's maximum stack size.
-// We have to use a #define macro here since yacc
-// or bison will check for its definition and use
-// a potentially smaller value if it is undefined.
 const (
-	NHUNK           = 50000
-	BUFSIZ          = 8192
-	NSYMB           = 500
-	NHASH           = 1024
-	MAXALIGN        = 7
 	UINF            = 100
 	PRIME1          = 3
 	BADWIDTH        = -1000000000
 	MaxStackVarSize = 10 * 1024 * 1024
 )
-
-const (
-	// These values are known by runtime.
-	// The MEMx and NOEQx values must run in parallel.  See algtype.
-	AMEM = iota
-	AMEM0
-	AMEM8
-	AMEM16
-	AMEM32
-	AMEM64
-	AMEM128
-	ANOEQ
-	ANOEQ0
-	ANOEQ8
-	ANOEQ16
-	ANOEQ32
-	ANOEQ64
-	ANOEQ128
-	ASTRING
-	AINTER
-	ANILINTER
-	ASLICE
-	AFLOAT32
-	AFLOAT64
-	ACPLX64
-	ACPLX128
-	AUNK = 100
-)
-
-const (
-	// Maximum size in bits for Mpints before signalling
-	// overflow and also mantissa precision for Mpflts.
-	Mpprec = 512
-	// Turn on for constant arithmetic debugging output.
-	Mpdebug = false
-)
-
-// Mpint represents an integer constant.
-type Mpint struct {
-	Val  big.Int
-	Ovf  bool // set if Val overflowed compiler limit (sticky)
-	Rune bool // set if syntax indicates default type rune
-}
-
-// Mpflt represents a floating-point constant.
-type Mpflt struct {
-	Val big.Float
-}
-
-// Mpcplx represents a complex constant.
-type Mpcplx struct {
-	Real Mpflt
-	Imag Mpflt
-}
 
 type Val struct {
 	// U contains one of:
@@ -95,7 +29,7 @@ type Val struct {
 
 type NilVal struct{}
 
-func (v Val) Ctype() int {
+func (v Val) Ctype() Ctype {
 	switch x := v.U.(type) {
 	default:
 		Fatalf("unexpected Ctype for %T", v.U)
@@ -133,10 +67,9 @@ type Pkg struct {
 }
 
 type Sym struct {
-	Lexical   uint16
-	Flags     uint8
-	Link      *Sym
+	Flags     SymFlags
 	Uniqgen   uint32
+	Link      *Sym
 	Importdef *Pkg   // where imported definition was found
 	Linkname  string // link name
 
@@ -153,7 +86,7 @@ type Sym struct {
 }
 
 type Type struct {
-	Etype       uint8
+	Etype       EType
 	Nointerface bool
 	Noalg       bool
 	Chan        uint8
@@ -171,7 +104,7 @@ type Type struct {
 
 	Nod    *Node // canonical OTYPE node
 	Orig   *Type // original type (type literal or predefined type)
-	Lineno int
+	Lineno int32
 
 	// TFUNC
 	Thistuple int
@@ -198,7 +131,7 @@ type Type struct {
 	Note  *string // literal string annotation
 
 	// TARRAY
-	Bound int64 // negative is dynamic array
+	Bound int64 // negative is slice
 
 	// TMAP
 	Bucket *Type // internal type representing a hash bucket
@@ -242,14 +175,16 @@ type InitPlan struct {
 	E    []InitEntry
 }
 
+type SymFlags uint8
+
 const (
-	SymExport   = 1 << 0 // to be exported
-	SymPackage  = 1 << 1
-	SymExported = 1 << 2 // already written out by export
-	SymUniq     = 1 << 3
-	SymSiggen   = 1 << 4
-	SymAsm      = 1 << 5
-	SymAlgGen   = 1 << 6
+	SymExport SymFlags = 1 << iota // to be exported
+	SymPackage
+	SymExported // already written out by export
+	SymUniq
+	SymSiggen
+	SymAsm
+	SymAlgGen
 )
 
 var dclstack *Sym
@@ -259,6 +194,8 @@ type Iter struct {
 	Tfunc *Type
 	T     *Type
 }
+
+type EType uint8
 
 const (
 	Txxx = iota
@@ -288,7 +225,7 @@ const (
 
 	TFUNC
 	TARRAY
-	T_old_DARRAY
+	T_old_DARRAY // Doesn't seem to be used in existing code. Used now for Isddd export (see bexport.go). TODO(gri) rename.
 	TSTRUCT
 	TCHAN
 	TMAP
@@ -312,8 +249,11 @@ const (
 	NTYPE
 )
 
+// Ctype describes the constant kind of an "ideal" (untyped) constant.
+type Ctype int8
+
 const (
-	CTxxx = iota
+	CTxxx Ctype = iota
 
 	CTINT
 	CTRUNE
@@ -325,27 +265,30 @@ const (
 )
 
 const (
-	/* types of channel */
-	/* must match ../../pkg/nreflect/type.go:/Chandir */
-	Cxxx  = 0
+	// types of channel
+	// must match ../../../../reflect/type.go:/ChanDir
 	Crecv = 1 << 0
 	Csend = 1 << 1
 	Cboth = Crecv | Csend
 )
 
-// declaration context
+// The Class of a variable/function describes the "storage class"
+// of a variable or function. During parsing, storage classes are
+// called declaration contexts.
+type Class uint8
+
 const (
-	Pxxx      = uint8(iota)
-	PEXTERN   // global variable
-	PAUTO     // local variables
-	PPARAM    // input arguments
-	PPARAMOUT // output results
-	PPARAMREF // closure variable reference
-	PFUNC     // global function
+	Pxxx      Class = iota
+	PEXTERN         // global variable
+	PAUTO           // local variables
+	PPARAM          // input arguments
+	PPARAMOUT       // output results
+	PPARAMREF       // closure variable reference
+	PFUNC           // global function
 
 	PDISCARD // discard during parse of duplicate import
 
-	PHEAP = uint8(1 << 7) // an extra bit to identify an escaped variable
+	PHEAP = 1 << 7 // an extra bit to identify an escaped variable
 )
 
 const (
@@ -362,12 +305,6 @@ const (
 	Ecomplit  = 1 << 11 // type in composite literal
 )
 
-type Typedef struct {
-	Name   string
-	Etype  int
-	Sameas int
-}
-
 type Sig struct {
 	name   string
 	pkg    *Pkg
@@ -378,31 +315,12 @@ type Sig struct {
 	offset int32
 }
 
-type Io struct {
-	infile     string
-	bin        *obj.Biobuf
-	cp         string // used for content when bin==nil
-	last       int
-	peekc      int
-	peekc1     int // second peekc for ...
-	nlsemi     bool
-	eofnl      bool
-	importsafe bool
-}
-
 type Dlist struct {
 	field *Type
 }
 
-type Idir struct {
-	link *Idir
-	dir  string
-}
-
-/*
- * argument passing to/from
- * smagic and umagic
- */
+// argument passing to/from
+// smagic and umagic
 type Magic struct {
 	W   int // input for both - width
 	S   int // output for both - shift
@@ -418,17 +336,15 @@ type Magic struct {
 	Ua int    // output - adder
 }
 
-/*
- * note this is the runtime representation
- * of the compilers arrays.
- *
- * typedef	struct
- * {				// must not move anything
- *	uchar	array[8];	// pointer to data
- *	uchar	nel[4];		// number of elements
- *	uchar	cap[4];		// allocated number of elements
- * } Array;
- */
+// note this is the runtime representation
+// of the compilers arrays.
+//
+// typedef	struct
+// {					// must not move anything
+// 	uchar	array[8];	// pointer to data
+// 	uchar	nel[4];		// number of elements
+// 	uchar	cap[4];		// allocated number of elements
+// } Array;
 var Array_array int // runtime offsetof(Array,array) - same for String
 
 var Array_nel int // runtime offsetof(Array,nel) - same for String
@@ -437,29 +353,24 @@ var Array_cap int // runtime offsetof(Array,cap)
 
 var sizeof_Array int // runtime sizeof(Array)
 
-/*
- * note this is the runtime representation
- * of the compilers strings.
- *
- * typedef	struct
- * {				// must not move anything
- *	uchar	array[8];	// pointer to data
- *	uchar	nel[4];		// number of elements
- * } String;
- */
+// note this is the runtime representation
+// of the compilers strings.
+//
+// typedef	struct
+// {					// must not move anything
+// 	uchar	array[8];	// pointer to data
+// 	uchar	nel[4];		// number of elements
+// } String;
 var sizeof_String int // runtime sizeof(String)
 
 var dotlist [10]Dlist // size is max depth of embeddeds
 
-var curio Io
-
-var pushedio Io
-
+// lexlineno is the line number _after_ the most recently read rune.
+// In particular, it's advanced (or rewound) as newlines are read (or unread).
 var lexlineno int32
 
+// lineno is the line number at the start of the most recently lexed token.
 var lineno int32
-
-var prevlineno int32
 
 var pragcgobuf string
 
@@ -483,8 +394,7 @@ var nolocalimports int
 
 var lexbuf bytes.Buffer
 var strbuf bytes.Buffer
-
-var litbuf string
+var litbuf string // LLITERAL value for use in syntax error messages
 
 var Debug [256]int
 
@@ -492,8 +402,6 @@ var debugstr string
 
 var Debug_checknil int
 var Debug_typeassert int
-
-var importmyname *Sym // my name for package
 
 var localpkg *Pkg // package being compiled
 
@@ -511,6 +419,8 @@ var Runtimepkg *Pkg // package runtime
 
 var racepkg *Pkg // package runtime/race
 
+var msanpkg *Pkg // package runtime/msan
+
 var typepkg *Pkg // fake package for runtime type info (headers)
 
 var typelinkpkg *Pkg // fake package for runtime type info (data)
@@ -521,11 +431,9 @@ var unsafepkg *Pkg // package unsafe
 
 var trackpkg *Pkg // fake package for field tracking
 
-var Tptr int // either TPTR32 or TPTR64
+var Tptr EType // either TPTR32 or TPTR64
 
 var myimportpath string
-
-var idirs *Idir
 
 var localimport string
 
@@ -543,7 +451,7 @@ var runetype *Type
 
 var errortype *Type
 
-var Simtype [NTYPE]uint8
+var Simtype [NTYPE]EType
 
 var (
 	Isptr     [NTYPE]bool
@@ -591,13 +499,11 @@ var importlist []*Node // imported functions and methods with inlinable bodies
 
 var funcsyms []*Node
 
-var dclcontext uint8 // PEXTERN/PAUTO
+var dclcontext Class // PEXTERN/PAUTO
 
 var incannedimport int
 
 var statuniqgen int // name generator for static temps
-
-var loophack bool
 
 var iota_ int32
 
@@ -625,8 +531,6 @@ var Widthint int
 
 var Widthreg int
 
-var typesw *Node
-
 var nblank *Node
 
 var Funcdepth int32
@@ -645,22 +549,17 @@ var flag_installsuffix string
 
 var flag_race int
 
+var flag_msan int
+
 var flag_largemodel int
 
-// Pending annotations for next func declaration.
-var (
-	noescape       bool
-	nosplit        bool
-	nowritebarrier bool
-	systemstack    bool
-	norace         bool
-)
+// Whether we are adding any sort of code instrumentation, such as
+// when the race detector is enabled.
+var instrumenting bool
 
 var debuglive int
 
 var Ctxt *obj.Link
-
-var nointerface bool
 
 var writearchive int
 
@@ -706,9 +605,7 @@ type Graph struct {
 	Rpo []*Flow
 }
 
-/*
- *	interface to back end
- */
+// interface to back end
 
 const (
 	// Pseudo-op, like TEXT, GLOBL, TYPE, PCDATA, FUNCDATA.
@@ -767,7 +664,6 @@ type Arch struct {
 	Thechar      int
 	Thestring    string
 	Thelinkarch  *obj.LinkArch
-	Typedefs     []Typedef
 	REGSP        int
 	REGCTXT      int
 	REGCALLX     int // BX
@@ -786,14 +682,14 @@ type Arch struct {
 	Bgen_float   func(*Node, bool, int, *obj.Prog) // optional
 	Cgen64       func(*Node, *Node)                // only on 32-bit systems
 	Cgenindex    func(*Node, *Node, bool) *obj.Prog
-	Cgen_bmul    func(int, *Node, *Node, *Node) bool
+	Cgen_bmul    func(Op, *Node, *Node, *Node) bool
 	Cgen_float   func(*Node, *Node) // optional
 	Cgen_hmul    func(*Node, *Node, *Node)
-	Cgen_shift   func(int, bool, *Node, *Node, *Node)
+	Cgen_shift   func(Op, bool, *Node, *Node, *Node)
 	Clearfat     func(*Node)
-	Cmp64        func(*Node, *Node, int, int, *obj.Prog) // only on 32-bit systems
+	Cmp64        func(*Node, *Node, Op, int, *obj.Prog) // only on 32-bit systems
 	Defframe     func(*obj.Prog)
-	Dodiv        func(int, *Node, *Node, *Node)
+	Dodiv        func(Op, *Node, *Node, *Node)
 	Excise       func(*Flow)
 	Expandchecks func(*obj.Prog)
 	Getg         func(*Node)
@@ -809,7 +705,7 @@ type Arch struct {
 	// function calls needed during the evaluation, and on 32-bit systems
 	// the values are guaranteed not to be 64-bit values, so no in-memory
 	// temporaries are necessary.
-	Ginscmp func(op int, t *Type, n1, n2 *Node, likely int) *obj.Prog
+	Ginscmp func(op Op, t *Type, n1, n2 *Node, likely int) *obj.Prog
 
 	// Ginsboolval inserts instructions to convert the result
 	// of a just-completed comparison to a boolean value.
@@ -838,7 +734,7 @@ type Arch struct {
 	FtoB         func(int) uint64
 	BtoR         func(uint64) int
 	BtoF         func(uint64) int
-	Optoas       func(int, *Type) int
+	Optoas       func(Op, *Type) int
 	Doregbits    func(int) uint64
 	Regnames     func(*int) []string
 	Use387       bool // should 8g use 387 FP instructions instead of sse2.
@@ -858,4 +754,13 @@ var Panicindex *Node
 
 var panicslice *Node
 
+var panicdivide *Node
+
 var throwreturn *Node
+
+var growslice *Node
+
+var writebarrierptr *Node
+var typedmemmove *Node
+
+var panicdottype *Node

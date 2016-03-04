@@ -10,9 +10,10 @@ import (
 	"cmd/internal/obj/x86"
 )
 
-func defframe(ptxt *obj.Prog) {
-	var n *gc.Node
+// no floating point in note handlers on Plan 9
+var isPlan9 = obj.Getgoos() == "plan9"
 
+func defframe(ptxt *obj.Prog) {
 	// fill in argument size, stack size
 	ptxt.To.Type = obj.TYPE_TEXTSIZE
 
@@ -31,8 +32,7 @@ func defframe(ptxt *obj.Prog) {
 	x0 := uint32(0)
 
 	// iterate through declarations - they are sorted in decreasing xoffset order.
-	for l := gc.Curfn.Func.Dcl; l != nil; l = l.Next {
-		n = l.N
+	for _, n := range gc.Curfn.Func.Dcl {
 		if !n.Name.Needzero {
 			continue
 		}
@@ -126,7 +126,7 @@ func zerorange(p *obj.Prog, frame int64, lo int64, hi int64, ax *uint32, x0 *uin
 			*ax = 1
 		}
 		p = appendpp(p, x86.AMOVQ, obj.TYPE_REG, x86.REG_AX, 0, obj.TYPE_MEM, x86.REG_SP, frame+lo)
-	} else if cnt <= int64(8*gc.Widthreg) {
+	} else if !isPlan9 && cnt <= int64(8*gc.Widthreg) {
 		if *x0 == 0 {
 			p = appendpp(p, x86.AXORPS, obj.TYPE_REG, x86.REG_X0, 0, obj.TYPE_REG, x86.REG_X0, 0)
 			*x0 = 1
@@ -139,12 +139,11 @@ func zerorange(p *obj.Prog, frame int64, lo int64, hi int64, ax *uint32, x0 *uin
 		if cnt%16 != 0 {
 			p = appendpp(p, x86.AMOVUPS, obj.TYPE_REG, x86.REG_X0, 0, obj.TYPE_MEM, x86.REG_SP, frame+lo+cnt-int64(16))
 		}
-	} else if !gc.Nacl && (cnt <= int64(128*gc.Widthreg)) {
+	} else if !gc.Nacl && !isPlan9 && (cnt <= int64(128*gc.Widthreg)) {
 		if *x0 == 0 {
 			p = appendpp(p, x86.AXORPS, obj.TYPE_REG, x86.REG_X0, 0, obj.TYPE_REG, x86.REG_X0, 0)
 			*x0 = 1
 		}
-
 		p = appendpp(p, leaptr, obj.TYPE_MEM, x86.REG_SP, frame+lo+dzDI(cnt), obj.TYPE_REG, x86.REG_DI, 0)
 		p = appendpp(p, obj.ADUFFZERO, obj.TYPE_NONE, 0, 0, obj.TYPE_ADDR, 0, dzOff(cnt))
 		p.To.Sym = gc.Linksym(gc.Pkglookup("duffzero", gc.Runtimepkg))
@@ -192,7 +191,7 @@ var panicdiv *gc.Node
  *	res = nl % nr
  * according to op.
  */
-func dodiv(op int, nl *gc.Node, nr *gc.Node, res *gc.Node) {
+func dodiv(op gc.Op, nl *gc.Node, nr *gc.Node, res *gc.Node) {
 	// Have to be careful about handling
 	// most negative int divided by -1 correctly.
 	// The hardware will trap.
@@ -335,7 +334,8 @@ func savex(dr int, x *gc.Node, oldx *gc.Node, res *gc.Node, t *gc.Type) {
 		x.Type = gc.Types[gc.TINT64]
 		gmove(x, oldx)
 		x.Type = t
-		oldx.Etype = r // squirrel away old r value
+		// TODO(marvin): Fix Node.EType type union.
+		oldx.Etype = gc.EType(r) // squirrel away old r value
 		gc.SetReg(dr, 1)
 	}
 }
@@ -364,24 +364,25 @@ func cgen_hmul(nl *gc.Node, nr *gc.Node, res *gc.Node) {
 	gc.Cgenr(nl, &n1, res)
 	var n2 gc.Node
 	gc.Cgenr(nr, &n2, nil)
-	var ax gc.Node
-	gc.Nodreg(&ax, t, x86.REG_AX)
+	var ax, oldax, dx, olddx gc.Node
+	savex(x86.REG_AX, &ax, &oldax, res, gc.Types[gc.TUINT64])
+	savex(x86.REG_DX, &dx, &olddx, res, gc.Types[gc.TUINT64])
 	gmove(&n1, &ax)
 	gins(a, &n2, nil)
 	gc.Regfree(&n2)
 	gc.Regfree(&n1)
 
-	var dx gc.Node
 	if t.Width == 1 {
 		// byte multiply behaves differently.
-		gc.Nodreg(&ax, t, x86.REG_AH)
-
-		gc.Nodreg(&dx, t, x86.REG_DX)
-		gmove(&ax, &dx)
+		var byteAH, byteDX gc.Node
+		gc.Nodreg(&byteAH, t, x86.REG_AH)
+		gc.Nodreg(&byteDX, t, x86.REG_DX)
+		gmove(&byteAH, &byteDX)
 	}
-
-	gc.Nodreg(&dx, t, x86.REG_DX)
 	gmove(&dx, res)
+
+	restx(&ax, &oldax)
+	restx(&dx, &olddx)
 }
 
 /*
@@ -389,7 +390,7 @@ func cgen_hmul(nl *gc.Node, nr *gc.Node, res *gc.Node) {
  *	res = nl << nr
  *	res = nl >> nr
  */
-func cgen_shift(op int, bounded bool, nl *gc.Node, nr *gc.Node, res *gc.Node) {
+func cgen_shift(op gc.Op, bounded bool, nl *gc.Node, nr *gc.Node, res *gc.Node) {
 	a := optoas(op, nl.Type)
 
 	if nr.Op == gc.OLITERAL {
@@ -508,7 +509,7 @@ func cgen_shift(op int, bounded bool, nl *gc.Node, nr *gc.Node, res *gc.Node) {
  * there is no 2-operand byte multiply instruction so
  * we do a full-width multiplication and truncate afterwards.
  */
-func cgen_bmul(op int, nl *gc.Node, nr *gc.Node, res *gc.Node) bool {
+func cgen_bmul(op gc.Op, nl *gc.Node, nr *gc.Node, res *gc.Node) bool {
 	if optoas(op, nl.Type) != x86.AIMULB {
 		return false
 	}
@@ -561,7 +562,7 @@ func clearfat(nl *gc.Node) {
 
 	w := nl.Type.Width
 
-	if w > 1024 || (gc.Nacl && w >= 64) {
+	if w > 1024 || (w >= 64 && (gc.Nacl || isPlan9)) {
 		var oldn1 gc.Node
 		var n1 gc.Node
 		savex(x86.REG_DI, &n1, &oldn1, nil, gc.Types[gc.Tptr])
@@ -628,6 +629,22 @@ func clearfat(nl *gc.Node) {
 }
 
 func clearfat_tail(n1 *gc.Node, b int64) {
+	if b >= 16 && isPlan9 {
+		var z gc.Node
+		gc.Nodconst(&z, gc.Types[gc.TUINT64], 0)
+		q := b / 8
+		for ; q > 0; q-- {
+			n1.Type = z.Type
+			gins(x86.AMOVQ, &z, n1)
+			n1.Xoffset += 8
+			b -= 8
+		}
+		if b != 0 {
+			n1.Xoffset -= 8 - b
+			gins(x86.AMOVQ, &z, n1)
+		}
+		return
+	}
 	if b >= 16 {
 		var vec_zero gc.Node
 		gc.Regalloc(&vec_zero, gc.Types[gc.TFLOAT64], nil)
@@ -711,7 +728,7 @@ func expandchecks(firstp *obj.Prog) {
 			continue
 		}
 		if gc.Debug_checknil != 0 && p.Lineno > 1 { // p->lineno==1 in generated wrappers
-			gc.Warnl(int(p.Lineno), "generated nil check")
+			gc.Warnl(p.Lineno, "generated nil check")
 		}
 
 		// check is

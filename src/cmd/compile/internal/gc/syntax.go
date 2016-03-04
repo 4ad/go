@@ -16,7 +16,7 @@ type Node struct {
 	Left  *Node
 	Right *Node
 	Ninit *NodeList
-	Nbody *NodeList
+	Nbody Nodes
 	List  *NodeList
 	Rlist *NodeList
 
@@ -42,13 +42,13 @@ type Node struct {
 
 	Esc uint16 // EscXXX
 
-	Op          uint8
+	Op          Op
 	Nointerface bool
 	Ullman      uint8 // sethi/ullman number
 	Addable     bool  // addressable
-	Etype       uint8 // op for OASOP, etype for OTYPE, exclam for export, 6g saved reg
+	Etype       EType // op for OASOP, etype for OTYPE, exclam for export, 6g saved reg
 	Bounded     bool  // bounds check unnecessary
-	Class       uint8 // PPARAM, PAUTO, PEXTERN, etc
+	Class       Class // PPARAM, PAUTO, PEXTERN, etc
 	Embedded    uint8 // ODCLFIELD embedded type
 	Colas       bool  // OAS resulting from :=
 	Diag        uint8 // already printed error about this
@@ -128,6 +128,7 @@ type Name struct {
 	Captured  bool // is the variable captured by a closure
 	Byval     bool // is the variable captured by value or by reference
 	Needzero  bool // if it contains pointers, needs to be zeroed on function entry
+	Keepalive bool // mark value live across unknown assembly call
 }
 
 type Param struct {
@@ -148,11 +149,11 @@ type Param struct {
 // Func holds Node fields used only with function-like nodes.
 type Func struct {
 	Shortname  *Node
-	Enter      *NodeList
-	Exit       *NodeList
-	Cvars      *NodeList // closure params
-	Dcl        *NodeList // autodcl for this func/closure
-	Inldcl     *NodeList // copy of dcl for use in inlining
+	Enter      Nodes // for example, allocate and initialize memory for escaping parameters
+	Exit       Nodes
+	Cvars      Nodes    // closure params
+	Dcl        []*Node  // autodcl for this func/closure
+	Inldcl     *[]*Node // copy of dcl for use in inlining
 	Closgen    int
 	Outerfunc  *Node
 	Fieldtrack []*Type
@@ -163,24 +164,24 @@ type Func struct {
 	FCurfn     *Node
 	Nname      *Node
 
-	Inl     *NodeList // copy of the body for use in inlining
+	Inl     Nodes // copy of the body for use in inlining
 	InlCost int32
 	Depth   int32
 
 	Endlineno int32
+	WBLineno  int32 // line number of first write barrier
 
-	Norace         bool // func must not have race detector annotations
-	Nosplit        bool // func should not execute on separate stack
-	Nowritebarrier bool // emit compiler error instead of write barrier
-	Dupok          bool // duplicate definitions ok
-	Wrapper        bool // is method wrapper
-	Needctxt       bool // function uses context register (has closure variables)
-	Systemstack    bool // must run on system stack
+	Pragma   Pragma // go:xxx function annotations
+	Dupok    bool   // duplicate definitions ok
+	Wrapper  bool   // is method wrapper
+	Needctxt bool   // function uses context register (has closure variables)
 }
+
+type Op uint8
 
 // Node ops.
 const (
-	OXXX = iota
+	OXXX = Op(iota)
 
 	// names
 	ONAME    // var, const or func name
@@ -194,7 +195,7 @@ const (
 	OSUB             // Left - Right
 	OOR              // Left | Right
 	OXOR             // Left ^ Right
-	OADDSTR          // Left + Right (string addition)
+	OADDSTR          // +{List} (string addition, list elements are strings)
 	OADDR            // &Left
 	OANDAND          // Left && Right
 	OAPPEND          // append(List)
@@ -336,6 +337,7 @@ const (
 	OCFUNC      // reference to c function pointer (not go func value)
 	OCHECKNIL   // emit code to ensure pointer/interface not nil
 	OVARKILL    // variable is dead
+	OVARLIVE    // variable is alive
 
 	// thearch-specific registers
 	OREGISTER // a register, such as AX.
@@ -409,69 +411,6 @@ func list(l *NodeList, n *Node) *NodeList {
 	return concat(l, list1(n))
 }
 
-// listsort sorts *l in place according to the comparison function lt.
-// The algorithm expects lt(a, b) to be equivalent to a < b.
-// The algorithm is mergesort, so it is guaranteed to be O(n log n).
-func listsort(l **NodeList, lt func(*Node, *Node) bool) {
-	if *l == nil || (*l).Next == nil {
-		return
-	}
-
-	l1 := *l
-	l2 := *l
-	for {
-		l2 = l2.Next
-		if l2 == nil {
-			break
-		}
-		l2 = l2.Next
-		if l2 == nil {
-			break
-		}
-		l1 = l1.Next
-	}
-
-	l2 = l1.Next
-	l1.Next = nil
-	l2.End = (*l).End
-	(*l).End = l1
-
-	l1 = *l
-	listsort(&l1, lt)
-	listsort(&l2, lt)
-
-	if lt(l1.N, l2.N) {
-		*l = l1
-	} else {
-		*l = l2
-		l2 = l1
-		l1 = *l
-	}
-
-	// now l1 == *l; and l1 < l2
-
-	var le *NodeList
-	for (l1 != nil) && (l2 != nil) {
-		for (l1.Next != nil) && lt(l1.Next.N, l2.N) {
-			l1 = l1.Next
-		}
-
-		// l1 is last one from l1 that is < l2
-		le = l1.Next // le is the rest of l1, first one that is >= l2
-		if le != nil {
-			le.End = (*l).End
-		}
-
-		(*l).End = l1       // cut *l at l1
-		*l = concat(*l, l2) // glue l2 to *l's tail
-
-		l1 = l2 // l1 is the first element of *l that is < the new l2
-		l2 = le // ... because l2 now is the old tail of l1
-	}
-
-	*l = concat(*l, l2) // any remainder
-}
-
 // count returns the length of the list l.
 func count(l *NodeList) int {
 	n := int64(0)
@@ -482,4 +421,387 @@ func count(l *NodeList) int {
 		Yyerror("too many elements in list")
 	}
 	return int(n)
+}
+
+// Nodes is a pointer to a slice of *Node.
+// For fields that are not used in most nodes, this is used instead of
+// a slice to save space.
+type Nodes struct{ slice *[]*Node }
+
+// Slice returns the entries in Nodes as a slice.
+// Changes to the slice entries (as in s[i] = n) will be reflected in
+// the Nodes.
+func (n *Nodes) Slice() []*Node {
+	if n.slice == nil {
+		return nil
+	}
+	return *n.slice
+}
+
+// NodeList returns the entries in Nodes as a NodeList.
+// Changes to the NodeList entries (as in l.N = n) will *not* be
+// reflected in the Nodes.
+// This wastes memory and should be used as little as possible.
+func (n *Nodes) NodeList() *NodeList {
+	if n.slice == nil {
+		return nil
+	}
+	var ret *NodeList
+	for _, n := range *n.slice {
+		ret = list(ret, n)
+	}
+	return ret
+}
+
+// Set sets Nodes to a slice.
+// This takes ownership of the slice.
+func (n *Nodes) Set(s []*Node) {
+	if len(s) == 0 {
+		n.slice = nil
+	} else {
+		n.slice = &s
+	}
+}
+
+// Append appends entries to Nodes.
+// If a slice is passed in, this will take ownership of it.
+func (n *Nodes) Append(a ...*Node) {
+	if n.slice == nil {
+		if len(a) > 0 {
+			n.slice = &a
+		}
+	} else {
+		*n.slice = append(*n.slice, a...)
+	}
+}
+
+// SetToNodeList sets Nodes to the contents of a NodeList.
+func (n *Nodes) SetToNodeList(l *NodeList) {
+	s := make([]*Node, 0, count(l))
+	for ; l != nil; l = l.Next {
+		s = append(s, l.N)
+	}
+	n.Set(s)
+}
+
+// AppendNodeList appends the contents of a NodeList.
+func (n *Nodes) AppendNodeList(l *NodeList) {
+	if n.slice == nil {
+		n.SetToNodeList(l)
+	} else {
+		for ; l != nil; l = l.Next {
+			*n.slice = append(*n.slice, l.N)
+		}
+	}
+}
+
+// nodesOrNodeList must be either type Nodes or type *NodeList, or, in
+// some cases, []*Node. It exists during the transition from NodeList
+// to Nodes only and then should be deleted. See nodeSeqIterate to
+// return an iterator from a nodesOrNodeList.
+type nodesOrNodeList interface{}
+
+// nodesOrNodeListPtr must be type *Nodes or type **NodeList, or, in
+// some cases, *[]*Node. It exists during the transition from NodeList
+// to Nodes only, and then should be deleted. See setNodeSeq to assign
+// to a generic value.
+type nodesOrNodeListPtr interface{}
+
+// nodeSeqIterator is an interface used to iterate over a sequence of nodes.
+// TODO(iant): Remove after conversion from NodeList to Nodes is complete.
+type nodeSeqIterator interface {
+	// Return whether iteration is complete.
+	Done() bool
+	// Advance to the next node.
+	Next()
+	// Return the current node.
+	N() *Node
+	// Return the address of the current node.
+	P() **Node
+	// Return the number of items remaining in the iteration.
+	Len() int
+	// Return the remaining items as a sequence.
+	// This will have the same type as that passed to nodeSeqIterate.
+	Seq() nodesOrNodeList
+}
+
+// nodeListIterator is a type that implements nodeSeqIterator using a
+// *NodeList.
+type nodeListIterator struct {
+	l *NodeList
+}
+
+func (nli *nodeListIterator) Done() bool {
+	return nli.l == nil
+}
+
+func (nli *nodeListIterator) Next() {
+	nli.l = nli.l.Next
+}
+
+func (nli *nodeListIterator) N() *Node {
+	return nli.l.N
+}
+
+func (nli *nodeListIterator) P() **Node {
+	return &nli.l.N
+}
+
+func (nli *nodeListIterator) Len() int {
+	return count(nli.l)
+}
+
+func (nli *nodeListIterator) Seq() nodesOrNodeList {
+	return nli.l
+}
+
+// nodesIterator implements nodeSeqIterator using a Nodes.
+type nodesIterator struct {
+	n Nodes
+	i int
+}
+
+func (ni *nodesIterator) Done() bool {
+	return ni.i >= len(ni.n.Slice())
+}
+
+func (ni *nodesIterator) Next() {
+	ni.i++
+}
+
+func (ni *nodesIterator) N() *Node {
+	return ni.n.Slice()[ni.i]
+}
+
+func (ni *nodesIterator) P() **Node {
+	return &ni.n.Slice()[ni.i]
+}
+
+func (ni *nodesIterator) Len() int {
+	return len(ni.n.Slice())
+}
+
+func (ni *nodesIterator) Seq() nodesOrNodeList {
+	var r Nodes
+	r.Set(ni.n.Slice()[ni.i:])
+	return r
+}
+
+// nodeSeqIterate returns an iterator over either a *NodeList or a Nodes.
+func nodeSeqIterate(ns nodesOrNodeList) nodeSeqIterator {
+	switch ns := ns.(type) {
+	case *NodeList:
+		return &nodeListIterator{ns}
+	case Nodes:
+		return &nodesIterator{ns, 0}
+	default:
+		panic("can't happen")
+	}
+}
+
+// nodeSeqLen returns the length of either a *NodeList or a Nodes.
+func nodeSeqLen(ns nodesOrNodeList) int {
+	switch ns := ns.(type) {
+	case *NodeList:
+		return count(ns)
+	case Nodes:
+		return len(ns.Slice())
+	default:
+		panic("can't happen")
+	}
+}
+
+// nodeSeqFirst returns the first element of either a *NodeList or a Nodes.
+// It panics if the sequence is empty.
+func nodeSeqFirst(ns nodesOrNodeList) *Node {
+	switch ns := ns.(type) {
+	case *NodeList:
+		return ns.N
+	case Nodes:
+		return ns.Slice()[0]
+	default:
+		panic("can't happen")
+	}
+}
+
+// nodeSeqSecond returns the second element of either a *NodeList or a Nodes.
+// It panics if the sequence has fewer than two elements.
+func nodeSeqSecond(ns nodesOrNodeList) *Node {
+	switch ns := ns.(type) {
+	case *NodeList:
+		return ns.Next.N
+	case Nodes:
+		return ns.Slice()[1]
+	default:
+		panic("can't happen")
+	}
+}
+
+// setNodeSeq implements *a = b.
+// a must have type **NodeList, *Nodes, or *[]*Node.
+// b must have type *NodeList, Nodes, []*Node, or nil.
+// This is an interim function during the transition from NodeList to Nodes.
+// TODO(iant): Remove when transition is complete.
+func setNodeSeq(a nodesOrNodeListPtr, b nodesOrNodeList) {
+	if b == nil {
+		switch a := a.(type) {
+		case **NodeList:
+			*a = nil
+		case *Nodes:
+			a.Set(nil)
+		case *[]*Node:
+			*a = nil
+		default:
+			panic("can't happen")
+		}
+		return
+	}
+
+	// Simplify b to either *NodeList or []*Node.
+	if n, ok := b.(Nodes); ok {
+		b = n.Slice()
+	}
+
+	if l, ok := a.(**NodeList); ok {
+		switch b := b.(type) {
+		case *NodeList:
+			*l = b
+		case []*Node:
+			var ll *NodeList
+			for _, n := range b {
+				ll = list(ll, n)
+			}
+			*l = ll
+		default:
+			panic("can't happen")
+		}
+	} else {
+		var s []*Node
+		switch b := b.(type) {
+		case *NodeList:
+			for l := b; l != nil; l = l.Next {
+				s = append(s, l.N)
+			}
+		case []*Node:
+			s = b
+		default:
+			panic("can't happen")
+		}
+
+		switch a := a.(type) {
+		case *Nodes:
+			a.Set(s)
+		case *[]*Node:
+			*a = s
+		default:
+			panic("can't happen")
+		}
+	}
+}
+
+// setNodeSeqNode sets the node sequence a to the node n.
+// a must have type **NodeList, *Nodes, or *[]*Node.
+// This is an interim function during the transition from NodeList to Nodes.
+// TODO(iant): Remove when transition is complete.
+func setNodeSeqNode(a nodesOrNodeListPtr, n *Node) {
+	// This is what the old list1 function did;
+	// the rest of the compiler has come to expect it.
+	if n.Op == OBLOCK && nodeSeqLen(n.Ninit) == 0 {
+		l := n.List
+		setNodeSeq(&n.List, nil)
+		setNodeSeq(a, l)
+		return
+	}
+
+	switch a := a.(type) {
+	case **NodeList:
+		*a = list1(n)
+	case *Nodes:
+		a.Set([]*Node{n})
+	case *[]*Node:
+		*a = []*Node{n}
+	default:
+		panic("can't happen")
+	}
+}
+
+// appendNodeSeq appends the node sequence b to the node sequence a.
+// a must have type **NodeList, *Nodes, or *[]*Node.
+// b must have type *NodeList, Nodes, or []*Node.
+// This is an interim function during the transition from NodeList to Nodes.
+// TODO(iant): Remove when transition is complete.
+func appendNodeSeq(a nodesOrNodeListPtr, b nodesOrNodeList) {
+	// Simplify b to either *NodeList or []*Node.
+	if n, ok := b.(Nodes); ok {
+		b = n.Slice()
+	}
+
+	if l, ok := a.(**NodeList); ok {
+		switch b := b.(type) {
+		case *NodeList:
+			*l = concat(*l, b)
+		case []*Node:
+			for _, n := range b {
+				*l = list(*l, n)
+			}
+		default:
+			panic("can't happen")
+		}
+	} else {
+		var s []*Node
+		switch a := a.(type) {
+		case *Nodes:
+			s = a.Slice()
+		case *[]*Node:
+			s = *a
+		default:
+			panic("can't happen")
+		}
+
+		switch b := b.(type) {
+		case *NodeList:
+			for l := b; l != nil; l = l.Next {
+				s = append(s, l.N)
+			}
+		case []*Node:
+			s = append(s, b...)
+		default:
+			panic("can't happen")
+		}
+
+		switch a := a.(type) {
+		case *Nodes:
+			a.Set(s)
+		case *[]*Node:
+			*a = s
+		default:
+			panic("can't happen")
+		}
+	}
+}
+
+// appendNodeSeqNode appends n to the node sequence a.
+// a must have type **NodeList, *Nodes, or *[]*Node.
+// This is an interim function during the transition from NodeList to Nodes.
+// TODO(iant): Remove when transition is complete.
+func appendNodeSeqNode(a nodesOrNodeListPtr, n *Node) {
+	// This is what the old list1 function did;
+	// the rest of the compiler has come to expect it.
+	if n.Op == OBLOCK && nodeSeqLen(n.Ninit) == 0 {
+		l := n.List
+		setNodeSeq(&n.List, nil)
+		appendNodeSeq(a, l)
+		return
+	}
+
+	switch a := a.(type) {
+	case **NodeList:
+		*a = list(*a, n)
+	case *Nodes:
+		a.Append(n)
+	case *[]*Node:
+		*a = append(*a, n)
+	default:
+		panic("can't happen")
+	}
 }

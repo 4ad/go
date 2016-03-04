@@ -1,4 +1,4 @@
-// Copyright 2010 The Go Authors.  All rights reserved.
+// Copyright 2010 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -58,9 +58,8 @@ func sysUnused(v unsafe.Pointer, n uintptr) {
 
 func sysUsed(v unsafe.Pointer, n uintptr) {
 	r := stdcall4(_VirtualAlloc, uintptr(v), n, _MEM_COMMIT, _PAGE_READWRITE)
-	if r != uintptr(v) {
-		print("runtime: VirtualAlloc of ", n, " bytes failed with errno=", getlasterror(), "\n")
-		throw("runtime: failed to commit pages")
+	if r == uintptr(v) {
+		return
 	}
 
 	// Commit failed. See SysUnused.

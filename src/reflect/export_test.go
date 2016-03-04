@@ -1,4 +1,4 @@
-// Copyright 2012 The Go Authors.  All rights reserved.
+// Copyright 2012 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -8,13 +8,13 @@ import "unsafe"
 
 // MakeRO returns a copy of v with the read-only flag set.
 func MakeRO(v Value) Value {
-	v.flag |= flagRO
+	v.flag |= flagStickyRO
 	return v
 }
 
 // IsRO reports whether v's read-only flag is set.
 func IsRO(v Value) bool {
-	return v.flag&flagRO != 0
+	return v.flag&flagStickyRO != 0
 }
 
 var CallGC = &callGC
@@ -48,7 +48,7 @@ func TypeLinks() []string {
 	var r []string
 	for _, m := range typelinks() {
 		for _, t := range m {
-			r = append(r, *t.string)
+			r = append(r, t.string)
 		}
 	}
 	return r

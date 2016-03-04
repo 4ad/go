@@ -7,6 +7,7 @@ package fmt_test
 import (
 	"bytes"
 	. "fmt"
+	"internal/race"
 	"io"
 	"math"
 	"reflect"
@@ -140,6 +141,10 @@ var fmtTests = []struct {
 	{"%x", "abc", "616263"},
 	{"%x", "\xff\xf0\x0f\xff", "fff00fff"},
 	{"%X", "\xff\xf0\x0f\xff", "FFF00FFF"},
+	{"%x", "", ""},
+	{"% x", "", ""},
+	{"%#x", "", ""},
+	{"%# x", "", ""},
 	{"%x", "xyz", "78797a"},
 	{"%X", "xyz", "78797A"},
 	{"% x", "xyz", "78 79 7a"},
@@ -155,6 +160,10 @@ var fmtTests = []struct {
 	{"%x", []byte("abc"), "616263"},
 	{"%x", []byte("\xff\xf0\x0f\xff"), "fff00fff"},
 	{"%X", []byte("\xff\xf0\x0f\xff"), "FFF00FFF"},
+	{"%x", []byte(""), ""},
+	{"% x", []byte(""), ""},
+	{"%#x", []byte(""), ""},
+	{"%# x", []byte(""), ""},
 	{"%x", []byte("xyz"), "78797a"},
 	{"%X", []byte("xyz"), "78797A"},
 	{"% x", []byte("xyz"), "78 79 7a"},
@@ -198,18 +207,20 @@ var fmtTests = []struct {
 	{"%08q", "abc", `000"abc"`},
 	{"%5s", "abcdefghijklmnopqrstuvwxyz", "abcdefghijklmnopqrstuvwxyz"},
 	{"%.5s", "abcdefghijklmnopqrstuvwxyz", "abcde"},
+	{"%.0s", "日本語日本語", ""},
 	{"%.5s", "日本語日本語", "日本語日本"},
+	{"%.10s", "日本語日本語", "日本語日本語"},
 	{"%.5s", []byte("日本語日本語"), "日本語日本"},
 	{"%.5q", "abcdefghijklmnopqrstuvwxyz", `"abcde"`},
-	{"%.5x", "abcdefghijklmnopqrstuvwxyz", `6162636465`},
+	{"%.5x", "abcdefghijklmnopqrstuvwxyz", "6162636465"},
 	{"%.5q", []byte("abcdefghijklmnopqrstuvwxyz"), `"abcde"`},
-	{"%.5x", []byte("abcdefghijklmnopqrstuvwxyz"), `6162636465`},
+	{"%.5x", []byte("abcdefghijklmnopqrstuvwxyz"), "6162636465"},
 	{"%.3q", "日本語日本語", `"日本語"`},
 	{"%.3q", []byte("日本語日本語"), `"日本語"`},
 	{"%.1q", "日本語", `"日"`},
 	{"%.1q", []byte("日本語"), `"日"`},
-	{"%.1x", "日本語", `e6`},
-	{"%.1X", []byte("日本語"), `E6`},
+	{"%.1x", "日本語", "e6"},
+	{"%.1X", []byte("日本語"), "E6"},
 	{"%10.1q", "日本語日本語", `       "日"`},
 	{"%3c", '⌘', "  ⌘"},
 	{"%5q", '\u2026', `  '…'`},
@@ -258,6 +269,12 @@ var fmtTests = []struct {
 	{"%+.3F", float32(-1.0), "-1.000"},
 	{"%+07.2f", 1.0, "+001.00"},
 	{"%+07.2f", -1.0, "-001.00"},
+	{"%-07.2f", 1.0, "1.00   "},
+	{"%-07.2f", -1.0, "-1.00  "},
+	{"%+-07.2f", 1.0, "+1.00  "},
+	{"%+-07.2f", -1.0, "-1.00  "},
+	{"%-+07.2f", 1.0, "+1.00  "},
+	{"%-+07.2f", -1.0, "-1.00  "},
 	{"%+10.2f", +1.0, "     +1.00"},
 	{"%+10.2f", -1.0, "     -1.00"},
 	{"% .3E", -1.0, "-1.000E+00"},
@@ -271,6 +288,9 @@ var fmtTests = []struct {
 	{"%b", 1.0, "4503599627370496p-52"},
 
 	// complex values
+	{"%.f", 0i, "(0+0i)"},
+	{"%+.f", 0i, "(+0+0i)"},
+	{"% +.f", 0i, "(+0+0i)"},
 	{"%+.3e", 0i, "(+0.000e+00+0.000e+00i)"},
 	{"%+.3f", 0i, "(+0.000+0.000i)"},
 	{"%+.3g", 0i, "(+0+0i)"},
@@ -377,8 +397,15 @@ var fmtTests = []struct {
 	{"%g", 1.23456789e-3, "0.00123456789"},
 	{"%g", 1.23456789e20, "1.23456789e+20"},
 	{"%20e", math.Inf(1), "                +Inf"},
+	{"% 20f", math.Inf(1), "                 Inf"},
+	{"%+20f", math.Inf(1), "                +Inf"},
+	{"% +20f", math.Inf(1), "                +Inf"},
 	{"%-20f", math.Inf(-1), "-Inf                "},
 	{"%20g", math.NaN(), "                 NaN"},
+	{"%+20f", math.NaN(), "                +NaN"},
+	{"% +20f", math.NaN(), "                +NaN"},
+	{"% -20f", math.NaN(), " NaN                "},
+	{"%+-20f", math.NaN(), "+NaN                "},
 
 	// arrays
 	{"%v", array, "[1 2 3 4 5]"},
@@ -452,30 +479,61 @@ var fmtTests = []struct {
 	{"%q", []string{"a", "b"}, `["a" "b"]`},
 	{"% 02x", []byte{1}, "01"},
 	{"% 02x", []byte{1, 2, 3}, "01 02 03"},
+
 	// Padding with byte slices.
-	{"%x", []byte{}, ""},
-	{"%02x", []byte{}, "00"},
+	{"%2x", []byte{}, "  "},
+	{"%#2x", []byte{}, "  "},
 	{"% 02x", []byte{}, "00"},
-	{"%08x", []byte{0xab}, "000000ab"},
-	{"% 08x", []byte{0xab}, "000000ab"},
-	{"%08x", []byte{0xab, 0xcd}, "0000abcd"},
-	{"% 08x", []byte{0xab, 0xcd}, "000ab cd"},
+	{"%# 02x", []byte{}, "00"},
+	{"%-2x", []byte{}, "  "},
+	{"%-02x", []byte{}, "  "},
 	{"%8x", []byte{0xab}, "      ab"},
 	{"% 8x", []byte{0xab}, "      ab"},
-	{"%8x", []byte{0xab, 0xcd}, "    abcd"},
-	{"% 8x", []byte{0xab, 0xcd}, "   ab cd"},
+	{"%#8x", []byte{0xab}, "    0xab"},
+	{"%# 8x", []byte{0xab}, "    0xab"},
+	{"%08x", []byte{0xab}, "000000ab"},
+	{"% 08x", []byte{0xab}, "000000ab"},
+	{"%#08x", []byte{0xab}, "00000xab"},
+	{"%# 08x", []byte{0xab}, "00000xab"},
+	{"%10x", []byte{0xab, 0xcd}, "      abcd"},
+	{"% 10x", []byte{0xab, 0xcd}, "     ab cd"},
+	{"%#10x", []byte{0xab, 0xcd}, "    0xabcd"},
+	{"%# 10x", []byte{0xab, 0xcd}, " 0xab 0xcd"},
+	{"%010x", []byte{0xab, 0xcd}, "000000abcd"},
+	{"% 010x", []byte{0xab, 0xcd}, "00000ab cd"},
+	{"%#010x", []byte{0xab, 0xcd}, "00000xabcd"},
+	{"%# 010x", []byte{0xab, 0xcd}, "00xab 0xcd"},
+	{"%-10X", []byte{0xab}, "AB        "},
+	{"% -010X", []byte{0xab}, "AB        "},
+	{"%#-10X", []byte{0xab, 0xcd}, "0XABCD    "},
+	{"%# -010X", []byte{0xab, 0xcd}, "0XAB 0XCD "},
 	// Same for strings
-	{"%x", "", ""},
-	{"%02x", "", "00"},
+	{"%2x", "", "  "},
+	{"%#2x", "", "  "},
 	{"% 02x", "", "00"},
-	{"%08x", "\xab", "000000ab"},
-	{"% 08x", "\xab", "000000ab"},
-	{"%08x", "\xab\xcd", "0000abcd"},
-	{"% 08x", "\xab\xcd", "000ab cd"},
+	{"%# 02x", "", "00"},
+	{"%-2x", "", "  "},
+	{"%-02x", "", "  "},
 	{"%8x", "\xab", "      ab"},
 	{"% 8x", "\xab", "      ab"},
-	{"%8x", "\xab\xcd", "    abcd"},
-	{"% 8x", "\xab\xcd", "   ab cd"},
+	{"%#8x", "\xab", "    0xab"},
+	{"%# 8x", "\xab", "    0xab"},
+	{"%08x", "\xab", "000000ab"},
+	{"% 08x", "\xab", "000000ab"},
+	{"%#08x", "\xab", "00000xab"},
+	{"%# 08x", "\xab", "00000xab"},
+	{"%10x", "\xab\xcd", "      abcd"},
+	{"% 10x", "\xab\xcd", "     ab cd"},
+	{"%#10x", "\xab\xcd", "    0xabcd"},
+	{"%# 10x", "\xab\xcd", " 0xab 0xcd"},
+	{"%010x", "\xab\xcd", "000000abcd"},
+	{"% 010x", "\xab\xcd", "00000ab cd"},
+	{"%#010x", "\xab\xcd", "00000xabcd"},
+	{"%# 010x", "\xab\xcd", "00xab 0xcd"},
+	{"%-10X", "\xab", "AB        "},
+	{"% -010X", "\xab", "AB        "},
+	{"%#-10X", "\xab\xcd", "0XABCD    "},
+	{"%# -010X", "\xab\xcd", "0XAB 0XCD "},
 
 	// renamings
 	{"%v", renamedBool(true), "true"},
@@ -562,7 +620,7 @@ var fmtTests = []struct {
 
 	// The "<nil>" show up because maps are printed by
 	// first obtaining a list of keys and then looking up
-	// each key.  Since NaNs can be map keys but cannot
+	// each key. Since NaNs can be map keys but cannot
 	// be fetched directly, the lookup fails and returns a
 	// zero reflect.Value, which formats as <nil>.
 	// This test is just to check that it shows the two NaNs at all.
@@ -598,14 +656,16 @@ var fmtTests = []struct {
 			"[%7.2f]",
 			"[% 7.2f]",
 			"[%+7.2f]",
+			"[% +7.2f]",
 			"[%07.2f]",
 			"[% 07.2f]",
 			"[%+07.2f]",
+			"[% +07.2f]"
 		};
 
 		int main(void) {
 			int i;
-			for(i = 0; i < 9; i++) {
+			for(i = 0; i < 11; i++) {
 				printf("%s: ", format[i]);
 				printf(format[i], 1.0);
 				printf(" ");
@@ -621,9 +681,12 @@ var fmtTests = []struct {
 			[%7.2f]: [   1.00] [  -1.00]
 			[% 7.2f]: [   1.00] [  -1.00]
 			[%+7.2f]: [  +1.00] [  -1.00]
+			[% +7.2f]: [  +1.00] [  -1.00]
 			[%07.2f]: [0001.00] [-001.00]
 			[% 07.2f]: [ 001.00] [-001.00]
 			[%+07.2f]: [+001.00] [-001.00]
+			[% +07.2f]: [+001.00] [-001.00]
+
 	*/
 	{"%.2f", 1.0, "1.00"},
 	{"%.2f", -1.0, "-1.00"},
@@ -637,26 +700,40 @@ var fmtTests = []struct {
 	{"% 7.2f", -1.0, "  -1.00"},
 	{"%+7.2f", 1.0, "  +1.00"},
 	{"%+7.2f", -1.0, "  -1.00"},
+	{"% +7.2f", 1.0, "  +1.00"},
+	{"% +7.2f", -1.0, "  -1.00"},
 	{"%07.2f", 1.0, "0001.00"},
 	{"%07.2f", -1.0, "-001.00"},
 	{"% 07.2f", 1.0, " 001.00"},
 	{"% 07.2f", -1.0, "-001.00"},
 	{"%+07.2f", 1.0, "+001.00"},
 	{"%+07.2f", -1.0, "-001.00"},
+	{"% +07.2f", 1.0, "+001.00"},
+	{"% +07.2f", -1.0, "-001.00"},
 
 	// Complex numbers: exhaustively tested in TestComplexFormatting.
 	{"%7.2f", 1 + 2i, "(   1.00  +2.00i)"},
 	{"%+07.2f", -1 - 2i, "(-001.00-002.00i)"},
-	// Zero padding does not apply to infinities.
+	// Zero padding does not apply to infinities and NaN.
 	{"%020f", math.Inf(-1), "                -Inf"},
 	{"%020f", math.Inf(+1), "                +Inf"},
+	{"%020f", math.NaN(), "                 NaN"},
 	{"% 020f", math.Inf(-1), "                -Inf"},
 	{"% 020f", math.Inf(+1), "                 Inf"},
+	{"% 020f", math.NaN(), "                 NaN"},
 	{"%+020f", math.Inf(-1), "                -Inf"},
 	{"%+020f", math.Inf(+1), "                +Inf"},
+	{"%+020f", math.NaN(), "                +NaN"},
+	{"%-020f", math.Inf(-1), "-Inf                "},
+	{"%-020f", math.Inf(+1), "+Inf                "},
+	{"%-020f", math.NaN(), "NaN                 "},
 	{"%20f", -1.0, "           -1.000000"},
 	// Make sure we can handle very large widths.
 	{"%0100f", -1.0, zeroFill("-", 99, "1.000000")},
+
+	// Use spaces instead of zero if padding to the right.
+	{"%0-5s", "abc", "abc  "},
+	{"%-05.1f", 1.0, "1.0  "},
 
 	// Complex fmt used to leave the plus flag set for future entries in the array
 	// causing +2+0i and +3+0i instead of 2+0i and 3+0i.
@@ -868,6 +945,14 @@ func TestReorder(t *testing.T) {
 	}
 }
 
+func BenchmarkSprintfPadding(b *testing.B) {
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			Sprintf("%16f", 1.0)
+		}
+	})
+}
+
 func BenchmarkSprintfEmpty(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
@@ -880,6 +965,14 @@ func BenchmarkSprintfString(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			Sprintf("%s", "hello")
+		}
+	})
+}
+
+func BenchmarkSprintfTruncateString(b *testing.B) {
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			Sprintf("%.3s", "日本語日本語日本語")
 		}
 	})
 }
@@ -912,6 +1005,30 @@ func BenchmarkSprintfFloat(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			Sprintf("%g", 5.23184)
+		}
+	})
+}
+func BenchmarkSprintfBoolean(b *testing.B) {
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			Sprintf("%t", true)
+		}
+	})
+}
+
+func BenchmarkSprintfHexString(b *testing.B) {
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			Sprintf("% #x", "0123456789abcdef")
+		}
+	})
+}
+
+func BenchmarkSprintfHexBytes(b *testing.B) {
+	data := []byte("0123456789abcdef")
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			Sprintf("% #x", data)
 		}
 	})
 }
@@ -982,7 +1099,7 @@ func TestCountMallocs(t *testing.T) {
 		t.Skip("skipping malloc count in short mode")
 	case runtime.GOMAXPROCS(0) > 1:
 		t.Skip("skipping; GOMAXPROCS>1")
-	case raceenabled:
+	case race.Enabled:
 		t.Skip("skipping malloc count under race detector")
 	}
 	for _, mt := range mallocTest {

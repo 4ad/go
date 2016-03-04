@@ -1,4 +1,4 @@
-// Copyright 2013 The Go Authors.  All rights reserved.
+// Copyright 2013 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -108,9 +108,20 @@ import (
 )
 
 // The Go and C compilers, and the assembler, call writeobj to write
-// out a Go object file.  The linker does not call this; the linker
+// out a Go object file. The linker does not call this; the linker
 // does not write out object files.
 func Writeobjdirect(ctxt *Link, b *Biobuf) {
+	Flushplist(ctxt)
+	Writeobjfile(ctxt, b)
+}
+
+func Flushplist(ctxt *Link) {
+	flushplist(ctxt, ctxt.Debugasm == 0)
+}
+func FlushplistNoFree(ctxt *Link) {
+	flushplist(ctxt, false)
+}
+func flushplist(ctxt *Link, freeProgs bool) {
 	var flag int
 	var s *LSym
 	var p *Prog
@@ -119,13 +130,11 @@ func Writeobjdirect(ctxt *Link, b *Biobuf) {
 
 	// Build list of symbols, and assign instructions to lists.
 	// Ignore ctxt->plist boundaries. There are no guarantees there,
-	// and the C compilers and assemblers just use one big list.
-	var text *LSym
-
+	// and the assemblers just use one big list.
 	var curtext *LSym
-	var data *LSym
+	var text *LSym
 	var etext *LSym
-	var edata *LSym
+
 	for pl := ctxt.Plist; pl != nil; pl = pl.Link {
 		for p = pl.Firstpc; p != nil; p = plink {
 			if ctxt.Debugasm != 0 && ctxt.Debugvlog != 0 {
@@ -174,10 +183,10 @@ func Writeobjdirect(ctxt *Link, b *Biobuf) {
 					log.Fatalf("symbol %s listed multiple times", s.Name)
 				}
 				s.Onlist = 1
-				if data == nil {
-					data = s
+				if ctxt.Data == nil {
+					ctxt.Data = s
 				} else {
-					edata.Next = s
+					ctxt.Edata.Next = s
 				}
 				s.Next = nil
 				s.Size = p.To.Offset
@@ -195,7 +204,7 @@ func Writeobjdirect(ctxt *Link, b *Biobuf) {
 				} else if flag&TLSBSS != 0 {
 					s.Type = STLSBSS
 				}
-				edata = s
+				ctxt.Edata = s
 				continue
 			}
 
@@ -292,12 +301,37 @@ func Writeobjdirect(ctxt *Link, b *Biobuf) {
 	for s := text; s != nil; s = s.Next {
 		mkfwd(s)
 		linkpatch(ctxt, s)
-		ctxt.Arch.Follow(ctxt, s)
+		if ctxt.Flag_optimize {
+			ctxt.Arch.Follow(ctxt, s)
+		}
 		ctxt.Arch.Preprocess(ctxt, s)
 		ctxt.Arch.Assemble(ctxt, s)
+		fieldtrack(ctxt, s)
 		linkpcln(ctxt, s)
+		if freeProgs {
+			s.Text = nil
+			s.Etext = nil
+		}
 	}
 
+	// Add to running list in ctxt.
+	if text != nil {
+		if ctxt.Text == nil {
+			ctxt.Text = text
+		} else {
+			ctxt.Etext.Next = text
+		}
+		ctxt.Etext = etext
+	}
+	ctxt.Plist = nil
+	ctxt.Plast = nil
+	ctxt.Curp = nil
+	if freeProgs {
+		ctxt.freeProgs()
+	}
+}
+
+func Writeobjfile(ctxt *Link, b *Biobuf) {
 	// Emit header.
 	Bputc(b, 0)
 
@@ -312,10 +346,10 @@ func Writeobjdirect(ctxt *Link, b *Biobuf) {
 	wrstring(b, "")
 
 	// Emit symbols.
-	for s := text; s != nil; s = s.Next {
+	for s := ctxt.Text; s != nil; s = s.Next {
 		writesym(ctxt, b, s)
 	}
-	for s := data; s != nil; s = s.Next {
+	for s := ctxt.Data; s != nil; s = s.Next {
 		writesym(ctxt, b, s)
 	}
 

@@ -6,9 +6,7 @@ package gc
 
 import "cmd/internal/obj"
 
-/*
- * range
- */
+// range
 func typecheckrange(n *Node) {
 	var toomany int
 	var why string
@@ -145,7 +143,7 @@ func walkrange(n *Node) {
 	t := n.Type
 
 	a := n.Right
-	lno := int(setlineno(a))
+	lno := setlineno(a)
 	n.Right = nil
 
 	var v1 *Node
@@ -161,93 +159,16 @@ func walkrange(n *Node) {
 	// to avoid erroneous processing by racewalk.
 	n.List = nil
 
-	var body *NodeList
+	var body []*Node
 	var init *NodeList
 	switch t.Etype {
 	default:
 		Fatalf("walkrange")
 
-		// Lower n into runtime·memclr if possible, for
-	// fast zeroing of slices and arrays (issue 5373).
-	// Look for instances of
-	//
-	// for i := range a {
-	// 	a[i] = zero
-	// }
-	//
-	// in which the evaluation of a is side-effect-free.
 	case TARRAY:
-		if Debug['N'] == 0 {
-			if flag_race == 0 {
-				if v1 != nil {
-					if v2 == nil {
-						if n.Nbody != nil {
-							if n.Nbody.N != nil { // at least one statement in body
-								if n.Nbody.Next == nil { // at most one statement in body
-									tmp := n.Nbody.N // first statement of body
-									if tmp.Op == OAS {
-										if tmp.Left.Op == OINDEX {
-											if samesafeexpr(tmp.Left.Left, a) {
-												if samesafeexpr(tmp.Left.Right, v1) {
-													if t.Type.Width > 0 {
-														if iszero(tmp.Right) {
-															// Convert to
-															// if len(a) != 0 {
-															// 	hp = &a[0]
-															// 	hn = len(a)*sizeof(elem(a))
-															// 	memclr(hp, hn)
-															// 	i = len(a) - 1
-															// }
-															n.Op = OIF
-
-															n.Nbody = nil
-															n.Left = Nod(ONE, Nod(OLEN, a, nil), Nodintconst(0))
-
-															// hp = &a[0]
-															hp := temp(Ptrto(Types[TUINT8]))
-
-															tmp := Nod(OINDEX, a, Nodintconst(0))
-															tmp.Bounded = true
-															tmp = Nod(OADDR, tmp, nil)
-															tmp = Nod(OCONVNOP, tmp, nil)
-															tmp.Type = Ptrto(Types[TUINT8])
-															n.Nbody = list(n.Nbody, Nod(OAS, hp, tmp))
-
-															// hn = len(a) * sizeof(elem(a))
-															hn := temp(Types[TUINTPTR])
-
-															tmp = Nod(OLEN, a, nil)
-															tmp = Nod(OMUL, tmp, Nodintconst(t.Type.Width))
-															tmp = conv(tmp, Types[TUINTPTR])
-															n.Nbody = list(n.Nbody, Nod(OAS, hn, tmp))
-
-															// memclr(hp, hn)
-															fn := mkcall("memclr", nil, nil, hp, hn)
-
-															n.Nbody = list(n.Nbody, fn)
-
-															// i = len(a) - 1
-															v1 = Nod(OAS, v1, Nod(OSUB, Nod(OLEN, a, nil), Nodintconst(1)))
-
-															n.Nbody = list(n.Nbody, v1)
-
-															typecheck(&n.Left, Erv)
-															typechecklist(n.Nbody, Etop)
-															walkstmt(&n)
-															lineno = int32(lno)
-															return
-														}
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
+		if memclrrange(n, v1, v2, a) {
+			lineno = lno
+			return
 		}
 
 		// orderstmt arranged for a copy of the array/slice variable if needed.
@@ -271,12 +192,12 @@ func walkrange(n *Node) {
 		if v1 == nil {
 			body = nil
 		} else if v2 == nil {
-			body = list1(Nod(OAS, v1, hv1))
+			body = []*Node{Nod(OAS, v1, hv1)}
 		} else {
 			a := Nod(OAS2, nil, nil)
 			a.List = list(list1(v1), v2)
 			a.Rlist = list(list1(hv1), Nod(OIND, hp, nil))
-			body = list1(a)
+			body = []*Node{a}
 
 			// Advance pointer as part of increment.
 			// We used to advance the pointer before executing the loop body,
@@ -324,14 +245,14 @@ func walkrange(n *Node) {
 		if v1 == nil {
 			body = nil
 		} else if v2 == nil {
-			body = list1(Nod(OAS, v1, key))
+			body = []*Node{Nod(OAS, v1, key)}
 		} else {
 			val := Nod(ODOT, hit, valname)
 			val = Nod(OIND, val, nil)
 			a := Nod(OAS2, nil, nil)
 			a.List = list(list1(v1), v2)
 			a.Rlist = list(list1(key), val)
-			body = list1(a)
+			body = []*Node{a}
 		}
 
 		// orderstmt arranged for a copy of the channel variable.
@@ -356,7 +277,7 @@ func walkrange(n *Node) {
 		if v1 == nil {
 			body = nil
 		} else {
-			body = list1(Nod(OAS, v1, hv1))
+			body = []*Node{Nod(OAS, v1, hv1)}
 		}
 
 		// orderstmt arranged for a copy of the string variable.
@@ -385,10 +306,10 @@ func walkrange(n *Node) {
 
 		body = nil
 		if v1 != nil {
-			body = list1(Nod(OAS, v1, ohv1))
+			body = []*Node{Nod(OAS, v1, ohv1)}
 		}
 		if v2 != nil {
-			body = list(body, Nod(OAS, v2, hv2))
+			body = append(body, Nod(OAS, v2, hv2))
 		}
 	}
 
@@ -398,9 +319,88 @@ func walkrange(n *Node) {
 	typechecklist(n.Left.Ninit, Etop)
 	typecheck(&n.Left, Erv)
 	typecheck(&n.Right, Etop)
-	typechecklist(body, Etop)
-	n.Nbody = concat(body, n.Nbody)
+	typecheckslice(body, Etop)
+	n.Nbody.Set(append(body, n.Nbody.Slice()...))
 	walkstmt(&n)
 
-	lineno = int32(lno)
+	lineno = lno
+}
+
+// Lower n into runtime·memclr if possible, for
+// fast zeroing of slices and arrays (issue 5373).
+// Look for instances of
+//
+// for i := range a {
+// 	a[i] = zero
+// }
+//
+// in which the evaluation of a is side-effect-free.
+//
+// Parameters are as in walkrange: "for v1, v2 = range a".
+func memclrrange(n, v1, v2, a *Node) bool {
+	if Debug['N'] != 0 || instrumenting {
+		return false
+	}
+	if v1 == nil || v2 != nil {
+		return false
+	}
+	if len(n.Nbody.Slice()) == 0 || n.Nbody.Slice()[0] == nil || len(n.Nbody.Slice()) > 1 {
+		return false
+	}
+	stmt := n.Nbody.Slice()[0] // only stmt in body
+	if stmt.Op != OAS || stmt.Left.Op != OINDEX {
+		return false
+	}
+	if !samesafeexpr(stmt.Left.Left, a) || !samesafeexpr(stmt.Left.Right, v1) {
+		return false
+	}
+	elemsize := n.Type.Type.Width
+	if elemsize <= 0 || !iszero(stmt.Right) {
+		return false
+	}
+
+	// Convert to
+	// if len(a) != 0 {
+	// 	hp = &a[0]
+	// 	hn = len(a)*sizeof(elem(a))
+	// 	memclr(hp, hn)
+	// 	i = len(a) - 1
+	// }
+	n.Op = OIF
+
+	n.Nbody.Set(nil)
+	n.Left = Nod(ONE, Nod(OLEN, a, nil), Nodintconst(0))
+
+	// hp = &a[0]
+	hp := temp(Ptrto(Types[TUINT8]))
+
+	tmp := Nod(OINDEX, a, Nodintconst(0))
+	tmp.Bounded = true
+	tmp = Nod(OADDR, tmp, nil)
+	tmp = Nod(OCONVNOP, tmp, nil)
+	tmp.Type = Ptrto(Types[TUINT8])
+	n.Nbody.Append(Nod(OAS, hp, tmp))
+
+	// hn = len(a) * sizeof(elem(a))
+	hn := temp(Types[TUINTPTR])
+
+	tmp = Nod(OLEN, a, nil)
+	tmp = Nod(OMUL, tmp, Nodintconst(elemsize))
+	tmp = conv(tmp, Types[TUINTPTR])
+	n.Nbody.Append(Nod(OAS, hn, tmp))
+
+	// memclr(hp, hn)
+	fn := mkcall("memclr", nil, nil, hp, hn)
+
+	n.Nbody.Append(fn)
+
+	// i = len(a) - 1
+	v1 = Nod(OAS, v1, Nod(OSUB, Nod(OLEN, a, nil), Nodintconst(1)))
+
+	n.Nbody.Append(v1)
+
+	typecheck(&n.Left, Erv)
+	typechecklist(n.Nbody, Etop)
+	walkstmt(&n)
+	return true
 }

@@ -42,11 +42,37 @@ TEXT runtime·rt0_go(SB),NOSPLIT,$0
 	JNE	notintel
 	MOVB	$1, runtime·lfenceBeforeRdtsc(SB)
 notintel:
+	// Do nothing.
 
 	MOVQ	$1, AX
 	CPUID
 	MOVL	CX, runtime·cpuid_ecx(SB)
 	MOVL	DX, runtime·cpuid_edx(SB)
+	// Detect AVX and AVX2 as per 14.7.1  Detection of AVX2 chapter of [1]
+	// [1] 64-ia-32-architectures-software-developer-manual-325462.pdf
+	// http://www.intel.com/content/dam/www/public/us/en/documents/manuals/64-ia-32-architectures-software-developer-manual-325462.pdf
+	ANDL    $0x18000000, CX // check for OSXSAVE and AVX bits
+	CMPL    CX, $0x18000000
+	JNE     noavx
+	MOVL    $0, CX
+	// For XGETBV, OSXSAVE bit is required and sufficient
+	XGETBV
+	ANDL    $6, AX
+	CMPL    AX, $6 // Check for OS support of YMM registers
+	JNE     noavx
+	MOVB    $1, runtime·support_avx(SB)
+	MOVL    $7, AX
+	MOVL    $0, CX
+	CPUID
+	ANDL    $0x20, BX // check for AVX2 bit
+	CMPL    BX, $0x20
+	JNE     noavx2
+	MOVB    $1, runtime·support_avx2(SB)
+	JMP     nocpuinfo
+noavx:
+	MOVB    $0, runtime·support_avx(SB)
+noavx2:
+	MOVB    $0, runtime·support_avx2(SB)
 nocpuinfo:	
 	
 	// if there is an _cgo_init, call it.
@@ -65,23 +91,26 @@ nocpuinfo:
 	MOVQ	AX, g_stackguard0(CX)
 	MOVQ	AX, g_stackguard1(CX)
 
-	CMPL	runtime·iswindows(SB), $0
-	JEQ ok
+#ifndef GOOS_windows
+	JMP ok
+#endif
 needtls:
+#ifdef GOOS_plan9
 	// skip TLS setup on Plan 9
-	CMPL	runtime·isplan9(SB), $1
-	JEQ ok
+	JMP ok
+#endif
+#ifdef GOOS_solaris
 	// skip TLS setup on Solaris
-	CMPL	runtime·issolaris(SB), $1
-	JEQ ok
+	JMP ok
+#endif
 
-	LEAQ	runtime·tls0(SB), DI
+	LEAQ	runtime·m0+m_tls(SB), DI
 	CALL	runtime·settls(SB)
 
 	// store through it, to make sure it works
 	get_tls(BX)
 	MOVQ	$0x123, g(BX)
-	MOVQ	runtime·tls0(SB), AX
+	MOVQ	runtime·m0+m_tls(SB), AX
 	CMPQ	AX, $0x123
 	JEQ 2(PC)
 	MOVL	AX, 0	// abort
@@ -174,7 +203,7 @@ TEXT runtime·gogo(SB), NOSPLIT, $0-8
 
 // func mcall(fn func(*g))
 // Switch to m->g0's stack, call fn(g).
-// Fn must never return.  It should gogo(&g->sched)
+// Fn must never return. It should gogo(&g->sched)
 // to keep running g.
 TEXT runtime·mcall(SB), NOSPLIT, $0-8
 	MOVQ	fn+0(FP), DI
@@ -208,7 +237,7 @@ TEXT runtime·mcall(SB), NOSPLIT, $0-8
 	RET
 
 // systemstack_switch is a dummy routine that systemstack leaves at the bottom
-// of the G stack.  We need to distinguish the routine that
+// of the G stack. We need to distinguish the routine that
 // lives at the bottom of the G stack from the one that lives
 // at the top of the system stack because the one at the top of
 // the system stack terminates the stack walk (see topofstack()).
@@ -239,7 +268,7 @@ TEXT runtime·systemstack(SB), NOSPLIT, $0-8
 	CALL	AX
 
 switch:
-	// save our state in g->sched.  Pretend to
+	// save our state in g->sched. Pretend to
 	// be systemstack_switch if the G stack is scanned.
 	MOVQ	$runtime·systemstack_switch(SB), SI
 	MOVQ	SI, (g_sched+gobuf_pc)(AX)
@@ -349,8 +378,9 @@ TEXT runtime·stackBarrier(SB),NOSPLIT,$0
 	MOVQ	stkbar_savedLRPtr(DX)(BX*1), R8
 	MOVQ	stkbar_savedLRVal(DX)(BX*1), BX
 	// Assert that we're popping the right saved LR.
+	ADDQ	$8, R8
 	CMPQ	R8, SP
-	JNE	2(PC)
+	JEQ	2(PC)
 	MOVL	$0, 0
 	// Record that this stack barrier was hit.
 	ADDQ	$1, g_stkbarPos(CX)
@@ -466,111 +496,6 @@ CALLFN(·call268435456, 268435456)
 CALLFN(·call536870912, 536870912)
 CALLFN(·call1073741824, 1073741824)
 
-// bool cas(int32 *val, int32 old, int32 new)
-// Atomically:
-//	if(*val == old){
-//		*val = new;
-//		return 1;
-//	} else
-//		return 0;
-TEXT runtime·cas(SB), NOSPLIT, $0-17
-	MOVQ	ptr+0(FP), BX
-	MOVL	old+8(FP), AX
-	MOVL	new+12(FP), CX
-	LOCK
-	CMPXCHGL	CX, 0(BX)
-	SETEQ	ret+16(FP)
-	RET
-
-// bool	runtime·cas64(uint64 *val, uint64 old, uint64 new)
-// Atomically:
-//	if(*val == *old){
-//		*val = new;
-//		return 1;
-//	} else {
-//		return 0;
-//	}
-TEXT runtime·cas64(SB), NOSPLIT, $0-25
-	MOVQ	ptr+0(FP), BX
-	MOVQ	old+8(FP), AX
-	MOVQ	new+16(FP), CX
-	LOCK
-	CMPXCHGQ	CX, 0(BX)
-	SETEQ	ret+24(FP)
-	RET
-	
-TEXT runtime·casuintptr(SB), NOSPLIT, $0-25
-	JMP	runtime·cas64(SB)
-
-TEXT runtime·atomicloaduintptr(SB), NOSPLIT, $0-16
-	JMP	runtime·atomicload64(SB)
-
-TEXT runtime·atomicloaduint(SB), NOSPLIT, $0-16
-	JMP	runtime·atomicload64(SB)
-
-TEXT runtime·atomicstoreuintptr(SB), NOSPLIT, $0-16
-	JMP	runtime·atomicstore64(SB)
-
-// bool casp(void **val, void *old, void *new)
-// Atomically:
-//	if(*val == old){
-//		*val = new;
-//		return 1;
-//	} else
-//		return 0;
-TEXT runtime·casp1(SB), NOSPLIT, $0-25
-	MOVQ	ptr+0(FP), BX
-	MOVQ	old+8(FP), AX
-	MOVQ	new+16(FP), CX
-	LOCK
-	CMPXCHGQ	CX, 0(BX)
-	SETEQ	ret+24(FP)
-	RET
-
-// uint32 xadd(uint32 volatile *val, int32 delta)
-// Atomically:
-//	*val += delta;
-//	return *val;
-TEXT runtime·xadd(SB), NOSPLIT, $0-20
-	MOVQ	ptr+0(FP), BX
-	MOVL	delta+8(FP), AX
-	MOVL	AX, CX
-	LOCK
-	XADDL	AX, 0(BX)
-	ADDL	CX, AX
-	MOVL	AX, ret+16(FP)
-	RET
-
-TEXT runtime·xadd64(SB), NOSPLIT, $0-24
-	MOVQ	ptr+0(FP), BX
-	MOVQ	delta+8(FP), AX
-	MOVQ	AX, CX
-	LOCK
-	XADDQ	AX, 0(BX)
-	ADDQ	CX, AX
-	MOVQ	AX, ret+16(FP)
-	RET
-
-TEXT runtime·xadduintptr(SB), NOSPLIT, $0-24
-	JMP	runtime·xadd64(SB)
-
-TEXT runtime·xchg(SB), NOSPLIT, $0-20
-	MOVQ	ptr+0(FP), BX
-	MOVL	new+8(FP), AX
-	XCHGL	AX, 0(BX)
-	MOVL	AX, ret+16(FP)
-	RET
-
-TEXT runtime·xchg64(SB), NOSPLIT, $0-24
-	MOVQ	ptr+0(FP), BX
-	MOVQ	new+8(FP), AX
-	XCHGQ	AX, 0(BX)
-	MOVQ	AX, ret+16(FP)
-	RET
-
-TEXT runtime·xchguintptr(SB), NOSPLIT, $0-24
-	JMP	runtime·xchg64(SB)
-
 TEXT runtime·procyield(SB),NOSPLIT,$0-0
 	MOVL	cycles+0(FP), AX
 again:
@@ -579,39 +504,6 @@ again:
 	JNZ	again
 	RET
 
-TEXT runtime·atomicstorep1(SB), NOSPLIT, $0-16
-	MOVQ	ptr+0(FP), BX
-	MOVQ	val+8(FP), AX
-	XCHGQ	AX, 0(BX)
-	RET
-
-TEXT runtime·atomicstore(SB), NOSPLIT, $0-12
-	MOVQ	ptr+0(FP), BX
-	MOVL	val+8(FP), AX
-	XCHGL	AX, 0(BX)
-	RET
-
-TEXT runtime·atomicstore64(SB), NOSPLIT, $0-16
-	MOVQ	ptr+0(FP), BX
-	MOVQ	val+8(FP), AX
-	XCHGQ	AX, 0(BX)
-	RET
-
-// void	runtime·atomicor8(byte volatile*, byte);
-TEXT runtime·atomicor8(SB), NOSPLIT, $0-9
-	MOVQ	ptr+0(FP), AX
-	MOVB	val+8(FP), BX
-	LOCK
-	ORB	BX, (AX)
-	RET
-
-// void	runtime·atomicand8(byte volatile*, byte);
-TEXT runtime·atomicand8(SB), NOSPLIT, $0-9
-	MOVQ	ptr+0(FP), AX
-	MOVB	val+8(FP), BX
-	LOCK
-	ANDB	BX, (AX)
-	RET
 
 TEXT ·publicationBarrier(SB),NOSPLIT,$0-0
 	// Stores are already ordered on x86, so this is just a
@@ -659,6 +551,8 @@ TEXT ·asmcgocall(SB),NOSPLIT,$0-20
 	// come in on the m->g0 stack already.
 	get_tls(CX)
 	MOVQ	g(CX), R8
+	CMPQ	R8, $0
+	JEQ	nosave
 	MOVQ	g_m(R8), R8
 	MOVQ	m_g0(R8), SI
 	MOVQ	g(CX), DI
@@ -668,11 +562,11 @@ TEXT ·asmcgocall(SB),NOSPLIT,$0-20
 	CMPQ	SI, DI
 	JEQ	nosave
 	
+	// Switch to system stack.
 	MOVQ	m_g0(R8), SI
 	CALL	gosave<>(SB)
 	MOVQ	SI, g(CX)
 	MOVQ	(g_sched+gobuf_sp)(SI), SP
-nosave:
 
 	// Now on a scheduling stack (a pthread-created stack).
 	// Make sure we have enough room for 4 stack-backed fast-call
@@ -695,6 +589,29 @@ nosave:
 	MOVQ	DI, g(CX)
 	MOVQ	SI, SP
 
+	MOVL	AX, ret+16(FP)
+	RET
+
+nosave:
+	// Running on a system stack, perhaps even without a g.
+	// Having no g can happen during thread creation or thread teardown
+	// (see needm/dropm on Solaris, for example).
+	// This code is like the above sequence but without saving/restoring g
+	// and without worrying about the stack moving out from under us
+	// (because we're on a system stack, not a goroutine stack).
+	// The above code could be used directly if already on a system stack,
+	// but then the only path through this code would be a rare case on Solaris.
+	// Using this code for all "already on system stack" calls exercises it more,
+	// which should help keep it correct.
+	SUBQ	$64, SP
+	ANDQ	$~15, SP
+	MOVQ	$0, 48(SP)		// where above code stores g, in case someone looks during debugging
+	MOVQ	DX, 40(SP)	// save original stack pointer
+	MOVQ	BX, DI		// DI = first argument in AMD64 ABI
+	MOVQ	BX, CX		// CX = first argument in Win64
+	CALL	AX
+	MOVQ	40(SP), SI	// restore original stack pointer
+	MOVQ	SI, SP
 	MOVL	AX, ret+16(FP)
 	RET
 
@@ -799,7 +716,7 @@ havem:
 	CALL	runtime·cgocallbackg(SB)
 	MOVQ	0(SP), R8
 
-	// Compute the size of the frame again.  FP and SP have
+	// Compute the size of the frame again. FP and SP have
 	// completely different values here than they did above,
 	// but only their difference matters.
 	LEAQ	fv+0(FP), AX
@@ -905,10 +822,10 @@ TEXT runtime·getcallersp(SB),NOSPLIT,$0-16
 TEXT runtime·cputicks(SB),NOSPLIT,$0-0
 	CMPB	runtime·lfenceBeforeRdtsc(SB), $1
 	JNE	mfence
-	BYTE	$0x0f; BYTE $0xae; BYTE $0xe8 // LFENCE
+	LFENCE
 	JMP	done
 mfence:
-	BYTE	$0x0f; BYTE $0xae; BYTE $0xf0 // MFENCE
+	MFENCE
 done:
 	RDTSC
 	SHLQ	$32, DX
@@ -992,7 +909,7 @@ final1:
 	RET
 
 endofpage:
-	// address ends in 1111xxxx.  Might be up against
+	// address ends in 1111xxxx. Might be up against
 	// a page boundary, so load ending at last byte.
 	// Then shift bytes down using pshufb.
 	MOVOU	-32(AX)(CX*1), X1
@@ -1306,7 +1223,16 @@ DATA masks<>+0xf0(SB)/8, $0xffffffffffffffff
 DATA masks<>+0xf8(SB)/8, $0x00ffffffffffffff
 GLOBL masks<>(SB),RODATA,$256
 
-// these are arguments to pshufb.  They move data down from
+TEXT ·checkASM(SB),NOSPLIT,$0-1
+	// check that masks<>(SB) and shifts<>(SB) are aligned to 16-byte
+	MOVQ	$masks<>(SB), AX
+	MOVQ	$shifts<>(SB), BX
+	ORQ	BX, AX
+	TESTQ	$15, AX
+	SETEQ	ret+0(FP)
+	RET
+
+// these are arguments to pshufb. They move data down from
 // the high bytes of the register to the low bytes of the register.
 // index is how many bytes to move.
 DATA shifts<>+0x00(SB)/8, $0x0000000000000000
@@ -1343,12 +1269,18 @@ DATA shifts<>+0xf0(SB)/8, $0x0807060504030201
 DATA shifts<>+0xf8(SB)/8, $0xff0f0e0d0c0b0a09
 GLOBL shifts<>(SB),RODATA,$256
 
-TEXT runtime·memeq(SB),NOSPLIT,$0-25
+// memequal(p, q unsafe.Pointer, size uintptr) bool
+TEXT runtime·memequal(SB),NOSPLIT,$0-25
 	MOVQ	a+0(FP), SI
 	MOVQ	b+8(FP), DI
+	CMPQ	SI, DI
+	JEQ	eq
 	MOVQ	size+16(FP), BX
 	LEAQ	ret+24(FP), AX
 	JMP	runtime·memeqbody(SB)
+eq:
+	MOVB	$1, ret+24(FP)
+	RET
 
 // memequal_varlen(a, b unsafe.Pointer) bool
 TEXT runtime·memequal_varlen(SB),NOSPLIT,$0-17
@@ -1387,6 +1319,10 @@ eq:
 TEXT runtime·memeqbody(SB),NOSPLIT,$0-0
 	CMPQ	BX, $8
 	JB	small
+	CMPQ	BX, $64
+	JB	bigloop
+	CMPB    runtime·support_avx2(SB), $1
+	JE	hugeloop_avx2
 	
 	// 64 bytes at a time using xmm registers
 hugeloop:
@@ -1415,6 +1351,30 @@ hugeloop:
 	JEQ	hugeloop
 	MOVB	$0, (AX)
 	RET
+
+	// 64 bytes at a time using ymm registers
+hugeloop_avx2:
+	CMPQ	BX, $64
+	JB	bigloop_avx2
+	VMOVDQU	(SI), Y0
+	VMOVDQU	(DI), Y1
+	VMOVDQU	32(SI), Y2
+	VMOVDQU	32(DI), Y3
+	VPCMPEQB	Y1, Y0, Y4
+	VPCMPEQB	Y2, Y3, Y5
+	VPAND	Y4, Y5, Y6
+	VPMOVMSKB Y6, DX
+	ADDQ	$64, SI
+	ADDQ	$64, DI
+	SUBQ	$64, BX
+	CMPL	DX, $0xffffffff
+	JEQ	hugeloop_avx2
+	VZEROUPPER
+	MOVB	$0, (AX)
+	RET
+
+bigloop_avx2:
+	VZEROUPPER
 
 	// 8 bytes at a time using 64-bit register
 bigloop:
@@ -1452,7 +1412,7 @@ small:
 	MOVQ	(SI), SI
 	JMP	si_finish
 si_high:
-	// address ends in 11111xxx.  Load up to bytes we want, move to correct position.
+	// address ends in 11111xxx. Load up to bytes we want, move to correct position.
 	MOVQ	-8(SI)(BX*1), SI
 	SHRQ	CX, SI
 si_finish:
@@ -1505,7 +1465,10 @@ TEXT runtime·cmpbody(SB),NOSPLIT,$0-0
 	JB	small
 
 	CMPQ	R8, $63
-	JA	big_loop
+	JBE	loop
+	CMPB    runtime·support_avx2(SB), $1
+	JEQ     big_loop_avx2
+	JMP	big_loop
 loop:
 	CMPQ	R8, $16
 	JBE	_0through16
@@ -1654,6 +1617,207 @@ big_loop:
 	JBE	loop
 	JMP	big_loop
 
+	// Compare 64-bytes per loop iteration.
+	// Loop is unrolled and uses AVX2.
+big_loop_avx2:
+	VMOVDQU	(SI), Y2
+	VMOVDQU	(DI), Y3
+	VMOVDQU	32(SI), Y4
+	VMOVDQU	32(DI), Y5
+	VPCMPEQB Y2, Y3, Y0
+	VPMOVMSKB Y0, AX
+	XORL	$0xffffffff, AX
+	JNE	diff32_avx2
+	VPCMPEQB Y4, Y5, Y6
+	VPMOVMSKB Y6, AX
+	XORL	$0xffffffff, AX
+	JNE	diff64_avx2
+
+	ADDQ	$64, SI
+	ADDQ	$64, DI
+	SUBQ	$64, R8
+	CMPQ	R8, $64
+	JB	big_loop_avx2_exit
+	JMP	big_loop_avx2
+
+	// Avoid AVX->SSE transition penalty and search first 32 bytes of 64 byte chunk.
+diff32_avx2:
+	VZEROUPPER
+	JMP diff16
+
+	// Same as diff32_avx2, but for last 32 bytes.
+diff64_avx2:
+	VZEROUPPER
+	JMP diff48
+
+	// For <64 bytes remainder jump to normal loop.
+big_loop_avx2_exit:
+	VZEROUPPER
+	JMP loop
+
+
+// TODO: Also use this in bytes.Index
+TEXT strings·indexShortStr(SB),NOSPLIT,$0-40
+	MOVQ s+0(FP), DI
+	MOVQ s_len+8(FP), CX
+	MOVQ c+16(FP), AX
+	MOVQ c_len+24(FP), BX
+	CMPQ BX, CX
+	JA fail
+	CMPQ BX, $2
+	JA   _3_or_more
+	MOVW (AX), AX
+	LEAQ -1(DI)(CX*1), CX
+loop2:
+	MOVW (DI), SI
+	CMPW SI,AX
+	JZ success
+	ADDQ $1,DI
+	CMPQ DI,CX
+	JB loop2
+	JMP fail
+_3_or_more:
+	CMPQ BX, $3
+	JA   _4_or_more
+	MOVW 1(AX), DX
+	MOVW (AX), AX
+	LEAQ -2(DI)(CX*1), CX
+loop3:
+	MOVW (DI), SI
+	CMPW SI,AX
+	JZ   partial_success3
+	ADDQ $1,DI
+	CMPQ DI,CX
+	JB loop3
+	JMP fail
+partial_success3:
+	MOVW 1(DI), SI
+	CMPW SI,DX
+	JZ success
+	ADDQ $1,DI
+	CMPQ DI,CX
+	JB loop3
+	JMP fail
+_4_or_more:
+	CMPQ BX, $4
+	JA   _5_or_more
+	MOVL (AX), AX
+	LEAQ -3(DI)(CX*1), CX
+loop4:
+	MOVL (DI), SI
+	CMPL SI,AX
+	JZ   success
+	ADDQ $1,DI
+	CMPQ DI,CX
+	JB loop4
+	JMP fail
+_5_or_more:
+	CMPQ BX, $7
+	JA   _8_or_more
+	LEAQ 1(DI)(CX*1), CX
+	SUBQ BX, CX
+	MOVL -4(AX)(BX*1), DX
+	MOVL (AX), AX
+loop5to7:
+	MOVL (DI), SI
+	CMPL SI,AX
+	JZ   partial_success5to7
+	ADDQ $1,DI
+	CMPQ DI,CX
+	JB loop5to7
+	JMP fail
+partial_success5to7:
+	MOVL -4(BX)(DI*1), SI
+	CMPL SI,DX
+	JZ success
+	ADDQ $1,DI
+	CMPQ DI,CX
+	JB loop5to7
+	JMP fail
+_8_or_more:
+	CMPQ BX, $8
+	JA   _9_or_more
+	MOVQ (AX), AX
+	LEAQ -7(DI)(CX*1), CX
+loop8:
+	MOVQ (DI), SI
+	CMPQ SI,AX
+	JZ   success
+	ADDQ $1,DI
+	CMPQ DI,CX
+	JB loop8
+	JMP fail
+_9_or_more:
+	CMPQ BX, $16
+	JA   _16_or_more
+	LEAQ 1(DI)(CX*1), CX
+	SUBQ BX, CX
+	MOVQ -8(AX)(BX*1), DX
+	MOVQ (AX), AX
+loop9to15:
+	MOVQ (DI), SI
+	CMPQ SI,AX
+	JZ   partial_success9to15
+	ADDQ $1,DI
+	CMPQ DI,CX
+	JB loop9to15
+	JMP fail
+partial_success9to15:
+	MOVQ -8(BX)(DI*1), SI
+	CMPQ SI,DX
+	JZ success
+	ADDQ $1,DI
+	CMPQ DI,CX
+	JB loop9to15
+	JMP fail
+_16_or_more:
+	CMPQ BX, $16
+	JA   _17_to_31
+	MOVOU (AX), X1
+	LEAQ -15(DI)(CX*1), CX
+loop16:
+	MOVOU (DI), X2
+	PCMPEQB X1, X2
+	PMOVMSKB X2, SI
+	CMPQ  SI, $0xffff
+	JE   success
+	ADDQ $1,DI
+	CMPQ DI,CX
+	JB loop16
+	JMP fail
+_17_to_31:
+	LEAQ 1(DI)(CX*1), CX
+	SUBQ BX, CX
+	MOVOU -16(AX)(BX*1), X0
+	MOVOU (AX), X1
+loop17to31:
+	MOVOU (DI), X2
+	PCMPEQB X1,X2
+	PMOVMSKB X2, SI
+	CMPQ  SI, $0xffff
+	JE   partial_success17to31
+	ADDQ $1,DI
+	CMPQ DI,CX
+	JB loop17to31
+	JMP fail
+partial_success17to31:
+	MOVOU -16(BX)(DI*1), X3
+	PCMPEQB X0, X3
+	PMOVMSKB X3, SI
+	CMPQ  SI, $0xffff
+	JE success
+	ADDQ $1,DI
+	CMPQ DI,CX
+	JB loop17to31
+fail:
+	MOVQ $-1, ret+32(FP)
+	RET
+success:
+	SUBQ s+0(FP), DI
+	MOVQ DI, ret+32(FP)
+	RET
+
+
 TEXT bytes·IndexByte(SB),NOSPLIT,$0-40
 	MOVQ s+0(FP), SI
 	MOVQ s_len+8(FP), BX
@@ -1674,88 +1838,125 @@ TEXT strings·IndexByte(SB),NOSPLIT,$0-32
 //   AL: byte sought
 //   R8: address to put result
 TEXT runtime·indexbytebody(SB),NOSPLIT,$0
-	MOVQ SI, DI
-
-	CMPQ BX, $16
-	JLT small
-
-	// round up to first 16-byte boundary
-	TESTQ $15, SI
-	JZ aligned
-	MOVQ SI, CX
-	ANDQ $~15, CX
-	ADDQ $16, CX
-
-	// search the beginning
-	SUBQ SI, CX
-	REPN; SCASB
-	JZ success
-
-// DI is 16-byte aligned; get ready to search using SSE instructions
-aligned:
-	// round down to last 16-byte boundary
-	MOVQ BX, R11
-	ADDQ SI, R11
-	ANDQ $~15, R11
-
-	// shuffle X0 around so that each byte contains c
+	// Shuffle X0 around so that each byte contains
+	// the character we're looking for.
 	MOVD AX, X0
 	PUNPCKLBW X0, X0
 	PUNPCKLBW X0, X0
 	PSHUFL $0, X0, X0
-	JMP condition
+	
+	CMPQ BX, $16
+	JLT small
 
+	MOVQ SI, DI
+
+	CMPQ BX, $32
+	JA avx2
 sse:
-	// move the next 16-byte chunk of the buffer into X1
-	MOVO (DI), X1
-	// compare bytes in X0 to X1
-	PCMPEQB X0, X1
-	// take the top bit of each byte in X1 and put the result in DX
+	LEAQ	-16(SI)(BX*1), AX	// AX = address of last 16 bytes
+	JMP	sseloopentry
+	
+sseloop:
+	// Move the next 16-byte chunk of the data into X1.
+	MOVOU	(DI), X1
+	// Compare bytes in X0 to X1.
+	PCMPEQB	X0, X1
+	// Take the top bit of each byte in X1 and put the result in DX.
 	PMOVMSKB X1, DX
-	TESTL DX, DX
-	JNZ ssesuccess
-	ADDQ $16, DI
+	// Find first set bit, if any.
+	BSFL	DX, DX
+	JNZ	ssesuccess
+	// Advance to next block.
+	ADDQ	$16, DI
+sseloopentry:
+	CMPQ	DI, AX
+	JB	sseloop
 
-condition:
-	CMPQ DI, R11
-	JLT sse
-
-	// search the end
-	MOVQ SI, CX
-	ADDQ BX, CX
-	SUBQ R11, CX
-	// if CX == 0, the zero flag will be set and we'll end up
-	// returning a false success
-	JZ failure
-	REPN; SCASB
-	JZ success
+	// Search the last 16-byte chunk. This chunk may overlap with the
+	// chunks we've already searched, but that's ok.
+	MOVQ	AX, DI
+	MOVOU	(AX), X1
+	PCMPEQB	X0, X1
+	PMOVMSKB X1, DX
+	BSFL	DX, DX
+	JNZ	ssesuccess
 
 failure:
 	MOVQ $-1, (R8)
 	RET
 
+// We've found a chunk containing the byte.
+// The chunk was loaded from DI.
+// The index of the matching byte in the chunk is DX.
+// The start of the data is SI.
+ssesuccess:
+	SUBQ SI, DI	// Compute offset of chunk within data.
+	ADDQ DX, DI	// Add offset of byte within chunk.
+	MOVQ DI, (R8)
+	RET
+
 // handle for lengths < 16
 small:
-	MOVQ BX, CX
-	REPN; SCASB
-	JZ success
+	TESTQ	BX, BX
+	JEQ	failure
+
+	// Check if we'll load across a page boundary.
+	LEAQ	16(SI), AX
+	TESTW	$0xff0, AX
+	JEQ	endofpage
+
+	MOVOU	(SI), X1 // Load data
+	PCMPEQB	X0, X1	// Compare target byte with each byte in data.
+	PMOVMSKB X1, DX	// Move result bits to integer register.
+	BSFL	DX, DX	// Find first set bit.
+	JZ	failure	// No set bit, failure.
+	CMPL	DX, BX
+	JAE	failure	// Match is past end of data.
+	MOVQ	DX, (R8)
+	RET
+
+endofpage:
+	MOVOU	-16(SI)(BX*1), X1	// Load data into the high end of X1.
+	PCMPEQB	X0, X1	// Compare target byte with each byte in data.
+	PMOVMSKB X1, DX	// Move result bits to integer register.
+	MOVL	BX, CX
+	SHLL	CX, DX
+	SHRL	$16, DX	// Shift desired bits down to bottom of register.
+	BSFL	DX, DX	// Find first set bit.
+	JZ	failure	// No set bit, failure.
+	MOVQ	DX, (R8)
+	RET
+
+avx2:
+	CMPB   runtime·support_avx2(SB), $1
+	JNE sse
+	MOVD AX, X0
+	LEAQ -32(SI)(BX*1), R11
+	VPBROADCASTB  X0, Y1
+avx2_loop:
+	VMOVDQU (DI), Y2
+	VPCMPEQB Y1, Y2, Y3
+	VPTEST Y3, Y3
+	JNZ avx2success
+	ADDQ $32, DI
+	CMPQ DI, R11
+	JLT avx2_loop
+	MOVQ R11, DI
+	VMOVDQU (DI), Y2
+	VPCMPEQB Y1, Y2, Y3
+	VPTEST Y3, Y3
+	JNZ avx2success
+	VZEROUPPER
 	MOVQ $-1, (R8)
 	RET
 
-// we've found the chunk containing the byte
-// now just figure out which specific byte it is
-ssesuccess:
-	// get the index of the least significant set bit
-	BSFW DX, DX
+avx2success:
+	VPMOVMSKB Y3, DX
+	BSFL DX, DX
 	SUBQ SI, DI
 	ADDQ DI, DX
 	MOVQ DX, (R8)
-	RET
-
-success:
-	SUBQ SI, DI
-	SUBL $1, DI
-	MOVQ DI, (R8)
+	VZEROUPPER
 	RET
 
 TEXT bytes·Equal(SB),NOSPLIT,$0-49

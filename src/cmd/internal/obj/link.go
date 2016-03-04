@@ -214,14 +214,14 @@ type Prog struct {
 	Spadj  int32
 	As     int16
 	Reg    int16
-	RegTo2 int16 // 2nd register output operand
-	Mark   uint16
+	RegTo2 int16  // 2nd register output operand
+	Mark   uint16 // bitmask of arch-specific items
 	Optab  uint16
 	Scond  uint8
 	Back   uint8
 	Ft     uint8
 	Tt     uint8
-	Isize  uint8
+	Isize  uint8 // size of the instruction in bytes (x86 only)
 	Mode   int8
 
 	Info ProgInfo
@@ -282,6 +282,7 @@ const (
 	AUSEFIELD
 	AVARDEF
 	AVARKILL
+	AVARLIVE
 	A_ARCHSPECIFIC
 )
 
@@ -404,8 +405,18 @@ type Reloc struct {
 // Reloc.type
 const (
 	R_ADDR = 1 + iota
+	// R_ADDRPOWER relocates a pair of "D-form" instructions (instructions with 16-bit
+	// immediates in the low half of the instruction word), usually addis followed by
+	// another add or a load, inserting the "high adjusted" 16 bits of the address of
+	// the referenced symbol into the immediate field of the first instruction and the
+	// low 16 bits into that of the second instruction.
 	R_ADDRPOWER
+	// R_ADDRARM64 relocates an adrp, add pair to compute the address of the
+	// referenced symbol.
 	R_ADDRARM64
+	// R_ADDRMIPS (only used on mips64) resolves to a 32-bit external address,
+	// by loading the address into a register with two instructions (lui, ori).
+	R_ADDRMIPS
 	R_ADDRSPARC64
 	R_SIZE
 	R_CALL
@@ -413,6 +424,9 @@ const (
 	R_CALLARM64
 	R_CALLIND
 	R_CALLPOWER
+	// R_CALLMIPS (only used on mips64) resolves to non-PC-relative target address
+	// of a CALL (JAL) instruction, by encoding the address into the instruction.
+	R_CALLMIPS
 	R_CALLSPARC64
 	R_CONST
 	R_PCREL
@@ -432,8 +446,88 @@ const (
 	R_PLT1
 	R_PLT2
 	R_USEFIELD
+	// R_USETYPE resolves to an *rtype, but no relocation is created. The
+	// linker uses this as a signal that the pointed-to type information
+	// should be linked into the final binary, even if there are no other
+	// direct references. (This is used for types reachable by reflection.)
+	R_USETYPE
 	R_POWER_TOC
 	R_GOTPCREL
+	// R_JMPMIPS (only used on mips64) resolves to non-PC-relative target address
+	// of a JMP instruction, by encoding the address into the instruction.
+	// The stack nosplit check ignores this since it is not a function call.
+	R_JMPMIPS
+
+	// Platform dependent relocations. Architectures with fixed width instructions
+	// have the inherent issue that a 32-bit (or 64-bit!) displacement cannot be
+	// stuffed into a 32-bit instruction, so an address needs to be spread across
+	// several instructions, and in turn this requires a sequence of relocations, each
+	// updating a part of an instruction. This leads to relocation codes that are
+	// inherently processor specific.
+
+	// Arm64.
+
+	// Set a MOV[NZ] immediate field to bits [15:0] of the offset from the thread
+	// local base to the thread local variable defined by the referenced (thread
+	// local) symbol. Error if the offset does not fit into 16 bits.
+	R_ARM64_TLS_LE
+
+	// Relocates an ADRP; LD64 instruction sequence to load the offset between
+	// the thread local base and the thread local variable defined by the
+	// referenced (thread local) symbol from the GOT.
+	R_ARM64_TLS_IE
+
+	// R_ARM64_GOTPCREL relocates an adrp, ld64 pair to compute the address of the GOT
+	// slot of the referenced symbol.
+	R_ARM64_GOTPCREL
+
+	// PPC64.
+
+	// R_POWER_TLS_LE is used to implement the "local exec" model for tls
+	// access. It resolves to the offset of the thread-local symbol from the
+	// thread pointer (R13) and inserts this value into the low 16 bits of an
+	// instruction word.
+	R_POWER_TLS_LE
+
+	// R_POWER_TLS_IE is used to implement the "initial exec" model for tls access. It
+	// relocates a D-form, DS-form instruction sequence like R_ADDRPOWER_DS. It
+	// inserts to the offset of GOT slot for the thread-local symbol from the TOC (the
+	// GOT slot is filled by the dynamic linker with the offset of the thread-local
+	// symbol from the thread pointer (R13)).
+	R_POWER_TLS_IE
+
+	// R_POWER_TLS marks an X-form instruction such as "MOVD 0(R13)(R31*1), g" as
+	// accessing a particular thread-local symbol. It does not affect code generation
+	// but is used by the system linker when relaxing "initial exec" model code to
+	// "local exec" model code.
+	R_POWER_TLS
+
+	// R_ADDRPOWER_DS is similar to R_ADDRPOWER above, but assumes the second
+	// instruction is a "DS-form" instruction, which has an immediate field occupying
+	// bits [15:2] of the instruction word. Bits [15:2] of the address of the
+	// relocated symbol are inserted into this field; it is an error if the last two
+	// bits of the address are not 0.
+	R_ADDRPOWER_DS
+
+	// R_ADDRPOWER_PCREL relocates a D-form, DS-form instruction sequence like
+	// R_ADDRPOWER_DS but inserts the offset of the GOT slot for the referenced symbol
+	// from the TOC rather than the symbol's address.
+	R_ADDRPOWER_GOT
+
+	// R_ADDRPOWER_PCREL relocates two D-form instructions like R_ADDRPOWER, but
+	// inserts the displacement from the place being relocated to the address of the
+	// the relocated symbol instead of just its address.
+	R_ADDRPOWER_PCREL
+
+	// R_ADDRPOWER_TOCREL relocates two D-form instructions like R_ADDRPOWER, but
+	// inserts the offset from the TOC to the address of the the relocated symbol
+	// rather than the symbol's address.
+	R_ADDRPOWER_TOCREL
+
+	// R_ADDRPOWER_TOCREL relocates a D-form, DS-form instruction sequence like
+	// R_ADDRPOWER_DS but inserts the offset from the TOC to the address of the the
+	// relocated symbol rather than the symbol's address.
+	R_ADDRPOWER_TOCREL_DS
 )
 
 type Auto struct {
@@ -485,6 +579,7 @@ type Link struct {
 	Debugpcln          int32
 	Flag_shared        int32
 	Flag_dynlink       bool
+	Flag_optimize      bool
 	Bso                *Biobuf
 	Pathname           string
 	Windows            int32
@@ -517,12 +612,45 @@ type Link struct {
 	Autosize           int32
 	Armsize            int32
 	Pc                 int64
-	Diag               func(string, ...interface{})
+	DiagFunc           func(string, ...interface{})
 	Mode               int
 	Cursym             *LSym
 	Version            int
 	Textp              *LSym
 	Etextp             *LSym
+	Errors             int
+
+	// state for writing objects
+	Text  *LSym
+	Data  *LSym
+	Etext *LSym
+	Edata *LSym
+
+	// Cache of Progs
+	allocIdx int
+	progs    [10000]Prog
+}
+
+func (ctxt *Link) Diag(format string, args ...interface{}) {
+	ctxt.Errors++
+	ctxt.DiagFunc(format, args...)
+}
+
+// The smallest possible offset from the hardware stack pointer to a local
+// variable on the stack. Architectures that use a link register save its value
+// on the stack in the function prologue and so always have a pointer between
+// the hardware stack pointer and the local variable area.
+func (ctxt *Link) FixedFrameSize() int64 {
+	switch ctxt.Arch.Thechar {
+	case '6', '8':
+		return 0
+	case '9':
+		// PIC code on ppc64le requires 32 bytes of stack, and it's easier to
+		// just use that much stack always on ppc64x.
+		return int64(4 * ctxt.Arch.Ptrsize)
+	default:
+		return int64(ctxt.Arch.Ptrsize)
+	}
 }
 
 type SymVer struct {

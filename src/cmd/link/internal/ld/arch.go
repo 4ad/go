@@ -1,4 +1,4 @@
-// Copyright 2015 The Go Authors.  All rights reserved.
+// Copyright 2015 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -69,6 +69,24 @@ var Linkppc64le = LinkArch{
 	Regsize:   8,
 }
 
+var Linkmips64 = LinkArch{
+	ByteOrder: binary.BigEndian,
+	Name:      "mips64",
+	Thechar:   '0',
+	Minlc:     4,
+	Ptrsize:   8,
+	Regsize:   8,
+}
+
+var Linkmips64le = LinkArch{
+	ByteOrder: binary.LittleEndian,
+	Name:      "mips64le",
+	Thechar:   '0',
+	Minlc:     4,
+	Ptrsize:   8,
+	Regsize:   8,
+}
+
 var Linksparc64 = LinkArch{
 	ByteOrder: binary.BigEndian,
 	Name:      "sparc64",
@@ -77,3 +95,4 @@ var Linksparc64 = LinkArch{
 	Ptrsize:   8,
 	Regsize:   8,
 }
+

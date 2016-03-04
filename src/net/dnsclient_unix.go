@@ -24,9 +24,18 @@ import (
 	"time"
 )
 
+// A dnsDialer provides dialing suitable for DNS queries.
+type dnsDialer interface {
+	dialDNS(string, string) (dnsConn, error)
+}
+
+var testHookDNSDialer = func(d time.Duration) dnsDialer { return &Dialer{Timeout: d} }
+
 // A dnsConn represents a DNS transport endpoint.
 type dnsConn interface {
-	Conn
+	io.Closer
+
+	SetDeadline(time.Time) error
 
 	// readDNSResponse reads a DNS response message from the DNS
 	// transport endpoint and returns the received DNS response
@@ -121,7 +130,7 @@ func (d *Dialer) dialDNS(network, server string) (dnsConn, error) {
 
 // exchange sends a query on the connection and hopes for a response.
 func exchange(server, name string, qtype uint16, timeout time.Duration) (*dnsMsg, error) {
-	d := Dialer{Timeout: timeout}
+	d := testHookDNSDialer(timeout)
 	out := dnsMsg{
 		dnsMsgHdr: dnsMsgHdr{
 			recursion_desired: true,
@@ -182,7 +191,11 @@ func tryOneName(cfg *dnsConfig, name string, qtype uint16) (string, []dnsRR, err
 				continue
 			}
 			cname, rrs, err := answer(name, server, msg, qtype)
-			if err == nil || msg.rcode == dnsRcodeSuccess || msg.rcode == dnsRcodeNameError && msg.recursion_available {
+			// If answer errored for rcodes dnsRcodeSuccess or dnsRcodeNameError,
+			// it means the response in msg was not useful and trying another
+			// server probably won't help. Return now in those cases.
+			// TODO: indicate this in a more obvious way, such as a field on DNSError?
+			if err == nil || msg.rcode == dnsRcodeSuccess || msg.rcode == dnsRcodeNameError {
 				return cname, rrs, err
 			}
 			lastErr = err
@@ -216,7 +229,6 @@ type resolverConfig struct {
 	// time to recheck resolv.conf.
 	ch          chan struct{} // guards lastChecked and modTime
 	lastChecked time.Time     // last time resolv.conf was checked
-	modTime     time.Time     // time of resolv.conf modification
 
 	mu        sync.RWMutex // protects dnsConfig
 	dnsConfig *dnsConfig   // parsed resolv.conf structure used in lookups
@@ -226,15 +238,11 @@ var resolvConf resolverConfig
 
 // init initializes conf and is only called via conf.initOnce.
 func (conf *resolverConfig) init() {
-	// Set dnsConfig, modTime, and lastChecked so we don't parse
+	// Set dnsConfig and lastChecked so we don't parse
 	// resolv.conf twice the first time.
 	conf.dnsConfig = systemConf().resolv
 	if conf.dnsConfig == nil {
 		conf.dnsConfig = dnsReadConfig("/etc/resolv.conf")
-	}
-
-	if fi, err := os.Stat("/etc/resolv.conf"); err == nil {
-		conf.modTime = fi.ModTime()
 	}
 	conf.lastChecked = time.Now()
 
@@ -261,17 +269,12 @@ func (conf *resolverConfig) tryUpdate(name string) {
 	}
 	conf.lastChecked = now
 
+	var mtime time.Time
 	if fi, err := os.Stat(name); err == nil {
-		if fi.ModTime().Equal(conf.modTime) {
-			return
-		}
-		conf.modTime = fi.ModTime()
-	} else {
-		// If modTime wasn't set prior, assume nothing has changed.
-		if conf.modTime.IsZero() {
-			return
-		}
-		conf.modTime = time.Time{}
+		mtime = fi.ModTime()
+	}
+	if mtime.Equal(conf.dnsConfig.mtime) {
+		return
 	}
 
 	dnsConf := dnsReadConfig(name)
@@ -436,7 +439,8 @@ func goLookupIPOrder(name string, order hostLookupOrder) (addrs []IPAddr, err er
 	conf := resolvConf.dnsConfig
 	resolvConf.mu.RUnlock()
 	type racer struct {
-		rrs []dnsRR
+		fqdn string
+		rrs  []dnsRR
 		error
 	}
 	lane := make(chan racer, 1)
@@ -446,13 +450,16 @@ func goLookupIPOrder(name string, order hostLookupOrder) (addrs []IPAddr, err er
 		for _, qtype := range qtypes {
 			go func(qtype uint16) {
 				_, rrs, err := tryOneName(conf, fqdn, qtype)
-				lane <- racer{rrs, err}
+				lane <- racer{fqdn, rrs, err}
 			}(qtype)
 		}
 		for range qtypes {
 			racer := <-lane
 			if racer.error != nil {
-				lastErr = racer.error
+				// Prefer error for original name.
+				if lastErr == nil || racer.fqdn == name+"." {
+					lastErr = racer.error
+				}
 				continue
 			}
 			addrs = append(addrs, addrRecordList(racer.rrs)...)
@@ -469,11 +476,11 @@ func goLookupIPOrder(name string, order hostLookupOrder) (addrs []IPAddr, err er
 	}
 	sortByRFC6724(addrs)
 	if len(addrs) == 0 {
-		if lastErr != nil {
-			return nil, lastErr
-		}
 		if order == hostLookupDNSFiles {
 			addrs = goLookupIPFiles(name)
+		}
+		if len(addrs) == 0 && lastErr != nil {
+			return nil, lastErr
 		}
 	}
 	return addrs, nil

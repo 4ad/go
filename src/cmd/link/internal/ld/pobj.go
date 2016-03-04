@@ -89,6 +89,7 @@ func Ldmain() {
 	flag.Var(&Buildmode, "buildmode", "set build `mode`")
 	obj.Flagcount("c", "dump call graph", &Debug['c'])
 	obj.Flagcount("d", "disable dynamic executable", &Debug['d'])
+	obj.Flagstr("extar", "archive program for buildmode=c-archive", &extar)
 	obj.Flagstr("extld", "use `linker` when linking in external mode", &extld)
 	obj.Flagstr("extldflags", "pass `flags` to external linker", &extldflags)
 	obj.Flagcount("f", "ignore version mismatch", &Debug['f'])
@@ -96,8 +97,10 @@ func Ldmain() {
 	obj.Flagcount("h", "halt on error", &Debug['h'])
 	obj.Flagstr("installsuffix", "set package directory `suffix`", &flag_installsuffix)
 	obj.Flagstr("k", "set field tracking `symbol`", &tracksym)
+	obj.Flagstr("libgcc", "compiler support lib for internal linking; use \"none\" to disable", &libgccfile)
 	obj.Flagfn1("linkmode", "set link `mode` (internal, external, auto)", setlinkmode)
 	flag.BoolVar(&Linkshared, "linkshared", false, "link against installed Go shared libraries")
+	obj.Flagcount("msan", "enable MSan interface", &flag_msan)
 	obj.Flagcount("n", "dump symbol table", &Debug['n'])
 	obj.Flagstr("o", "write output to `file`", &outfile)
 	flag.Var(&rpath, "r", "set the ELF dynamic linker search `path` to dir1:dir2:...")
@@ -115,33 +118,6 @@ func Ldmain() {
 	obj.Flagstr("cpuprofile", "write cpu profile to `file`", &cpuprofile)
 	obj.Flagstr("memprofile", "write memory profile to `file`", &memprofile)
 	obj.Flagint64("memprofilerate", "set runtime.MemProfileRate to `rate`", &memprofilerate)
-
-	// Clumsy hack to preserve old two-argument -X name val syntax for old scripts.
-	// Rewrite that syntax into new syntax -X name=val.
-	// TODO(rsc): Delete this hack in Go 1.6 or later.
-	var args []string
-	for i := 0; i < len(os.Args); i++ {
-		arg := os.Args[i]
-		if (arg == "-X" || arg == "--X") && i+2 < len(os.Args) && !strings.Contains(os.Args[i+1], "=") {
-			fmt.Fprintf(os.Stderr, "link: warning: option %s %s %s may not work in future releases; use %s %s=%s\n",
-				arg, os.Args[i+1], os.Args[i+2],
-				arg, os.Args[i+1], os.Args[i+2])
-			args = append(args, arg)
-			args = append(args, os.Args[i+1]+"="+os.Args[i+2])
-			i += 2
-			continue
-		}
-		if (strings.HasPrefix(arg, "-X=") || strings.HasPrefix(arg, "--X=")) && i+1 < len(os.Args) && strings.Count(arg, "=") == 1 {
-			fmt.Fprintf(os.Stderr, "link: warning: option %s %s may not work in future releases; use %s=%s\n",
-				arg, os.Args[i+1],
-				arg, os.Args[i+1])
-			args = append(args, arg+"="+os.Args[i+1])
-			i++
-			continue
-		}
-		args = append(args, arg)
-	}
-	os.Args = args
 
 	obj.Flagparse(usage)
 
@@ -218,10 +194,10 @@ func Ldmain() {
 		mark(Linklookup(Ctxt, "runtime.read_tls_fallback", 0))
 	}
 
-	checkgo()
 	checkstrdata()
 	deadcode()
 	callgraph()
+	mergestrings()
 
 	doelf()
 	if HEADTYPE == obj.Hdarwin {

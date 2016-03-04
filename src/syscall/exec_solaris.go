@@ -44,7 +44,7 @@ func write1(fd uintptr, buf uintptr, nbyte uintptr) (n uintptr, err Errno)
 // If a dup or exec fails, write the errno error to pipe.
 // (Pipe is close-on-exec so if exec succeeds, it will be closed.)
 // In the child, this function must not acquire any locks, because
-// they might have been locked at the time of the fork.  This means
+// they might have been locked at the time of the fork. This means
 // no rescheduling, no malloc calls, and no new stack segments.
 //
 // We call hand-crafted syscalls, implemented in
@@ -52,6 +52,7 @@ func write1(fd uintptr, buf uintptr, nbyte uintptr) (n uintptr, err Errno)
 // because we need to avoid lazy-loading the functions (might malloc,
 // split the stack, or acquire mutexes). We can't call RawSyscall
 // because it's not safe even for BSD-subsystem calls.
+//go:norace
 func forkAndExecInChild(argv0 *byte, argv, envv []*byte, chroot, dir *byte, attr *ProcAttr, sys *SysProcAttr, pipe int) (pid int, err Errno) {
 	// Declare all variables at top in case any
 	// declarations require heap allocation (e.g., err1).

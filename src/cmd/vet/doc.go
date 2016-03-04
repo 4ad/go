@@ -67,6 +67,12 @@ Flag: -buildtags
 
 Badly formed or misplaced +build tags.
 
+Invalid uses of cgo
+
+Flag: -cgocall
+
+Detect some violations of the cgo pointer passing rules.
+
 Unkeyed composite literals
 
 Flag: -composites
@@ -79,12 +85,12 @@ Flag: -copylocks
 
 Locks that are erroneously passed by value.
 
-Documentation examples
+Tests, benchmarks and documentation examples
 
-Flag: -example
+Flag: -tests
 
-Mistakes involving example tests, including examples with incorrect names or
-function signatures, or that document identifiers not in the package.
+Mistakes involving tests including functions with incorrect names or signatures
+and example tests that document identifiers not in the package.
 
 Methods
 
@@ -178,7 +184,7 @@ Other flags
 These flags configure the behavior of vet:
 
 	-all (default true)
-		Check everything; disabled if any explicit check is requested.
+		Enable all non-experimental checks.
 	-v
 		Verbose mode
 	-printfuncs

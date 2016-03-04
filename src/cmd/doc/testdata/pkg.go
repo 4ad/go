@@ -1,4 +1,4 @@
-// Copyright 2015 The Go Authors.  All rights reserved.
+// Copyright 2015 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -60,8 +60,12 @@ func internalFunc(a int) bool
 // Comment about exported type.
 type ExportedType struct {
 	// Comment before exported field.
-	ExportedField   int
-	unexportedField int // Comment on line with unexported field.
+	ExportedField         int // Comment on line with exported field.
+	unexportedField       int // Comment on line with unexported field.
+	ExportedEmbeddedType      // Comment on line with exported embedded field.
+	*ExportedEmbeddedType     // Comment on line with exported embedded *field.
+	unexportedType            // Comment on line with unexported embedded field.
+	*unexportedType           // Comment on line with unexported embedded *field.
 }
 
 // Comment about exported method.
@@ -86,6 +90,13 @@ func ExportedTypeConstructor() *ExportedType {
 }
 
 const unexportedTypedConstant ExportedType = 1 // In a separate section to test -u.
+
+// Comment about exported interface.
+type ExportedInterface interface {
+	// Comment before exported method.
+	ExportedMethod()   // Comment on line with exported method.
+	unexportedMethod() // Comment on line with unexported method.
+}
 
 // Comment about unexported type.
 type unexportedType int

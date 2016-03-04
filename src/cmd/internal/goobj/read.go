@@ -1,4 +1,4 @@
-// Copyright 2013 The Go Authors.  All rights reserved.
+// Copyright 2013 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -530,7 +530,7 @@ func (r *objReader) parseArchive() error {
 			return errCorruptArchive
 		}
 		switch name {
-		case "__.SYMDEF", "__.GOSYMDEF", "__.PKGDEF":
+		case "__.PKGDEF":
 			r.skip(size)
 		default:
 			oldLimit := r.limit
@@ -564,7 +564,9 @@ func (r *objReader) parseObject(prefix []byte) error {
 	var c1, c2, c3 byte
 	for {
 		c1, c2, c3 = c2, c3, r.readByte()
-		if c3 == 0 { // NUL or EOF, either is bad
+		// The new export format can contain 0 bytes.
+		// Don't consider them errors, only look for r.err != nil.
+		if r.err != nil {
 			return errCorruptObject
 		}
 		if c1 == '\n' && c2 == '!' && c3 == '\n' {

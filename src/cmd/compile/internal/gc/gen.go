@@ -9,10 +9,8 @@ import (
 	"fmt"
 )
 
-/*
- * portable half of code generator.
- * mainly statements and control flow.
- */
+// portable half of code generator.
+// mainly statements and control flow.
 var labellist *Label
 
 var lastlabel *Label
@@ -78,6 +76,9 @@ func addrescapes(n *Node) {
 			oldfn := Curfn
 
 			Curfn = n.Name.Curfn
+			if Curfn.Func.Closure != nil && Curfn.Op == OCLOSURE {
+				Curfn = Curfn.Func.Closure
+			}
 			n.Name.Heapaddr = temp(Ptrto(n.Type))
 			buf := fmt.Sprintf("&%v", n.Sym)
 			n.Name.Heapaddr.Sym = Lookup(buf)
@@ -141,6 +142,8 @@ func newlab(n *Node) *Label {
 	return lab
 }
 
+// There is a copy of checkgoto in the new SSA backend.
+// Please keep them in sync.
 func checkgoto(from *Node, to *Node) {
 	if from.Sym == to.Sym {
 		return
@@ -159,7 +162,7 @@ func checkgoto(from *Node, to *Node) {
 		fs = fs.Link
 	}
 	if fs != to.Sym {
-		lno := int(lineno)
+		lno := lineno
 		setlineno(from)
 
 		// decide what to complain about.
@@ -189,11 +192,11 @@ func checkgoto(from *Node, to *Node) {
 		}
 
 		if block != nil {
-			Yyerror("goto %v jumps into block starting at %v", from.Left.Sym, Ctxt.Line(int(block.Lastlineno)))
+			Yyerror("goto %v jumps into block starting at %v", from.Left.Sym, linestr(block.Lastlineno))
 		} else {
-			Yyerror("goto %v jumps over declaration of %v at %v", from.Left.Sym, dcl, Ctxt.Line(int(dcl.Lastlineno)))
+			Yyerror("goto %v jumps over declaration of %v at %v", from.Left.Sym, dcl, linestr(dcl.Lastlineno))
 		}
-		lineno = int32(lno)
+		lineno = lno
 	}
 }
 
@@ -211,18 +214,14 @@ func stmtlabel(n *Node) *Label {
 	return nil
 }
 
-/*
- * compile statements
- */
-func Genlist(l *NodeList) {
-	for ; l != nil; l = l.Next {
-		gen(l.N)
+// compile statements
+func Genlist(l nodesOrNodeList) {
+	for it := nodeSeqIterate(l); !it.Done(); it.Next() {
+		gen(it.N())
 	}
 }
 
-/*
- * generate code to start new proc running call n.
- */
+// generate code to start new proc running call n.
 func cgen_proc(n *Node, proc int) {
 	switch n.Left.Op {
 	default:
@@ -239,11 +238,9 @@ func cgen_proc(n *Node, proc int) {
 	}
 }
 
-/*
- * generate declaration.
- * have to allocate heap copy
- * for escaped variables.
- */
+// generate declaration.
+// have to allocate heap copy
+// for escaped variables.
 func cgen_dcl(n *Node) {
 	if Debug['g'] != 0 {
 		Dump("\ncgen-dcl", n)
@@ -265,9 +262,7 @@ func cgen_dcl(n *Node) {
 	Cgen_as(n.Name.Heapaddr, prealloc[n])
 }
 
-/*
- * generate discard of value
- */
+// generate discard of value
 func cgen_discard(nr *Node) {
 	if nr == nil {
 		return
@@ -322,9 +317,7 @@ func cgen_discard(nr *Node) {
 	}
 }
 
-/*
- * clearslim generates code to zero a slim node.
- */
+// clearslim generates code to zero a slim node.
 func Clearslim(n *Node) {
 	var z Node
 	z.Op = OLITERAL
@@ -367,17 +360,13 @@ func Clearslim(n *Node) {
 	Cgen(&z, n)
 }
 
-/*
- * generate:
- *	res = iface{typ, data}
- * n->left is typ
- * n->right is data
- */
+// generate:
+//	res = iface{typ, data}
+// n->left is typ
+// n->right is data
 func Cgen_eface(n *Node, res *Node) {
-	/*
-	 * the right node of an eface may contain function calls that uses res as an argument,
-	 * so it's important that it is done first
-	 */
+	// the right node of an eface may contain function calls that uses res as an argument,
+	// so it's important that it is done first
 
 	tmp := temp(Types[Tptr])
 	Cgen(n.Right, tmp)
@@ -393,13 +382,11 @@ func Cgen_eface(n *Node, res *Node) {
 	Cgen(n.Left, &dst)
 }
 
-/*
- * generate one of:
- *	res, resok = x.(T)
- *	res = x.(T) (when resok == nil)
- * n.Left is x
- * n.Type is T
- */
+// generate one of:
+//	res, resok = x.(T)
+//	res = x.(T) (when resok == nil)
+// n.Left is x
+// n.Type is T
 func cgen_dottype(n *Node, res, resok *Node, wb bool) {
 	if Debug_typeassert > 0 {
 		Warn("type assertion inlined")
@@ -452,8 +439,8 @@ func cgen_dottype(n *Node, res, resok *Node, wb bool) {
 		call := Nod(OCALLFUNC, fn, nil)
 		r1.Type = byteptr
 		r2.Type = byteptr
-		call.List = list(list(list1(&r1), &r2), typename(n.Left.Type))
-		call.List = ascompatte(OCALLFUNC, call, false, getinarg(fn.Type), call.List, 0, nil)
+		setNodeSeq(&call.List, list(list(list1(&r1), &r2), typename(n.Left.Type)))
+		setNodeSeq(&call.List, ascompatte(OCALLFUNC, call, false, getinarg(fn.Type), call.List, 0, nil))
 		gen(call)
 		Regfree(&r1)
 		Regfree(&r2)
@@ -485,12 +472,10 @@ func cgen_dottype(n *Node, res, resok *Node, wb bool) {
 	}
 }
 
-/*
- * generate:
- *	res, resok = x.(T)
- * n.Left is x
- * n.Type is T
- */
+// generate:
+//	res, resok = x.(T)
+// n.Left is x
+// n.Type is T
 func Cgen_As2dottype(n, res, resok *Node) {
 	if Debug_typeassert > 0 {
 		Warn("type assertion inlined")
@@ -540,8 +525,8 @@ func Cgen_As2dottype(n, res, resok *Node) {
 	fn := syslook("panicdottype", 0)
 	dowidth(fn.Type)
 	call := Nod(OCALLFUNC, fn, nil)
-	call.List = list(list(list1(&r1), &r2), typename(n.Left.Type))
-	call.List = ascompatte(OCALLFUNC, call, false, getinarg(fn.Type), call.List, 0, nil)
+	setNodeSeq(&call.List, list(list(list1(&r1), &r2), typename(n.Left.Type)))
+	setNodeSeq(&call.List, ascompatte(OCALLFUNC, call, false, getinarg(fn.Type), call.List, 0, nil))
 	gen(call)
 	Regfree(&r1)
 	Regfree(&r2)
@@ -549,11 +534,9 @@ func Cgen_As2dottype(n, res, resok *Node) {
 	Patch(q, Pc)
 }
 
-/*
- * gather series of offsets
- * >=0 is direct addressed field
- * <0 is pointer to next field (+1)
- */
+// gather series of offsets
+// >=0 is direct addressed field
+// <0 is pointer to next field (+1)
 func Dotoffset(n *Node, oary []int64, nn **Node) int {
 	var i int
 
@@ -602,12 +585,14 @@ func Dotoffset(n *Node, oary []int64, nn **Node) int {
 	return i
 }
 
-/*
- * make a new off the books
- */
+// make a new off the books
 func Tempname(nn *Node, t *Type) {
 	if Curfn == nil {
 		Fatalf("no curfn for tempname")
+	}
+	if Curfn.Func.Closure != nil && Curfn.Op == OCLOSURE {
+		Dump("Tempname", Curfn)
+		Fatalf("adding tempname to wrong closure function")
 	}
 
 	if t == nil {
@@ -628,7 +613,7 @@ func Tempname(nn *Node, t *Type) {
 	n.Ullman = 1
 	n.Esc = EscNever
 	n.Name.Curfn = Curfn
-	Curfn.Func.Dcl = list(Curfn.Func.Dcl, n)
+	Curfn.Func.Dcl = append(Curfn.Func.Dcl, n)
 
 	dowidth(t)
 	n.Xoffset = 0
@@ -653,7 +638,7 @@ func gen(n *Node) {
 		goto ret
 	}
 
-	if n.Ninit != nil {
+	if nodeSeqLen(n.Ninit) > 0 {
 		Genlist(n.Ninit)
 	}
 
@@ -851,7 +836,7 @@ func gen(n *Node) {
 		cgen_dcl(n.Left)
 
 	case OAS:
-		if gen_as_init(n) {
+		if gen_as_init(n, false) {
 			break
 		}
 		Cgen_as(n.Left, n.Right)
@@ -860,7 +845,7 @@ func gen(n *Node) {
 		Cgen_as_wb(n.Left, n.Right, true)
 
 	case OAS2DOTTYPE:
-		cgen_dottype(n.Rlist.N, n.List.N, n.List.Next.N, false)
+		cgen_dottype(nodeSeqFirst(n.Rlist), nodeSeqFirst(n.List), nodeSeqSecond(n.List), needwritebarrier(nodeSeqFirst(n.List), nodeSeqFirst(n.Rlist)))
 
 	case OCALLMETH:
 		cgen_callmeth(n, 0)
@@ -892,6 +877,9 @@ func gen(n *Node) {
 
 	case OVARKILL:
 		gvarkill(n.Left)
+
+	case OVARLIVE:
+		gvarlive(n.Left)
 	}
 
 ret:
@@ -989,13 +977,13 @@ func checklabels() {
 	for lab := labellist; lab != nil; lab = lab.Link {
 		if lab.Def == nil {
 			for _, n := range lab.Use {
-				yyerrorl(int(n.Lineno), "label %v not defined", lab.Sym)
+				yyerrorl(n.Lineno, "label %v not defined", lab.Sym)
 			}
 			continue
 		}
 
 		if lab.Use == nil && !lab.Used {
-			yyerrorl(int(lab.Def.Lineno), "label %v defined and not used", lab.Sym)
+			yyerrorl(lab.Def.Lineno, "label %v defined and not used", lab.Sym)
 			continue
 		}
 
@@ -1036,7 +1024,7 @@ func componentgen_wb(nr, nl *Node, wb bool) bool {
 	numPtr := 0
 	visitComponents(nl.Type, 0, func(t *Type, offset int64) bool {
 		n++
-		if int(Simtype[t.Etype]) == Tptr && t != itable {
+		if Simtype[t.Etype] == Tptr && t != itable {
 			numPtr++
 		}
 		return n <= maxMoves && (!wb || numPtr <= 1)
@@ -1153,7 +1141,7 @@ func componentgen_wb(nr, nl *Node, wb bool) bool {
 		ptrOffset int64
 	)
 	visitComponents(nl.Type, 0, func(t *Type, offset int64) bool {
-		if wb && int(Simtype[t.Etype]) == Tptr && t != itable {
+		if wb && Simtype[t.Etype] == Tptr && t != itable {
 			if ptrType != nil {
 				Fatalf("componentgen_wb %v", Tconv(nl.Type, 0))
 			}

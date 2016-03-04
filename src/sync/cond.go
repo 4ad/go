@@ -5,6 +5,7 @@
 package sync
 
 import (
+	"internal/race"
 	"sync/atomic"
 	"unsafe"
 )
@@ -34,13 +35,13 @@ func NewCond(l Locker) *Cond {
 }
 
 // Wait atomically unlocks c.L and suspends execution
-// of the calling goroutine.  After later resuming execution,
-// Wait locks c.L before returning.  Unlike in other systems,
+// of the calling goroutine. After later resuming execution,
+// Wait locks c.L before returning. Unlike in other systems,
 // Wait cannot return unless awoken by Broadcast or Signal.
 //
 // Because c.L is not locked when Wait first resumes, the caller
 // typically cannot assume that the condition is true when
-// Wait returns.  Instead, the caller should Wait in a loop:
+// Wait returns. Instead, the caller should Wait in a loop:
 //
 //    c.L.Lock()
 //    for !condition() {
@@ -51,12 +52,12 @@ func NewCond(l Locker) *Cond {
 //
 func (c *Cond) Wait() {
 	c.checker.check()
-	if raceenabled {
-		raceDisable()
+	if race.Enabled {
+		race.Disable()
 	}
 	atomic.AddUint32(&c.waiters, 1)
-	if raceenabled {
-		raceEnable()
+	if race.Enabled {
+		race.Enable()
 	}
 	c.L.Unlock()
 	runtime_Syncsemacquire(&c.sema)
@@ -81,14 +82,14 @@ func (c *Cond) Broadcast() {
 
 func (c *Cond) signalImpl(all bool) {
 	c.checker.check()
-	if raceenabled {
-		raceDisable()
+	if race.Enabled {
+		race.Disable()
 	}
 	for {
 		old := atomic.LoadUint32(&c.waiters)
 		if old == 0 {
-			if raceenabled {
-				raceEnable()
+			if race.Enabled {
+				race.Enable()
 			}
 			return
 		}
@@ -97,8 +98,8 @@ func (c *Cond) signalImpl(all bool) {
 			new = 0
 		}
 		if atomic.CompareAndSwapUint32(&c.waiters, old, new) {
-			if raceenabled {
-				raceEnable()
+			if race.Enabled {
+				race.Enable()
 			}
 			runtime_Syncsemrelease(&c.sema, old-new)
 			return

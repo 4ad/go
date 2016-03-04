@@ -46,6 +46,18 @@ type ReverseProxy struct {
 	// If nil, logging goes to os.Stderr via the log package's
 	// standard logger.
 	ErrorLog *log.Logger
+
+	// BufferPool optionally specifies a buffer pool to
+	// get byte slices for use by io.CopyBuffer when
+	// copying HTTP response bodies.
+	BufferPool BufferPool
+}
+
+// A BufferPool is an interface for getting and returning temporary
+// byte slices for use by io.CopyBuffer.
+type BufferPool interface {
+	Get() []byte
+	Put([]byte)
 }
 
 func singleJoiningSlash(a, b string) string {
@@ -94,11 +106,12 @@ func copyHeader(dst, src http.Header) {
 // http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
 var hopHeaders = []string{
 	"Connection",
+	"Proxy-Connection", // non-standard but still sent by libcurl and rejected by e.g. google
 	"Keep-Alive",
 	"Proxy-Authenticate",
 	"Proxy-Authorization",
-	"Te", // canonicalized version of "TE"
-	"Trailers",
+	"Te",      // canonicalized version of "TE"
+	"Trailer", // not Trailers per URL above; http://www.rfc-editor.org/errata_search.php?eid=4522
 	"Transfer-Encoding",
 	"Upgrade",
 }
@@ -167,9 +180,9 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	outreq.ProtoMinor = 1
 	outreq.Close = false
 
-	// Remove hop-by-hop headers to the backend.  Especially
+	// Remove hop-by-hop headers to the backend. Especially
 	// important is "Connection" because we want a persistent
-	// connection, regardless of what the client sent to us.  This
+	// connection, regardless of what the client sent to us. This
 	// is modifying the same underlying map from req (shallow
 	// copied above) so we only copy it if necessary.
 	copiedHeaders := false
@@ -245,7 +258,14 @@ func (p *ReverseProxy) copyResponse(dst io.Writer, src io.Reader) {
 		}
 	}
 
-	io.Copy(dst, src)
+	var buf []byte
+	if p.BufferPool != nil {
+		buf = p.BufferPool.Get()
+	}
+	io.CopyBuffer(dst, src, buf)
+	if p.BufferPool != nil {
+		p.BufferPool.Put(buf)
+	}
 }
 
 func (p *ReverseProxy) logf(format string, args ...interface{}) {

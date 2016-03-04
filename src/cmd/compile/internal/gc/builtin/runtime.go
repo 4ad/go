@@ -3,12 +3,12 @@
 // license that can be found in the LICENSE file.
 
 // NOTE: If you change this file you must run "go generate"
-// to update builtin.go.  This is not done automatically
+// to update builtin.go. This is not done automatically
 // to avoid depending on having a working compiler binary.
 
 // +build ignore
 
-package PACKAGE
+package runtime
 
 // emitted by compiler, not referred to by go programs
 
@@ -83,8 +83,6 @@ func panicdottype(have, want, iface *byte)
 
 func ifaceeq(i1 any, i2 any) (ret bool)
 func efaceeq(i1 any, i2 any) (ret bool)
-func ifacethash(i1 any) (ret uint32)
-func efacethash(i1 any) (ret uint32)
 
 // *byte is really *runtime.Type
 func makemap(mapType *byte, hint int64, mapbuf *any, bucketbuf *any) (hmap map[any]any)
@@ -108,7 +106,11 @@ func chanrecv2(chanType *byte, hchan <-chan any, elem *any) bool
 func chansend1(chanType *byte, hchan chan<- any, elem *any)
 func closechan(hchan any)
 
-var writeBarrierEnabled bool
+var writeBarrier struct {
+	enabled bool
+	needed  bool
+	cgo     bool
+}
 
 func writebarrierptr(dst *any, src any)
 func writebarrierstring(dst *any, src any)
@@ -193,3 +195,7 @@ func raceread(uintptr)
 func racewrite(uintptr)
 func racereadrange(addr, size uintptr)
 func racewriterange(addr, size uintptr)
+
+// memory sanitizer
+func msanread(addr, size uintptr)
+func msanwrite(addr, size uintptr)

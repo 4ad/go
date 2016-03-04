@@ -11,7 +11,6 @@ import (
 	"cmd/internal/obj"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 )
 
@@ -22,36 +21,10 @@ func expandpkg(t0 string, pkg string) string {
 	return strings.Replace(t0, `"".`, pkg+".", -1)
 }
 
-// accumulate all type information from .6 files.
-// check for inconsistencies.
-
 // TODO:
 //	generate debugging section in binary.
 //	once the dust settles, try to move some code to
 //		libmach, so that other linkers and ar can share.
-
-/*
- *	package import data
- */
-type Import struct {
-	prefix string // "type", "var", "func", "const"
-	name   string
-	def    string
-	file   string
-}
-
-// importmap records type information about imported symbols to detect inconsistencies.
-// Entries are keyed by qualified symbol name (e.g., "runtime.Callers" or "net/url.Error").
-var importmap = map[string]*Import{}
-
-func lookupImport(name string) *Import {
-	if x, ok := importmap[name]; ok {
-		return x
-	}
-	x := &Import{name: name}
-	importmap[name] = x
-	return x
-}
 
 func ldpkg(f *obj.Biobuf, pkg string, length int64, filename string, whence int) {
 	var p0, p1 int
@@ -66,6 +39,12 @@ func ldpkg(f *obj.Biobuf, pkg string, length int64, filename string, whence int)
 			errorexit()
 		}
 		return
+	}
+
+	// In a __.PKGDEF, we only care about the package name.
+	// Don't read all the export data.
+	if length > 1000 && whence == Pkgdef {
+		length = 1000
 	}
 
 	bdata := make([]byte, length)
@@ -87,13 +66,17 @@ func ldpkg(f *obj.Biobuf, pkg string, length int64, filename string, whence int)
 		return
 	}
 
+	// \n$$B marks the beginning of binary export data - don't skip over the B
 	p0 += 3
-	for p0 < len(data) && data[p0] != '\n' {
+	for p0 < len(data) && data[p0] != '\n' && data[p0] != 'B' {
 		p0++
 	}
 
 	// second marks end of exports / beginning of local data
-	p1 = strings.Index(data[p0:], "\n$$")
+	p1 = strings.Index(data[p0:], "\n$$\n")
+	if p1 < 0 && whence == Pkgdef {
+		p1 = len(data) - p0
+	}
 	if p1 < 0 {
 		fmt.Fprintf(os.Stderr, "%s: cannot find end of exports in %s\n", os.Args[0], filename)
 		if Debug['u'] != 0 {
@@ -103,10 +86,12 @@ func ldpkg(f *obj.Biobuf, pkg string, length int64, filename string, whence int)
 	}
 	p1 += p0
 
-	for p0 < p1 && (data[p0] == ' ' || data[p0] == '\t' || data[p0] == '\n') {
+	for p0 < p1 && data[p0] != 'B' && (data[p0] == ' ' || data[p0] == '\t' || data[p0] == '\n') {
 		p0++
 	}
-	if p0 < p1 {
+	// don't check this section if we have binary (B) export data
+	// TODO fix this eventually
+	if p0 < p1 && data[p0] != 'B' {
 		if !strings.HasPrefix(data[p0:], "package ") {
 			fmt.Fprintf(os.Stderr, "%s: bad package section in %s - %.20s\n", os.Args[0], filename, data[p0:])
 			if Debug['u'] != 0 {
@@ -138,8 +123,6 @@ func ldpkg(f *obj.Biobuf, pkg string, length int64, filename string, whence int)
 		if pkg == "main" && name != "main" {
 			Exitf("%s: not package main (package %s)", filename, name)
 		}
-
-		loadpkgdata(filename, pkg, data[p0:p1])
 	}
 
 	// __.PKGDEF has no cgo section - those are in the C compiler-generated object files.
@@ -176,195 +159,6 @@ func ldpkg(f *obj.Biobuf, pkg string, length int64, filename string, whence int)
 
 		loadcgo(filename, pkg, data[p0:p1])
 	}
-}
-
-func loadpkgdata(file string, pkg string, data string) {
-	var prefix string
-	var name string
-	var def string
-
-	p := data
-	for parsepkgdata(file, pkg, &p, &prefix, &name, &def) > 0 {
-		x := lookupImport(name)
-		if x.prefix == "" {
-			x.prefix = prefix
-			x.def = def
-			x.file = file
-		} else if x.prefix != prefix {
-			fmt.Fprintf(os.Stderr, "%s: conflicting definitions for %s\n", os.Args[0], name)
-			fmt.Fprintf(os.Stderr, "%s:\t%s %s ...\n", x.file, x.prefix, name)
-			fmt.Fprintf(os.Stderr, "%s:\t%s %s ...\n", file, prefix, name)
-			nerrors++
-		} else if x.def != def {
-			fmt.Fprintf(os.Stderr, "%s: conflicting definitions for %s\n", os.Args[0], name)
-			fmt.Fprintf(os.Stderr, "%s:\t%s %s %s\n", x.file, x.prefix, name, x.def)
-			fmt.Fprintf(os.Stderr, "%s:\t%s %s %s\n", file, prefix, name, def)
-			nerrors++
-		}
-	}
-}
-
-func parsepkgdata(file string, pkg string, pp *string, prefixp *string, namep *string, defp *string) int {
-	// skip white space
-	p := *pp
-
-loop:
-	for len(p) > 0 && (p[0] == ' ' || p[0] == '\t' || p[0] == '\n') {
-		p = p[1:]
-	}
-	if len(p) == 0 || strings.HasPrefix(p, "$$\n") {
-		return 0
-	}
-
-	// prefix: (var|type|func|const)
-	prefix := p
-
-	if len(p) < 7 {
-		return -1
-	}
-	if strings.HasPrefix(p, "var ") {
-		p = p[4:]
-	} else if strings.HasPrefix(p, "type ") {
-		p = p[5:]
-	} else if strings.HasPrefix(p, "func ") {
-		p = p[5:]
-	} else if strings.HasPrefix(p, "const ") {
-		p = p[6:]
-	} else if strings.HasPrefix(p, "import ") {
-		p = p[7:]
-		for len(p) > 0 && p[0] != ' ' {
-			p = p[1:]
-		}
-		p = p[1:]
-		line := p
-		for len(p) > 0 && p[0] != '\n' {
-			p = p[1:]
-		}
-		if len(p) == 0 {
-			fmt.Fprintf(os.Stderr, "%s: %s: confused in import line\n", os.Args[0], file)
-			nerrors++
-			return -1
-		}
-		line = line[:len(line)-len(p)]
-		line = strings.TrimSuffix(line, " // indirect")
-		path, err := strconv.Unquote(line)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "%s: %s: confused in import path: %q\n", os.Args[0], file, line)
-			nerrors++
-			return -1
-		}
-		p = p[1:]
-		imported(pkg, path)
-		goto loop
-	} else {
-		fmt.Fprintf(os.Stderr, "%s: %s: confused in pkg data near <<%.40s>>\n", os.Args[0], file, prefix)
-		nerrors++
-		return -1
-	}
-
-	prefix = prefix[:len(prefix)-len(p)-1]
-
-	// name: a.b followed by space
-	name := p
-
-	inquote := false
-	for len(p) > 0 {
-		if p[0] == ' ' && !inquote {
-			break
-		}
-
-		if p[0] == '\\' {
-			p = p[1:]
-		} else if p[0] == '"' {
-			inquote = !inquote
-		}
-
-		p = p[1:]
-	}
-
-	if len(p) == 0 {
-		return -1
-	}
-	name = name[:len(name)-len(p)]
-	p = p[1:]
-
-	// def: free form to new line
-	def := p
-
-	for len(p) > 0 && p[0] != '\n' {
-		p = p[1:]
-	}
-	if len(p) == 0 {
-		return -1
-	}
-	def = def[:len(def)-len(p)]
-	var defbuf *bytes.Buffer
-	p = p[1:]
-
-	// include methods on successive lines in def of named type
-	var meth string
-	for parsemethod(&p, &meth) > 0 {
-		if defbuf == nil {
-			defbuf = new(bytes.Buffer)
-			defbuf.WriteString(def)
-		}
-		defbuf.WriteString("\n\t")
-		defbuf.WriteString(meth)
-	}
-	if defbuf != nil {
-		def = defbuf.String()
-	}
-
-	name = expandpkg(name, pkg)
-	def = expandpkg(def, pkg)
-
-	// done
-	*pp = p
-
-	*prefixp = prefix
-	*namep = name
-	*defp = def
-	return 1
-}
-
-func parsemethod(pp *string, methp *string) int {
-	// skip white space
-	p := *pp
-
-	for len(p) > 0 && (p[0] == ' ' || p[0] == '\t') {
-		p = p[1:]
-	}
-	if len(p) == 0 {
-		return 0
-	}
-
-	// might be a comment about the method
-	if strings.HasPrefix(p, "//") {
-		goto useline
-	}
-
-	// if it says "func (", it's a method
-	if strings.HasPrefix(p, "func (") {
-		goto useline
-	}
-	return 0
-
-	// definition to end of line
-useline:
-	*methp = p
-
-	for len(p) > 0 && p[0] != '\n' {
-		p = p[1:]
-	}
-	if len(p) == 0 {
-		fmt.Fprintf(os.Stderr, "%s: lost end of line in method definition\n", os.Args[0])
-		*pp = ""
-		return -1
-	}
-
-	*methp = (*methp)[:len(*methp)-len(p)]
-	*pp = p[1:]
-	return 1
 }
 
 func loadcgo(file string, pkg string, p string) {
@@ -485,7 +279,7 @@ func loadcgo(file string, pkg string, p string) {
 				s.Type = 0
 			}
 
-			if s.Cgoexport == 0 {
+			if !s.Attr.CgoExport() {
 				s.Extname = remote
 				dynexp = append(dynexp, s)
 			} else if s.Extname != remote {
@@ -495,9 +289,9 @@ func loadcgo(file string, pkg string, p string) {
 			}
 
 			if f[0] == "cgo_export_static" {
-				s.Cgoexport |= CgoExportStatic
+				s.Attr |= AttrCgoExportStatic
 			} else {
-				s.Cgoexport |= CgoExportDynamic
+				s.Attr |= AttrCgoExportDynamic
 			}
 			if local != f[1] {
 			}
@@ -573,54 +367,45 @@ func Adddynsym(ctxt *Link, s *LSym) {
 	}
 }
 
-var markq *LSym
-
-var emarkq *LSym
+var markQueue []*LSym
 
 func mark1(s *LSym, parent *LSym) {
-	if s == nil || s.Reachable {
+	if s == nil || s.Attr.Reachable() {
 		return
 	}
 	if strings.HasPrefix(s.Name, "go.weak.") {
 		return
 	}
-	s.Reachable = true
+	s.Attr |= AttrReachable
 	s.Reachparent = parent
-	if markq == nil {
-		markq = s
-	} else {
-		emarkq.Queue = s
-	}
-	emarkq = s
+	markQueue = append(markQueue, s)
 }
 
 func mark(s *LSym) {
 	mark1(s, nil)
 }
 
+// markflood makes the dependencies of any reachable symable also reachable.
 func markflood() {
-	var a *Auto
-	var i int
-
-	for s := markq; s != nil; s = s.Queue {
+	for len(markQueue) > 0 {
+		s := markQueue[0]
+		markQueue = markQueue[1:]
 		if s.Type == obj.STEXT {
 			if Debug['v'] > 1 {
 				fmt.Fprintf(&Bso, "marktext %s\n", s.Name)
 			}
-			for a = s.Autom; a != nil; a = a.Link {
+			for _, a := range s.Autom {
 				mark1(a.Gotype, s)
 			}
 		}
-
-		for i = 0; i < len(s.R); i++ {
+		for i := 0; i < len(s.R); i++ {
 			mark1(s.R[i].Sym, s)
 		}
 		if s.Pcln != nil {
-			for i = 0; i < s.Pcln.Nfuncdata; i++ {
+			for i := 0; i < s.Pcln.Nfuncdata; i++ {
 				mark1(s.Pcln.Funcdata[i], s)
 			}
 		}
-
 		mark1(s.Gotype, s)
 		mark1(s.Sub, s)
 		mark1(s.Outer, s)
@@ -655,7 +440,7 @@ func deadcode() {
 	if Buildmode == BuildmodeShared {
 		// Mark all symbols defined in this library as reachable when
 		// building a shared library.
-		for s := Ctxt.Allsym; s != nil; s = s.Allsym {
+		for _, s := range Ctxt.Allsym {
 			if s.Type != 0 && s.Type != obj.SDYNIMPORT {
 				mark(s)
 			}
@@ -677,9 +462,9 @@ func deadcode() {
 		markflood()
 
 		// keep each beginning with 'typelink.' if the symbol it points at is being kept.
-		for s := Ctxt.Allsym; s != nil; s = s.Allsym {
+		for _, s := range Ctxt.Allsym {
 			if strings.HasPrefix(s.Name, "go.typelink.") {
-				s.Reachable = len(s.R) == 1 && s.R[0].Sym.Reachable
+				s.Attr.Set(AttrReachable, len(s.R) == 1 && s.R[0].Sym.Attr.Reachable())
 			}
 		}
 
@@ -687,7 +472,7 @@ func deadcode() {
 		var last *LSym
 
 		for s := Ctxt.Textp; s != nil; s = s.Next {
-			if !s.Reachable {
+			if !s.Attr.Reachable() {
 				continue
 			}
 
@@ -709,24 +494,23 @@ func deadcode() {
 		}
 	}
 
-	for s := Ctxt.Allsym; s != nil; s = s.Allsym {
+	for _, s := range Ctxt.Allsym {
 		if strings.HasPrefix(s.Name, "go.weak.") {
-			s.Special = 1 // do not lay out in data segment
-			s.Reachable = true
-			s.Hide = 1
+			s.Attr |= AttrSpecial // do not lay out in data segment
+			s.Attr |= AttrReachable
+			s.Attr |= AttrHidden
 		}
 	}
 
 	// record field tracking references
 	var buf bytes.Buffer
-	var p *LSym
-	for s := Ctxt.Allsym; s != nil; s = s.Allsym {
+	for _, s := range Ctxt.Allsym {
 		if strings.HasPrefix(s.Name, "go.track.") {
-			s.Special = 1 // do not lay out in data segment
-			s.Hide = 1
-			if s.Reachable {
+			s.Attr |= AttrSpecial // do not lay out in data segment
+			s.Attr |= AttrHidden
+			if s.Attr.Reachable() {
 				buf.WriteString(s.Name[9:])
-				for p = s.Reachparent; p != nil; p = p.Reachparent {
+				for p := s.Reachparent; p != nil; p = p.Reachparent {
 					buf.WriteString("\t")
 					buf.WriteString(p.Name)
 				}
@@ -742,21 +526,19 @@ func deadcode() {
 		return
 	}
 	s := Linklookup(Ctxt, tracksym, 0)
-	if !s.Reachable {
+	if !s.Attr.Reachable() {
 		return
 	}
 	addstrdata(tracksym, buf.String())
 }
 
 func doweak() {
-	var t *LSym
-
 	// resolve weak references only if
 	// target symbol will be in binary anyway.
-	for s := Ctxt.Allsym; s != nil; s = s.Allsym {
+	for _, s := range Ctxt.Allsym {
 		if strings.HasPrefix(s.Name, "go.weak.") {
-			t = Linkrlookup(Ctxt, s.Name[8:], int(s.Version))
-			if t != nil && t.Type != 0 && t.Reachable {
+			t := Linkrlookup(Ctxt, s.Name[8:], int(s.Version))
+			if t != nil && t.Type != 0 && t.Attr.Reachable() {
 				s.Value = t.Value
 				s.Type = t.Type
 				s.Outer = t

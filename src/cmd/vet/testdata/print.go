@@ -197,7 +197,10 @@ func PrintfTests() {
 	et5.error() // ok, not an error method.
 	// Can't print a function.
 	Printf("%d", someFunction) // ERROR "arg someFunction in printf call is a function value, not a function call"
+	Printf("%v", someFunction) // ERROR "arg someFunction in printf call is a function value, not a function call"
 	Println(someFunction)      // ERROR "arg someFunction in Println call is a function value, not a function call"
+	Printf("%p", someFunction) // ok: maybe someone wants to see the pointer
+	Printf("%T", someFunction) // ok: maybe someone wants to see the type
 	// Bug: used to recur forever.
 	Printf("%p %x", recursiveStructV, recursiveStructV.next)
 	Printf("%p %x", recursiveStruct1V, recursiveStruct1V.next)
@@ -208,8 +211,10 @@ func PrintfTests() {
 	Log(3)       // OK
 	Log("%d", 3) // ERROR "possible formatting directive in Log call"
 	Logf("%d", 3)
-	Logf("%d", "hi") // ERROR "arg .hi. for printf verb %d of wrong type: untyped string"
+	Logf("%d", "hi") // ERROR "arg .hi. for printf verb %d of wrong type: string"
 
+	Errorf(1, "%d", 3)    // OK
+	Errorf(1, "%d", "hi") // ERROR "arg .hi. for printf verb %d of wrong type: string"
 }
 
 // A function we use as a function value; it has no other purpose.
@@ -221,8 +226,19 @@ func Printf(format string, args ...interface{}) {
 	panic("don't call - testing only")
 }
 
+// Logf is used by the test so we must declare it.
+func Logf(format string, args ...interface{}) {
+	panic("don't call - testing only")
+}
+
 // printf is used by the test so we must declare it.
 func printf(format string, args ...interface{}) {
+	panic("don't call - testing only")
+}
+
+// Errorf is used by the test for a case in which the first parameter
+// is not a format string.
+func Errorf(i int, format string, args ...interface{}) {
 	panic("don't call - testing only")
 }
 

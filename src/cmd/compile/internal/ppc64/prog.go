@@ -1,4 +1,4 @@
-// Copyright 2014 The Go Authors.  All rights reserved.
+// Copyright 2014 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -34,6 +34,7 @@ var progtable = [ppc64.ALAST]obj.ProgInfo{
 	obj.ACHECKNIL: {Flags: gc.LeftRead},
 	obj.AVARDEF:   {Flags: gc.Pseudo | gc.RightWrite},
 	obj.AVARKILL:  {Flags: gc.Pseudo | gc.RightWrite},
+	obj.AVARLIVE:  {Flags: gc.Pseudo | gc.LeftRead},
 
 	// NOP is an internal no-op that also stands
 	// for USED and SET annotations, not the Power opcode.
@@ -179,8 +180,8 @@ func proginfo(p *obj.Prog) {
 	}
 }
 
-// Instruction variants table.  Initially this contains entries only
-// for the "base" form of each instruction.  On the first call to
+// Instruction variants table. Initially this contains entries only
+// for the "base" form of each instruction. On the first call to
 // as2variant or variant2as, we'll add the variants to the table.
 var varianttable = [ppc64.ALAST][4]int{
 	ppc64.AADD:     {ppc64.AADD, ppc64.AADDCC, ppc64.AADDV, ppc64.AADDVCC},

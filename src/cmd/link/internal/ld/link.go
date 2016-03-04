@@ -38,52 +38,39 @@ import (
 )
 
 type LSym struct {
-	Name       string
-	Extname    string
-	Type       int16
-	Version    int16
-	Dupok      uint8
-	Cfunc      uint8
-	External   uint8
-	Nosplit    uint8
-	Reachable  bool
-	Cgoexport  uint8
-	Special    uint8
-	Stkcheck   uint8
-	Hide       uint8
-	Leaf       uint8
-	Localentry uint8
-	Onlist     uint8
-	// ElfType is set for symbols read from shared libraries by ldshlibsyms. It
-	// is not set for symbols defined by the packages being linked or by symbols
-	// read by ldelf (and so is left as elf.STT_NOTYPE).
-	ElfType     elf.SymType
+	Name        string
+	Extname     string
+	Type        int16
+	Version     int16
+	Attr        Attribute
+	Localentry  uint8
 	Dynid       int32
 	Plt         int32
 	Got         int32
 	Align       int32
 	Elfsym      int32
+	LocalElfsym int32
 	Args        int32
 	Locals      int32
 	Value       int64
 	Size        int64
-	Hash        *LSym
-	Allsym      *LSym
+	// ElfType is set for symbols read from shared libraries by ldshlibsyms. It
+	// is not set for symbols defined by the packages being linked or by symbols
+	// read by ldelf (and so is left as elf.STT_NOTYPE).
+	ElfType     elf.SymType
 	Next        *LSym
 	Sub         *LSym
 	Outer       *LSym
 	Gotype      *LSym
 	Reachparent *LSym
-	Queue       *LSym
 	File        string
 	Dynimplib   string
 	Dynimpvers  string
 	Sect        *Section
-	Autom       *Auto
+	Autom       []Auto
 	Pcln        *Pcln
 	P           []byte
 	R           []Reloc
-	Local       bool
 }
 
 func (s *LSym) String() string {
@@ -91,6 +78,57 @@ func (s *LSym) String() string {
 		return s.Name
 	}
 	return fmt.Sprintf("%s<%d>", s.Name, s.Version)
+}
+
+func (s *LSym) ElfsymForReloc() int32 {
+	// If putelfsym created a local version of this symbol, use that in all
+	// relocations.
+	if s.LocalElfsym != 0 {
+		return s.LocalElfsym
+	} else {
+		return s.Elfsym
+	}
+}
+
+// Attribute is a set of common symbol attributes.
+type Attribute int16
+
+const (
+	AttrDuplicateOK Attribute = 1 << iota
+	AttrExternal
+	AttrNoSplit
+	AttrReachable
+	AttrCgoExportDynamic
+	AttrCgoExportStatic
+	AttrSpecial
+	AttrStackCheck
+	AttrHidden
+	AttrOnList
+	AttrLocal
+)
+
+func (a Attribute) DuplicateOK() bool      { return a&AttrDuplicateOK != 0 }
+func (a Attribute) External() bool         { return a&AttrExternal != 0 }
+func (a Attribute) NoSplit() bool          { return a&AttrNoSplit != 0 }
+func (a Attribute) Reachable() bool        { return a&AttrReachable != 0 }
+func (a Attribute) CgoExportDynamic() bool { return a&AttrCgoExportDynamic != 0 }
+func (a Attribute) CgoExportStatic() bool  { return a&AttrCgoExportStatic != 0 }
+func (a Attribute) Special() bool          { return a&AttrSpecial != 0 }
+func (a Attribute) StackCheck() bool       { return a&AttrStackCheck != 0 }
+func (a Attribute) Hidden() bool           { return a&AttrHidden != 0 }
+func (a Attribute) OnList() bool           { return a&AttrOnList != 0 }
+func (a Attribute) Local() bool            { return a&AttrLocal != 0 }
+
+func (a Attribute) CgoExport() bool {
+	return a.CgoExportDynamic() || a.CgoExportStatic()
+}
+
+func (a *Attribute) Set(flag Attribute, value bool) {
+	if value {
+		*a |= flag
+	} else {
+		*a &= ^flag
+	}
 }
 
 type Reloc struct {
@@ -107,17 +145,17 @@ type Reloc struct {
 
 type Auto struct {
 	Asym    *LSym
-	Link    *Auto
+	Gotype  *LSym
 	Aoffset int32
 	Name    int16
-	Gotype  *LSym
 }
 
 type Shlib struct {
-	Path string
-	Hash []byte
-	Deps []string
-	File *elf.File
+	Path             string
+	Hash             []byte
+	Deps             []string
+	File             *elf.File
+	gcdata_addresses map[*LSym]uint64
 }
 
 type Link struct {
@@ -132,7 +170,7 @@ type Link struct {
 	Windows    int32
 	Goroot     string
 	Hash       map[symVer]*LSym
-	Allsym     *LSym
+	Allsym     []*LSym
 	Nsymbol    int32
 	Tlsg       *LSym
 	Libdir     []string
@@ -147,6 +185,24 @@ type Link struct {
 	Nhistfile  int32
 	Filesyms   *LSym
 	Moduledata *LSym
+	LSymBatch  []LSym
+}
+
+// The smallest possible offset from the hardware stack pointer to a local
+// variable on the stack. Architectures that use a link register save its value
+// on the stack in the function prologue and so always have a pointer between
+// the hardware stack pointer and the local variable area.
+func (ctxt *Link) FixedFrameSize() int64 {
+	switch ctxt.Arch.Thechar {
+	case '6', '8':
+		return 0
+	case '9':
+		// PIC code on ppc64le requires 32 bytes of stack, and it's easier to
+		// just use that much stack always on ppc64x.
+		return int64(4 * ctxt.Arch.Ptrsize)
+	default:
+		return int64(ctxt.Arch.Ptrsize)
+	}
 }
 
 type LinkArch struct {

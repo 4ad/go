@@ -10,9 +10,7 @@ import (
 	"strconv"
 )
 
-/*
- * architecture-independent object file output
- */
+// architecture-independent object file output
 const (
 	ArhdrSize = 60
 )
@@ -235,8 +233,7 @@ func stringsym(s string) (hdr, data *Sym) {
 		off = dsname(symdata, off, s[n:n+m])
 	}
 
-	off = duint8(symdata, off, 0)                // terminating NUL for runtime
-	off = (off + Widthptr - 1) &^ (Widthptr - 1) // round to pointer alignment
+	off = duint8(symdata, off, 0) // terminating NUL for runtime
 	ggloblsym(symdata, int32(off), obj.DUPOK|obj.RODATA|obj.LOCAL)
 
 	return symhdr, symdata
@@ -279,7 +276,7 @@ func Datastring(s string, a *obj.Addr) {
 	a.Sym = Linksym(symdata)
 	a.Node = symdata.Def
 	a.Offset = 0
-	a.Etype = Simtype[TINT]
+	a.Etype = uint8(Simtype[TINT])
 }
 
 func datagostring(sval string, a *obj.Addr) {
@@ -289,7 +286,7 @@ func datagostring(sval string, a *obj.Addr) {
 	a.Sym = Linksym(symhdr)
 	a.Node = symhdr.Def
 	a.Offset = 0
-	a.Etype = TSTRING
+	a.Etype = uint8(TSTRING)
 }
 
 func dgostringptr(s *Sym, off int, str string) int {
@@ -314,7 +311,7 @@ func dgostrlitptr(s *Sym, off int, lit *string) int {
 	p.From3.Offset = int64(Widthptr)
 	datagostring(*lit, &p.To)
 	p.To.Type = obj.TYPE_ADDR
-	p.To.Etype = Simtype[TINT]
+	p.To.Etype = uint8(Simtype[TINT])
 	off += Widthptr
 
 	return off
@@ -375,8 +372,8 @@ func gdata(nam *Node, nr *Node, wid int) {
 }
 
 func gdatacomplex(nam *Node, cval *Mpcplx) {
-	w := cplxsubtype(int(nam.Type.Etype))
-	w = int(Types[w].Width)
+	cst := cplxsubtype(nam.Type.Etype)
+	w := int(Types[cst].Width)
 
 	p := Thearch.Gins(obj.ADATA, nam, nil)
 	p.From3 = new(obj.Addr)

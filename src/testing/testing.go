@@ -45,7 +45,7 @@
 //
 // The benchmark function must run the target code b.N times.
 // During benchmark execution, b.N is adjusted until the benchmark function lasts
-// long enough to be timed reliably.  The output
+// long enough to be timed reliably. The output
 //     BenchmarkHello    10000000    282 ns/op
 // means that the loop ran 10000000 times at a speed of 282 ns per loop.
 //
@@ -149,6 +149,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"runtime/debug"
 	"runtime/pprof"
 	"runtime/trace"
 	"strconv"
@@ -159,8 +160,8 @@ import (
 
 var (
 	// The short flag requests that tests run more quickly, but its functionality
-	// is provided by test writers themselves.  The testing package is just its
-	// home.  The all.bash installation script sets it to make installation more
+	// is provided by test writers themselves. The testing package is just its
+	// home. The all.bash installation script sets it to make installation more
 	// efficient, but by default the flag is off so a plain "go test" will do a
 	// full test of the package.
 	short = flag.Bool("test.short", false, "run smaller test suite to save time")
@@ -282,9 +283,18 @@ var _ TB = (*B)(nil)
 
 // T is a type passed to Test functions to manage test state and support formatted test logs.
 // Logs are accumulated during execution and dumped to standard error when done.
+//
+// A test ends when its Test function returns or calls any of the methods
+// FailNow, Fatal, Fatalf, SkipNow, Skip, or Skipf. Those methods, as well as
+// the Parallel method, must be called only from the goroutine running the
+// Test function.
+//
+// The other reporting methods, such as the variations of Log and Error,
+// may be called simultaneously from multiple goroutines.
 type T struct {
 	common
-	name          string    // Name of test.
+	name          string // Name of test.
+	isParallel    bool
 	startParallel chan bool // Parallel tests will wait on this.
 }
 
@@ -327,9 +337,9 @@ func (c *common) FailNow() {
 	// This previous version duplicated code (those lines are in
 	// tRunner no matter what), but worse the goroutine teardown
 	// implicit in runtime.Goexit was not guaranteed to complete
-	// before the test exited.  If a test deferred an important cleanup
+	// before the test exited. If a test deferred an important cleanup
 	// function (like removing temporary files), there was no guarantee
-	// it would run on a test failure.  Because we send on c.signal during
+	// it would run on a test failure. Because we send on c.signal during
 	// a top-of-stack deferred function now, we know that the send
 	// only happens after any other stacked defers have completed.
 	c.finished = true
@@ -418,10 +428,17 @@ func (c *common) Skipped() bool {
 // Parallel signals that this test is to be run in parallel with (and only with)
 // other parallel tests.
 func (t *T) Parallel() {
+	if t.isParallel {
+		panic("testing: t.Parallel called multiple times")
+	}
+	t.isParallel = true
+
+	// We don't want to include the time we spend waiting for serial tests
+	// in the test duration. Record the elapsed time thus far and reset the
+	// timer afterwards.
+	t.duration += time.Since(t.start)
 	t.signal <- (*T)(nil) // Release main testing loop
 	<-t.startParallel     // Wait for serial tests to finish
-	// Assuming Parallel is the first thing a test does, which is reasonable,
-	// reinitialize the test's start time because it's actually starting now.
 	t.start = time.Now()
 }
 
@@ -438,7 +455,7 @@ func tRunner(t *T, test *InternalTest) {
 	// a call to runtime.Goexit, record the duration and send
 	// a signal saying that the test is done.
 	defer func() {
-		t.duration = time.Now().Sub(t.start)
+		t.duration += time.Now().Sub(t.start)
 		// If the test panicked, print any test output before dying.
 		err := recover()
 		if !t.finished && err == nil {
@@ -485,7 +502,11 @@ func MainStart(matchString func(pat, str string) (bool, error), tests []Internal
 
 // Run runs the tests. It returns an exit code to pass to os.Exit.
 func (m *M) Run() int {
-	flag.Parse()
+	// TestMain may have already called flag.Parse.
+	if !flag.Parsed() {
+		flag.Parse()
+	}
+
 	parseCpuList()
 
 	before()
@@ -494,13 +515,12 @@ func (m *M) Run() int {
 	testOk := RunTests(m.matchString, m.tests)
 	exampleOk := RunExamples(m.matchString, m.examples)
 	stopAlarm()
-	if !testOk || !exampleOk {
+	if !testOk || !exampleOk || !runBenchmarksInternal(m.matchString, m.benchmarks) {
 		fmt.Println("FAIL")
 		after()
 		return 1
 	}
 	fmt.Println("PASS")
-	RunBenchmarks(m.matchString, m.benchmarks)
 	after()
 	return 0
 }
@@ -700,6 +720,7 @@ var timer *time.Timer
 func startAlarm() {
 	if *timeout > 0 {
 		timer = time.AfterFunc(*timeout, func() {
+			debug.SetTraceback("all")
 			panic(fmt.Sprintf("test timed out after %v", *timeout))
 		})
 	}

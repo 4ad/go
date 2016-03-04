@@ -15,10 +15,10 @@ const cannotSet = "cannot set value obtained from unexported struct field"
 
 // Value is the reflection interface to a Go value.
 //
-// Not all methods apply to all kinds of values.  Restrictions,
+// Not all methods apply to all kinds of values. Restrictions,
 // if any, are noted in the documentation for each method.
 // Use the Kind method to find out the kind of value before
-// calling kind-specific methods.  Calling a method
+// calling kind-specific methods. Calling a method
 // inappropriate to the kind of type causes a run time panic.
 //
 // The zero Value represents no value.
@@ -44,7 +44,8 @@ type Value struct {
 
 	// flag holds metadata about the value.
 	// The lowest bits are flag bits:
-	//	- flagRO: obtained via unexported field, so read-only
+	//	- flagStickyRO: obtained via unexported not embedded field, so read-only
+	//	- flagEmbedRO: obtained via unexported embedded field, so read-only
 	//	- flagIndir: val holds a pointer to the data
 	//	- flagAddr: v.CanAddr is true (implies flagIndir)
 	//	- flagMethod: v is a method value.
@@ -56,7 +57,7 @@ type Value struct {
 	flag
 
 	// A method value represents a curried method invocation
-	// like r.Read for some receiver r.  The typ+val+flag bits describe
+	// like r.Read for some receiver r. The typ+val+flag bits describe
 	// the receiver r, but the flag's Kind bits say Func (methods are
 	// functions), and the top bits of the flag give the method number
 	// in r's type's method table.
@@ -67,11 +68,13 @@ type flag uintptr
 const (
 	flagKindWidth        = 5 // there are 27 kinds
 	flagKindMask    flag = 1<<flagKindWidth - 1
-	flagRO          flag = 1 << 5
-	flagIndir       flag = 1 << 6
-	flagAddr        flag = 1 << 7
-	flagMethod      flag = 1 << 8
-	flagMethodShift      = 9
+	flagStickyRO    flag = 1 << 5
+	flagEmbedRO     flag = 1 << 6
+	flagIndir       flag = 1 << 7
+	flagAddr        flag = 1 << 8
+	flagMethod      flag = 1 << 9
+	flagMethodShift      = 10
+	flagRO          flag = flagStickyRO | flagEmbedRO
 )
 
 func (f flag) kind() Kind {
@@ -112,14 +115,14 @@ func packEface(v Value) interface{} {
 		}
 		e.word = ptr
 	case v.flag&flagIndir != 0:
-		// Value is indirect, but interface is direct.  We need
+		// Value is indirect, but interface is direct. We need
 		// to load the data at v.ptr into the interface data word.
 		e.word = *(*unsafe.Pointer)(v.ptr)
 	default:
 		// Value is direct, and so is the interface.
 		e.word = v.ptr
 	}
-	// Now, fill in the type portion.  We're very careful here not
+	// Now, fill in the type portion. We're very careful here not
 	// to have any operation between the e.word and e.typ assignments
 	// that would let the garbage collector observe the partially-built
 	// interface value.
@@ -139,11 +142,11 @@ func unpackEface(i interface{}) Value {
 	if ifaceIndir(t) {
 		f |= flagIndir
 	}
-	return Value{t, unsafe.Pointer(e.word), f}
+	return Value{t, e.word, f}
 }
 
 // A ValueError occurs when a Value method is invoked on
-// a Value that does not support it.  Such cases are documented
+// a Value that does not support it. Such cases are documented
 // in the description of each method.
 type ValueError struct {
 	Method string
@@ -269,7 +272,7 @@ func (v Value) runes() []rune {
 }
 
 // CanAddr reports whether the value's address can be obtained with Addr.
-// Such values are called addressable.  A value is addressable if it is
+// Such values are called addressable. A value is addressable if it is
 // an element of a slice, an element of an addressable array,
 // a field of an addressable struct, or the result of dereferencing a pointer.
 // If CanAddr returns false, calling Addr will panic.
@@ -578,7 +581,7 @@ func methodReceiver(op string, v Value, methodIndex int) (rcvrtype, t *rtype, fn
 	return
 }
 
-// v is a method receiver.  Store at p the word which is used to
+// v is a method receiver. Store at p the word which is used to
 // encode that receiver at the start of the argument list.
 // Reflect uses the "interface" calling convention for
 // methods, which always uses one word to record the receiver.
@@ -587,7 +590,7 @@ func storeRcvr(v Value, p unsafe.Pointer) {
 	if t.Kind() == Interface {
 		// the interface data word becomes the receiver word
 		iface := (*nonEmptyInterface)(v.ptr)
-		*(*unsafe.Pointer)(p) = unsafe.Pointer(iface.word)
+		*(*unsafe.Pointer)(p) = iface.word
 	} else if v.flag&flagIndir != 0 && !ifaceIndir(t) {
 		*(*unsafe.Pointer)(p) = *(*unsafe.Pointer)(v.ptr)
 	} else {
@@ -745,11 +748,15 @@ func (v Value) Field(i int) Value {
 	field := &tt.fields[i]
 	typ := field.typ
 
-	// Inherit permission bits from v.
-	fl := v.flag&(flagRO|flagIndir|flagAddr) | flag(typ.Kind())
+	// Inherit permission bits from v, but clear flagEmbedRO.
+	fl := v.flag&(flagStickyRO|flagIndir|flagAddr) | flag(typ.Kind())
 	// Using an unexported field forces flagRO.
 	if field.pkgPath != nil {
-		fl |= flagRO
+		if field.name == nil {
+			fl |= flagEmbedRO
+		} else {
+			fl |= flagStickyRO
+		}
 	}
 	// Either flagIndir is set and v.ptr points at struct,
 	// or flagIndir is not set and v.ptr is the actual struct data.
@@ -1018,9 +1025,9 @@ func (v Value) MapIndex(key Value) Value {
 
 	// Do not require key to be exported, so that DeepEqual
 	// and other programs can use all the keys returned by
-	// MapKeys as arguments to MapIndex.  If either the map
+	// MapKeys as arguments to MapIndex. If either the map
 	// or the key is unexported, though, the result will be
-	// considered unexported.  This is consistent with the
+	// considered unexported. This is consistent with the
 	// behavior for structs, which allow read but not write
 	// of unexported fields.
 	key = key.assignTo("reflect.Value.MapIndex", tt.key, nil)
@@ -1072,7 +1079,7 @@ func (v Value) MapKeys() []Value {
 		key := mapiterkey(it)
 		if key == nil {
 			// Someone deleted an entry from the map since we
-			// called maplen above.  It's a data race, but nothing
+			// called maplen above. It's a data race, but nothing
 			// we can do about it.
 			break
 		}
@@ -1104,7 +1111,7 @@ func (v Value) Method(i int) Value {
 	if v.typ.Kind() == Interface && v.IsNil() {
 		panic("reflect: Method on nil interface value")
 	}
-	fl := v.flag & (flagRO | flagIndir)
+	fl := v.flag & (flagStickyRO | flagIndir) // Clear flagEmbedRO
 	fl |= flag(Func)
 	fl |= flag(i)<<flagMethodShift | flagMethod
 	return Value{v.typ, v.ptr, fl}
@@ -1219,7 +1226,7 @@ func (v Value) OverflowUint(x uint64) bool {
 // result is zero if and only if v is a nil func Value.
 //
 // If v's Kind is Slice, the returned pointer is to the first
-// element of the slice.  If the slice is nil the returned value
+// element of the slice. If the slice is nil the returned value
 // is 0.  If the slice is empty but non-nil the return value is non-zero.
 func (v Value) Pointer() uintptr {
 	// TODO: deprecate
@@ -1876,7 +1883,7 @@ type runtimeSelect struct {
 	val unsafe.Pointer // ptr to data (SendDir) or ptr to receive buffer (RecvDir)
 }
 
-// rselect runs a select.  It returns the index of the chosen case.
+// rselect runs a select. It returns the index of the chosen case.
 // If the case was a receive, val is filled in with the received value.
 // The conventional OK bool indicates whether the receive corresponds
 // to a sent value.
@@ -2073,17 +2080,16 @@ func Indirect(v Value) Value {
 }
 
 // ValueOf returns a new Value initialized to the concrete value
-// stored in the interface i.  ValueOf(nil) returns the zero Value.
+// stored in the interface i. ValueOf(nil) returns the zero Value.
 func ValueOf(i interface{}) Value {
 	if i == nil {
 		return Value{}
 	}
 
-	// TODO(rsc): Eliminate this terrible hack.
-	// In the call to unpackEface, i.typ doesn't escape,
-	// and i.word is an integer.  So it looks like
-	// i doesn't escape.  But really it does,
-	// because i.word is actually a pointer.
+	// TODO: Maybe allow contents of a Value to live on the stack.
+	// For now we make the contents always escape to the heap. It
+	// makes life easier in a few places (see chanrecv/mapassign
+	// comment below).
 	escapes(i)
 
 	return unpackEface(i)
@@ -2107,7 +2113,7 @@ func Zero(typ Type) Value {
 }
 
 // New returns a Value representing a pointer to a new zero value
-// for the specified type.  That is, the returned Value's Type is PtrTo(typ).
+// for the specified type. That is, the returned Value's Type is PtrTo(typ).
 func New(typ Type) Value {
 	if typ == nil {
 		panic("reflect: New(nil)")
@@ -2439,6 +2445,14 @@ func chancap(ch unsafe.Pointer) int
 func chanclose(ch unsafe.Pointer)
 func chanlen(ch unsafe.Pointer) int
 
+// Note: some of the noescape annotations below are technically a lie,
+// but safe in the context of this package. Functions like chansend
+// and mapassign don't escape the referent, but may escape anything
+// the referent points to (they do shallow copies of the referent).
+// It is safe in this package because the referent may only point
+// to something a Value may point to, and that is always in the heap
+// (due to the escapes() call in ValueOf).
+
 //go:noescape
 func chanrecv(t *rtype, ch unsafe.Pointer, nb bool, val unsafe.Pointer) (selected, received bool)
 
@@ -2451,6 +2465,7 @@ func makemap(t *rtype) (m unsafe.Pointer)
 //go:noescape
 func mapaccess(t *rtype, m unsafe.Pointer, key unsafe.Pointer) (val unsafe.Pointer)
 
+//go:noescape
 func mapassign(t *rtype, m unsafe.Pointer, key, val unsafe.Pointer)
 
 //go:noescape

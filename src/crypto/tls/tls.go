@@ -5,6 +5,11 @@
 // Package tls partially implements TLS 1.2, as specified in RFC 5246.
 package tls
 
+// BUG(agl): The crypto/tls package does not implement countermeasures
+// against Lucky13 attacks on CBC-mode encryption. See
+// http://www.isg.rhul.ac.uk/tls/TLStiming.pdf and
+// https://www.imperialviolet.org/2013/02/04/luckythirteen.html.
+
 import (
 	"crypto"
 	"crypto/ecdsa"
@@ -42,14 +47,13 @@ type listener struct {
 }
 
 // Accept waits for and returns the next incoming TLS connection.
-// The returned connection c is a *tls.Conn.
-func (l *listener) Accept() (c net.Conn, err error) {
-	c, err = l.Listener.Accept()
+// The returned connection is of type *Conn.
+func (l *listener) Accept() (net.Conn, error) {
+	c, err := l.Listener.Accept()
 	if err != nil {
-		return
+		return nil, err
 	}
-	c = Server(c, l.config)
-	return
+	return Server(c, l.config), nil
 }
 
 // NewListener creates a Listener which accepts connections from an inner
@@ -167,7 +171,9 @@ func Dial(network, addr string, config *Config) (*Conn, error) {
 }
 
 // LoadX509KeyPair reads and parses a public/private key pair from a pair of
-// files. The files must contain PEM encoded data.
+// files. The files must contain PEM encoded data. On successful return,
+// Certificate.Leaf will be nil because the parsed form of the certificate is
+// not retained.
 func LoadX509KeyPair(certFile, keyFile string) (Certificate, error) {
 	certPEMBlock, err := ioutil.ReadFile(certFile)
 	if err != nil {
@@ -181,7 +187,8 @@ func LoadX509KeyPair(certFile, keyFile string) (Certificate, error) {
 }
 
 // X509KeyPair parses a public/private key pair from a pair of
-// PEM encoded data.
+// PEM encoded data. On successful return, Certificate.Leaf will be nil because
+// the parsed form of the certificate is not retained.
 func X509KeyPair(certPEMBlock, keyPEMBlock []byte) (Certificate, error) {
 	fail := func(err error) (Certificate, error) { return Certificate{}, err }
 

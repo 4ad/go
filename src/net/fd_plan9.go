@@ -1,4 +1,4 @@
-// Copyright 2009 The Go Authors.  All rights reserved.
+// Copyright 2009 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -170,6 +170,14 @@ func (fd *netFD) Close() error {
 	}
 	if !fd.ok() {
 		return syscall.EINVAL
+	}
+	if fd.net == "tcp" {
+		// The following line is required to unblock Reads.
+		// For some reason, WriteString returns an error:
+		// "write /net/tcp/39/listen: inappropriate use of fd"
+		// But without it, Reads on dead conns hang forever.
+		// See Issue 9554.
+		fd.ctl.WriteString("hangup")
 	}
 	err := fd.ctl.Close()
 	if fd.data != nil {

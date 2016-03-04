@@ -1,4 +1,4 @@
-// Copyright 2010 The Go Authors.  All rights reserved.
+// Copyright 2010 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -6,6 +6,7 @@ package net
 
 import (
 	"errors"
+	"runtime"
 	"time"
 )
 
@@ -57,6 +58,11 @@ type Dialer struct {
 	// If zero, keep-alives are not enabled. Network protocols
 	// that do not support keep-alives ignore this field.
 	KeepAlive time.Duration
+
+	// Cancel is an optional channel whose closure indicates that
+	// the dial should be canceled. Not all types of dials support
+	// cancelation.
+	Cancel <-chan struct{}
 }
 
 // Return either now+Timeout or Deadline, whichever comes first.
@@ -165,12 +171,14 @@ func resolveAddrList(op, net, addr string, deadline time.Time) (addrList, error)
 // in square brackets as in "[::1]:80" or "[ipv6-host%zone]:80".
 // The functions JoinHostPort and SplitHostPort manipulate addresses
 // in this form.
+// If the host is empty, as in ":80", the local system is assumed.
 //
 // Examples:
 //	Dial("tcp", "12.34.56.78:80")
 //	Dial("tcp", "google.com:http")
 //	Dial("tcp", "[2001:db8::1]:http")
 //	Dial("tcp", "[fe80::1%lo0]:80")
+//	Dial("tcp", ":80")
 //
 // For IP networks, the network must be "ip", "ip4" or "ip6" followed
 // by a colon and a protocol number or name and the addr must be a
@@ -218,8 +226,10 @@ func (d *Dialer) Dial(network, address string) (Conn, error) {
 		finalDeadline: finalDeadline,
 	}
 
+	// DualStack mode requires that dialTCP support cancelation. This is
+	// not available on plan9 (golang.org/issue/11225), so we ignore it.
 	var primaries, fallbacks addrList
-	if d.DualStack && network == "tcp" {
+	if d.DualStack && network == "tcp" && runtime.GOOS != "plan9" {
 		primaries, fallbacks = addrs.partition(isIPv4)
 	} else {
 		primaries = addrs
@@ -229,9 +239,9 @@ func (d *Dialer) Dial(network, address string) (Conn, error) {
 	if len(fallbacks) == 0 {
 		// dialParallel can accept an empty fallbacks list,
 		// but this shortcut avoids the goroutine/channel overhead.
-		c, err = dialSerial(ctx, primaries, nil)
+		c, err = dialSerial(ctx, primaries, ctx.Cancel)
 	} else {
-		c, err = dialParallel(ctx, primaries, fallbacks)
+		c, err = dialParallel(ctx, primaries, fallbacks, ctx.Cancel)
 	}
 
 	if d.KeepAlive > 0 && err == nil {
@@ -248,10 +258,9 @@ func (d *Dialer) Dial(network, address string) (Conn, error) {
 // head start. It returns the first established connection and
 // closes the others. Otherwise it returns an error from the first
 // primary address.
-func dialParallel(ctx *dialContext, primaries, fallbacks addrList) (Conn, error) {
-	results := make(chan dialResult) // unbuffered, so dialSerialAsync can detect race loss & cleanup
+func dialParallel(ctx *dialContext, primaries, fallbacks addrList, userCancel <-chan struct{}) (Conn, error) {
+	results := make(chan dialResult, 2)
 	cancel := make(chan struct{})
-	defer close(cancel)
 
 	// Spawn the primary racer.
 	go dialSerialAsync(ctx, primaries, nil, cancel, results)
@@ -260,28 +269,59 @@ func dialParallel(ctx *dialContext, primaries, fallbacks addrList) (Conn, error)
 	fallbackTimer := time.NewTimer(ctx.fallbackDelay())
 	go dialSerialAsync(ctx, fallbacks, fallbackTimer, cancel, results)
 
-	var primaryErr error
-	for nracers := 2; nracers > 0; nracers-- {
-		res := <-results
-		// If we're still waiting for a connection, then hasten the delay.
-		// Otherwise, disable the Timer and let cancel take over.
-		if fallbackTimer.Stop() && res.error != nil {
-			fallbackTimer.Reset(0)
-		}
-		if res.error == nil {
-			return res.Conn, nil
-		}
-		if res.primary {
-			primaryErr = res.error
+	// Wait for both racers to succeed or fail.
+	var primaryResult, fallbackResult dialResult
+	for !primaryResult.done || !fallbackResult.done {
+		select {
+		case <-userCancel:
+			// Forward an external cancelation request.
+			if cancel != nil {
+				close(cancel)
+				cancel = nil
+			}
+			userCancel = nil
+		case res := <-results:
+			// Drop the result into its assigned bucket.
+			if res.primary {
+				primaryResult = res
+			} else {
+				fallbackResult = res
+			}
+			// On success, cancel the other racer (if one exists.)
+			if res.error == nil && cancel != nil {
+				close(cancel)
+				cancel = nil
+			}
+			// If the fallbackTimer was pending, then either we've canceled the
+			// fallback because we no longer want it, or we haven't canceled yet
+			// and therefore want it to wake up immediately.
+			if fallbackTimer.Stop() && cancel != nil {
+				fallbackTimer.Reset(0)
+			}
 		}
 	}
-	return nil, primaryErr
+
+	// Return, in order of preference:
+	// 1. The primary connection (but close the other if we got both.)
+	// 2. The fallback connection.
+	// 3. The primary error.
+	if primaryResult.error == nil {
+		if fallbackResult.error == nil {
+			fallbackResult.Conn.Close()
+		}
+		return primaryResult.Conn, nil
+	} else if fallbackResult.error == nil {
+		return fallbackResult.Conn, nil
+	} else {
+		return nil, primaryResult.error
+	}
 }
 
 type dialResult struct {
 	Conn
 	error
 	primary bool
+	done    bool
 }
 
 // dialSerialAsync runs dialSerial after some delay, and returns the
@@ -293,19 +333,11 @@ func dialSerialAsync(ctx *dialContext, ras addrList, timer *time.Timer, cancel <
 		select {
 		case <-timer.C:
 		case <-cancel:
-			return
+			// dialSerial will immediately return errCanceled in this case.
 		}
 	}
 	c, err := dialSerial(ctx, ras, cancel)
-	select {
-	case results <- dialResult{c, err, timer == nil}:
-		// We won the race.
-	case <-cancel:
-		// The other goroutine won the race.
-		if c != nil {
-			c.Close()
-		}
-	}
+	results <- dialResult{Conn: c, error: err, primary: timer == nil, done: true}
 }
 
 // dialSerial connects to a list of addresses in sequence, returning
@@ -329,11 +361,11 @@ func dialSerial(ctx *dialContext, ras addrList, cancel <-chan struct{}) (Conn, e
 			break
 		}
 
-		// dialTCP does not support cancelation (see golang.org/issue/11225),
-		// so if cancel fires, we'll continue trying to connect until the next
-		// timeout, or return a spurious connection for the caller to close.
+		// If this dial is canceled, the implementation is expected to complete
+		// quickly, but it's still possible that we could return a spurious Conn,
+		// which the caller must Close.
 		dialer := func(d time.Time) (Conn, error) {
-			return dialSingle(ctx, ra, d)
+			return dialSingle(ctx, ra, d, cancel)
 		}
 		c, err := dial(ctx.network, ra, dialer, partialDeadline)
 		if err == nil {
@@ -353,7 +385,7 @@ func dialSerial(ctx *dialContext, ras addrList, cancel <-chan struct{}) (Conn, e
 // dialSingle attempts to establish and returns a single connection to
 // the destination address. This must be called through the OS-specific
 // dial function, because some OSes don't implement the deadline feature.
-func dialSingle(ctx *dialContext, ra Addr, deadline time.Time) (c Conn, err error) {
+func dialSingle(ctx *dialContext, ra Addr, deadline time.Time, cancel <-chan struct{}) (c Conn, err error) {
 	la := ctx.LocalAddr
 	if la != nil && la.Network() != ra.Network() {
 		return nil, &OpError{Op: "dial", Net: ctx.network, Source: la, Addr: ra, Err: errors.New("mismatched local address type " + la.Network())}
@@ -361,7 +393,7 @@ func dialSingle(ctx *dialContext, ra Addr, deadline time.Time) (c Conn, err erro
 	switch ra := ra.(type) {
 	case *TCPAddr:
 		la, _ := la.(*TCPAddr)
-		c, err = testHookDialTCP(ctx.network, la, ra, deadline)
+		c, err = testHookDialTCP(ctx.network, la, ra, deadline, cancel)
 	case *UDPAddr:
 		la, _ := la.(*UDPAddr)
 		c, err = dialUDP(ctx.network, la, ra, deadline)
@@ -375,7 +407,7 @@ func dialSingle(ctx *dialContext, ra Addr, deadline time.Time) (c Conn, err erro
 		return nil, &OpError{Op: "dial", Net: ctx.network, Source: la, Addr: ra, Err: &AddrError{Err: "unexpected address type", Addr: ctx.address}}
 	}
 	if err != nil {
-		return nil, err // c is non-nil interface containing nil pointer
+		return nil, &OpError{Op: "dial", Net: ctx.network, Source: la, Addr: ra, Err: err} // c is non-nil interface containing nil pointer
 	}
 	return c, nil
 }
@@ -383,7 +415,10 @@ func dialSingle(ctx *dialContext, ra Addr, deadline time.Time) (c Conn, err erro
 // Listen announces on the local network address laddr.
 // The network net must be a stream-oriented network: "tcp", "tcp4",
 // "tcp6", "unix" or "unixpacket".
-// See Dial for the syntax of laddr.
+// For TCP and UDP, the syntax of laddr is "host:port", like "127.0.0.1:8080".
+// If host is omitted, as in ":8080", Listen listens on all available interfaces
+// instead of just the interface with the given host address.
+// See Dial for more details about address syntax.
 func Listen(net, laddr string) (Listener, error) {
 	addrs, err := resolveAddrList("listen", net, laddr, noDeadline)
 	if err != nil {
@@ -407,6 +442,9 @@ func Listen(net, laddr string) (Listener, error) {
 // ListenPacket announces on the local network address laddr.
 // The network net must be a packet-oriented network: "udp", "udp4",
 // "udp6", "ip", "ip4", "ip6" or "unixgram".
+// For TCP and UDP, the syntax of laddr is "host:port", like "127.0.0.1:8080".
+// If host is omitted, as in ":8080", ListenPacket listens on all available interfaces
+// instead of just the interface with the given host address.
 // See Dial for the syntax of laddr.
 func ListenPacket(net, laddr string) (PacketConn, error) {
 	addrs, err := resolveAddrList("listen", net, laddr, noDeadline)

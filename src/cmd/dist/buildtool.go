@@ -1,4 +1,4 @@
-// Copyright 2015 The Go Authors.  All rights reserved.
+// Copyright 2015 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -34,13 +34,15 @@ var bootstrapDirs = []string{
 	"compile/internal/arm64",
 	"compile/internal/big",
 	"compile/internal/gc",
+	"compile/internal/mips64",
 	"compile/internal/ppc64",
-	"compile/internal/sparc64",
+	"compile/internal/ssa",
 	"compile/internal/x86",
 	"internal/gcprog",
 	"internal/obj",
 	"internal/obj/arm",
 	"internal/obj/arm64",
+	"internal/obj/mips",
 	"internal/obj/ppc64",
 	"internal/obj/sparc64",
 	"internal/obj/x86",
@@ -49,6 +51,7 @@ var bootstrapDirs = []string{
 	"link/internal/arm",
 	"link/internal/arm64",
 	"link/internal/ld",
+	"link/internal/mips64",
 	"link/internal/ppc64",
 	"link/internal/sparc64",
 	"link/internal/x86",

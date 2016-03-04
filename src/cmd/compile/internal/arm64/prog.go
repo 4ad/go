@@ -1,4 +1,4 @@
-// Copyright 2014 The Go Authors.  All rights reserved.
+// Copyright 2014 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -34,6 +34,7 @@ var progtable = [arm64.ALAST]obj.ProgInfo{
 	obj.ACHECKNIL: {Flags: gc.LeftRead},
 	obj.AVARDEF:   {Flags: gc.Pseudo | gc.RightWrite},
 	obj.AVARKILL:  {Flags: gc.Pseudo | gc.RightWrite},
+	obj.AVARLIVE:  {Flags: gc.Pseudo | gc.LeftRead},
 
 	// NOP is an internal no-op that also stands
 	// for USED and SET annotations, not the Power opcode.

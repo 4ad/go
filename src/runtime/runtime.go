@@ -1,10 +1,13 @@
-// Copyright 2009 The Go Authors.  All rights reserved.
+// Copyright 2009 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
 package runtime
 
-import _ "unsafe" // for go:linkname
+import (
+	"runtime/internal/atomic"
+	_ "unsafe" // for go:linkname
+)
 
 //go:generate go run wincallback.go
 //go:generate go run mkduff.go
@@ -16,11 +19,9 @@ var ticks struct {
 	val  uint64
 }
 
-var tls0 [8]uintptr // available storage for m0's TLS; not necessarily used; opaque to GC
-
 // Note: Called by runtime/pprof in addition to runtime code.
 func tickspersecond() int64 {
-	r := int64(atomicload64(&ticks.val))
+	r := int64(atomic.Load64(&ticks.val))
 	if r != 0 {
 		return r
 	}
@@ -39,7 +40,7 @@ func tickspersecond() int64 {
 		if r == 0 {
 			r++
 		}
-		atomicstore64(&ticks.val, uint64(r))
+		atomic.Store64(&ticks.val, uint64(r))
 	}
 	unlock(&ticks.lock)
 	return r

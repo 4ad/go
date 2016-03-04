@@ -1,8 +1,12 @@
-// Copyright 2014 The Go Authors.  All rights reserved.
+// Copyright 2014 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
 package runtime
+
+type mOS struct {
+	waitsemacount uint32
+}
 
 //go:noescape
 func setitimer(mode int32, new, old *itimerval)
@@ -14,7 +18,7 @@ func sigaction(sig int32, new, old *sigactiont)
 func sigaltstack(new, old *stackt)
 
 //go:noescape
-func sigprocmask(mode int32, new uint32) uint32
+func sigprocmask(mode int32, new sigset) sigset
 
 //go:noescape
 func sysctl(mib *uint32, miblen uint32, out *byte, size *uintptr, dst *byte, ndst uintptr) int32

@@ -7,6 +7,7 @@ package flate
 import (
 	"bytes"
 	"fmt"
+	"internal/testenv"
 	"io"
 	"io/ioutil"
 	"reflect"
@@ -246,7 +247,7 @@ func testSync(t *testing.T, level int, input []byte, name string) {
 		// not necessarily the case: the write Flush may emit
 		// some extra framing bits that are not necessary
 		// to process to obtain the first half of the uncompressed
-		// data.  The test ran correctly most of the time, because
+		// data. The test ran correctly most of the time, because
 		// the background goroutine had usually read even
 		// those extra bits by now, but it's not a useful thing to
 		// check.
@@ -343,6 +344,9 @@ var deflateInflateStringTests = []deflateInflateStringTest{
 }
 
 func TestDeflateInflateString(t *testing.T) {
+	if testing.Short() && testenv.Builder() == "" {
+		t.Skip("skipping in short mode")
+	}
 	for _, test := range deflateInflateStringTests {
 		gold, err := ioutil.ReadFile(test.filename)
 		if err != nil {
@@ -436,7 +440,11 @@ func TestWriterReset(t *testing.T) {
 			t.Fatalf("NewWriter: %v", err)
 		}
 		buf := []byte("hello world")
-		for i := 0; i < 1024; i++ {
+		n := 1024
+		if testing.Short() {
+			n = 10
+		}
+		for i := 0; i < n; i++ {
 			w.Write(buf)
 		}
 		w.Reset(ioutil.Discard)

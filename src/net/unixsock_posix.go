@@ -1,4 +1,4 @@
-// Copyright 2009 The Go Authors.  All rights reserved.
+// Copyright 2009 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -42,7 +42,7 @@ func unixSocket(net string, laddr, raddr sockaddr, mode string, deadline time.Ti
 		return nil, errors.New("unknown mode: " + mode)
 	}
 
-	fd, err := socket(net, syscall.AF_UNIX, sotype, 0, false, laddr, raddr, deadline)
+	fd, err := socket(net, syscall.AF_UNIX, sotype, 0, false, laddr, raddr, deadline, noCancel)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ type UnixConn struct {
 
 func newUnixConn(fd *netFD) *UnixConn { return &UnixConn{conn{fd}} }
 
-// ReadFromUnix reads a packet from c, copying the payload into b.  It
+// ReadFromUnix reads a packet from c, copying the payload into b. It
 // returns the number of bytes copied into b and the source address of
 // the packet.
 //
@@ -140,7 +140,7 @@ func (c *UnixConn) ReadFrom(b []byte) (int, Addr, error) {
 }
 
 // ReadMsgUnix reads a packet from c, copying the payload into b and
-// the associated out-of-band data into oob.  It returns the number of
+// the associated out-of-band data into oob. It returns the number of
 // bytes copied into b, the number of bytes copied into oob, the flags
 // that were set on the packet, and the source address of the packet.
 func (c *UnixConn) ReadMsgUnix(b, oob []byte) (n, oobn, flags int, addr *UnixAddr, err error) {
@@ -164,7 +164,7 @@ func (c *UnixConn) ReadMsgUnix(b, oob []byte) (n, oobn, flags int, addr *UnixAdd
 //
 // WriteToUnix can be made to time out and return an error with
 // Timeout() == true after a fixed time limit; see SetDeadline and
-// SetWriteDeadline.  On packet-oriented connections, write timeouts
+// SetWriteDeadline. On packet-oriented connections, write timeouts
 // are rare.
 func (c *UnixConn) WriteToUnix(b []byte, addr *UnixAddr) (int, error) {
 	if !c.ok() {
@@ -200,7 +200,7 @@ func (c *UnixConn) WriteTo(b []byte, addr Addr) (n int, err error) {
 }
 
 // WriteMsgUnix writes a packet to addr via c, copying the payload
-// from b and the associated out-of-band data from oob.  It returns
+// from b and the associated out-of-band data from oob. It returns
 // the number of payload and out-of-band bytes written.
 func (c *UnixConn) WriteMsgUnix(b, oob []byte, addr *UnixAddr) (n, oobn int, err error) {
 	if !c.ok() {
@@ -258,27 +258,32 @@ func DialUnix(net string, laddr, raddr *UnixAddr) (*UnixConn, error) {
 	default:
 		return nil, &OpError{Op: "dial", Net: net, Source: laddr.opAddr(), Addr: raddr.opAddr(), Err: UnknownNetworkError(net)}
 	}
-	return dialUnix(net, laddr, raddr, noDeadline)
+	c, err := dialUnix(net, laddr, raddr, noDeadline)
+	if err != nil {
+		return nil, &OpError{Op: "dial", Net: net, Source: laddr.opAddr(), Addr: raddr.opAddr(), Err: err}
+	}
+	return c, nil
 }
 
 func dialUnix(net string, laddr, raddr *UnixAddr, deadline time.Time) (*UnixConn, error) {
 	fd, err := unixSocket(net, laddr, raddr, "dial", deadline)
 	if err != nil {
-		return nil, &OpError{Op: "dial", Net: net, Source: laddr.opAddr(), Addr: raddr.opAddr(), Err: err}
+		return nil, err
 	}
 	return newUnixConn(fd), nil
 }
 
-// UnixListener is a Unix domain socket listener.  Clients should
+// UnixListener is a Unix domain socket listener. Clients should
 // typically use variables of type Listener instead of assuming Unix
 // domain sockets.
 type UnixListener struct {
-	fd   *netFD
-	path string
+	fd     *netFD
+	path   string
+	unlink bool
 }
 
 // ListenUnix announces on the Unix domain socket laddr and returns a
-// Unix listener.  The network net must be "unix" or "unixpacket".
+// Unix listener. The network net must be "unix" or "unixpacket".
 func ListenUnix(net string, laddr *UnixAddr) (*UnixListener, error) {
 	switch net {
 	case "unix", "unixpacket":
@@ -292,7 +297,7 @@ func ListenUnix(net string, laddr *UnixAddr) (*UnixListener, error) {
 	if err != nil {
 		return nil, &OpError{Op: "listen", Net: net, Source: nil, Addr: laddr.opAddr(), Err: err}
 	}
-	return &UnixListener{fd: fd, path: fd.laddr.String()}, nil
+	return &UnixListener{fd: fd, path: fd.laddr.String(), unlink: true}, nil
 }
 
 // AcceptUnix accepts the next incoming call and returns the new
@@ -308,17 +313,17 @@ func (l *UnixListener) AcceptUnix() (*UnixConn, error) {
 	return newUnixConn(fd), nil
 }
 
-// Accept implements the Accept method in the Listener interface; it
-// waits for the next call and returns a generic Conn.
-func (l *UnixListener) Accept() (c Conn, err error) {
-	c1, err := l.AcceptUnix()
+// Accept implements the Accept method in the Listener interface.
+// Returned connections will be of type *UnixConn.
+func (l *UnixListener) Accept() (Conn, error) {
+	c, err := l.AcceptUnix()
 	if err != nil {
 		return nil, err
 	}
-	return c1, nil
+	return c, nil
 }
 
-// Close stops listening on the Unix address.  Already accepted
+// Close stops listening on the Unix address. Already accepted
 // connections are not closed.
 func (l *UnixListener) Close() error {
 	if l == nil || l.fd == nil {
@@ -333,9 +338,9 @@ func (l *UnixListener) Close() error {
 	// and replaced our socket name already--
 	// but this sequence (remove then close)
 	// is at least compatible with the auto-remove
-	// sequence in ListenUnix.  It's only non-Go
+	// sequence in ListenUnix. It's only non-Go
 	// programs that can mess us up.
-	if l.path[0] != '@' {
+	if l.path[0] != '@' && l.unlink {
 		syscall.Unlink(l.path)
 	}
 	err := l.fd.Close()
@@ -363,11 +368,11 @@ func (l *UnixListener) SetDeadline(t time.Time) error {
 }
 
 // File returns a copy of the underlying os.File, set to blocking
-// mode.  It is the caller's responsibility to close f when finished.
+// mode. It is the caller's responsibility to close f when finished.
 // Closing l does not affect f, and closing f does not affect l.
 //
 // The returned os.File's file descriptor is different from the
-// connection's.  Attempting to change properties of the original
+// connection's. Attempting to change properties of the original
 // using this duplicate may or may not have the desired effect.
 func (l *UnixListener) File() (f *os.File, err error) {
 	f, err = l.fd.dup()
@@ -378,7 +383,7 @@ func (l *UnixListener) File() (f *os.File, err error) {
 }
 
 // ListenUnixgram listens for incoming Unix datagram packets addressed
-// to the local address laddr.  The network net must be "unixgram".
+// to the local address laddr. The network net must be "unixgram".
 // The returned connection's ReadFrom and WriteTo methods can be used
 // to receive and send packets with per-packet addressing.
 func ListenUnixgram(net string, laddr *UnixAddr) (*UnixConn, error) {

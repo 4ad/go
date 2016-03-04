@@ -164,7 +164,11 @@ func (t *Template) ExecuteTemplate(wr io.Writer, name string, data interface{}) 
 // execution stops, but partial results may already have been written to
 // the output writer.
 // A template may be executed safely in parallel.
-func (t *Template) Execute(wr io.Writer, data interface{}) (err error) {
+func (t *Template) Execute(wr io.Writer, data interface{}) error {
+	return t.execute(wr, data)
+}
+
+func (t *Template) execute(wr io.Writer, data interface{}) (err error) {
 	defer errRecover(&err)
 	value := reflect.ValueOf(data)
 	state := &state{
@@ -180,7 +184,7 @@ func (t *Template) Execute(wr io.Writer, data interface{}) (err error) {
 }
 
 // DefinedTemplates returns a string listing the defined templates,
-// prefixed by the string "defined templates are: ". If there are none,
+// prefixed by the string "; defined templates are: ". If there are none,
 // it returns the empty string. For generating an error message here
 // and in html/template.
 func (t *Template) DefinedTemplates() string {
@@ -436,7 +440,7 @@ func (s *state) evalCommand(dot reflect.Value, cmd *parse.CommandNode, final ref
 
 // idealConstant is called to return the value of a number in a context where
 // we don't know the type. In that case, the syntax of the number tells us
-// its type, and we use Go rules to resolve.  Note there is no such thing as
+// its type, and we use Go rules to resolve. Note there is no such thing as
 // a uint ideal constant in this situation - the value must be of int type.
 func (s *state) idealConstant(constant *parse.NumberNode) reflect.Value {
 	// These are ideal constants but we don't know the type
@@ -446,7 +450,7 @@ func (s *state) idealConstant(constant *parse.NumberNode) reflect.Value {
 	switch {
 	case constant.IsComplex:
 		return reflect.ValueOf(constant.Complex128) // incontrovertible.
-	case constant.IsFloat && !isHexConstant(constant.Text) && strings.IndexAny(constant.Text, ".eE") >= 0:
+	case constant.IsFloat && !isHexConstant(constant.Text) && strings.ContainsAny(constant.Text, ".eE"):
 		return reflect.ValueOf(constant.Float64)
 	case constant.IsInt:
 		n := int(constant.Int64)
@@ -523,7 +527,7 @@ func (s *state) evalField(dot reflect.Value, fieldName string, node parse.Node, 
 		return zero
 	}
 	typ := receiver.Type()
-	receiver, _ = indirect(receiver)
+	receiver, isNil := indirect(receiver)
 	// Unless it's an interface, need to get to a value of type *T to guarantee
 	// we see all methods of T and *T.
 	ptr := receiver
@@ -535,7 +539,6 @@ func (s *state) evalField(dot reflect.Value, fieldName string, node parse.Node, 
 	}
 	hasArgs := len(args) > 1 || final.IsValid()
 	// It's not a method; must be a field of a struct or an element of a map. The receiver must not be nil.
-	receiver, isNil := indirect(receiver)
 	if isNil {
 		s.errorf("nil pointer evaluating %s.%s", typ, fieldName)
 	}
@@ -585,7 +588,7 @@ var (
 )
 
 // evalCall executes a function or method call. If it's a method, fun already has the receiver bound, so
-// it looks just like a function call.  The arg list, if non-nil, includes (in the manner of the shell), arg[0]
+// it looks just like a function call. The arg list, if non-nil, includes (in the manner of the shell), arg[0]
 // as the function itself.
 func (s *state) evalCall(dot, fun reflect.Value, node parse.Node, name string, args []parse.Node, final reflect.Value) reflect.Value {
 	if args != nil {

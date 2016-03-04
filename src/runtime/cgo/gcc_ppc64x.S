@@ -1,4 +1,4 @@
-// Copyright 2014 The Go Authors.  All rights reserved.
+// Copyright 2014 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -31,11 +31,13 @@ EXT(crosscall_ppc64):
 
 	// Set up Go ABI constant registers
 	bl	_cgo_reginit
+	nop
 
 	// Restore g pointer (r30 in Go ABI, which may have been clobbered by C)
 	mr	%r30, %r4
 
 	// Call fn
+	mr	%r12, %r3
 	mtctr	%r3
 	bctrl
 

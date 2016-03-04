@@ -16,6 +16,7 @@ import (
 	"unicode/utf8"
 
 	"cmd/asm/internal/arch"
+	"cmd/asm/internal/flags"
 	"cmd/asm/internal/lex"
 	"cmd/internal/obj"
 )
@@ -78,7 +79,7 @@ func (p *Parser) errorf(format string, args ...interface{}) {
 	}
 	fmt.Fprintf(p.errorWriter, format, args...)
 	p.errorCount++
-	if p.errorCount > 10 {
+	if p.errorCount > 10 && !*flags.AllErrors {
 		log.Fatal("too many errors")
 	}
 }
@@ -296,7 +297,7 @@ func (p *Parser) operand(a *obj.Addr) bool {
 			p.errorf("illegal use of register list")
 		}
 		p.registerList(a)
-		p.expect(scanner.EOF)
+		p.expectOperandEnd()
 		return true
 	}
 
@@ -330,7 +331,7 @@ func (p *Parser) operand(a *obj.Addr) bool {
 			}
 		}
 		// fmt.Printf("REG %s\n", obj.Dconv(&emptyProg, 0, a))
-		p.expect(scanner.EOF)
+		p.expectOperandEnd()
 		return true
 	}
 
@@ -362,7 +363,7 @@ func (p *Parser) operand(a *obj.Addr) bool {
 			a.Type = obj.TYPE_FCONST
 			a.Val = p.floatExpr()
 			// fmt.Printf("FCONST %s\n", obj.Dconv(&emptyProg, 0, a))
-			p.expect(scanner.EOF)
+			p.expectOperandEnd()
 			return true
 		}
 		if p.have(scanner.String) {
@@ -377,7 +378,7 @@ func (p *Parser) operand(a *obj.Addr) bool {
 			a.Type = obj.TYPE_SCONST
 			a.Val = str
 			// fmt.Printf("SCONST %s\n", obj.Dconv(&emptyProg, 0, a))
-			p.expect(scanner.EOF)
+			p.expectOperandEnd()
 			return true
 		}
 		a.Offset = int64(p.expr())
@@ -391,7 +392,7 @@ func (p *Parser) operand(a *obj.Addr) bool {
 				a.Type = obj.TYPE_MEM
 			}
 			// fmt.Printf("CONST %d %s\n", a.Offset, obj.Dconv(&emptyProg, 0, a))
-			p.expect(scanner.EOF)
+			p.expectOperandEnd()
 			return true
 		}
 		// fmt.Printf("offset %d \n", a.Offset)
@@ -401,7 +402,7 @@ func (p *Parser) operand(a *obj.Addr) bool {
 	p.registerIndirect(a, prefix)
 	// fmt.Printf("DONE %s\n", p.arch.Dconv(&emptyProg, 0, a))
 
-	p.expect(scanner.EOF)
+	p.expectOperandEnd()
 	return true
 }
 
@@ -989,14 +990,19 @@ func (p *Parser) more() bool {
 
 // get verifies that the next item has the expected type and returns it.
 func (p *Parser) get(expected lex.ScanToken) lex.Token {
-	p.expect(expected)
+	p.expect(expected, expected.String())
 	return p.next()
 }
 
+// expectOperandEnd verifies that the parsing state is properly at the end of an operand.
+func (p *Parser) expectOperandEnd() {
+	p.expect(scanner.EOF, "end of operand")
+}
+
 // expect verifies that the next item has the expected type. It does not consume it.
-func (p *Parser) expect(expected lex.ScanToken) {
-	if p.peek() != expected {
-		p.errorf("expected %s, found %s", expected, p.next())
+func (p *Parser) expect(expectedToken lex.ScanToken, expectedMessage string) {
+	if p.peek() != expectedToken {
+		p.errorf("expected %s, found %s", expectedMessage, p.next())
 	}
 }
 

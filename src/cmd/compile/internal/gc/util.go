@@ -1,20 +1,17 @@
+// Copyright 2015 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package gc
 
 import (
 	"os"
 	"runtime"
 	"runtime/pprof"
-	"strconv"
 )
 
 func (n *Node) Line() string {
 	return Ctxt.LineHist.LineString(int(n.Lineno))
-}
-
-func atoi(s string) int {
-	// NOTE: Not strconv.Atoi, accepts hex and octal prefixes.
-	n, _ := strconv.ParseInt(s, 0, 0)
-	return int(n)
 }
 
 var atExitFuncs []func()

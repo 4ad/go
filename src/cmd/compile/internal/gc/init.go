@@ -17,13 +17,11 @@ package gc
 //		a->offset += v;
 //		break;
 
-/*
- * a function named init is a special case.
- * it is called by the initialization before
- * main is run. to make it unique within a
- * package and also uncallable, the name,
- * normally "pkg.init", is altered to "pkg.init.1".
- */
+// a function named init is a special case.
+// it is called by the initialization before
+// main is run. to make it unique within a
+// package and also uncallable, the name,
+// normally "pkg.init", is altered to "pkg.init.1".
 
 var renameinit_initgen int
 
@@ -32,33 +30,31 @@ func renameinit() *Sym {
 	return Lookupf("init.%d", renameinit_initgen)
 }
 
-/*
- * hand-craft the following initialization code
- *	var initdone· uint8 				(1)
- *	func init()					(2)
- *		if initdone· != 0 {			(3)
- *			if initdone· == 2		(4)
- *				return
- *			throw();			(5)
- *		}
- *		initdone· = 1;				(6)
- *		// over all matching imported symbols
- *			<pkg>.init()			(7)
- *		{ <init stmts> }			(8)
- *		init.<n>() // if any			(9)
- *		initdone· = 2;				(10)
- *		return					(11)
- *	}
- */
-func anyinit(n *NodeList) bool {
+// hand-craft the following initialization code
+//	var initdone· uint8 				(1)
+//	func init()					(2)
+//              if initdone· > 1 {                      (3)
+//                      return                          (3a)
+//		if initdone· == 1 {			(4)
+//			throw();			(4a)
+//		}
+//		initdone· = 1;				(6)
+//		// over all matching imported symbols
+//			<pkg>.init()			(7)
+//		{ <init stmts> }			(8)
+//		init.<n>() // if any			(9)
+//		initdone· = 2;				(10)
+//		return					(11)
+//	}
+func anyinit(n []*Node) bool {
 	// are there any interesting init statements
-	for l := n; l != nil; l = l.Next {
-		switch l.N.Op {
+	for _, ln := range n {
+		switch ln.Op {
 		case ODCLFUNC, ODCLCONST, ODCLTYPE, OEMPTY:
 			break
 
 		case OAS, OASWB:
-			if isblank(l.N.Left) && candiscard(l.N.Right) {
+			if isblank(ln.Left) && candiscard(ln.Right) {
 				break
 			}
 			fallthrough
@@ -98,12 +94,12 @@ func fninit(n *NodeList) {
 		return
 	}
 
-	n = initfix(n)
-	if !anyinit(n) {
+	nf := initfix(n)
+	if !anyinit(nf) {
 		return
 	}
 
-	var r *NodeList
+	var r []*Node
 
 	// (1)
 	gatevar := newname(Lookup("initdone·"))
@@ -122,39 +118,38 @@ func fninit(n *NodeList) {
 
 	// (3)
 	a := Nod(OIF, nil, nil)
-
-	a.Left = Nod(ONE, gatevar, Nodintconst(0))
-	r = list(r, a)
+	a.Left = Nod(OGT, gatevar, Nodintconst(1))
+	a.Likely = 1
+	r = append(r, a)
+	// (3a)
+	a.Nbody.Set([]*Node{Nod(ORETURN, nil, nil)})
 
 	// (4)
 	b := Nod(OIF, nil, nil)
-
-	b.Left = Nod(OEQ, gatevar, Nodintconst(2))
-	b.Nbody = list1(Nod(ORETURN, nil, nil))
-	a.Nbody = list1(b)
-
-	// (5)
-	b = syslook("throwinit", 0)
-
-	b = Nod(OCALL, b, nil)
-	a.Nbody = list(a.Nbody, b)
+	b.Left = Nod(OEQ, gatevar, Nodintconst(1))
+	// this actually isn't likely, but code layout is better
+	// like this: no JMP needed after the call.
+	b.Likely = 1
+	r = append(r, b)
+	// (4a)
+	b.Nbody.Set([]*Node{Nod(OCALL, syslook("throwinit", 0), nil)})
 
 	// (6)
 	a = Nod(OAS, gatevar, Nodintconst(1))
 
-	r = list(r, a)
+	r = append(r, a)
 
 	// (7)
 	for _, s := range initSyms {
 		if s.Def != nil && s != initsym {
 			// could check that it is fn of no args/returns
 			a = Nod(OCALL, s.Def, nil)
-			r = list(r, a)
+			r = append(r, a)
 		}
 	}
 
 	// (8)
-	r = concat(r, n)
+	r = append(r, nf...)
 
 	// (9)
 	// could check that it is fn of no args/returns
@@ -164,26 +159,26 @@ func fninit(n *NodeList) {
 			break
 		}
 		a = Nod(OCALL, s.Def, nil)
-		r = list(r, a)
+		r = append(r, a)
 	}
 
 	// (10)
 	a = Nod(OAS, gatevar, Nodintconst(2))
 
-	r = list(r, a)
+	r = append(r, a)
 
 	// (11)
 	a = Nod(ORETURN, nil, nil)
 
-	r = list(r, a)
+	r = append(r, a)
 	exportsym(fn.Func.Nname)
 
-	fn.Nbody = r
+	fn.Nbody.Set(r)
 	funcbody(fn)
 
 	Curfn = fn
 	typecheck(&fn, Etop)
-	typechecklist(r, Etop)
+	typecheckslice(r, Etop)
 	Curfn = nil
 	funccompile(fn)
 }

@@ -37,6 +37,8 @@ var (
 	numParallel    = flag.Int("n", runtime.NumCPU(), "number of parallel tests to run")
 	summary        = flag.Bool("summary", false, "show summary of results")
 	showSkips      = flag.Bool("show_skips", false, "show skipped tests")
+	runSkips       = flag.Bool("run_skips", false, "run skipped tests (ignore skip and build tags)")
+	linkshared     = flag.Bool("linkshared", false, "")
 	updateErrors   = flag.Bool("update_errors", false, "update error messages in test file based on compiler output")
 	runoutputLimit = flag.Int("l", defaultRunOutputLimit(), "number of parallel runoutput tests to run")
 
@@ -132,9 +134,6 @@ func main() {
 			failed = true
 		}
 		resCount[status]++
-		if status == "skip" && !*verbose && !*showSkips {
-			continue
-		}
 		dt := fmt.Sprintf("%.3fs", test.dt.Seconds())
 		if status == "FAIL" {
 			fmt.Printf("# go run run.go -- %s\n%s\nFAIL\t%s\t%s\n",
@@ -194,11 +193,19 @@ func goFiles(dir string) []string {
 type runCmd func(...string) ([]byte, error)
 
 func compileFile(runcmd runCmd, longname string) (out []byte, err error) {
-	return runcmd("go", "tool", "compile", "-e", longname)
+	cmd := []string{"go", "tool", "compile", "-e"}
+	if *linkshared {
+		cmd = append(cmd, "-dynlink", "-installsuffix=dynlink")
+	}
+	cmd = append(cmd, longname)
+	return runcmd(cmd...)
 }
 
 func compileInDir(runcmd runCmd, dir string, names ...string) (out []byte, err error) {
 	cmd := []string{"go", "tool", "compile", "-e", "-D", ".", "-I", "."}
+	if *linkshared {
+		cmd = append(cmd, "-dynlink", "-installsuffix=dynlink")
+	}
 	for _, name := range names {
 		cmd = append(cmd, filepath.Join(dir, name))
 	}
@@ -207,7 +214,12 @@ func compileInDir(runcmd runCmd, dir string, names ...string) (out []byte, err e
 
 func linkFile(runcmd runCmd, goname string) (err error) {
 	pfile := strings.Replace(goname, ".go", ".o", -1)
-	_, err = runcmd("go", "tool", "link", "-w", "-o", "a.exe", "-L", ".", pfile)
+	cmd := []string{"go", "tool", "link", "-w", "-o", "a.exe", "-L", "."}
+	if *linkshared {
+		cmd = append(cmd, "-linkshared", "-installsuffix=dynlink")
+	}
+	cmd = append(cmd, pfile)
+	_, err = runcmd(cmd...)
 	return
 }
 
@@ -328,6 +340,9 @@ type context struct {
 // shouldTest looks for build tags in a source file and returns
 // whether the file should be used according to the tags.
 func shouldTest(src string, goos, goarch string) (ok bool, whyNot string) {
+	if *runSkips {
+		return true, ""
+	}
 	for _, line := range strings.Split(src, "\n") {
 		line = strings.TrimSpace(line)
 		if strings.HasPrefix(line, "//") {
@@ -386,6 +401,10 @@ func (ctxt *context) match(name string) bool {
 	}
 
 	if name == ctxt.GOOS || name == ctxt.GOARCH {
+		return true
+	}
+
+	if name == "test_run" {
 		return true
 	}
 
@@ -470,6 +489,9 @@ func (t *test) run() {
 			args = args[1:]
 		}
 	case "skip":
+		if *runSkips {
+			break
+		}
 		t.action = "skip"
 		return
 	default:
@@ -493,6 +515,7 @@ func (t *test) run() {
 	}
 
 	useTmp := true
+	ssaMain := false
 	runcmd := func(args ...string) ([]byte, error) {
 		cmd := exec.Command(args[0], args[1:]...)
 		var buf bytes.Buffer
@@ -501,6 +524,11 @@ func (t *test) run() {
 		if useTmp {
 			cmd.Dir = t.tempDir
 			cmd.Env = envForDir(cmd.Dir)
+		} else {
+			cmd.Env = os.Environ()
+		}
+		if ssaMain && os.Getenv("GOARCH") == "amd64" {
+			cmd.Env = append(cmd.Env, "GOSSAPKG=main")
 		}
 		err := cmd.Run()
 		if err != nil {
@@ -516,6 +544,7 @@ func (t *test) run() {
 
 	case "errorcheck":
 		cmdline := []string{"go", "tool", "compile", "-e", "-o", "a.o"}
+		// No need to add -dynlink even if linkshared if we're just checking for errors...
 		cmdline = append(cmdline, flags...)
 		cmdline = append(cmdline, long)
 		out, err := runcmd(cmdline...)
@@ -631,7 +660,13 @@ func (t *test) run() {
 
 	case "run":
 		useTmp = false
-		out, err := runcmd(append([]string{"go", "run", t.goFileName()}, args...)...)
+		ssaMain = true
+		cmd := []string{"go", "run"}
+		if *linkshared {
+			cmd = append(cmd, "-linkshared")
+		}
+		cmd = append(cmd, t.goFileName())
+		out, err := runcmd(append(cmd, args...)...)
 		if err != nil {
 			t.err = err
 			return
@@ -646,7 +681,12 @@ func (t *test) run() {
 			<-rungatec
 		}()
 		useTmp = false
-		out, err := runcmd(append([]string{"go", "run", t.goFileName()}, args...)...)
+		cmd := []string{"go", "run"}
+		if *linkshared {
+			cmd = append(cmd, "-linkshared")
+		}
+		cmd = append(cmd, t.goFileName())
+		out, err := runcmd(append(cmd, args...)...)
 		if err != nil {
 			t.err = err
 			return
@@ -656,7 +696,13 @@ func (t *test) run() {
 			t.err = fmt.Errorf("write tempfile:%s", err)
 			return
 		}
-		out, err = runcmd("go", "run", tfile)
+		ssaMain = true
+		cmd = []string{"go", "run"}
+		if *linkshared {
+			cmd = append(cmd, "-linkshared")
+		}
+		cmd = append(cmd, tfile)
+		out, err = runcmd(cmd...)
 		if err != nil {
 			t.err = err
 			return
@@ -667,7 +713,12 @@ func (t *test) run() {
 
 	case "errorcheckoutput":
 		useTmp = false
-		out, err := runcmd(append([]string{"go", "run", t.goFileName()}, args...)...)
+		cmd := []string{"go", "run"}
+		if *linkshared {
+			cmd = append(cmd, "-linkshared")
+		}
+		cmd = append(cmd, t.goFileName())
+		out, err := runcmd(append(cmd, args...)...)
 		if err != nil {
 			t.err = err
 			return

@@ -5,12 +5,27 @@
 package gc
 
 import (
+	"bytes"
 	"cmd/internal/obj"
 	"fmt"
 	"sort"
 	"unicode"
 	"unicode/utf8"
 )
+
+var (
+	newexport    int // if set, use new export format
+	Debug_export int // if set, print debugging information about export data
+	exportsize   int
+)
+
+func exportf(format string, args ...interface{}) {
+	n, _ := fmt.Fprintf(bout, format, args...)
+	exportsize += n
+	if Debug_export != 0 {
+		fmt.Printf(format, args...)
+	}
+}
 
 var asmlist *NodeList
 
@@ -35,8 +50,8 @@ func exportsym(n *Node) {
 }
 
 func exportname(s string) bool {
-	if s[0] < utf8.RuneSelf {
-		return 'A' <= s[0] && s[0] <= 'Z'
+	if r := s[0]; r < utf8.RuneSelf {
+		return 'A' <= r && r <= 'Z'
 	}
 	r, _ := utf8.DecodeRuneInString(s)
 	return unicode.IsUpper(r)
@@ -57,7 +72,7 @@ func exportedsym(sym *Sym) bool {
 	return sym.Pkg == localpkg && exportname(sym.Name)
 }
 
-func autoexport(n *Node, ctxt uint8) {
+func autoexport(n *Node, ctxt Class) {
 	if n == nil || n.Sym == nil {
 		return
 	}
@@ -87,13 +102,19 @@ func dumppkg(p *Pkg) {
 	if !p.Direct {
 		suffix = " // indirect"
 	}
-	fmt.Fprintf(bout, "\timport %s %q%s\n", p.Name, p.Path, suffix)
+	exportf("\timport %s %q%s\n", p.Name, p.Path, suffix)
 }
 
 // Look for anything we need for the inline body
 func reexportdeplist(ll *NodeList) {
 	for ; ll != nil; ll = ll.Next {
 		reexportdep(ll.N)
+	}
+}
+
+func reexportdepslice(ll []*Node) {
+	for _, n := range ll {
+		reexportdep(n)
 	}
 }
 
@@ -128,7 +149,7 @@ func reexportdep(n *Node) {
 			}
 		}
 
-		// Local variables in the bodies need their type.
+	// Local variables in the bodies need their type.
 	case ODCL:
 		t := n.Left.Type
 
@@ -167,7 +188,7 @@ func reexportdep(n *Node) {
 			exportlist = append(exportlist, n)
 		}
 
-		// for operations that need a type when rendered, put the type on the export list.
+	// for operations that need a type when rendered, put the type on the export list.
 	case OCONV,
 		OCONVIFACE,
 		OCONVNOP,
@@ -202,7 +223,7 @@ func reexportdep(n *Node) {
 	reexportdeplist(n.List)
 	reexportdeplist(n.Rlist)
 	reexportdeplist(n.Ninit)
-	reexportdeplist(n.Nbody)
+	reexportdepslice(n.Nbody.Slice())
 }
 
 func dumpexportconst(s *Sym) {
@@ -216,9 +237,9 @@ func dumpexportconst(s *Sym) {
 	dumpexporttype(t)
 
 	if t != nil && !isideal(t) {
-		fmt.Fprintf(bout, "\tconst %v %v = %v\n", Sconv(s, obj.FmtSharp), Tconv(t, obj.FmtSharp), Vconv(n.Val(), obj.FmtSharp))
+		exportf("\tconst %v %v = %v\n", Sconv(s, obj.FmtSharp), Tconv(t, obj.FmtSharp), Vconv(n.Val(), obj.FmtSharp))
 	} else {
-		fmt.Fprintf(bout, "\tconst %v = %v\n", Sconv(s, obj.FmtSharp), Vconv(n.Val(), obj.FmtSharp))
+		exportf("\tconst %v = %v\n", Sconv(s, obj.FmtSharp), Vconv(n.Val(), obj.FmtSharp))
 	}
 }
 
@@ -234,7 +255,7 @@ func dumpexportvar(s *Sym) {
 	dumpexporttype(t)
 
 	if t.Etype == TFUNC && n.Class == PFUNC {
-		if n.Func != nil && n.Func.Inl != nil {
+		if n.Func != nil && len(n.Func.Inl.Slice()) != 0 {
 			// when lazily typechecking inlined bodies, some re-exported ones may not have been typechecked yet.
 			// currently that can leave unresolved ONONAMEs in import-dot-ed packages in the wrong package
 			if Debug['l'] < 2 {
@@ -242,14 +263,14 @@ func dumpexportvar(s *Sym) {
 			}
 
 			// NOTE: The space after %#S here is necessary for ld's export data parser.
-			fmt.Fprintf(bout, "\tfunc %v %v { %v }\n", Sconv(s, obj.FmtSharp), Tconv(t, obj.FmtShort|obj.FmtSharp), Hconv(n.Func.Inl, obj.FmtSharp))
+			exportf("\tfunc %v %v { %v }\n", Sconv(s, obj.FmtSharp), Tconv(t, obj.FmtShort|obj.FmtSharp), Hconvslice(n.Func.Inl.Slice(), obj.FmtSharp|obj.FmtBody))
 
-			reexportdeplist(n.Func.Inl)
+			reexportdepslice(n.Func.Inl.Slice())
 		} else {
-			fmt.Fprintf(bout, "\tfunc %v %v\n", Sconv(s, obj.FmtSharp), Tconv(t, obj.FmtShort|obj.FmtSharp))
+			exportf("\tfunc %v %v\n", Sconv(s, obj.FmtSharp), Tconv(t, obj.FmtShort|obj.FmtSharp))
 		}
 	} else {
-		fmt.Fprintf(bout, "\tvar %v %v\n", Sconv(s, obj.FmtSharp), Tconv(t, obj.FmtSharp))
+		exportf("\tvar %v %v\n", Sconv(s, obj.FmtSharp), Tconv(t, obj.FmtSharp))
 	}
 }
 
@@ -287,22 +308,22 @@ func dumpexporttype(t *Type) {
 	}
 	sort.Sort(methodbyname(m))
 
-	fmt.Fprintf(bout, "\ttype %v %v\n", Sconv(t.Sym, obj.FmtSharp), Tconv(t, obj.FmtSharp|obj.FmtLong))
+	exportf("\ttype %v %v\n", Sconv(t.Sym, obj.FmtSharp), Tconv(t, obj.FmtSharp|obj.FmtLong))
 	for _, f := range m {
 		if f.Nointerface {
-			fmt.Fprintf(bout, "\t//go:nointerface\n")
+			exportf("\t//go:nointerface\n")
 		}
-		if f.Type.Nname != nil && f.Type.Nname.Func.Inl != nil { // nname was set by caninl
+		if f.Type.Nname != nil && len(f.Type.Nname.Func.Inl.Slice()) != 0 { // nname was set by caninl
 
 			// when lazily typechecking inlined bodies, some re-exported ones may not have been typechecked yet.
 			// currently that can leave unresolved ONONAMEs in import-dot-ed packages in the wrong package
 			if Debug['l'] < 2 {
 				typecheckinl(f.Type.Nname)
 			}
-			fmt.Fprintf(bout, "\tfunc (%v) %v %v { %v }\n", Tconv(getthisx(f.Type).Type, obj.FmtSharp), Sconv(f.Sym, obj.FmtShort|obj.FmtByte|obj.FmtSharp), Tconv(f.Type, obj.FmtShort|obj.FmtSharp), Hconv(f.Type.Nname.Func.Inl, obj.FmtSharp))
-			reexportdeplist(f.Type.Nname.Func.Inl)
+			exportf("\tfunc (%v) %v %v { %v }\n", Tconv(getthisx(f.Type).Type, obj.FmtSharp), Sconv(f.Sym, obj.FmtShort|obj.FmtByte|obj.FmtSharp), Tconv(f.Type, obj.FmtShort|obj.FmtSharp), Hconvslice(f.Type.Nname.Func.Inl.Slice(), obj.FmtSharp))
+			reexportdepslice(f.Type.Nname.Func.Inl.Slice())
 		} else {
-			fmt.Fprintf(bout, "\tfunc (%v) %v %v\n", Tconv(getthisx(f.Type).Type, obj.FmtSharp), Sconv(f.Sym, obj.FmtShort|obj.FmtByte|obj.FmtSharp), Tconv(f.Type, obj.FmtShort|obj.FmtSharp))
+			exportf("\tfunc (%v) %v %v\n", Tconv(getthisx(f.Type).Type, obj.FmtSharp), Sconv(f.Sym, obj.FmtShort|obj.FmtByte|obj.FmtSharp), Tconv(f.Type, obj.FmtShort|obj.FmtSharp))
 		}
 	}
 }
@@ -341,51 +362,93 @@ func dumpsym(s *Sym) {
 }
 
 func dumpexport() {
-	lno := lineno
-
 	if buildid != "" {
-		fmt.Fprintf(bout, "build id %q\n", buildid)
+		exportf("build id %q\n", buildid)
 	}
-	fmt.Fprintf(bout, "\n$$\npackage %s", localpkg.Name)
-	if safemode != 0 {
-		fmt.Fprintf(bout, " safe")
-	}
-	fmt.Fprintf(bout, "\n")
 
-	for _, p := range pkgs {
-		if p.Direct {
-			dumppkg(p)
+	size := 0 // size of export section without enclosing markers
+	if forceNewExport || newexport != 0 {
+		// binary export
+		// The linker also looks for the $$ marker - use char after $$ to distinguish format.
+		exportf("\n$$B\n")        // indicate binary format
+		const verifyExport = true // enable to check format changes
+		if verifyExport {
+			// save a copy of the export data
+			var copy bytes.Buffer
+			bcopy := obj.Binitw(&copy)
+			size = Export(bcopy, Debug_export != 0)
+			bcopy.Flush() // flushing to bytes.Buffer cannot fail
+			if n, err := bout.Write(copy.Bytes()); n != size || err != nil {
+				Fatalf("error writing export data: got %d bytes, want %d bytes, err = %v", n, size, err)
+			}
+			// export data must contain no '$' so that we can find the end by searching for "$$"
+			if bytes.IndexByte(copy.Bytes(), '$') >= 0 {
+				Fatalf("export data contains $")
+			}
+
+			// verify that we can read the copied export data back in
+			// (use empty package map to avoid collisions)
+			savedPkgMap := pkgMap
+			savedPkgs := pkgs
+			pkgMap = make(map[string]*Pkg)
+			pkgs = nil
+			importpkg = mkpkg("")
+			Import(obj.Binitr(&copy)) // must not die
+			importpkg = nil
+			pkgs = savedPkgs
+			pkgMap = savedPkgMap
+		} else {
+			size = Export(bout, Debug_export != 0)
 		}
+		exportf("\n$$\n")
+	} else {
+		// textual export
+		lno := lineno
+
+		exportf("\n$$\n") // indicate textual format
+		exportsize = 0
+		exportf("package %s", localpkg.Name)
+		if safemode != 0 {
+			exportf(" safe")
+		}
+		exportf("\n")
+
+		for _, p := range pkgs {
+			if p.Direct {
+				dumppkg(p)
+			}
+		}
+
+		// exportlist grows during iteration - cannot use range
+		for len(exportlist) > 0 {
+			n := exportlist[0]
+			exportlist = exportlist[1:]
+			lineno = n.Lineno
+			dumpsym(n.Sym)
+		}
+
+		size = exportsize
+		exportf("\n$$\n")
+		lineno = lno
 	}
 
-	// exportlist grows during iteration - cannot use range
-	for len(exportlist) > 0 {
-		n := exportlist[0]
-		exportlist = exportlist[1:]
-		lineno = n.Lineno
-		dumpsym(n.Sym)
+	if Debug_export != 0 {
+		fmt.Printf("export data size = %d bytes\n", size)
 	}
-
-	fmt.Fprintf(bout, "\n$$\n")
-	lineno = lno
 }
 
-/*
- * import
- */
+// import
 
-/*
- * return the sym for ss, which should match lexical
- */
-func importsym(s *Sym, op int) *Sym {
-	if s.Def != nil && int(s.Def.Op) != op {
+// return the sym for ss, which should match lexical
+func importsym(s *Sym, op Op) *Sym {
+	if s.Def != nil && s.Def.Op != op {
 		pkgstr := fmt.Sprintf("during import %q", importpkg.Path)
 		redeclare(s, pkgstr)
 	}
 
 	// mark the symbol so it is not reexported
 	if s.Def == nil {
-		if exportname(s.Name) || initname(s.Name) {
+		if Debug['A'] != 0 || exportname(s.Name) || initname(s.Name) {
 			s.Flags |= SymExport
 		} else {
 			s.Flags |= SymPackage // package scope
@@ -395,9 +458,7 @@ func importsym(s *Sym, op int) *Sym {
 	return s
 }
 
-/*
- * return the type pkg.name, forward declaring if needed
- */
+// return the type pkg.name, forward declaring if needed
 func pkgtype(s *Sym) *Type {
 	importsym(s, OTYPE)
 	if s.Def == nil || s.Def.Op != OTYPE {
@@ -497,7 +558,7 @@ func importtype(pt *Type, t *Type) {
 		copytype(pt.Nod, t)
 		pt.Nod = n // unzero nod
 		pt.Sym.Importdef = importpkg
-		pt.Sym.Lastlineno = int32(parserline())
+		pt.Sym.Lastlineno = lineno
 		declare(n, PEXTERN)
 		checkwidth(pt)
 	} else if !Eqtype(pt.Orig, t) {

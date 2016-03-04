@@ -298,7 +298,7 @@ func (z *Float) setExpAndRound(exp int64, sbit uint) {
 // not require 0.5 <= |mant| < 1.0. Specifically:
 //
 //	mant := new(Float)
-//	new(Float).SetMantExp(mant, x.SetMantExp(mant)).Cmp(x).Eql() is true
+//	new(Float).SetMantExp(mant, x.MantExp(mant)).Cmp(x) == 0
 //
 // Special cases are:
 //
@@ -1123,7 +1123,7 @@ func (x *Float) Int(z *Int) (*Int, Accuracy) {
 
 // Rat returns the rational number corresponding to x;
 // or nil if x is an infinity.
-// The result is Exact is x is not an Inf.
+// The result is Exact if x is not an Inf.
 // If a non-nil *Rat argument z is provided, Rat stores
 // the result in z instead of allocating a new Rat.
 func (x *Float) Rat(z *Rat) (*Rat, Accuracy) {
@@ -1427,7 +1427,7 @@ func (z *Float) Add(x, y *Float) *Float {
 	}
 
 	if x.form == finite && y.form == finite {
-		// x + y (commom case)
+		// x + y (common case)
 		z.neg = x.neg
 		if x.neg == y.neg {
 			// x + y == x + y

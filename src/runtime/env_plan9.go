@@ -1,4 +1,4 @@
-// Copyright 2012 The Go Authors.  All rights reserved.
+// Copyright 2012 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -40,8 +40,8 @@ func gogetenv(key string) string {
 	}
 
 	var s string
-	sp := (*_string)(unsafe.Pointer(&s))
-	sp.str = &p[0]
+	sp := stringStructOf(&s)
+	sp.str = unsafe.Pointer(&p[0])
 	sp.len = int(r)
 	return s
 }

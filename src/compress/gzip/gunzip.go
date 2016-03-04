@@ -58,18 +58,18 @@ type Header struct {
 // uncompressed data from a gzip-format compressed file.
 //
 // In general, a gzip file can be a concatenation of gzip files,
-// each with its own header.  Reads from the Reader
+// each with its own header. Reads from the Reader
 // return the concatenation of the uncompressed data of each.
 // Only the first header is recorded in the Reader fields.
 //
 // Gzip files store a length and checksum of the uncompressed data.
 // The Reader will return a ErrChecksum when Read
 // reaches the end of the uncompressed data if it does not
-// have the expected length or checksum.  Clients should treat data
+// have the expected length or checksum. Clients should treat data
 // returned by Read as tentative until they receive the io.EOF
 // marking the end of the data.
 type Reader struct {
-	Header
+	Header       // valid after NewReader or Reader.Reset
 	r            flate.Reader
 	decompressor io.ReadCloser
 	digest       hash.Hash32
@@ -83,7 +83,10 @@ type Reader struct {
 // NewReader creates a new Reader reading the given reader.
 // If r does not also implement io.ByteReader,
 // the decompressor may read more data than necessary from r.
+//
 // It is the caller's responsibility to call Close on the Reader when done.
+//
+// The Reader.Header fields will be valid in the Reader returned.
 func NewReader(r io.Reader) (*Reader, error) {
 	z := new(Reader)
 	z.r = makeReader(r)
@@ -296,7 +299,7 @@ func (z *Reader) Read(p []byte) (n int, err error) {
 		return
 	}
 
-	// Yes.  Reset and read from it.
+	// Yes. Reset and read from it.
 	z.digest.Reset()
 	z.size = 0
 	return z.Read(p)

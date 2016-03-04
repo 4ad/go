@@ -341,7 +341,7 @@ func TestExtraFilesFDShuffle(t *testing.T) {
 	//
 	// We want to test that FDs in the child do not get overwritten
 	// by one another as this shuffle occurs. The original implementation
-	// was buggy in that in some data dependent cases it would ovewrite
+	// was buggy in that in some data dependent cases it would overwrite
 	// stderr in the child with one of the ExtraFile members.
 	// Testing for this case is difficult because it relies on using
 	// the same FD values as that case. In particular, an FD of 3
@@ -697,7 +697,7 @@ func TestHelperProcess(*testing.T) {
 		}
 		// Referring to fd3 here ensures that it is not
 		// garbage collected, and therefore closed, while
-		// executing the wantfd loop above.  It doesn't matter
+		// executing the wantfd loop above. It doesn't matter
 		// what we do with fd3 as long as we refer to it;
 		// closing it is the easy choice.
 		fd3.Close()
@@ -760,6 +760,9 @@ func TestHelperProcess(*testing.T) {
 		}
 		fmt.Print(p)
 		os.Exit(0)
+	case "stderrfail":
+		fmt.Fprintf(os.Stderr, "some stderr text\n")
+		os.Exit(1)
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command %q\n", cmd)
 		os.Exit(2)
@@ -814,5 +817,21 @@ func TestClosePipeOnCopyError(t *testing.T) {
 		// ok
 	case <-time.After(5 * time.Second):
 		t.Fatalf("yes got stuck writing to bad writer")
+	}
+}
+
+func TestOutputStderrCapture(t *testing.T) {
+	testenv.MustHaveExec(t)
+
+	cmd := helperCommand(t, "stderrfail")
+	_, err := cmd.Output()
+	ee, ok := err.(*exec.ExitError)
+	if !ok {
+		t.Fatalf("Output error type = %T; want ExitError", err)
+	}
+	got := string(ee.Stderr)
+	want := "some stderr text\n"
+	if got != want {
+		t.Errorf("ExitError.Stderr = %q; want %q", got, want)
 	}
 }

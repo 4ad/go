@@ -1,4 +1,4 @@
-// Copyright 2013 The Go Authors.  All rights reserved.
+// Copyright 2013 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -8,6 +8,8 @@ import (
 	"cmd/internal/obj"
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 )
 
 // funcpctab writes to dst a pc-value table mapping the code in func to the values
@@ -95,7 +97,7 @@ func pciterinit(ctxt *Link, it *Pciter, d *Pcdata) {
 	pciternext(it)
 }
 
-// Copyright 2013 The Go Authors.  All rights reserved.
+// Copyright 2013 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -150,6 +152,7 @@ func renumberfiles(ctxt *Link, files []*LSym, d *Pcdata) {
 			f.Value = int64(ctxt.Nhistfile)
 			f.Type = obj.SFILEPATH
 			f.Next = ctxt.Filesyms
+			f.Name = expandGoroot(f.Name)
 			ctxt.Filesyms = f
 		}
 	}
@@ -215,7 +218,7 @@ func pclntab() {
 	funcdata_bytes := int64(0)
 	ftab := Linklookup(Ctxt, "runtime.pclntab", 0)
 	ftab.Type = obj.SPCLNTAB
-	ftab.Reachable = true
+	ftab.Attr |= AttrReachable
 
 	// See golang.org/s/go12symtab for the format. Briefly:
 	//	8-byte header
@@ -376,6 +379,18 @@ func pclntab() {
 	}
 }
 
+func expandGoroot(s string) string {
+	const n = len("$GOROOT")
+	if len(s) >= n+1 && s[:n] == "$GOROOT" && (s[n] == '/' || s[n] == '\\') {
+		root := goroot
+		if final := os.Getenv("GOROOT_FINAL"); final != "" {
+			root = final
+		}
+		return filepath.ToSlash(filepath.Join(root, s[n:]))
+	}
+	return s
+}
+
 const (
 	BUCKETSIZE    = 256 * MINFUNC
 	SUBBUCKETS    = 16
@@ -384,12 +399,12 @@ const (
 )
 
 // findfunctab generates a lookup table to quickly find the containing
-// function for a pc.  See src/runtime/symtab.go:findfunc for details.
+// function for a pc. See src/runtime/symtab.go:findfunc for details.
 func findfunctab() {
 	t := Linklookup(Ctxt, "runtime.findfunctab", 0)
 	t.Type = obj.SRODATA
-	t.Reachable = true
-	t.Local = true
+	t.Attr |= AttrReachable
+	t.Attr |= AttrLocal
 
 	// find min and max address
 	min := Ctxt.Textp.Value

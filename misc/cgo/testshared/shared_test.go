@@ -21,6 +21,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -203,11 +204,14 @@ func TestNoTextrel(t *testing.T) {
 }
 
 // The install command should have created a "shlibname" file for the
-// listed packages (and runtime/cgo) indicating the name of the shared
-// library containing it.
+// listed packages (and runtime/cgo, and math on arm) indicating the
+// name of the shared library containing it.
 func TestShlibnameFiles(t *testing.T) {
 	pkgs := append([]string{}, minpkgs...)
 	pkgs = append(pkgs, "runtime/cgo")
+	if runtime.GOARCH == "arm" {
+		pkgs = append(pkgs, "math")
+	}
 	for _, pkg := range pkgs {
 		shlibnamefile := filepath.Join(gorootInstallDir, pkg+".shlibname")
 		contentsb, err := ioutil.ReadFile(shlibnamefile)
@@ -281,23 +285,23 @@ func readNotes(f *elf.File) ([]*note, error) {
 				if err == io.EOF {
 					break
 				}
-				return nil, fmt.Errorf("read namesize failed:", err)
+				return nil, fmt.Errorf("read namesize failed: %v", err)
 			}
 			err = binary.Read(r, f.ByteOrder, &descsize)
 			if err != nil {
-				return nil, fmt.Errorf("read descsize failed:", err)
+				return nil, fmt.Errorf("read descsize failed: %v", err)
 			}
 			err = binary.Read(r, f.ByteOrder, &tag)
 			if err != nil {
-				return nil, fmt.Errorf("read type failed:", err)
+				return nil, fmt.Errorf("read type failed: %v", err)
 			}
 			name, err := readwithpad(r, namesize)
 			if err != nil {
-				return nil, fmt.Errorf("read name failed:", err)
+				return nil, fmt.Errorf("read name failed: %v", err)
 			}
 			desc, err := readwithpad(r, descsize)
 			if err != nil {
-				return nil, fmt.Errorf("read desc failed:", err)
+				return nil, fmt.Errorf("read desc failed: %v", err)
 			}
 			notes = append(notes, &note{name: string(name), tag: tag, desc: string(desc), section: sect})
 		}
@@ -357,6 +361,36 @@ func TestTrivialExecutable(t *testing.T) {
 func TestCgoExecutable(t *testing.T) {
 	goCmd(t, "install", "-linkshared", "execgo")
 	run(t, "cgo executable", "./bin/execgo")
+}
+
+func checkPIE(t *testing.T, name string) {
+	f, err := elf.Open(name)
+	if err != nil {
+		t.Fatal("elf.Open failed: ", err)
+	}
+	defer f.Close()
+	if f.Type != elf.ET_DYN {
+		t.Errorf("%s has type %v, want ET_DYN", name, f.Type)
+	}
+	if hasDynTag(f, elf.DT_TEXTREL) {
+		t.Errorf("%s has DT_TEXTREL set", name)
+	}
+}
+
+func TestTrivialPIE(t *testing.T) {
+	name := "trivial_pie"
+	goCmd(t, "build", "-buildmode=pie", "-o="+name, "trivial")
+	defer os.Remove(name)
+	run(t, name, "./"+name)
+	checkPIE(t, name)
+}
+
+func TestCgoPIE(t *testing.T) {
+	name := "cgo_pie"
+	goCmd(t, "build", "-buildmode=pie", "-o="+name, "execgo")
+	defer os.Remove(name)
+	run(t, name, "./"+name)
+	checkPIE(t, name)
 }
 
 // Build a GOPATH package into a shared library that links against the goroot runtime
@@ -714,4 +748,16 @@ func TestABIChecking(t *testing.T) {
 	appendFile("src/dep/dep.go", "func noABIBreak() {}\n")
 	goCmd(t, "install", "-buildmode=shared", "-linkshared", "dep")
 	run(t, "after non-ABI breaking change", "./bin/exe")
+}
+
+// If a package 'explicit' imports a package 'implicit', building
+// 'explicit' into a shared library implicitly includes implicit in
+// the shared library. Building an executable that imports both
+// explicit and implicit builds the code from implicit into the
+// executable rather than fetching it from the shared library. The
+// link still succeeds and the executable still runs though.
+func TestImplicitInclusion(t *testing.T) {
+	goCmd(t, "install", "-buildmode=shared", "-linkshared", "explicit")
+	goCmd(t, "install", "-linkshared", "implicitcmd")
+	run(t, "running executable linked against library that contains same package as it", "./bin/implicitcmd")
 }

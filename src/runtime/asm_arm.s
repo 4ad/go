@@ -31,7 +31,8 @@ TEXT runtime·rt0_go(SB),NOSPLIT,$-4
 	MOVW	R8, g_m(g)
 
 	// create istack out of the OS stack
-	MOVW	$(-8192+104)(R13), R0
+	// (1MB of system stack is available on iOS and Android)
+	MOVW	$(-64*1024+104)(R13), R0
 	MOVW	R0, g_stackguard0(g)
 	MOVW	R0, g_stackguard1(g)
 	MOVW	R0, (g_stack+stack_lo)(g)
@@ -85,7 +86,11 @@ TEXT runtime·breakpoint(SB),NOSPLIT,$0-0
 #ifdef GOOS_nacl
 	WORD	$0xe125be7f	// BKPT 0x5bef, NACL_INSTR_ARM_BREAKPOINT
 #else
+#ifdef GOOS_plan9
+	WORD	$0xD1200070	// undefined instruction used as armv5 breakpoint in Plan 9
+#else
 	WORD	$0xe7f001f0	// undefined instruction that gdb understands is a software breakpoint
+#endif
 #endif
 	RET
 
@@ -148,7 +153,7 @@ TEXT runtime·gogo(SB),NOSPLIT,$-4-4
 
 // func mcall(fn func(*g))
 // Switch to m->g0's stack, call fn(g).
-// Fn must never return.  It should gogo(&g->sched)
+// Fn must never return. It should gogo(&g->sched)
 // to keep running g.
 TEXT runtime·mcall(SB),NOSPLIT,$-4-4
 	// Save caller state in g->sched.
@@ -180,7 +185,7 @@ TEXT runtime·mcall(SB),NOSPLIT,$-4-4
 	RET
 
 // systemstack_switch is a dummy routine that systemstack leaves at the bottom
-// of the G stack.  We need to distinguish the routine that
+// of the G stack. We need to distinguish the routine that
 // lives at the bottom of the G stack from the one that lives
 // at the top of the system stack because the one at the top of
 // the system stack terminates the stack walk (see topofstack()).
@@ -212,7 +217,7 @@ TEXT runtime·systemstack(SB),NOSPLIT,$0-4
 	BL	(R0)
 
 switch:
-	// save our state in g->sched.  Pretend to
+	// save our state in g->sched. Pretend to
 	// be systemstack_switch if the G stack is scanned.
 	MOVW	$runtime·systemstack_switch(SB), R3
 #ifdef GOOS_nacl
@@ -555,7 +560,13 @@ TEXT	·cgocallback_gofunc(SB),NOSPLIT,$8-12
 	// lots of space, but the linker doesn't know. Hide the call from
 	// the linker analysis by using an indirect call.
 	CMP	$0, g
-	B.NE	havem
+	B.EQ	needm
+
+	MOVW	g_m(g), R8
+	MOVW	R8, savedm-4(SP)
+	B	havem
+
+needm:
 	MOVW	g, savedm-4(SP) // g is zero, so is m.
 	MOVW	$runtime·needm(SB), R0
 	BL	(R0)
@@ -576,8 +587,6 @@ TEXT	·cgocallback_gofunc(SB),NOSPLIT,$8-12
 	MOVW	R13, (g_sched+gobuf_sp)(R3)
 
 havem:
-	MOVW	g_m(g), R8
-	MOVW	R8, savedm-4(SP)
 	// Now there's a valid m, and we're running on its m->g0.
 	// Save current m->g0->sched.sp on stack and then set it to SP.
 	// Save current sp in m->g0->sched.sp in preparation for
@@ -694,67 +703,10 @@ TEXT runtime·abort(SB),NOSPLIT,$-4-0
 	MOVW	$0, R0
 	MOVW	(R0), R1
 
-// bool armcas(int32 *val, int32 old, int32 new)
-// Atomically:
-//	if(*val == old){
-//		*val = new;
-//		return 1;
-//	}else
-//		return 0;
-//
-// To implement runtime·cas in sys_$GOOS_arm.s
-// using the native instructions, use:
-//
-//	TEXT runtime·cas(SB),NOSPLIT,$0
-//		B	runtime·armcas(SB)
-//
-TEXT runtime·armcas(SB),NOSPLIT,$0-13
-	MOVW	valptr+0(FP), R1
-	MOVW	old+4(FP), R2
-	MOVW	new+8(FP), R3
-casl:
-	LDREX	(R1), R0
-	CMP	R0, R2
-	BNE	casfail
-
-	MOVB	runtime·goarm(SB), R11
-	CMP	$7, R11
-	BLT	2(PC)
-	WORD	$0xf57ff05a	// dmb ishst
-
-	STREX	R3, (R1), R0
-	CMP	$0, R0
-	BNE	casl
-	MOVW	$1, R0
-
-	MOVB	runtime·goarm(SB), R11
-	CMP	$7, R11
-	BLT	2(PC)
-	WORD	$0xf57ff05b	// dmb ish
-
-	MOVB	R0, ret+12(FP)
-	RET
-casfail:
-	MOVW	$0, R0
-	MOVB	R0, ret+12(FP)
-	RET
-
-TEXT runtime·casuintptr(SB),NOSPLIT,$0-13
-	B	runtime·cas(SB)
-
-TEXT runtime·atomicloaduintptr(SB),NOSPLIT,$0-8
-	B	runtime·atomicload(SB)
-
-TEXT runtime·atomicloaduint(SB),NOSPLIT,$0-8
-	B	runtime·atomicload(SB)
-
-TEXT runtime·atomicstoreuintptr(SB),NOSPLIT,$0-8
-	B	runtime·atomicstore(SB)
-
 // armPublicationBarrier is a native store/store barrier for ARMv7+.
 // On earlier ARM revisions, armPublicationBarrier is a no-op.
 // This will not work on SMP ARMv6 machines, if any are in use.
-// To implement publiationBarrier in sys_$GOOS_arm.s using the native
+// To implement publicationBarrier in sys_$GOOS_arm.s using the native
 // instructions, use:
 //
 //	TEXT ·publicationBarrier(SB),NOSPLIT,$-4-0
@@ -798,13 +750,16 @@ TEXT runtime·memhash_varlen(SB),NOSPLIT,$16-12
 	MOVW	R0, ret+8(FP)
 	RET
 
-TEXT runtime·memeq(SB),NOSPLIT,$-4-13
+// memequal(p, q unsafe.Pointer, size uintptr) bool
+TEXT runtime·memequal(SB),NOSPLIT,$-4-13
 	MOVW	a+0(FP), R1
 	MOVW	b+4(FP), R2
 	MOVW	size+8(FP), R3
 	ADD	R1, R3, R6
 	MOVW	$1, R0
 	MOVB	R0, ret+12(FP)
+	CMP	R1, R2
+	RET.EQ
 loop:
 	CMP	R1, R6
 	RET.EQ
@@ -827,7 +782,7 @@ TEXT runtime·memequal_varlen(SB),NOSPLIT,$16-9
 	MOVW	R0, 4(R13)
 	MOVW	R1, 8(R13)
 	MOVW	R2, 12(R13)
-	BL	runtime·memeq(SB)
+	BL	runtime·memequal(SB)
 	MOVB	16(R13), R0
 	MOVB	R0, ret+8(FP)
 	RET
@@ -914,7 +869,7 @@ loop:
 	MOVB	R8, v+16(FP)
 	RET
 
-// TODO: share code with memeq?
+// TODO: share code with memequal?
 TEXT bytes·Equal(SB),NOSPLIT,$0-25
 	MOVW	a_len+4(FP), R1
 	MOVW	b_len+16(FP), R3
@@ -1018,7 +973,7 @@ yieldloop:
 // Called from cgo wrappers, this function returns g->m->curg.stack.hi.
 // Must obey the gcc calling convention.
 TEXT _cgo_topofstack(SB),NOSPLIT,$8
-	// R11 and g register are clobbered by load_g.  They are
+	// R11 and g register are clobbered by load_g. They are
 	// callee-save in the gcc calling convention, so save them here.
 	MOVW	R11, saveR11-4(SP)
 	MOVW	g, saveG-8(SP)
@@ -1075,3 +1030,19 @@ TEXT runtime·usplitR0(SB),NOSPLIT,$0
 
 TEXT runtime·sigreturn(SB),NOSPLIT,$0-4
         RET
+
+#ifndef GOOS_nacl
+// This is called from .init_array and follows the platform, not Go, ABI.
+TEXT runtime·addmoduledata(SB),NOSPLIT,$0-4
+	MOVW	R9, saver9-4(SP) // The access to global variables below implicitly uses R9, which is callee-save
+	MOVW	runtime·lastmoduledatap(SB), R1
+	MOVW	R0, moduledata_next(R1)
+	MOVW	R0, runtime·lastmoduledatap(SB)
+	MOVW	saver9-4(SP), R9
+	RET
+#endif
+
+TEXT ·checkASM(SB),NOSPLIT,$0-1
+	MOVW	$1, R3
+	MOVB	R3, ret+0(FP)
+	RET

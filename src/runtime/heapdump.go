@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Implementation of runtime/debug.WriteHeapDump.  Writes all
+// Implementation of runtime/debug.WriteHeapDump. Writes all
 // objects in the heap plus additional info (roots, threads,
 // finalizers, etc.) to a file.
 
@@ -11,7 +11,10 @@
 
 package runtime
 
-import "unsafe"
+import (
+	"runtime/internal/sys"
+	"unsafe"
+)
 
 //go:linkname runtime_debug_WriteHeapDump runtime/debug.WriteHeapDump
 func runtime_debug_WriteHeapDump(fd uintptr) {
@@ -70,7 +73,7 @@ func dwrite(data unsafe.Pointer, len uintptr) {
 		return
 	}
 
-	write(dumpfd, (unsafe.Pointer)(&buf), int32(nbuf))
+	write(dumpfd, unsafe.Pointer(&buf), int32(nbuf))
 	if len >= bufSize {
 		write(dumpfd, data, int32(len))
 		nbuf = 0
@@ -85,7 +88,7 @@ func dwritebyte(b byte) {
 }
 
 func flush() {
-	write(dumpfd, (unsafe.Pointer)(&buf), int32(nbuf))
+	write(dumpfd, unsafe.Pointer(&buf), int32(nbuf))
 	nbuf = 0
 }
 
@@ -94,7 +97,7 @@ func flush() {
 // Inside a bucket, we keep a list of types that
 // have been serialized so far, most recently used first.
 // Note: when a bucket overflows we may end up
-// serializing a type more than once.  That's ok.
+// serializing a type more than once. That's ok.
 const (
 	typeCacheBuckets = 256
 	typeCacheAssoc   = 4
@@ -142,7 +145,7 @@ func dumpslice(b []byte) {
 }
 
 func dumpstr(s string) {
-	sp := (*stringStruct)(unsafe.Pointer(&s))
+	sp := stringStructOf(&s)
 	dumpmemrange(sp.str, uintptr(sp.len))
 }
 
@@ -169,7 +172,7 @@ func dumptype(t *_type) {
 		}
 	}
 
-	// Might not have been dumped yet.  Dump it and
+	// Might not have been dumped yet. Dump it and
 	// remember we did so.
 	for j := typeCacheAssoc - 1; j > 0; j-- {
 		b.t[j] = b.t[j-1]
@@ -180,11 +183,12 @@ func dumptype(t *_type) {
 	dumpint(tagType)
 	dumpint(uint64(uintptr(unsafe.Pointer(t))))
 	dumpint(uint64(t.size))
-	if t.x == nil || t.x.pkgpath == nil || t.x.name == nil {
-		dumpstr(*t._string)
+	if t.x == nil || t.x.pkgpath == nil {
+		dumpstr(t._string)
 	} else {
-		pkgpath := (*stringStruct)(unsafe.Pointer(&t.x.pkgpath))
-		name := (*stringStruct)(unsafe.Pointer(&t.x.name))
+		pkgpath := stringStructOf(t.x.pkgpath)
+		namestr := t.name()
+		name := stringStructOf(&namestr)
 		dumpint(uint64(uintptr(pkgpath.len) + 1 + uintptr(name.len)))
 		dwrite(pkgpath.str, uintptr(pkgpath.len))
 		dwritebyte('.')
@@ -233,7 +237,7 @@ func dumpbv(cbv *bitvector, offset uintptr) {
 	for i := uintptr(0); i < uintptr(bv.n); i++ {
 		if bv.bytedata[i/8]>>(i%8)&1 == 1 {
 			dumpint(fieldKindPtr)
-			dumpint(uint64(offset + i*ptrSize))
+			dumpint(uint64(offset + i*sys.PtrSize))
 		}
 	}
 }
@@ -247,10 +251,10 @@ func dumpframe(s *stkframe, arg unsafe.Pointer) bool {
 	if pc != f.entry {
 		pc--
 	}
-	pcdata := pcdatavalue(f, _PCDATA_StackMapIndex, pc)
+	pcdata := pcdatavalue(f, _PCDATA_StackMapIndex, pc, nil)
 	if pcdata == -1 {
 		// We do not have a valid pcdata value but there might be a
-		// stackmap for this function.  It is likely that we are looking
+		// stackmap for this function. It is likely that we are looking
 		// at the function prologue, assume so and hope for the best.
 		pcdata = 0
 	}
@@ -263,7 +267,7 @@ func dumpframe(s *stkframe, arg unsafe.Pointer) bool {
 	var bv bitvector
 	if stkmap != nil && stkmap.n > 0 {
 		bv = stackmapdata(stkmap, pcdata)
-		dumpbvtypes(&bv, unsafe.Pointer(s.varp-uintptr(bv.n*ptrSize)))
+		dumpbvtypes(&bv, unsafe.Pointer(s.varp-uintptr(bv.n*sys.PtrSize)))
 	} else {
 		bv.n = -1
 	}
@@ -288,7 +292,7 @@ func dumpframe(s *stkframe, arg unsafe.Pointer) bool {
 		dumpbv(&child.args, child.argoff)
 	} else {
 		// conservative - everything might be a pointer
-		for off := child.argoff; off < child.argoff+child.arglen; off += ptrSize {
+		for off := child.argoff; off < child.argoff+child.arglen; off += sys.PtrSize {
 			dumpint(fieldKindPtr)
 			dumpint(uint64(off))
 		}
@@ -297,21 +301,21 @@ func dumpframe(s *stkframe, arg unsafe.Pointer) bool {
 	// Dump fields in the local vars section
 	if stkmap == nil {
 		// No locals information, dump everything.
-		for off := child.arglen; off < s.varp-s.sp; off += ptrSize {
+		for off := child.arglen; off < s.varp-s.sp; off += sys.PtrSize {
 			dumpint(fieldKindPtr)
 			dumpint(uint64(off))
 		}
 	} else if stkmap.n < 0 {
 		// Locals size information, dump just the locals.
 		size := uintptr(-stkmap.n)
-		for off := s.varp - size - s.sp; off < s.varp-s.sp; off += ptrSize {
+		for off := s.varp - size - s.sp; off < s.varp-s.sp; off += sys.PtrSize {
 			dumpint(fieldKindPtr)
 			dumpint(uint64(off))
 		}
 	} else if stkmap.n > 0 {
 		// Locals bitmap information, scan just the pointers in
 		// locals.
-		dumpbv(&bv, s.varp-uintptr(bv.n)*ptrSize-s.sp)
+		dumpbv(&bv, s.varp-uintptr(bv.n)*sys.PtrSize-s.sp)
 	}
 	dumpint(fieldKindEol)
 
@@ -379,7 +383,7 @@ func dumpgoroutine(gp *g) {
 		dumpint(tagPanic)
 		dumpint(uint64(uintptr(unsafe.Pointer(p))))
 		dumpint(uint64(uintptr(unsafe.Pointer(gp))))
-		eface := (*eface)(unsafe.Pointer(&p.arg))
+		eface := efaceOf(&p.arg)
 		dumpint(uint64(uintptr(unsafe.Pointer(eface._type))))
 		dumpint(uint64(uintptr(unsafe.Pointer(eface.data))))
 		dumpint(0) // was p->defer, no longer recorded
@@ -489,38 +493,20 @@ func dumpparams() {
 	} else {
 		dumpbool(true) // big-endian ptrs
 	}
-	dumpint(ptrSize)
+	dumpint(sys.PtrSize)
 	dumpint(uint64(mheap_.arena_start))
 	dumpint(uint64(mheap_.arena_used))
-	dumpint(thechar)
-	dumpstr(goexperiment)
+	dumpint(sys.TheChar)
+	dumpstr(sys.Goexperiment)
 	dumpint(uint64(ncpu))
 }
 
 func itab_callback(tab *itab) {
 	t := tab._type
-	// Dump a map from itab* to the type of its data field.
-	// We want this map so we can deduce types of interface referents.
-	if t.kind&kindDirectIface == 0 {
-		// indirect - data slot is a pointer to t.
-		dumptype(t.ptrto)
-		dumpint(tagItab)
-		dumpint(uint64(uintptr(unsafe.Pointer(tab))))
-		dumpint(uint64(uintptr(unsafe.Pointer(t.ptrto))))
-	} else if t.kind&kindNoPointers == 0 {
-		// t is pointer-like - data slot is a t.
-		dumptype(t)
-		dumpint(tagItab)
-		dumpint(uint64(uintptr(unsafe.Pointer(tab))))
-		dumpint(uint64(uintptr(unsafe.Pointer(t))))
-	} else {
-		// Data slot is a scalar.  Dump type just for fun.
-		// With pointer-only interfaces, this shouldn't happen.
-		dumptype(t)
-		dumpint(tagItab)
-		dumpint(uint64(uintptr(unsafe.Pointer(tab))))
-		dumpint(uint64(uintptr(unsafe.Pointer(t))))
-	}
+	dumptype(t)
+	dumpint(tagItab)
+	dumpint(uint64(uintptr(unsafe.Pointer(tab))))
+	dumpint(uint64(uintptr(unsafe.Pointer(t))))
 }
 
 func dumpitabs() {
@@ -636,14 +622,14 @@ func dumpmemprof() {
 	}
 }
 
-var dumphdr = []byte("go1.5 heap dump\n")
+var dumphdr = []byte("go1.7 heap dump\n")
 
 func mdump() {
 	// make sure we're done sweeping
 	for i := uintptr(0); i < uintptr(mheap_.nspan); i++ {
 		s := h_allspans[i]
 		if s.state == _MSpanInUse {
-			mSpan_EnsureSwept(s)
+			s.ensureSwept()
 		}
 	}
 	memclr(unsafe.Pointer(&typecache), unsafe.Sizeof(typecache))
@@ -693,8 +679,8 @@ func dumpfields(bv bitvector) {
 }
 
 // The heap dump reader needs to be able to disambiguate
-// Eface entries.  So it needs to know every type that might
-// appear in such an entry.  The following routine accomplishes that.
+// Eface entries. So it needs to know every type that might
+// appear in such an entry. The following routine accomplishes that.
 // TODO(rsc, khr): Delete - no longer possible.
 
 // Dump all the types that appear in the type field of
@@ -704,7 +690,7 @@ func dumpbvtypes(bv *bitvector, base unsafe.Pointer) {
 
 func makeheapobjbv(p uintptr, size uintptr) bitvector {
 	// Extend the temp buffer if necessary.
-	nptr := size / ptrSize
+	nptr := size / sys.PtrSize
 	if uintptr(len(tmpbuf)) < nptr/8+1 {
 		if tmpbuf != nil {
 			sysFree(unsafe.Pointer(&tmpbuf[0]), uintptr(len(tmpbuf)), &memstats.other_sys)

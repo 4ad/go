@@ -614,7 +614,7 @@ func span5(ctxt *obj.Link, cursym *obj.LSym) {
 			}
 		}
 
-		if m == 0 && (p.As != obj.AFUNCDATA && p.As != obj.APCDATA && p.As != ADATABUNDLEEND && p.As != obj.ANOP) {
+		if m == 0 && (p.As != obj.AFUNCDATA && p.As != obj.APCDATA && p.As != ADATABUNDLEEND && p.As != obj.ANOP && p.As != obj.AUSEFIELD) {
 			ctxt.Diag("zero-width instruction\n%v", p)
 			continue
 		}
@@ -710,7 +710,7 @@ func span5(ctxt *obj.Link, cursym *obj.LSym) {
 			if m/4 > len(out) {
 				ctxt.Diag("instruction size too large: %d > %d", m/4, len(out))
 			}
-			if m == 0 && (p.As != obj.AFUNCDATA && p.As != obj.APCDATA && p.As != ADATABUNDLEEND && p.As != obj.ANOP) {
+			if m == 0 && (p.As != obj.AFUNCDATA && p.As != obj.APCDATA && p.As != ADATABUNDLEEND && p.As != obj.ANOP && p.As != obj.AUSEFIELD) {
 				if p.As == obj.ATEXT {
 					ctxt.Autosize = int32(p.To.Offset + 4)
 					continue
@@ -981,6 +981,7 @@ func aclass(ctxt *obj.Link, a *obj.Addr) int {
 		return C_NONE
 
 	case obj.TYPE_REG:
+		ctxt.Instoffset = 0
 		if REG_R0 <= a.Reg && a.Reg <= REG_R15 {
 			return C_REG
 		}
@@ -1010,6 +1011,7 @@ func aclass(ctxt *obj.Link, a *obj.Addr) int {
 	case obj.TYPE_MEM:
 		switch a.Name {
 		case obj.NAME_EXTERN,
+			obj.NAME_GOTREF,
 			obj.NAME_STATIC:
 			if a.Sym == nil || a.Sym.Name == "" {
 				fmt.Printf("null sym external\n")
@@ -1130,6 +1132,7 @@ func aclass(ctxt *obj.Link, a *obj.Addr) int {
 			return C_LCON
 
 		case obj.NAME_EXTERN,
+			obj.NAME_GOTREF,
 			obj.NAME_STATIC:
 			s := a.Sym
 			if s == nil {
@@ -1558,7 +1561,7 @@ func asmout(ctxt *obj.Link, p *obj.Prog, o *Optab, out []uint32) {
 		o1 |= (uint32(p.To.Reg) & 15) << 12
 
 	case 5: /* bra s */
-		o1 = opbra(ctxt, int(p.As), int(p.Scond))
+		o1 = opbra(ctxt, p, int(p.As), int(p.Scond))
 
 		v := int32(-8)
 		if p.To.Sym != nil {
@@ -1589,7 +1592,7 @@ func asmout(ctxt *obj.Link, p *obj.Prog, o *Optab, out []uint32) {
 		aclass(ctxt, &p.To)
 
 		if ctxt.Instoffset != 0 {
-			ctxt.Diag("%v: doesn't support BL offset(REG) where offset != 0", p)
+			ctxt.Diag("%v: doesn't support BL offset(REG) with non-zero offset %d", p, ctxt.Instoffset)
 		}
 		o1 = oprrr(ctxt, ABL, int(p.Scond))
 		o1 |= (uint32(p.To.Reg) & 15) << 0
@@ -1644,7 +1647,11 @@ func asmout(ctxt *obj.Link, p *obj.Prog, o *Optab, out []uint32) {
 			rel.Add = p.To.Offset
 
 			if ctxt.Flag_shared != 0 {
-				rel.Type = obj.R_PCREL
+				if p.To.Name == obj.NAME_GOTREF {
+					rel.Type = obj.R_GOTPCREL
+				} else {
+					rel.Type = obj.R_PCREL
+				}
 				rel.Add += ctxt.Pc - p.Rel.Pc - 8
 			} else {
 				rel.Type = obj.R_ADDR
@@ -2365,7 +2372,7 @@ func asmout(ctxt *obj.Link, p *obj.Prog, o *Optab, out []uint32) {
 
 		// This is supposed to be something that stops execution.
 	// It's not supposed to be reached, ever, but if it is, we'd
-	// like to be able to tell how we got there.  Assemble as
+	// like to be able to tell how we got there. Assemble as
 	// 0xf7fabcfd which is guaranteed to raise undefined instruction
 	// exception.
 	case 96: /* UNDEF */
@@ -2587,9 +2594,9 @@ func oprrr(ctxt *obj.Link, a int, sc int) uint32 {
 	return 0
 }
 
-func opbra(ctxt *obj.Link, a int, sc int) uint32 {
+func opbra(ctxt *obj.Link, p *obj.Prog, a int, sc int) uint32 {
 	if sc&(C_SBIT|C_PBIT|C_WBIT) != 0 {
-		ctxt.Diag(".nil/.nil/.W on bra instruction")
+		ctxt.Diag("%v: .nil/.nil/.W on bra instruction", p)
 	}
 	sc &= C_SCOND
 	sc ^= C_SCOND_XOR
@@ -2597,7 +2604,7 @@ func opbra(ctxt *obj.Link, a int, sc int) uint32 {
 		return uint32(sc)<<28 | 0x5<<25 | 0x1<<24
 	}
 	if sc != 0xe {
-		ctxt.Diag(".COND on bcond instruction")
+		ctxt.Diag("%v: .COND on bcond instruction", p)
 	}
 	switch a {
 	case ABEQ:
@@ -2730,7 +2737,7 @@ func olhrr(ctxt *obj.Link, i int, b int, r int, sc int) uint32 {
 
 func ofsr(ctxt *obj.Link, a int, r int, v int32, b int, sc int, p *obj.Prog) uint32 {
 	if sc&C_SBIT != 0 {
-		ctxt.Diag(".nil on FLDR/FSTR instruction")
+		ctxt.Diag(".nil on FLDR/FSTR instruction: %v", p)
 	}
 	o := ((uint32(sc) & C_SCOND) ^ C_SCOND_XOR) << 28
 	if sc&C_PBIT == 0 {

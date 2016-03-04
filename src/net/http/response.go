@@ -33,7 +33,7 @@ type Response struct {
 	ProtoMajor int    // e.g. 1
 	ProtoMinor int    // e.g. 0
 
-	// Header maps header keys to values.  If the response had multiple
+	// Header maps header keys to values. If the response had multiple
 	// headers with the same key, they may be concatenated, with comma
 	// delimiters.  (Section 4.2 of RFC 2616 requires that multiple headers
 	// be semantically equivalent to a comma-delimited sequence.) Values
@@ -57,8 +57,8 @@ type Response struct {
 	// with a "chunked" Transfer-Encoding.
 	Body io.ReadCloser
 
-	// ContentLength records the length of the associated content.  The
-	// value -1 indicates that the length is unknown.  Unless Request.Method
+	// ContentLength records the length of the associated content. The
+	// value -1 indicates that the length is unknown. Unless Request.Method
 	// is "HEAD", values >= 0 indicate that the given number of bytes may
 	// be read from Body.
 	ContentLength int64
@@ -68,12 +68,22 @@ type Response struct {
 	TransferEncoding []string
 
 	// Close records whether the header directed that the connection be
-	// closed after reading Body.  The value is advice for clients: neither
+	// closed after reading Body. The value is advice for clients: neither
 	// ReadResponse nor Response.Write ever closes a connection.
 	Close bool
 
-	// Trailer maps trailer keys to values, in the same
-	// format as the header.
+	// Trailer maps trailer keys to values in the same
+	// format as Header.
+	//
+	// The Trailer initially contains only nil values, one for
+	// each key specified in the server's "Trailer" header
+	// value. Those values are not added to Header.
+	//
+	// Trailer must not be accessed concurrently with Read calls
+	// on the Body.
+	//
+	// After Body.Read has returned io.EOF, Trailer will contain
+	// any trailer values sent by the server.
 	Trailer Header
 
 	// The Request that was sent to obtain this Response.
@@ -98,8 +108,8 @@ func (r *Response) Cookies() []*Cookie {
 var ErrNoLocation = errors.New("http: no Location header in response")
 
 // Location returns the URL of the response's "Location" header,
-// if present.  Relative redirects are resolved relative to
-// the Response's Request.  ErrNoLocation is returned if no
+// if present. Relative redirects are resolved relative to
+// the Response's Request. ErrNoLocation is returned if no
 // Location header is present.
 func (r *Response) Location() (*url.URL, error) {
 	lv := r.Header.Get("Location")
@@ -140,12 +150,14 @@ func ReadResponse(r *bufio.Reader, req *Request) (*Response, error) {
 	if len(f) > 2 {
 		reasonPhrase = f[2]
 	}
-	resp.Status = f[1] + " " + reasonPhrase
-	resp.StatusCode, err = strconv.Atoi(f[1])
-	if err != nil {
+	if len(f[1]) != 3 {
 		return nil, &badStringError{"malformed HTTP status code", f[1]}
 	}
-
+	resp.StatusCode, err = strconv.Atoi(f[1])
+	if err != nil || resp.StatusCode < 0 {
+		return nil, &badStringError{"malformed HTTP status code", f[1]}
+	}
+	resp.Status = f[1] + " " + reasonPhrase
 	resp.Proto = f[0]
 	var ok bool
 	if resp.ProtoMajor, resp.ProtoMinor, ok = ParseHTTPVersion(resp.Proto); !ok {

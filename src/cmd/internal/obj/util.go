@@ -1,4 +1,4 @@
-// Copyright 2015 The Go Authors.  All rights reserved.
+// Copyright 2015 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -51,6 +51,10 @@ func Bopenr(name string) (*Biobuf, error) {
 
 func Binitw(w io.Writer) *Biobuf {
 	return &Biobuf{w: bufio.NewWriter(w)}
+}
+
+func Binitr(r io.Reader) *Biobuf {
+	return &Biobuf{r: bufio.NewReader(r)}
 }
 
 func (b *Biobuf) Write(p []byte) (int, error) {
@@ -290,6 +294,10 @@ func CConv(ctxt *Link, s uint8) (sc string) {
 }
 
 func (p *Prog) String() string {
+	if p == nil {
+		return "<nil Prog>"
+	}
+
 	if p.Ctxt == nil {
 		return "<Prog without ctxt>"
 	}
@@ -328,9 +336,22 @@ func (p *Prog) String() string {
 }
 
 func (ctxt *Link) NewProg() *Prog {
-	p := new(Prog) // should be the only call to this; all others should use ctxt.NewProg
+	var p *Prog
+	if i := ctxt.allocIdx; i < len(ctxt.progs) {
+		p = &ctxt.progs[i]
+		ctxt.allocIdx = i + 1
+	} else {
+		p = new(Prog) // should be the only call to this; all others should use ctxt.NewProg
+	}
 	p.Ctxt = ctxt
 	return p
+}
+func (ctxt *Link) freeProgs() {
+	s := ctxt.progs[:ctxt.allocIdx]
+	for i := range s {
+		s[i] = Prog{}
+	}
+	ctxt.allocIdx = 0
 }
 
 func (ctxt *Link) Line(n int) string {
@@ -391,6 +412,9 @@ func Dconv(p *Prog, a *Addr) string {
 		str = Mconv(a)
 		if a.Index != REG_NONE {
 			str += fmt.Sprintf("(%v*%d)", Rconv(int(a.Index)), int(a.Scale))
+		}
+		if p.As == ATYPE && a.Gotype != nil {
+			str += fmt.Sprintf("%s", a.Gotype.Name)
 		}
 
 	case TYPE_CONST:
@@ -535,11 +559,12 @@ const (
 	RBaseARM     = 3 * 1024
 	RBasePPC64   = 4 * 1024 // range [4k, 8k)
 	RBaseARM64   = 8 * 1024 // range [8k, 13k)
-	RBaseSPARC64 = 13 * 1024
+	RBaseMIPS64  = 13 * 1024 // range [13k, 14k)
+	RBaseSPARC64 = 14 * 1024 // range [14k, 15k)
 )
 
 // RegisterRegister binds a pretty-printer (Rconv) for register
-// numbers to a given register number range.  Lo is inclusive,
+// numbers to a given register number range. Lo is inclusive,
 // hi exclusive (valid registers are lo through hi-1).
 func RegisterRegister(lo, hi int, Rconv func(int) string) {
 	regSpace = append(regSpace, regSet{lo, hi, Rconv})
@@ -595,6 +620,7 @@ const (
 	ABaseAMD64
 	ABasePPC64
 	ABaseARM64
+	ABaseMIPS64
 	ABaseSPARC64
 	AMask = 1<<12 - 1 // AND with this to use the opcode as an array index.
 )
@@ -614,7 +640,7 @@ func RegisterOpcode(lo int, Anames []string) {
 }
 
 func Aconv(a int) string {
-	if a < A_ARCHSPECIFIC {
+	if 0 <= a && a < len(Anames) {
 		return Anames[a]
 	}
 	for i := range aSpace {
@@ -646,6 +672,7 @@ var Anames = []string{
 	"USEFIELD",
 	"VARDEF",
 	"VARKILL",
+	"VARLIVE",
 }
 
 func Bool2int(b bool) int {

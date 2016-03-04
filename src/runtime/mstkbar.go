@@ -102,10 +102,34 @@
 // enabling write barriers globally during the concurrent scan phase.
 // However, traditionally, write barriers are not enabled during this
 // phase.
+//
+// Synchronization
+// ---------------
+//
+// For the most part, accessing and modifying stack barriers is
+// synchronized around GC safe points. Installing stack barriers
+// forces the G to a safe point, while all other operations that
+// modify stack barriers run on the G and prevent it from reaching a
+// safe point.
+//
+// Subtlety arises when a G may be tracebacked when *not* at a safe
+// point. This happens during sigprof. For this, each G has a "stack
+// barrier lock" (see gcLockStackBarriers, gcUnlockStackBarriers).
+// Operations that manipulate stack barriers acquire this lock, while
+// sigprof tries to acquire it and simply skips the traceback if it
+// can't acquire it. There is one exception for performance and
+// complexity reasons: hitting a stack barrier manipulates the stack
+// barrier list without acquiring the stack barrier lock. For this,
+// gentraceback performs a special fix up if the traceback starts in
+// the stack barrier function.
 
 package runtime
 
-import "unsafe"
+import (
+	"runtime/internal/atomic"
+	"runtime/internal/sys"
+	"unsafe"
+)
 
 const debugStackBarrier = false
 
@@ -170,9 +194,9 @@ func gcInstallStackBarrier(gp *g, frame *stkframe) bool {
 	if usesLR {
 		lrUintptr = frame.sp
 	} else {
-		lrUintptr = frame.fp - regSize
+		lrUintptr = frame.fp - sys.RegSize
 	}
-	lrPtr := (*uintreg)(unsafe.Pointer(lrUintptr))
+	lrPtr := (*sys.Uintreg)(unsafe.Pointer(lrUintptr))
 	if debugStackBarrier {
 		print("install stack barrier at ", hex(lrUintptr), " over ", hex(*lrPtr), ", goid=", gp.goid, "\n")
 		if uintptr(*lrPtr) != frame.lr {
@@ -185,7 +209,7 @@ func gcInstallStackBarrier(gp *g, frame *stkframe) bool {
 	stkbar := &gp.stkbar[len(gp.stkbar)-1]
 	stkbar.savedLRPtr = lrUintptr
 	stkbar.savedLRVal = uintptr(*lrPtr)
-	*lrPtr = uintreg(stackBarrierPC)
+	*lrPtr = sys.Uintreg(stackBarrierPC)
 	return true
 }
 
@@ -196,6 +220,8 @@ func gcRemoveStackBarriers(gp *g) {
 		print("hit ", gp.stkbarPos, " stack barriers, goid=", gp.goid, "\n")
 	}
 
+	gcLockStackBarriers(gp)
+
 	// Remove stack barriers that we didn't hit.
 	for _, stkbar := range gp.stkbar[gp.stkbarPos:] {
 		gcRemoveStackBarrier(gp, stkbar)
@@ -205,6 +231,8 @@ func gcRemoveStackBarriers(gp *g) {
 	// adjust them.
 	gp.stkbarPos = 0
 	gp.stkbar = gp.stkbar[:0]
+
+	gcUnlockStackBarriers(gp)
 }
 
 // gcRemoveStackBarrier removes a single stack barrier. It is the
@@ -218,26 +246,40 @@ func gcRemoveStackBarrier(gp *g, stkbar stkbar) {
 	if debugStackBarrier {
 		print("remove stack barrier at ", hex(stkbar.savedLRPtr), " with ", hex(stkbar.savedLRVal), ", goid=", gp.goid, "\n")
 	}
-	lrPtr := (*uintreg)(unsafe.Pointer(stkbar.savedLRPtr))
-	if val := *lrPtr; val != uintreg(stackBarrierPC) {
+	lrPtr := (*sys.Uintreg)(unsafe.Pointer(stkbar.savedLRPtr))
+	if val := *lrPtr; val != sys.Uintreg(stackBarrierPC) {
 		printlock()
 		print("at *", hex(stkbar.savedLRPtr), " expected stack barrier PC ", hex(stackBarrierPC), ", found ", hex(val), ", goid=", gp.goid, "\n")
 		print("gp.stkbar=")
-		gcPrintStkbars(gp.stkbar)
-		print(", gp.stkbarPos=", gp.stkbarPos, ", gp.stack=[", hex(gp.stack.lo), ",", hex(gp.stack.hi), ")\n")
+		gcPrintStkbars(gp, -1)
+		print(", gp.stack=[", hex(gp.stack.lo), ",", hex(gp.stack.hi), ")\n")
 		throw("stack barrier lost")
 	}
-	*lrPtr = uintreg(stkbar.savedLRVal)
+	*lrPtr = sys.Uintreg(stkbar.savedLRVal)
 }
 
-// gcPrintStkbars prints a []stkbar for debugging.
-func gcPrintStkbars(stkbar []stkbar) {
+// gcPrintStkbars prints the stack barriers of gp for debugging. It
+// places a "@@@" marker at gp.stkbarPos. If marker >= 0, it will also
+// place a "==>" marker before the marker'th entry.
+func gcPrintStkbars(gp *g, marker int) {
 	print("[")
-	for i, s := range stkbar {
+	for i, s := range gp.stkbar {
 		if i > 0 {
 			print(" ")
 		}
+		if i == int(gp.stkbarPos) {
+			print("@@@ ")
+		}
+		if i == marker {
+			print("==> ")
+		}
 		print("*", hex(s.savedLRPtr), "=", hex(s.savedLRVal))
+	}
+	if int(gp.stkbarPos) == len(gp.stkbar) {
+		print(" @@@")
+	}
+	if marker == len(gp.stkbar) {
+		print(" ==>")
 	}
 	print("]")
 }
@@ -251,6 +293,7 @@ func gcPrintStkbars(stkbar []stkbar) {
 //
 //go:nosplit
 func gcUnwindBarriers(gp *g, sp uintptr) {
+	gcLockStackBarriers(gp)
 	// On LR machines, if there is a stack barrier on the return
 	// from the frame containing sp, this will mark it as hit even
 	// though it isn't, but it's okay to be conservative.
@@ -259,9 +302,12 @@ func gcUnwindBarriers(gp *g, sp uintptr) {
 		gcRemoveStackBarrier(gp, gp.stkbar[gp.stkbarPos])
 		gp.stkbarPos++
 	}
+	gcUnlockStackBarriers(gp)
 	if debugStackBarrier && gp.stkbarPos != before {
 		print("skip barriers below ", hex(sp), " in goid=", gp.goid, ": ")
-		gcPrintStkbars(gp.stkbar[before:gp.stkbarPos])
+		// We skipped barriers between the "==>" marker
+		// (before) and the "@@@" marker (gp.stkbarPos).
+		gcPrintStkbars(gp, int(before))
 		print("\n")
 	}
 }
@@ -279,5 +325,41 @@ func nextBarrierPC() uintptr {
 //go:nosplit
 func setNextBarrierPC(pc uintptr) {
 	gp := getg()
+	gcLockStackBarriers(gp)
 	gp.stkbar[gp.stkbarPos].savedLRVal = pc
+	gcUnlockStackBarriers(gp)
+}
+
+// gcLockStackBarriers synchronizes with tracebacks of gp's stack
+// during sigprof for installation or removal of stack barriers. It
+// blocks until any current sigprof is done tracebacking gp's stack
+// and then disallows profiling tracebacks of gp's stack.
+//
+// This is necessary because a sigprof during barrier installation or
+// removal could observe inconsistencies between the stkbar array and
+// the stack itself and crash.
+//
+//go:nosplit
+func gcLockStackBarriers(gp *g) {
+	// Disable preemption so scanstack cannot run while the caller
+	// is manipulating the stack barriers.
+	acquirem()
+	for !atomic.Cas(&gp.stackLock, 0, 1) {
+		osyield()
+	}
+}
+
+//go:nosplit
+func gcTryLockStackBarriers(gp *g) bool {
+	mp := acquirem()
+	result := atomic.Cas(&gp.stackLock, 0, 1)
+	if !result {
+		releasem(mp)
+	}
+	return result
+}
+
+func gcUnlockStackBarriers(gp *g) {
+	atomic.Store(&gp.stackLock, 0)
+	releasem(getg().m)
 }

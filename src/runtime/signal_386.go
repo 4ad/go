@@ -1,4 +1,4 @@
-// Copyright 2013 The Go Authors.  All rights reserved.
+// Copyright 2013 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -6,7 +6,10 @@
 
 package runtime
 
-import "unsafe"
+import (
+	"runtime/internal/sys"
+	"unsafe"
+)
 
 func dumpregs(c *sigctxt) {
 	print("eax    ", hex(c.eax()), "\n")
@@ -27,7 +30,8 @@ func dumpregs(c *sigctxt) {
 var crashing int32
 
 // May run during STW, so write barriers are not allowed.
-//go:nowritebarrier
+//
+//go:nowritebarrierrec
 func sighandler(sig uint32, info *siginfo, ctxt unsafe.Pointer, gp *g) {
 	_g_ := getg()
 	c := &sigctxt{info, ctxt}
@@ -80,16 +84,16 @@ func sighandler(sig uint32, info *siginfo, ctxt unsafe.Pointer, gp *g) {
 
 		// Only push runtime.sigpanic if pc != 0.
 		// If pc == 0, probably panicked because of a
-		// call to a nil func.  Not pushing that onto sp will
+		// call to a nil func. Not pushing that onto sp will
 		// make the trace look like a call to runtime.sigpanic instead.
 		// (Otherwise the trace will end at runtime.sigpanic and we
 		// won't get to see who faulted.)
 		if pc != 0 {
-			if regSize > ptrSize {
-				sp -= ptrSize
+			if sys.RegSize > sys.PtrSize {
+				sp -= sys.PtrSize
 				*(*uintptr)(unsafe.Pointer(sp)) = 0
 			}
-			sp -= ptrSize
+			sp -= sys.PtrSize
 			*(*uintptr)(unsafe.Pointer(sp)) = pc
 			c.set_esp(uint32(sp))
 		}
@@ -103,8 +107,12 @@ func sighandler(sig uint32, info *siginfo, ctxt unsafe.Pointer, gp *g) {
 		}
 	}
 
+	if c.sigcode() == _SI_USER && signal_ignored(sig) {
+		return
+	}
+
 	if flags&_SigKill != 0 {
-		exit(2)
+		dieFromSignal(int32(sig))
 	}
 
 	if flags&_SigThrow == 0 {
@@ -131,33 +139,10 @@ func sighandler(sig uint32, info *siginfo, ctxt unsafe.Pointer, gp *g) {
 	}
 	print("\n")
 
-	var docrash bool
-	if gotraceback(&docrash) > 0 {
+	level, _, docrash := gotraceback()
+	if level > 0 {
 		goroutineheader(gp)
-
-		// On Linux/386, all system calls go through the vdso kernel_vsyscall routine.
-		// Normally we don't see those PCs, but during signals we can.
-		// If we see a PC in the vsyscall area (it moves around, but near the top of memory),
-		// assume we're blocked in the vsyscall routine, which has saved
-		// three words on the stack after the initial call saved the caller PC.
-		// Pop all four words off SP and use the saved PC.
-		// The check of the stack bounds here should suffice to avoid a fault
-		// during the actual PC pop.
-		// If we do load a bogus PC, not much harm done: we weren't going
-		// to get a decent traceback anyway.
-		// TODO(rsc): Make this more precise: we should do more checks on the PC,
-		// and we should find out whether different versions of the vdso page
-		// use different prologues that store different amounts on the stack.
-		pc := uintptr(c.eip())
-		sp := uintptr(c.esp())
-		if GOOS == "linux" && pc >= 0xf4000000 && gp.stack.lo <= sp && sp+16 <= gp.stack.hi {
-			// Assume in vsyscall page.
-			sp += 16
-			pc = *(*uintptr)(unsafe.Pointer(sp - 4))
-			print("runtime: unwind vdso kernel_vsyscall: pc=", hex(pc), " sp=", hex(sp), "\n")
-		}
-
-		tracebacktrap(pc, sp, 0, gp)
+		tracebacktrap(uintptr(c.eip()), uintptr(c.esp()), 0, gp)
 		if crashing > 0 && gp != _g_.m.curg && _g_.m.curg != nil && readgstatus(_g_.m.curg)&^_Gscan == _Grunning {
 			// tracebackothers on original m skipped this one; trace it now.
 			goroutineheader(_g_.m.curg)

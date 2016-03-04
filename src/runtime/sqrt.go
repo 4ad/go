@@ -11,7 +11,7 @@ package runtime
 
 // The original C code and the long comment below are
 // from FreeBSD's /usr/src/lib/msun/src/e_sqrt.c and
-// came with this notice.  The go code is a simplified
+// came with this notice. The go code is a simplified
 // version of the original C.
 //
 // ====================================================
@@ -117,7 +117,7 @@ func sqrt(ix uint64) uint64 {
 	// normalize x
 	exp := int((ix >> float64Shift) & float64Mask)
 	if exp == 0 { // subnormal x
-		for ix&1<<float64Shift == 0 {
+		for ix&(1<<float64Shift) == 0 {
 			ix <<= 1
 			exp--
 		}

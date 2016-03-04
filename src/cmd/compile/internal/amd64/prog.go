@@ -1,4 +1,4 @@
-// Copyright 2013 The Go Authors.  All rights reserved.
+// Copyright 2013 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -34,6 +34,7 @@ var progtable = [x86.ALAST]obj.ProgInfo{
 	obj.ACHECKNIL: {Flags: gc.LeftRead},
 	obj.AVARDEF:   {Flags: gc.Pseudo | gc.RightWrite},
 	obj.AVARKILL:  {Flags: gc.Pseudo | gc.RightWrite},
+	obj.AVARLIVE:  {Flags: gc.Pseudo | gc.LeftRead},
 
 	// NOP is an internal no-op that also stands
 	// for USED and SET annotations, not the Intel opcode.
@@ -116,6 +117,7 @@ var progtable = [x86.ALAST]obj.ProgInfo{
 	x86.AJPL:       {Flags: gc.Cjmp | gc.UseCarry},
 	x86.AJPS:       {Flags: gc.Cjmp | gc.UseCarry},
 	obj.AJMP:       {Flags: gc.Jump | gc.Break | gc.KillCarry},
+	x86.ALEAW:      {Flags: gc.LeftAddr | gc.RightWrite},
 	x86.ALEAL:      {Flags: gc.LeftAddr | gc.RightWrite},
 	x86.ALEAQ:      {Flags: gc.LeftAddr | gc.RightWrite},
 	x86.AMOVBLSX:   {Flags: gc.SizeL | gc.LeftRead | gc.RightWrite | gc.Conv},
@@ -140,7 +142,7 @@ var progtable = [x86.ALAST]obj.ProgInfo{
 	x86.AMOVSL:     {Flags: gc.OK, Reguse: DI | SI, Regset: DI | SI},
 	x86.AMOVSQ:     {Flags: gc.OK, Reguse: DI | SI, Regset: DI | SI},
 	x86.AMOVSW:     {Flags: gc.OK, Reguse: DI | SI, Regset: DI | SI},
-	obj.ADUFFCOPY:  {Flags: gc.OK, Reguse: DI | SI, Regset: DI | SI | CX},
+	obj.ADUFFCOPY:  {Flags: gc.OK, Reguse: DI | SI, Regset: DI | SI | X0},
 	x86.AMOVSD:     {Flags: gc.SizeD | gc.LeftRead | gc.RightWrite | gc.Move},
 	x86.AMOVSS:     {Flags: gc.SizeF | gc.LeftRead | gc.RightWrite | gc.Move},
 
@@ -166,6 +168,7 @@ var progtable = [x86.ALAST]obj.ProgInfo{
 	x86.AORW:      {Flags: gc.SizeW | gc.LeftRead | RightRdwr | gc.SetCarry},
 	x86.APOPQ:     {Flags: gc.SizeQ | gc.RightWrite},
 	x86.APUSHQ:    {Flags: gc.SizeQ | gc.LeftRead},
+	x86.APXOR:     {Flags: gc.SizeD | gc.LeftRead | RightRdwr},
 	x86.ARCLB:     {Flags: gc.SizeB | gc.LeftRead | RightRdwr | gc.ShiftCX | gc.SetCarry | gc.UseCarry},
 	x86.ARCLL:     {Flags: gc.SizeL | gc.LeftRead | RightRdwr | gc.ShiftCX | gc.SetCarry | gc.UseCarry},
 	x86.ARCLQ:     {Flags: gc.SizeQ | gc.LeftRead | RightRdwr | gc.ShiftCX | gc.SetCarry | gc.UseCarry},
@@ -226,7 +229,7 @@ var progtable = [x86.ALAST]obj.ProgInfo{
 	x86.ASTOSL:    {Flags: gc.OK, Reguse: AX | DI, Regset: DI},
 	x86.ASTOSQ:    {Flags: gc.OK, Reguse: AX | DI, Regset: DI},
 	x86.ASTOSW:    {Flags: gc.OK, Reguse: AX | DI, Regset: DI},
-	obj.ADUFFZERO: {Flags: gc.OK, Reguse: AX | DI, Regset: DI},
+	obj.ADUFFZERO: {Flags: gc.OK, Reguse: X0 | DI, Regset: DI},
 	x86.ASUBB:     {Flags: gc.SizeB | gc.LeftRead | RightRdwr | gc.SetCarry},
 	x86.ASUBL:     {Flags: gc.SizeL | gc.LeftRead | RightRdwr | gc.SetCarry},
 	x86.ASUBQ:     {Flags: gc.SizeQ | gc.LeftRead | RightRdwr | gc.SetCarry},

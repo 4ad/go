@@ -58,6 +58,7 @@ func linkarchinit() {
 	ld.Thearch.Regsize = ld.Thelinkarch.Regsize
 	ld.Thearch.Funcalign = FuncAlign
 	ld.Thearch.Maxalign = MaxAlign
+	ld.Thearch.Minalign = MinAlign
 	ld.Thearch.Minlc = MINLC
 	ld.Thearch.Dwarfregsp = DWARFREGSP
 	ld.Thearch.Dwarfreglr = DWARFREGLR
@@ -75,10 +76,16 @@ func linkarchinit() {
 		ld.Thearch.Lput = ld.Lputl
 		ld.Thearch.Wput = ld.Wputl
 		ld.Thearch.Vput = ld.Vputl
+		ld.Thearch.Append16 = ld.Append16l
+		ld.Thearch.Append32 = ld.Append32l
+		ld.Thearch.Append64 = ld.Append64l
 	} else {
 		ld.Thearch.Lput = ld.Lputb
 		ld.Thearch.Wput = ld.Wputb
 		ld.Thearch.Vput = ld.Vputb
+		ld.Thearch.Append16 = ld.Append16b
+		ld.Thearch.Append32 = ld.Append32b
+		ld.Thearch.Append64 = ld.Append64b
 	}
 
 	// TODO(austin): ABI v1 uses /usr/lib/ld.so.1
@@ -98,6 +105,20 @@ func archinit() {
 		ld.Linkmode = ld.LinkInternal
 	}
 
+	switch ld.Buildmode {
+	case ld.BuildmodePIE, ld.BuildmodeShared:
+		ld.Linkmode = ld.LinkExternal
+	}
+
+	if ld.Linkshared {
+		ld.Linkmode = ld.LinkExternal
+	}
+
+	if ld.Linkmode == ld.LinkExternal {
+		toc := ld.Linklookup(ld.Ctxt, ".TOC.", 0)
+		toc.Type = obj.SDYNIMPORT
+	}
+
 	switch ld.HEADTYPE {
 	default:
 		if ld.Linkmode == ld.LinkAuto {
@@ -106,6 +127,9 @@ func archinit() {
 		if ld.Linkmode == ld.LinkExternal && obj.Getgoextlinkenabled() != "1" {
 			log.Fatalf("cannot use -linkmode=external with -H %s", ld.Headstr(int(ld.HEADTYPE)))
 		}
+
+	case obj.Hlinux:
+		break
 	}
 
 	switch ld.HEADTYPE {

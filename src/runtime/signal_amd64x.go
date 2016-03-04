@@ -1,4 +1,4 @@
-// Copyright 2013 The Go Authors.  All rights reserved.
+// Copyright 2013 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -8,6 +8,7 @@
 package runtime
 
 import (
+	"runtime/internal/sys"
 	"unsafe"
 )
 
@@ -38,7 +39,8 @@ func dumpregs(c *sigctxt) {
 var crashing int32
 
 // May run during STW, so write barriers are not allowed.
-//go:nowritebarrier
+//
+//go:nowritebarrierrec
 func sighandler(sig uint32, info *siginfo, ctxt unsafe.Pointer, gp *g) {
 	_g_ := getg()
 	c := &sigctxt{info, ctxt}
@@ -114,16 +116,16 @@ func sighandler(sig uint32, info *siginfo, ctxt unsafe.Pointer, gp *g) {
 
 		// Only push runtime.sigpanic if pc != 0.
 		// If pc == 0, probably panicked because of a
-		// call to a nil func.  Not pushing that onto sp will
+		// call to a nil func. Not pushing that onto sp will
 		// make the trace look like a call to runtime.sigpanic instead.
 		// (Otherwise the trace will end at runtime.sigpanic and we
 		// won't get to see who faulted.)
 		if pc != 0 {
-			if regSize > ptrSize {
-				sp -= ptrSize
+			if sys.RegSize > sys.PtrSize {
+				sp -= sys.PtrSize
 				*(*uintptr)(unsafe.Pointer(sp)) = 0
 			}
-			sp -= ptrSize
+			sp -= sys.PtrSize
 			*(*uintptr)(unsafe.Pointer(sp)) = pc
 			c.set_rsp(uint64(sp))
 		}
@@ -137,8 +139,12 @@ func sighandler(sig uint32, info *siginfo, ctxt unsafe.Pointer, gp *g) {
 		}
 	}
 
+	if c.sigcode() == _SI_USER && signal_ignored(sig) {
+		return
+	}
+
 	if flags&_SigKill != 0 {
-		exit(2)
+		dieFromSignal(int32(sig))
 	}
 
 	if flags&_SigThrow == 0 {
@@ -165,8 +171,8 @@ func sighandler(sig uint32, info *siginfo, ctxt unsafe.Pointer, gp *g) {
 	}
 	print("\n")
 
-	var docrash bool
-	if gotraceback(&docrash) > 0 {
+	level, _, docrash := gotraceback()
+	if level > 0 {
 		goroutineheader(gp)
 		tracebacktrap(uintptr(c.rip()), uintptr(c.rsp()), 0, gp)
 		if crashing > 0 && gp != _g_.m.curg && _g_.m.curg != nil && readgstatus(_g_.m.curg)&^_Gscan == _Grunning {

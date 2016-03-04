@@ -6,12 +6,8 @@ package gc
 
 import "cmd/internal/obj"
 
-/*
- * machine size and rounding
- * alignment is dictated around
- * the size of a pointer, set in betypeinit
- * (see ../6g/galign.c).
- */
+// machine size and rounding alignment is dictated around
+// the size of a pointer, set in betypeinit (see ../amd64/galign.go).
 var defercalc int
 
 func Rnd(o int64, r int64) int64 {
@@ -68,7 +64,7 @@ func widstruct(errtype *Type, t *Type, o int64, flag int) int64 {
 		f.Width = o // really offset for TFIELD
 		if f.Nname != nil {
 			// this same stackparam logic is in addrescapes
-			// in typecheck.c.  usually addrescapes runs after
+			// in typecheck.go.  usually addrescapes runs after
 			// widstruct, in which case we could drop this,
 			// but function closure functions are the exception.
 			if f.Nname.Name.Param.Stackparam != nil {
@@ -90,9 +86,9 @@ func widstruct(errtype *Type, t *Type, o int64, flag int) int64 {
 	}
 
 	// For nonzero-sized structs which end in a zero-sized thing, we add
-	// an extra byte of padding to the type.  This padding ensures that
+	// an extra byte of padding to the type. This padding ensures that
 	// taking the address of the zero-sized thing can't manufacture a
-	// pointer to the next object in the heap.  See issue 9401.
+	// pointer to the next object in the heap. See issue 9401.
 	if flag == 1 && o > starto && o == lastzero {
 		o++
 	}
@@ -127,15 +123,12 @@ func dowidth(t *Type) {
 	}
 
 	if t.Width == -2 {
-		lno := int(lineno)
-		lineno = int32(t.Lineno)
 		if !t.Broke {
 			t.Broke = true
-			Yyerror("invalid recursive type %v", t)
+			yyerrorl(t.Lineno, "invalid recursive type %v", t)
 		}
 
 		t.Width = 0
-		lineno = int32(lno)
 		return
 	}
 
@@ -148,20 +141,20 @@ func dowidth(t *Type) {
 	// defer checkwidth calls until after we're done
 	defercalc++
 
-	lno := int(lineno)
-	lineno = int32(t.Lineno)
+	lno := lineno
+	lineno = t.Lineno
 	t.Width = -2
 	t.Align = 0
 
-	et := int32(t.Etype)
+	et := t.Etype
 	switch et {
 	case TFUNC, TCHAN, TMAP, TSTRING:
 		break
 
-		/* simtype == 0 during bootstrap */
+	// simtype == 0 during bootstrap
 	default:
 		if Simtype[t.Etype] != 0 {
-			et = int32(Simtype[t.Etype])
+			et = Simtype[t.Etype]
 		}
 	}
 
@@ -170,7 +163,7 @@ func dowidth(t *Type) {
 	default:
 		Fatalf("dowidth: unknown type: %v", t)
 
-		/* compiler-specific stuff */
+	// compiler-specific stuff
 	case TINT8, TUINT8, TBOOL:
 		// bool is int8
 		w = 1
@@ -238,7 +231,7 @@ func dowidth(t *Type) {
 		}
 		w = 1 // anything will do
 
-		// dummy type; should be replaced before use.
+	// dummy type; should be replaced before use.
 	case TANY:
 		if Debug['A'] == 0 {
 			Fatalf("dowidth any")
@@ -286,7 +279,7 @@ func dowidth(t *Type) {
 		}
 		w = widstruct(t, t, 0, 1)
 
-		// make fake type to check later to
+	// make fake type to check later to
 	// trigger function argument computation.
 	case TFUNC:
 		t1 := typ(TFUNCARGS)
@@ -297,7 +290,7 @@ func dowidth(t *Type) {
 		// width of func type is pointer
 		w = int64(Widthptr)
 
-		// function is 3 cated structures;
+	// function is 3 cated structures;
 	// compute their widths as side-effect.
 	case TFUNCARGS:
 		t1 := t.Type
@@ -324,7 +317,7 @@ func dowidth(t *Type) {
 		t.Align = uint8(w)
 	}
 
-	lineno = int32(lno)
+	lineno = lno
 
 	if defercalc == 1 {
 		resumecheckwidth()
@@ -333,23 +326,21 @@ func dowidth(t *Type) {
 	}
 }
 
-/*
- * when a type's width should be known, we call checkwidth
- * to compute it.  during a declaration like
- *
- *	type T *struct { next T }
- *
- * it is necessary to defer the calculation of the struct width
- * until after T has been initialized to be a pointer to that struct.
- * similarly, during import processing structs may be used
- * before their definition.  in those situations, calling
- * defercheckwidth() stops width calculations until
- * resumecheckwidth() is called, at which point all the
- * checkwidths that were deferred are executed.
- * dowidth should only be called when the type's size
- * is needed immediately.  checkwidth makes sure the
- * size is evaluated eventually.
- */
+// when a type's width should be known, we call checkwidth
+// to compute it.  during a declaration like
+//
+//	type T *struct { next T }
+//
+// it is necessary to defer the calculation of the struct width
+// until after T has been initialized to be a pointer to that struct.
+// similarly, during import processing structs may be used
+// before their definition.  in those situations, calling
+// defercheckwidth() stops width calculations until
+// resumecheckwidth() is called, at which point all the
+// checkwidths that were deferred are executed.
+// dowidth should only be called when the type's size
+// is needed immediately.  checkwidth makes sure the
+// size is evaluated eventually.
 type TypeList struct {
 	t    *Type
 	next *TypeList
@@ -422,8 +413,8 @@ func typeinit() {
 		Fatalf("typeinit before betypeinit")
 	}
 
-	for i := 0; i < NTYPE; i++ {
-		Simtype[i] = uint8(i)
+	for et := EType(0); et < NTYPE; et++ {
+		Simtype[et] = et
 	}
 
 	Types[TPTR32] = typ(TPTR32)
@@ -445,8 +436,8 @@ func typeinit() {
 		Tptr = TPTR64
 	}
 
-	for i := TINT8; i <= TUINT64; i++ {
-		Isint[i] = true
+	for et := TINT8; et <= TUINT64; et++ {
+		Isint[et] = true
 	}
 	Isint[TINT] = true
 	Isint[TUINT] = true
@@ -469,39 +460,37 @@ func typeinit() {
 	Issigned[TINT32] = true
 	Issigned[TINT64] = true
 
-	/*
-	 * initialize okfor
-	 */
-	for i := 0; i < NTYPE; i++ {
-		if Isint[i] || i == TIDEAL {
-			okforeq[i] = true
-			okforcmp[i] = true
-			okforarith[i] = true
-			okforadd[i] = true
-			okforand[i] = true
-			okforconst[i] = true
-			issimple[i] = true
-			Minintval[i] = new(Mpint)
-			Maxintval[i] = new(Mpint)
+	// initialize okfor
+	for et := EType(0); et < NTYPE; et++ {
+		if Isint[et] || et == TIDEAL {
+			okforeq[et] = true
+			okforcmp[et] = true
+			okforarith[et] = true
+			okforadd[et] = true
+			okforand[et] = true
+			okforconst[et] = true
+			issimple[et] = true
+			Minintval[et] = new(Mpint)
+			Maxintval[et] = new(Mpint)
 		}
 
-		if Isfloat[i] {
-			okforeq[i] = true
-			okforcmp[i] = true
-			okforadd[i] = true
-			okforarith[i] = true
-			okforconst[i] = true
-			issimple[i] = true
-			minfltval[i] = newMpflt()
-			maxfltval[i] = newMpflt()
+		if Isfloat[et] {
+			okforeq[et] = true
+			okforcmp[et] = true
+			okforadd[et] = true
+			okforarith[et] = true
+			okforconst[et] = true
+			issimple[et] = true
+			minfltval[et] = newMpflt()
+			maxfltval[et] = newMpflt()
 		}
 
-		if Iscomplex[i] {
-			okforeq[i] = true
-			okforadd[i] = true
-			okforarith[i] = true
-			okforconst[i] = true
-			issimple[i] = true
+		if Iscomplex[et] {
+			okforeq[et] = true
+			okforadd[et] = true
+			okforarith[et] = true
+			okforconst[et] = true
+			issimple[et] = true
 		}
 	}
 
@@ -599,10 +588,10 @@ func typeinit() {
 	mpatofix(Maxintval[TUINT32], "0xffffffff")
 	mpatofix(Maxintval[TUINT64], "0xffffffffffffffff")
 
-	/* f is valid float if min < f < max.  (min and max are not themselves valid.) */
-	mpatoflt(maxfltval[TFLOAT32], "33554431p103") /* 2^24-1 p (127-23) + 1/2 ulp*/
+	// f is valid float if min < f < max.  (min and max are not themselves valid.)
+	mpatoflt(maxfltval[TFLOAT32], "33554431p103") // 2^24-1 p (127-23) + 1/2 ulp
 	mpatoflt(minfltval[TFLOAT32], "-33554431p103")
-	mpatoflt(maxfltval[TFLOAT64], "18014398509481983p970") /* 2^53-1 p (1023-52) + 1/2 ulp */
+	mpatoflt(maxfltval[TFLOAT64], "18014398509481983p970") // 2^53-1 p (1023-52) + 1/2 ulp
 	mpatoflt(minfltval[TFLOAT64], "-18014398509481983p970")
 
 	maxfltval[TCOMPLEX64] = maxfltval[TFLOAT32]
@@ -610,58 +599,21 @@ func typeinit() {
 	maxfltval[TCOMPLEX128] = maxfltval[TFLOAT64]
 	minfltval[TCOMPLEX128] = minfltval[TFLOAT64]
 
-	/* for walk to use in error messages */
+	// for walk to use in error messages
 	Types[TFUNC] = functype(nil, nil, nil)
 
-	/* types used in front end */
+	// types used in front end
 	// types[TNIL] got set early in lexinit
 	Types[TIDEAL] = typ(TIDEAL)
 
 	Types[TINTER] = typ(TINTER)
 
-	/* simple aliases */
-	Simtype[TMAP] = uint8(Tptr)
+	// simple aliases
+	Simtype[TMAP] = Tptr
 
-	Simtype[TCHAN] = uint8(Tptr)
-	Simtype[TFUNC] = uint8(Tptr)
-	Simtype[TUNSAFEPTR] = uint8(Tptr)
-
-	/* pick up the backend thearch.typedefs */
-	var s1 *Sym
-	var etype int
-	var sameas int
-	var s *Sym
-	for i = range Thearch.Typedefs {
-		s = Lookup(Thearch.Typedefs[i].Name)
-		s1 = Pkglookup(Thearch.Typedefs[i].Name, builtinpkg)
-
-		etype = Thearch.Typedefs[i].Etype
-		if etype < 0 || etype >= len(Types) {
-			Fatalf("typeinit: %s bad etype", s.Name)
-		}
-		sameas = Thearch.Typedefs[i].Sameas
-		if sameas < 0 || sameas >= len(Types) {
-			Fatalf("typeinit: %s bad sameas", s.Name)
-		}
-		Simtype[etype] = uint8(sameas)
-		minfltval[etype] = minfltval[sameas]
-		maxfltval[etype] = maxfltval[sameas]
-		Minintval[etype] = Minintval[sameas]
-		Maxintval[etype] = Maxintval[sameas]
-
-		t = Types[etype]
-		if t != nil {
-			Fatalf("typeinit: %s already defined", s.Name)
-		}
-
-		t = typ(etype)
-		t.Sym = s1
-
-		dowidth(t)
-		Types[etype] = t
-		s1.Def = typenod(t)
-		s1.Def.Name = new(Name)
-	}
+	Simtype[TCHAN] = Tptr
+	Simtype[TFUNC] = Tptr
+	Simtype[TUNSAFEPTR] = Tptr
 
 	Array_array = int(Rnd(0, int64(Widthptr)))
 	Array_nel = int(Rnd(int64(Array_array)+int64(Widthptr), int64(Widthint)))
@@ -678,9 +630,7 @@ func typeinit() {
 	itable.Type = Types[TUINT8]
 }
 
-/*
- * compute total size of f's in/out arguments.
- */
+// compute total size of f's in/out arguments.
 func Argsize(t *Type) int {
 	var save Iter
 	var x int64

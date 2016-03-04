@@ -1,4 +1,4 @@
-// Copyright 2013 The Go Authors.  All rights reserved.
+// Copyright 2013 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -46,4 +46,7 @@ back:
 	REP; MOVSB
 	CLD
 
+	// Note: we copy only 4 bytes at a time so that the tail is at most
+	// 3 bytes. That guarantees that we aren't copying pointers with MOVSB.
+	// See issue 13160.
 	RET

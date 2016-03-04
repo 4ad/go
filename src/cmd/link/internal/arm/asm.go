@@ -37,11 +37,79 @@ import (
 	"log"
 )
 
+// This assembler:
+//
+//         .align 2
+// local.dso_init:
+//         ldr r0, .Lmoduledata
+// .Lloadfrom:
+//         ldr r0, [r0]
+//         b runtime.addmoduledata@plt
+// .align 2
+// .Lmoduledata:
+//         .word local.moduledata(GOT_PREL) + (. - (.Lloadfrom + 4))
+// assembles to:
+//
+// 00000000 <local.dso_init>:
+//    0:        e59f0004        ldr     r0, [pc, #4]    ; c <local.dso_init+0xc>
+//    4:        e5900000        ldr     r0, [r0]
+//    8:        eafffffe        b       0 <runtime.addmoduledata>
+//                      8: R_ARM_JUMP24 runtime.addmoduledata
+//    c:        00000004        .word   0x00000004
+//                      c: R_ARM_GOT_PREL       local.moduledata
+
 func gentext() {
+	if !ld.DynlinkingGo() {
+		return
+	}
+	addmoduledata := ld.Linklookup(ld.Ctxt, "runtime.addmoduledata", 0)
+	if addmoduledata.Type == obj.STEXT {
+		// we're linking a module containing the runtime -> no need for
+		// an init function
+		return
+	}
+	addmoduledata.Attr |= ld.AttrReachable
+	initfunc := ld.Linklookup(ld.Ctxt, "go.link.addmoduledata", 0)
+	initfunc.Type = obj.STEXT
+	initfunc.Attr |= ld.AttrLocal
+	initfunc.Attr |= ld.AttrReachable
+	o := func(op uint32) {
+		ld.Adduint32(ld.Ctxt, initfunc, op)
+	}
+	o(0xe59f0004)
+	o(0xe08f0000)
+
+	o(0xeafffffe)
+	rel := ld.Addrel(initfunc)
+	rel.Off = 8
+	rel.Siz = 4
+	rel.Sym = ld.Linklookup(ld.Ctxt, "runtime.addmoduledata", 0)
+	rel.Type = obj.R_CALLARM
+	rel.Add = 0xeafffffe // vomit
+
+	o(0x00000000)
+	rel = ld.Addrel(initfunc)
+	rel.Off = 12
+	rel.Siz = 4
+	rel.Sym = ld.Ctxt.Moduledata
+	rel.Type = obj.R_PCREL
+	rel.Add = 4
+
+	if ld.Ctxt.Etextp != nil {
+		ld.Ctxt.Etextp.Next = initfunc
+	} else {
+		ld.Ctxt.Textp = initfunc
+	}
+	ld.Ctxt.Etextp = initfunc
+	initarray_entry := ld.Linklookup(ld.Ctxt, "go.link.addmoduledatainit", 0)
+	initarray_entry.Attr |= ld.AttrReachable
+	initarray_entry.Attr |= ld.AttrLocal
+	initarray_entry.Type = obj.SINITARR
+	ld.Addaddr(ld.Ctxt, initarray_entry, initfunc)
 }
 
 // Preserve highest 8 bits of a, and do addition to lower 24-bit
-// of a and b; used to adjust ARM branch intruction's target
+// of a and b; used to adjust ARM branch instruction's target
 func braddoff(a int32, b int32) int32 {
 	return int32((uint32(a))&0xff000000 | 0x00ffffff&uint32(a+b))
 }
@@ -193,7 +261,7 @@ func adddynrel(s *ld.LSym, r *ld.Reloc) {
 func elfreloc1(r *ld.Reloc, sectoff int64) int {
 	ld.Thearch.Lput(uint32(sectoff))
 
-	elfsym := r.Xsym.Elfsym
+	elfsym := r.Xsym.ElfsymForReloc()
 	switch r.Type {
 	default:
 		return -1
@@ -228,6 +296,13 @@ func elfreloc1(r *ld.Reloc, sectoff int64) int {
 
 	case obj.R_TLS_IE:
 		ld.Thearch.Lput(ld.R_ARM_TLS_IE32 | uint32(elfsym)<<8)
+
+	case obj.R_GOTPCREL:
+		if r.Siz == 4 {
+			ld.Thearch.Lput(ld.R_ARM_GOT_PREL | uint32(elfsym)<<8)
+		} else {
+			return -1
+		}
 	}
 
 	return 0
@@ -405,7 +480,7 @@ func addpltreloc(ctxt *ld.Link, plt *ld.LSym, got *ld.LSym, sym *ld.LSym, typ in
 	r.Type = int32(typ)
 	r.Add = int64(sym.Got) - 8
 
-	plt.Reachable = true
+	plt.Attr |= ld.AttrReachable
 	plt.Size += 4
 	ld.Symgrow(ctxt, plt, plt.Size)
 
@@ -614,14 +689,14 @@ func asmb() {
 	switch ld.HEADTYPE {
 	default:
 	case obj.Hplan9: /* plan 9 */
-		ld.Thearch.Lput(0x647)                      /* magic */
-		ld.Thearch.Lput(uint32(ld.Segtext.Filelen)) /* sizes */
-		ld.Thearch.Lput(uint32(ld.Segdata.Filelen))
-		ld.Thearch.Lput(uint32(ld.Segdata.Length - ld.Segdata.Filelen))
-		ld.Thearch.Lput(uint32(ld.Symsize))      /* nsyms */
-		ld.Thearch.Lput(uint32(ld.Entryvalue())) /* va of entry */
-		ld.Thearch.Lput(0)
-		ld.Thearch.Lput(uint32(ld.Lcsize))
+		ld.Lputb(0x647)                      /* magic */
+		ld.Lputb(uint32(ld.Segtext.Filelen)) /* sizes */
+		ld.Lputb(uint32(ld.Segdata.Filelen))
+		ld.Lputb(uint32(ld.Segdata.Length - ld.Segdata.Filelen))
+		ld.Lputb(uint32(ld.Symsize))      /* nsyms */
+		ld.Lputb(uint32(ld.Entryvalue())) /* va of entry */
+		ld.Lputb(0)
+		ld.Lputb(uint32(ld.Lcsize))
 
 	case obj.Hlinux,
 		obj.Hfreebsd,
