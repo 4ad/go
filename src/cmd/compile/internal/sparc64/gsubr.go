@@ -509,7 +509,7 @@ func rawgins(as int, f *gc.Node, t *gc.Node) *obj.Prog {
 
 	// Bad things the front end has done to us. Crash to find call stack.
 	switch as {
-	case sparc64.AAND, sparc64.AMUL:
+	case sparc64.AAND, sparc64.AMULD:
 		if p.From.Type == obj.TYPE_CONST {
 			gc.Debug['h'] = 1
 			gc.Fatalf("bad inst: %v", p)
@@ -947,22 +947,15 @@ func optoas(op gc.Op, t *gc.Type) int {
 
 	case OMUL_ | gc.TINT8,
 		OMUL_ | gc.TINT16,
-		OMUL_ | gc.TINT32:
-		a = sparc64.ASMULL
-
-	case OMUL_ | gc.TINT64:
-		a = sparc64.AMUL
-
-	case OMUL_ | gc.TUINT8,
+		OMUL_ | gc.TINT32,
+		OMUL_ | gc.TINT64,
+		OMUL_ | gc.TUINT8,
 		OMUL_ | gc.TUINT16,
 		OMUL_ | gc.TUINT32,
-		OMUL_ | gc.TPTR32:
-		// don't use word multiply, the high 32-bit are undefined.
-		a = sparc64.AUMULL
-
-	case OMUL_ | gc.TUINT64,
+		OMUL_ | gc.TPTR32,
+		OMUL_ | gc.TUINT64,
 		OMUL_ | gc.TPTR64:
-		a = sparc64.AMUL // for 64-bit multiplies, signedness doesn't matter.
+		a = sparc64.AMULD
 
 	case OMUL_ | gc.TFLOAT32:
 		a = sparc64.AFMULS
