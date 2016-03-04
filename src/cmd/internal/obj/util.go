@@ -557,8 +557,8 @@ const (
 	RBase386     = 1 * 1024
 	RBaseAMD64   = 2 * 1024
 	RBaseARM     = 3 * 1024
-	RBasePPC64   = 4 * 1024 // range [4k, 8k)
-	RBaseARM64   = 8 * 1024 // range [8k, 13k)
+	RBasePPC64   = 4 * 1024  // range [4k, 8k)
+	RBaseARM64   = 8 * 1024  // range [8k, 13k)
 	RBaseMIPS64  = 13 * 1024 // range [13k, 14k)
 	RBaseSPARC64 = 14 * 1024 // range [14k, 15k)
 )

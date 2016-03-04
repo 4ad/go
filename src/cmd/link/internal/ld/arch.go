@@ -95,4 +95,3 @@ var Linksparc64 = LinkArch{
 	Ptrsize:   8,
 	Regsize:   8,
 }
-
