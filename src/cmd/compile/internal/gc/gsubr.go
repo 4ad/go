@@ -631,8 +631,8 @@ func unpatch(p *obj.Prog) *obj.Prog {
 	return q
 }
 
-var reg [100]int       // count of references to reg
-var regstk [100][]byte // allocation sites, when -v is given
+var reg [128]int       // count of references to reg
+var regstk [128][]byte // allocation sites, when -v is given
 
 func GetReg(r int) int {
 	return reg[r-Thearch.REGMIN]

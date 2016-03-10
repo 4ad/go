@@ -122,6 +122,39 @@ func autoedit(a *obj.Addr) {
 	}
 }
 
+// yfix rewrites references to Y registers (issued by compiler)
+// to F and D registers.
+func yfix(p *obj.Prog) {
+	if REG_Y0 <= p.From.Reg && p.From.Reg <= REG_Y15 {
+		if isInstDouble[p.As] || isSrcDouble[p.As] {
+			p.From.Reg = REG_D0 + (p.From.Reg-REG_Y0)*2
+		} else if isInstFloat[p.As] || isSrcFloat[p.As] {
+			p.From.Reg = REG_F0 + (p.From.Reg-REG_Y0)*2
+		}
+	}
+	if REG_Y0 <= p.Reg && p.Reg <= REG_Y15 {
+		if isInstDouble[p.As] {
+			p.Reg = REG_D0 + (p.Reg-REG_Y0)*2
+		} else {
+			p.Reg = REG_F0 + (p.Reg-REG_Y0)*2
+		}
+	}
+	if p.From3 != nil && REG_Y0 <= p.From3.Reg && p.From3.Reg <= REG_Y15 {
+		if isInstDouble[p.As] {
+			p.From3.Reg = REG_D0 + (p.From3.Reg-REG_Y0)*2
+		} else {
+			p.From3.Reg = REG_F0 + (p.From3.Reg-REG_Y0)*2
+		}
+	}
+	if REG_Y0 <= p.To.Reg && p.To.Reg <= REG_Y15 {
+		if isInstDouble[p.As] || isDstDouble[p.As] {
+			p.To.Reg = REG_D0 + (p.To.Reg-REG_Y0)*2
+		} else if isInstFloat[p.As] || isDstFloat[p.As] {
+			p.To.Reg = REG_F0 + (p.To.Reg-REG_Y0)*2
+		}
+	}
+}
+
 func progedit(ctxt *obj.Link, p *obj.Prog) {
 	// Rewite virtual SP/FP references to RFP. This has to happen
 	// before any call to aclass, so it must be first here.
@@ -217,6 +250,10 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 			p.From.Offset = 0
 		}
 	}
+
+	// TODO(aram): remove this when compiler can use F and
+	// D registers directly.
+	yfix(p)
 }
 
 // TODO(aram):

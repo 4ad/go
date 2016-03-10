@@ -52,10 +52,12 @@ func Rconv(r int) string {
 		return fmt.Sprintf("D%d", r-REG_D0)
 	case REG_D32 <= r && r <= REG_D62 && r%2 == 1:
 		return fmt.Sprintf("D%d", r-REG_D0+31)
+	case REG_Y0 <= r && r <= REG_Y15:
+		return fmt.Sprintf("Y%d", r-REG_Y0)
 	case REG_FCC0 <= r && r <= REG_FCC3:
 		return fmt.Sprintf("FCC%d", r-REG_FCC0)
 	}
-	return fmt.Sprintf("badreg(%d)", r)
+	return fmt.Sprintf("badreg(%d+%d)", REG_R0, r-REG_R0)
 }
 
 func DRconv(a int8) string {

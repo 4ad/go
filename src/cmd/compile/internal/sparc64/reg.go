@@ -121,7 +121,12 @@ func excludedregs() uint64 {
 	}
 
 	// Exclude floating point registers with fixed functions
-	regbits = RtoB(sparc64.REG_FTMP) | RtoB(sparc64.REG_DTMP)
+	regbits = RtoB(sparc64.REG_YTMP)
+
+	// Exclude Y16-Y31, since they don't exist.
+	for r := sparc64.REG_Y15 + 1; r <= (sparc64.REG_Y0 + 31); r++ {
+		regbits |= RtoB(r)
+	}
 
 	return regbits
 }
@@ -137,17 +142,18 @@ func doregbits(r int) uint64 {
  *	1	R1
  *	...	...
  *	31	R31
- *	32+0	F0
- *	32+1	F1
+ *	32+0	Y0
+ *	32+1	Y1
  *	...	...
- *	32+31	F31
+ *	32+15	Y15
+ *	...	unused
  */
 func RtoB(r int) uint64 {
 	if r >= sparc64.REG_R0 && r <= sparc64.REG_R31 {
 		return 1 << uint(r-sparc64.REG_R0)
 	}
-	if r >= sparc64.REG_F0 && r <= sparc64.REG_F31 {
-		return 1 << uint(32+r-sparc64.REG_F0)
+	if r >= sparc64.REG_Y0 && r <= sparc64.REG_Y15 {
+		return 1 << uint(32+r-sparc64.REG_Y0)
 	}
 	return 0
 }
@@ -165,5 +171,5 @@ func BtoF(b uint64) int {
 	if b == 0 {
 		return 0
 	}
-	return gc.Bitno(b) + sparc64.REG_F0
+	return gc.Bitno(b) + sparc64.REG_Y0
 }

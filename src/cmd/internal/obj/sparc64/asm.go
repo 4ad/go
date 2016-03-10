@@ -105,13 +105,13 @@ var optab = map[Optab]Opval{
 	Optab{AFMOVD, ClassDReg, ClassNone, ClassNone, ClassDReg}: {11, 4},
 
 	Optab{AFXTOD, ClassDReg, ClassNone, ClassNone, ClassDReg}: {11, 4},
-	Optab{AFITOD, ClassDReg, ClassNone, ClassNone, ClassDReg}: {11, 4},
+	Optab{AFITOD, ClassFReg, ClassNone, ClassNone, ClassDReg}: {11, 4},
 	Optab{AFXTOS, ClassDReg, ClassNone, ClassNone, ClassFReg}: {11, 4},
 	Optab{AFITOS, ClassFReg, ClassNone, ClassNone, ClassFReg}: {11, 4},
 
-	Optab{AFSTOX, ClassDReg, ClassNone, ClassNone, ClassDReg}: {11, 4},
+	Optab{AFSTOX, ClassFReg, ClassNone, ClassNone, ClassDReg}: {11, 4},
 	Optab{AFDTOX, ClassDReg, ClassNone, ClassNone, ClassDReg}: {11, 4},
-	Optab{AFDTOI, ClassDReg, ClassNone, ClassNone, ClassDReg}: {11, 4},
+	Optab{AFDTOI, ClassDReg, ClassNone, ClassNone, ClassFReg}: {11, 4},
 	Optab{AFSTOI, ClassFReg, ClassNone, ClassNone, ClassFReg}: {11, 4},
 
 	Optab{AFABSD, ClassDReg, ClassNone, ClassNone, ClassDReg}: {11, 4},
@@ -228,6 +228,34 @@ var isInstFloat = map[int16]bool{
 	AFSQRTS: true,
 	ALDSF:   true,
 	ASTSF:   true,
+}
+
+var isSrcDouble = map[int16]bool{
+	AFXTOD: true,
+	AFXTOS: true,
+	AFDTOX: true,
+	AFDTOI: true,
+}
+
+var isSrcFloat = map[int16]bool{
+	AFITOD: true,
+	AFITOS: true,
+	AFSTOX: true,
+	AFSTOI: true,
+}
+
+var isDstDouble = map[int16]bool{
+	AFXTOD: true,
+	AFITOD: true,
+	AFSTOX: true,
+	AFDTOX: true,
+}
+
+var isDstFloat = map[int16]bool{
+	AFXTOS: true,
+	AFITOS: true,
+	AFDTOI: true,
+	AFSTOI: true,
 }
 
 // Compatible instructions, if an asm* function accepts AADD,

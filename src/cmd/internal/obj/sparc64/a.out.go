@@ -111,6 +111,25 @@ const (
 	REG_D60
 	REG_D30
 	REG_D62
+
+	// common single/double-precision virtualized registers.
+	// Yn is aliased to F2n, F2n+1, D2n.
+	REG_Y0
+	REG_Y1
+	REG_Y2
+	REG_Y3
+	REG_Y4
+	REG_Y5
+	REG_Y6
+	REG_Y7
+	REG_Y8
+	REG_Y9
+	REG_Y10
+	REG_Y11
+	REG_Y12
+	REG_Y13
+	REG_Y14
+	REG_Y15
 )
 
 const (
@@ -151,6 +170,7 @@ const (
 	REG_G    = REG_R31
 	REG_FTMP = REG_F0
 	REG_DTMP = REG_D0
+	REG_YTMP = REG_Y0
 )
 
 const (

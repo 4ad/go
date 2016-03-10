@@ -39,8 +39,8 @@ func Main() {
 	gc.Thearch.REGMIN = sparc64.REG_MIN
 	gc.Thearch.REGMAX = sparc64.REG_MAX
 	gc.Thearch.REGZERO = sparc64.REG_ZR
-	gc.Thearch.FREGMIN = sparc64.REG_F0
-	gc.Thearch.FREGMAX = sparc64.REG_F31
+	gc.Thearch.FREGMIN = sparc64.REG_Y0
+	gc.Thearch.FREGMAX = sparc64.REG_Y15
 	gc.Thearch.MAXWIDTH = MAXWIDTH
 	gc.Thearch.ReservedRegs = resvd
 

@@ -48,8 +48,7 @@ var resvd = []int{
 	sparc64.REG_CTXT,
 	sparc64.REG_RFP,
 	sparc64.REG_G,
-	sparc64.REG_FTMP,
-	sparc64.REG_DTMP,
+	sparc64.REG_YTMP,
 }
 
 /*
