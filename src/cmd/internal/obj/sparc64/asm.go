@@ -235,6 +235,7 @@ var isSrcDouble = map[int16]bool{
 	AFXTOS: true,
 	AFDTOX: true,
 	AFDTOI: true,
+	AFDTOS: true,
 }
 
 var isSrcFloat = map[int16]bool{
@@ -242,6 +243,7 @@ var isSrcFloat = map[int16]bool{
 	AFITOS: true,
 	AFSTOX: true,
 	AFSTOI: true,
+	AFSTOD: true,
 }
 
 var isDstDouble = map[int16]bool{
@@ -249,6 +251,7 @@ var isDstDouble = map[int16]bool{
 	AFITOD: true,
 	AFSTOX: true,
 	AFDTOX: true,
+	AFSTOD: true,
 }
 
 var isDstFloat = map[int16]bool{
@@ -256,6 +259,7 @@ var isDstFloat = map[int16]bool{
 	AFITOS: true,
 	AFDTOI: true,
 	AFSTOI: true,
+	AFDTOS: true,
 }
 
 // Compatible instructions, if an asm* function accepts AADD,

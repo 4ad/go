@@ -153,6 +153,7 @@ func gmove(f *gc.Node, t *gc.Node) {
 
 	// cannot have two memory operands
 	var r1 gc.Node
+	var r2 gc.Node
 	var a int
 	if gc.Ismem(f) && gc.Ismem(t) {
 		goto hard
@@ -210,6 +211,8 @@ func gmove(f *gc.Node, t *gc.Node) {
 	// value -> value copy, only one memory operand.
 	// figure out the instruction to use.
 	// break out of switch for one-instruction gins.
+	// goto fsrccpy for "float operation, and source is an integer register".
+	// goto fdstcpy for "float operation, and destination is an integer register".
 	// goto rdst for "destination must be register".
 	// goto hard for "convert to cvt type first".
 	// otherwise handle and return.
@@ -336,36 +339,36 @@ func gmove(f *gc.Node, t *gc.Node) {
 	 */
 	case gc.TFLOAT32<<16 | gc.TINT32:
 		a = sparc64.AFSTOI
-		goto rdst
+		goto fdstcpy
 
 	case gc.TFLOAT64<<16 | gc.TINT32:
 		a = sparc64.AFDTOI
-		goto rdst
+		goto fdstcpy
 
 	case gc.TFLOAT32<<16 | gc.TINT64:
 		a = sparc64.AFSTOX
-		goto rdst
+		goto fdstcpy
 
 	case gc.TFLOAT64<<16 | gc.TINT64:
 		a = sparc64.AFDTOX
-		goto rdst
+		goto fdstcpy
 
 	// TODO(aram):
 	//case gc.TFLOAT32<<16 | gc.TUINT32:
 	//	a = sparc64.AFCVTZUSW
-	//	goto rdst
+	//	goto fdstcpy
 	//
 	//case gc.TFLOAT64<<16 | gc.TUINT32:
 	//	a = sparc64.AFCVTZUDW
-	//	goto rdst
+	//	goto fdstcpy
 	//
 	//case gc.TFLOAT32<<16 | gc.TUINT64:
 	//	a = sparc64.AFCVTZUS
-	//	goto rdst
+	//	goto fdstcpy
 	//
 	//case gc.TFLOAT64<<16 | gc.TUINT64:
 	//	a = sparc64.AFCVTZUD
-	//	goto rdst
+	//	goto fdstcpy
 
 	case gc.TFLOAT32<<16 | gc.TINT16,
 		gc.TFLOAT32<<16 | gc.TINT8,
@@ -393,7 +396,7 @@ func gmove(f *gc.Node, t *gc.Node) {
 		gc.TUINT16<<16 | gc.TFLOAT32:
 		a = sparc64.AFITOS
 
-		goto rdst
+		goto fsrccpy
 
 	case gc.TINT8<<16 | gc.TFLOAT64,
 		gc.TINT16<<16 | gc.TFLOAT64,
@@ -402,26 +405,28 @@ func gmove(f *gc.Node, t *gc.Node) {
 		gc.TUINT16<<16 | gc.TFLOAT64:
 		a = sparc64.AFITOD
 
-		goto rdst
+		goto fsrccpy
 
 	case gc.TINT64<<16 | gc.TFLOAT32,
 		gc.TUINT32<<16 | gc.TFLOAT32:
 		a = sparc64.AFXTOS
-		goto rdst
+
+		goto fsrccpy
 
 	case gc.TINT64<<16 | gc.TFLOAT64,
 		gc.TUINT32<<16 | gc.TFLOAT64:
 		a = sparc64.AFXTOD
-		goto rdst
+
+		goto fsrccpy
 
 	// TODO(aram):
 	//case gc.TUINT64<<16 | gc.TFLOAT32:
 	//	a = sparc64.AUCVTFS
-	//	goto rdst
+	//	goto fsrccpy
 	//
 	//case gc.TUINT64<<16 | gc.TFLOAT64:
 	//	a = sparc64.AUCVTFD
-	//	goto rdst
+	//	goto fsrccpy
 
 	/*
 	 * float to float
@@ -443,6 +448,82 @@ func gmove(f *gc.Node, t *gc.Node) {
 
 	gins(a, f, t)
 	return
+
+	// require copying bits (no conversion) from integer register
+	// to floating-point  register.
+fsrccpy:
+	{
+		var st int
+		switch ft {
+		case gc.TINT8:
+			st = sparc64.AMOVB
+		case gc.TINT16:
+			st = sparc64.AMOVH
+		case gc.TINT32:
+			st = sparc64.AMOVW
+		case gc.TINT64, gc.TUINT64:
+			st = sparc64.AMOVD
+		case gc.TUINT8:
+			st = sparc64.AMOVUB
+		case gc.TUINT16:
+			st = sparc64.AMOVUH
+		case gc.TUINT32:
+			st = sparc64.AMOVUW
+		}
+		p1 := gins(st, f, nil)
+		p1.To.Type = obj.TYPE_MEM
+		p1.To.Reg = sparc64.REG_RSP
+		p1.To.Offset = -8
+
+		gc.Regalloc(&r1, t.Type, nil)
+		ld := sparc64.AFMOVD
+		if tt == gc.TFLOAT32 {
+			ld = sparc64.AFMOVS
+		}
+		p1 = gins(ld, nil, &r1)
+		p1.From.Type = obj.TYPE_MEM
+		p1.From.Reg = sparc64.REG_RSP
+		p1.From.Offset = -8
+
+		gc.Regalloc(&r2, t.Type, t)
+		gins(a, &r1, &r2)
+		gmove(&r2, t)
+
+		gc.Regfree(&r2)
+		gc.Regfree(&r1)
+		return
+	}
+
+	// require copying bits (no conversion) from floating-point register
+	// to integer register.
+fdstcpy:
+	{
+		gc.Regalloc(&r1, f.Type, nil)
+		gins(a, f, &r1)
+
+		st := sparc64.AFMOVD
+		if ft == gc.TFLOAT32 {
+			st = sparc64.AFMOVS
+		}
+		p1 := gins(st, &r1, nil)
+		p1.To.Type = obj.TYPE_MEM
+		p1.To.Reg = sparc64.REG_RSP
+		p1.To.Offset = -8
+
+		gc.Regalloc(&r2, t.Type, t)
+		ld := sparc64.AMOVD
+		if tt == gc.TINT32 {
+			ld = sparc64.AMOVW
+		}
+		p1 = gins(ld, nil, &r2)
+		p1.From.Type = obj.TYPE_MEM
+		p1.From.Reg = sparc64.REG_RSP
+		p1.From.Offset = -8
+
+		gc.Regfree(&r2)
+		gc.Regfree(&r1)
+		return
+	}
 
 	// requires register destination
 rdst:
