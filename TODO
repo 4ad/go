@@ -17,12 +17,6 @@ cd tmp && GOOS=solaris GOARCH=sparc64 go tool compile -S cmp.go
 cd tmp && GOOS=solaris GOARCH=sparc64 go tool compile -S shift.go
 cd /tmp && lsr /Users/aram/go/test | grep \.go$ | xargs egrep -L 'ERROR' | xargs egrep -L 'import' | GOOS=solaris GOARCH=sparc64 xargs -n1 go tool compile >/tmp/errors
 
-==
-
-ZR is used as a destination register
-
-==
-
 !!!
 NO DYNAMIC SIZED INSTRUCTIONS
 !!!
