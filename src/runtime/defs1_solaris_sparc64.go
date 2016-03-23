@@ -102,11 +102,11 @@ const (
 )
 
 type semt struct {
-	Count uint32
-	Type  uint16
-	Magic uint16
-	Pad1  [3]uint64
-	Pad2  [2]uint64
+	sem_count uint32
+	sem_type  uint16
+	sem_magic uint16
+	sem_pad1  [3]uint64
+	sem_pad2  [2]uint64
 }
 
 type sigaltstackt struct {
