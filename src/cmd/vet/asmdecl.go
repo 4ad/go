@@ -65,6 +65,7 @@ var (
 	asmArchAmd64p32 = asmArch{"amd64p32", 4, 4, 8, false, "SP", false}
 	asmArchPpc64    = asmArch{"ppc64", 8, 8, 8, true, "R1", true}
 	asmArchPpc64LE  = asmArch{"ppc64le", 8, 8, 8, false, "R1", true}
+	asmArchSparc64  = asmArch{"sparc64", 8, 8, 8, true, "RSP", true}
 
 	arches = []*asmArch{
 		&asmArch386,
@@ -74,6 +75,7 @@ var (
 		&asmArchAmd64p32,
 		&asmArchPpc64,
 		&asmArchPpc64LE,
+		&asmArchSparc64,
 	}
 )
 
@@ -603,6 +605,17 @@ func asmCheckVar(badf func(string, ...interface{}), fn *asmFunc, line, expr stri
 				case 'D':
 					src = 8
 				}
+			}
+		case "sparc64":
+			switch op[len(op)-1] {
+			case 'B':
+				src = 1
+			case 'H':
+				src = 2
+			case 'W':
+				src = 4
+			case 'D':
+				src = 8
 			}
 		}
 	}
