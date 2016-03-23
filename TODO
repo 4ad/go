@@ -3,18 +3,9 @@ git diff origin/master..HEAD |wc
 git push -f 4ad sparc64
 go install -v cmd/asm cmd/link
 go install -v cmd/compile
-go install -gcflags='-e' -v cmd/compile/internal/sparc64
 cd cmd/link/internal/sparc64
 cd cmd/compile/internal/sparc64
 cd cmd/compile/internal/gc
-cd alt && mk
-egrep -h sparc64.A cgen.go ggen.go galign.go gsubr.go reg.go | egrep -v '	+//' | ssam 'y/sparc64\.A[A-Z]+/ c/\n/' |sort -u >/tmp/one
-egrep -h sparc64.A prog.go | egrep -v '	+//' | ssam 'y/sparc64\.A[A-Z]+/ c/\n/' |sort -u >/tmp/two
-diff -u /tmp/one /tmp/two
-cd tmp && GOOS=linux GOARCH=arm64 go tool compile -S cmp.go
-cd tmp && GOOS=linux GOARCH=arm64 go tool compile -S shift.go
-cd tmp && GOOS=solaris GOARCH=sparc64 go tool compile -S cmp.go
-cd tmp && GOOS=solaris GOARCH=sparc64 go tool compile -S shift.go
 cd /tmp && lsr /Users/aram/go/test | grep \.go$ | xargs egrep -L 'ERROR' | xargs egrep -L 'import' | GOOS=solaris GOARCH=sparc64 xargs -n1 go tool compile >/tmp/errors
 
 !!!
