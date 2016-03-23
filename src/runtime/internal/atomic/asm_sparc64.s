@@ -12,7 +12,18 @@
 //	} else
 //		return 0;
 TEXT runtime∕internal∕atomic·Cas(SB), NOSPLIT, $0-17
-	MOVD	$42, (ZR)	// TODO(aram)
+	MOVD	ptr+0(FP), R3
+	MOVUW	old+8(FP), R1
+	MOVUW	new+12(FP), R2
+	MEMBAR	$15
+	CASW	(R3), R1, R2
+	XOR	R1, R2, R1
+	SUBCC	R1, ZR, ZR
+	SUBC	$-1, ZR, R1
+	MEMBAR	$15
+	AND	$0xff, R1, R1
+	SRAW	$0, R1, R1
+	MOVB	R1, ret+16(FP)
 	RET
 
 // bool	runtime∕internal∕atomic·Cas64(uint64 *ptr, uint64 old, uint64 new)
