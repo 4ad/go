@@ -210,6 +210,7 @@ const (
 	ClassZero     // $0 or ZR
 	ClassConst5   // unsigned 5-bit constant
 	ClassConst6   // unsigned 6-bit constant
+	ClassConst10  // signed 10-bit constant
 	ClassConst11  // signed 11-bit constant
 	ClassConst13  // signed 13-bit constant
 	ClassConst31_ // signed 32-bit constant, negative
@@ -247,6 +248,7 @@ var cnames = []string{
 	ClassZero:        "ClassZero",
 	ClassConst5:      "ClassConst5",
 	ClassConst6:      "ClassConst6",
+	ClassConst10:     "ClassConst10",
 	ClassConst11:     "ClassConst11",
 	ClassConst13:     "ClassConst13",
 	ClassConst31_:    "ClassConst31-",
@@ -359,11 +361,11 @@ const (
 	ALDSH
 	ALDSW
 	ALDUB
+	ALDD
+	ALDDF
+	ALDSF
 	ALDUH
 	ALDUW
-	ALDD
-	ALDSF
-	ALDDF
 	AMEMBAR
 	AMOVA
 	AMOVCC
@@ -379,17 +381,23 @@ const (
 	AMOVNE
 	AMOVNEG
 	AMOVPOS
+	AMOVRGEZ
+	AMOVRGZ
+	AMOVRLEZ
+	AMOVRLZ
+	AMOVRNZ
+	AMOVRZ
 	AMOVVC
 	AMOVVS
 	AMULD
-	ASDIVD
-	AUDIVD
 	AOR
 	AORCC
 	AORN
 	AORNCC
 	ARD
+	ASDIVD
 	ASETHI
+	AUDIVD
 	ASLLW
 	ASRLW
 	ASRAW
