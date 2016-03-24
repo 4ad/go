@@ -187,6 +187,9 @@ var optab = map[Optab]Opval{
 	Optab{ALDD, ClassIndir, ClassNone, ClassNone, ClassReg}: {44, 12},
 
 	Optab{obj.AJMP, ClassNone, ClassNone, ClassNone, ClassMem}: {45, 12},
+
+	Optab{AMOVA, ClassCond, ClassNone, ClassConst11, ClassReg}: {46, 4},
+	Optab{AMOVA, ClassCond, ClassReg, ClassNone, ClassReg}:     {47, 4},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -195,10 +198,11 @@ var optab = map[Optab]Opval{
 var cc = map[int8][]int8{
 	ClassReg:      {ClassZero},
 	ClassConst6:   {ClassConst5, ClassZero},
-	ClassConst13:  {ClassConst6, ClassConst5, ClassZero},
+	ClassConst11:  {ClassConst6, ClassConst5, ClassZero},
+	ClassConst13:  {ClassConst11, ClassConst6, ClassConst5, ClassZero},
 	ClassConst31:  {ClassConst6, ClassConst5, ClassZero},
-	ClassConst32:  {ClassConst31_, ClassConst31, ClassConst13, ClassConst6, ClassConst5, ClassZero},
-	ClassConst:    {ClassConst32, ClassConst31_, ClassConst31, ClassConst13, ClassConst6, ClassConst5, ClassZero},
+	ClassConst32:  {ClassConst31_, ClassConst31, ClassConst13, ClassConst11, ClassConst6, ClassConst5, ClassZero},
+	ClassConst:    {ClassConst32, ClassConst31_, ClassConst31, ClassConst13, ClassConst11, ClassConst6, ClassConst5, ClassZero},
 	ClassRegConst: {ClassRegConst13},
 	ClassIndir13:  {ClassIndir0},
 	ClassIndir:    {ClassIndir13, ClassIndir0},
@@ -284,6 +288,7 @@ var ci = map[int16][]int16{
 	AFXTOD: {AFXTOS},
 	ALDD:   {ALDSB, ALDSH, ALDSW, ALDUB, ALDUH, ALDUW, AMOVB, AMOVH, AMOVW, AMOVUB, AMOVUH, AMOVUW, AMOVD},
 	ALDDF:  {ALDSF, AFMOVD, AFMOVS},
+	AMOVA:  {AMOVN, AMOVNE, AMOVE, AMOVG, AMOVLE, AMOVGE, AMOVL, AMOVGU, AMOVLEU, AMOVCC, AMOVCS, AMOVPOS, AMOVNEG, AMOVVC, AMOVVS},
 	AMULD:  {ASDIVD, AUDIVD},
 	ARD:    {AMOVD},
 	ASLLD:  {ASRLD, ASRAD},
@@ -768,6 +773,40 @@ func opcode(a int16) uint32 {
 	case AJMPL:
 		return op3(2, 0x38)
 
+	// Move Integer Register on Condition (MOVcc).
+	case AMOVA:
+		return op3(2, 0x2C) | 8<<14 | 1<<18
+	case AMOVN:
+		return op3(2, 0x2C) | 0<<14 | 1<<18
+	case AMOVNE:
+		return op3(2, 0x2C) | 9<<14 | 1<<18
+	case AMOVE:
+		return op3(2, 0x2C) | 1<<14 | 1<<18
+	case AMOVG:
+		return op3(2, 0x2C) | 10<<14 | 1<<18
+	case AMOVLE:
+		return op3(2, 0x2C) | 2<<14 | 1<<18
+	case AMOVGE:
+		return op3(2, 0x2C) | 11<<14 | 1<<18
+	case AMOVL:
+		return op3(2, 0x2C) | 3<<14 | 1<<18
+	case AMOVGU:
+		return op3(2, 0x2C) | 12<<14 | 1<<18
+	case AMOVLEU:
+		return op3(2, 0x2C) | 4<<14 | 1<<18
+	case AMOVCC:
+		return op3(2, 0x2C) | 13<<14 | 1<<18
+	case AMOVCS:
+		return op3(2, 0x2C) | 5<<14 | 1<<18
+	case AMOVPOS:
+		return op3(2, 0x2C) | 14<<14 | 1<<18
+	case AMOVNEG:
+		return op3(2, 0x2C) | 6<<14 | 1<<18
+	case AMOVVC:
+		return op3(2, 0x2C) | 15<<14 | 1<<18
+	case AMOVVS:
+		return op3(2, 0x2C) | 7<<14 | 1<<18
+
 	// Memory Barrier.
 	case AMEMBAR:
 		return op3(2, 0x28) | 0xF<<14 | 1<<13
@@ -807,6 +846,9 @@ func constclass(offset int64) int8 {
 	}
 	if 0 <= offset && offset <= 63 {
 		return ClassConst6
+	}
+	if -1024 <= offset && offset <= 1023 {
+		return ClassConst11
 	}
 	if -4096 <= offset && offset <= 4095 {
 		return ClassConst13
@@ -1288,6 +1330,14 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		rel.Add = p.To.Offset
 		rel.Type = obj.R_ADDRSPARC64
 		*o3 = opcode(AJMPL) | rsr(REG_TMP, 0, REG_ZR)
+
+	// MOVPOS XCC, $simm11, R
+	case 46:
+		*o1 = opcode(p.As) | rsr(0, p.From3.Offset, p.To.Reg) | 1<<13 | uint32(p.From.Reg&3<<11)
+
+	// MOVPOS ICC, R, R
+	case 47:
+		*o1 = opcode(p.As) | rrr(0, 0, p.Reg, p.To.Reg) | uint32(p.From.Reg&3<<11)
 	}
 
 	return out[:o.size/4], nil
