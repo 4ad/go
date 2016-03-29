@@ -63,7 +63,7 @@ TEXT runtime∕internal∕atomic·Xadduintptr(SB), NOSPLIT, $0-24
 TEXT runtime∕internal∕atomic·Loadint64(SB), NOSPLIT, $0-16
 	JMP	runtime∕internal∕atomic·Load64(SB)
 
-TEXT runtime∕internal∕atomic·Xaddint64(SB), NOSPLIT, $0-16
+TEXT runtime∕internal∕atomic·Xaddint64(SB), NOSPLIT, $0-24
 	JMP	runtime∕internal∕atomic·Xadd64(SB)
 
 // bool casp(void **val, void *old, void *new)
@@ -81,19 +81,61 @@ TEXT runtime∕internal∕atomic·Casp1(SB), NOSPLIT, $0-25
 //	*val += delta;
 //	return *val;
 TEXT runtime∕internal∕atomic·Xadd(SB), NOSPLIT, $0-20
-	MOVD	$42, (ZR)	// TODO(aram)
+	MOVD	ptr+0(FP), R4
+	MOVUW	delta+8(FP), R1
+	MOVUW	(R4), R3
+	MEMBAR	$15
+retry:
+	ADD	R3, R1, R2
+	CASW	(R4), R3, R2
+	CMP	R3, R2
+	MOVNE	ICC, R2, R3
+	BNEW	retry
+	ADD	R3, R1, R2
+	MEMBAR	$15
+	MOVUW	R2, ret+16(FP)
 	RET
 
 TEXT runtime∕internal∕atomic·Xadd64(SB), NOSPLIT, $0-24
-	MOVD	$42, (ZR)	// TODO(aram)
+	MOVD	ptr+0(FP), R4
+	MOVD	delta+8(FP), R1
+	MEMBAR	$15
+	MOVD	(R4), R3
+retry:
+	ADD	R3, R1, R2
+	CASD	(R4), R3, R2
+	CMP	R3, R2
+	MOVNE	XCC, R2, R3
+	BNED	retry
+	ADD	R3, R1, R2
+	MEMBAR	$15
+	MOVD	R2, ret+16(FP)
 	RET
 
 TEXT runtime∕internal∕atomic·Xchg(SB), NOSPLIT, $0-20
-	MOVD	$42, (ZR)	// TODO(aram)
+	MOVD	ptr+0(FP), R1
+	MOVUW	new+8(FP), R3
+again:
+	MEMBAR	$15
+	MOVUW	(R1), R2
+	CASW	(R1), R2, R3
+	CMP	R3, R2
+	BNEW	again
+	MEMBAR	$15
+	MOVUW	R2, ret+16(FP)
 	RET
 
 TEXT runtime∕internal∕atomic·Xchg64(SB), NOSPLIT, $0-24
-	MOVD	$42, (ZR)	// TODO(aram)
+	MOVD	ptr+0(FP), R1
+	MOVD	new+8(FP), R3
+again:
+	MEMBAR	$15
+	MOVD	(R1), R2
+	CASD	(R1), R2, R3
+	CMP	R3, R2
+	BNED	again
+	MEMBAR	$15
+	MOVD	R2, ret+16(FP)
 	RET
 
 TEXT runtime∕internal∕atomic·Xchguintptr(SB), NOSPLIT, $0-24
@@ -104,19 +146,47 @@ TEXT runtime∕internal∕atomic·Storep1(SB), NOSPLIT, $0-16
 	JMP	runtime∕internal∕atomic·Store64(SB)
 
 TEXT runtime∕internal∕atomic·Store(SB), NOSPLIT, $0-12
-	MOVD	$42, (ZR)	// TODO(aram)
+	MOVD	ptr+0(FP), R1
+	MOVUW	val+8(FP), R2
+	MEMBAR	$12
+	STW	R2, (R1)
+	MEMBAR	$10
 	RET
 
 TEXT runtime∕internal∕atomic·Store64(SB), NOSPLIT, $0-16
-	MOVD	$42, (ZR)	// TODO(aram)
+	MOVD	ptr+0(FP), R1
+	MOVD	val+8(FP), R2
+	MEMBAR	$12
+	STD	R2, (R1)
+	MEMBAR	$10
 	RET
 
 // void	runtime∕internal∕atomic·Or8(byte volatile*, byte);
 TEXT runtime∕internal∕atomic·Or8(SB), NOSPLIT, $0-9
-	MOVD	$42, (ZR)	// TODO(aram)
+	MOVD	ptr+0(FP), R4
+	MOVUB	val+8(FP), R1
+	MEMBAR	$15
+	MOVUB	(R4), R3
+retry:
+	OR	R3, R1, R2
+	CASW	(R4), R3, R2
+	CMP	R3, R2
+	MOVNE	ICC, R2, R3
+	BNEW	retry
+	MEMBAR	$15
 	RET
 
 // void	runtime∕internal∕atomic·And8(byte volatile*, byte);
 TEXT runtime∕internal∕atomic·And8(SB), NOSPLIT, $0-9
-	MOVD	$42, (ZR)	// TODO(aram)
+	MOVD	ptr+0(FP), R4
+	MOVUB	val+8(FP), R1
+	MEMBAR	$15
+	MOVUB	(R4), R3
+retry:
+	AND	R3, R1, R2
+	CASW	(R4), R3, R2
+	CMP	R3, R2
+	MOVNE	ICC, R2, R3
+	BNEW	retry
+	MEMBAR	$15
 	RET
