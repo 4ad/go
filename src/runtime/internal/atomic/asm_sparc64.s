@@ -17,12 +17,10 @@ TEXT runtime∕internal∕atomic·Cas(SB), NOSPLIT, $0-17
 	MOVUW	new+12(FP), R2
 	MEMBAR	$15
 	CASW	(R3), R1, R2
-	XOR	R1, R2, R1
-	SUBCC	R1, ZR, ZR
-	SUBC	$-1, ZR, R1
+	CMP	R2, R1
+	MOVD	$0, R1
+	MOVE	ICC, $1, R1
 	MEMBAR	$15
-	AND	$0xff, R1, R1
-	SRAW	$0, R1, R1
 	MOVB	R1, ret+16(FP)
 	RET
 
@@ -35,7 +33,16 @@ TEXT runtime∕internal∕atomic·Cas(SB), NOSPLIT, $0-17
 //		return 0;
 //	}
 TEXT runtime∕internal∕atomic·Cas64(SB), NOSPLIT, $0-25
-	MOVD	$42, (ZR)	// TODO(aram)
+	MOVD	ptr+0(FP), R3
+	MOVD	old+8(FP), R1
+	MOVD	new+16(FP), R2
+	MEMBAR	$15
+	CASD	(R3), R1, R2
+	CMP	R2, R1
+	MOVD	$0, R1
+	MOVE	XCC, $1, R1
+	MEMBAR	$15
+	MOVB	R1, ret+24(FP)
 	RET
 
 TEXT runtime∕internal∕atomic·Casuintptr(SB), NOSPLIT, $0-25
