@@ -49,7 +49,7 @@ call1.6.a: call1.6 call1_amd64.6
 	sparc64-none-elf-objdump -d $prereq >$target
 
 %.gnu.S: %.c
-	sparc64-none-elf-gcc -m64 -S -O2 -o $target $prereq
+	sparc64-none-elf-gcc -mflat -m64 -S -O2 -o $target $prereq
 
 %.u.dat: %.u.out
 	sparc64-none-elf-readelf -x .data -x .rodata -x .noptrdata $prereq >$target
