@@ -23,6 +23,7 @@ test.out
 alt/*.[56789u]
 alt/*.out
 alt/*.gnu.S
+alt/*.gnuopt.S
 alt/*.go.s
 alt/*.dat
 doc/articles/wiki/*.bin
