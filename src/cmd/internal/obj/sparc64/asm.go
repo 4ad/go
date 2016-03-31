@@ -924,7 +924,7 @@ func aclass(a *obj.Addr) int8 {
 			return ClassMem
 
 		case obj.NAME_AUTO, obj.NAME_PARAM:
-			panic("unimplemented")
+			return aclass(autoeditaddr(a))
 
 		case obj.TYPE_NONE:
 			if a.Scale == 1 {
@@ -960,7 +960,7 @@ func aclass(a *obj.Addr) int8 {
 			return ClassAddr
 
 		case obj.NAME_AUTO, obj.NAME_PARAM:
-			panic("unimplemented")
+			return aclass(autoeditaddr(a))
 		}
 	case obj.TYPE_BRANCH:
 		return ClassBranch
@@ -975,7 +975,7 @@ func span(ctxt *obj.Link, cursym *obj.LSym) {
 
 	var pc int64 // relative to entry point
 	for p := cursym.Text.Link; p != nil; p = p.Link {
-		o, err := oplook(p)
+		o, err := oplook(autoeditprog(p))
 		if err != nil {
 			ctxt.Diag(err.Error())
 		}
@@ -988,8 +988,9 @@ func span(ctxt *obj.Link, cursym *obj.LSym) {
 
 	var text []uint32 // actual assembled bytes
 	for p := cursym.Text.Link; p != nil; p = p.Link {
-		o, _ := oplook(p)
-		out, _ := asmout(p, o, cursym)
+		p1 := autoeditprog(p)
+		o, _ := oplook(p1)
+		out, _ := asmout(p1, o, cursym)
 		text = append(text, out...)
 	}
 

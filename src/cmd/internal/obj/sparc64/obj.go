@@ -101,25 +101,40 @@ func init() {
 	}
 }
 
-// Autoedit rewrites off(SP), off(FP), $off(SP), and $off(FP) to new(RFP).
-func autoedit(a *obj.Addr) {
+// AutoeditProg returns a new obj.Prog, with off(SP), off(FP), $off(SP),
+// and $off(FP) replaced with new(RFP).
+func autoeditprog(p *obj.Prog) *obj.Prog {
+	r := new(obj.Prog)
+	*r = *p
+	r.From = *autoeditaddr(&r.From)
+	r.From3 = autoeditaddr(r.From3)
+	r.To = *autoeditaddr(&r.To)
+	return r
+}
+
+// Autoeditaddr returns a new obj.Addr, with off(SP), off(FP), $off(SP),
+// and $off(FP) replaced with new(RFP).
+func autoeditaddr(a *obj.Addr) *obj.Addr {
 	if a == nil {
-		return
+		return nil
 	}
 	if a.Type != obj.TYPE_MEM && a.Type != obj.TYPE_ADDR {
-		return
+		return a
 	}
-	if a.Name == obj.NAME_PARAM {
-		a.Reg = REG_RFP
-		a.Offset += MinStackFrameSize + StackBias
-		a.Name = obj.TYPE_NONE
-		return
+	r := new(obj.Addr)
+	*r = *a
+	if r.Name == obj.NAME_PARAM {
+		r.Reg = REG_RFP
+		r.Offset += MinStackFrameSize + StackBias
+		r.Name = obj.TYPE_NONE
+		return r
 	}
-	if a.Name == obj.NAME_AUTO {
-		a.Reg = REG_RFP
-		a.Offset += StackBias
-		a.Name = obj.TYPE_NONE
+	if r.Name == obj.NAME_AUTO {
+		r.Reg = REG_RFP
+		r.Offset += StackBias
+		r.Name = obj.TYPE_NONE
 	}
+	return r
 }
 
 // yfix rewrites references to Y registers (issued by compiler)
@@ -156,12 +171,6 @@ func yfix(p *obj.Prog) {
 }
 
 func progedit(ctxt *obj.Link, p *obj.Prog) {
-	// Rewite virtual SP/FP references to RFP. This has to happen
-	// before any call to aclass, so it must be first here.
-	autoedit(&p.From)
-	autoedit(p.From3)
-	autoedit(&p.To)
-
 	// Rewrite constant moves to memory to go through an intermediary
 	// register
 	switch p.As {
