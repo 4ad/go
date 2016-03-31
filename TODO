@@ -50,7 +50,7 @@ Check resvd.
 !ALSR -> ASRL
 !AASR -> ASRA
 
-CMP check operand order
+(Go) CMP operand order is like arm64, this translates to *reverse* order in native assembly.
 
 !AFCVTZSD -> AFDTOX
 !AFCVTZSS -> AFSTOX
