@@ -4,12 +4,13 @@ LD=`go env GOTOOLDIR`/link
 ALTROOT=`go env GOROOT`/alt
 
 EXES=empty.u.out cmp.u.out hello.u.out call.u.out virtreg.u.out call1.6.out bigoffset.u.out mov.u.out neg.u.out branch1.u.out new3.u.out order.u.out bigmov.u.out hugealu.u.out jmp.u.out sync.u.out movcc.u.out empty1.u.out
+GNUEXES=ext.gnu.out
 GOS=call0.7.go.s cmp1.u.go.s cmp1.7.go.s
-GNUS=${EXES:%.u.out=%.u.gnu.S} conv.gnu.S fconv.gnu.S mul.gnu.S atomic.gnu.S cmp1.gnu.S
+GNUS=${EXES:%.u.out=%.u.gnu.S} ${GNUEXES:%.gnu.out=%.dis.gnu.S} conv.gnu.S fconv.gnu.S mul.gnu.S atomic.gnu.S cmp1.gnu.S
 GNUOPTS=${GNUS:%.gnu.S=%.gnuopt.S}
 DATS=${EXES:%.u.out=%.u.dat}
 
-all:V: $EXES $GNUS $GOS $DATS
+all:V: $EXES $GNUEXES $GNUS $GOS $DATS
 
 tools:V:
 	go install -v cmd/asm cmd/compile cmd/link cmd/pack
@@ -24,7 +25,7 @@ pkg/solaris_sparc64:
 	GOOS=solaris GOARCH=sparc64 go tool asm -o $target $stem.s
 
 %.u: %.go
-	GOOS=solaris GOARCH=sparc64 go tool compile -+ -o $target $stem.go
+	GOOS=solaris GOARCH=sparc64 go tool compile -+ -N -o $target $stem.go
 
 %.6: tools
 
@@ -55,6 +56,9 @@ call1.6.a: call1.6 call1_amd64.6
 %.u.gnu.S: %.u.out
 	sparc64-none-elf-objdump -d $prereq >$target
 
+%.dis.gnu.S: %.gnu.out
+	sparc64-none-elf-objdump -d $prereq >$target
+
 %.gnu.S: %.c
 	sparc64-none-elf-gcc -mflat -m64 -S -o $target $prereq
 
@@ -64,8 +68,11 @@ call1.6.a: call1.6 call1_amd64.6
 %.u.dat: %.u.out
 	sparc64-none-elf-readelf -x .data -x .rodata -x .noptrdata $prereq >$target
 
-copy:V: $EXES
-	rsync -i $EXES torside:~/x
+%.gnu.out: %.c
+	sparcv9-solaris2.12-gcc -mflat -m64 -o $target $prereq
+
+copy:V: $EXES $GNUEXES
+	rsync -i $EXES $GNUEXES torside:~/x
 
 clean:V:
-	rm -rf pkg *.[a56789uo] *.gnu.S *.gnuopt.S *.go.s *.out *.dat
+	rm -rf pkg *.[a56789uo] *.gnu.S *.gnu.out *.gnuopt.S *.go.s *.out *.dat
