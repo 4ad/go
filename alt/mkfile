@@ -1,16 +1,61 @@
-RTOBJS=runtime.u data.u
-RT=pkg/solaris_sparc64/runtime.a
 LD=`go env GOTOOLDIR`/link
 ALTROOT=`go env GOROOT`/alt
 
-EXES=empty.u.out cmp.u.out hello.u.out call.u.out virtreg.u.out call1.6.out bigoffset.u.out mov.u.out neg.u.out branch1.u.out new3.u.out order.u.out bigmov.u.out hugealu.u.out jmp.u.out sync.u.out movcc.u.out empty1.u.out
-GNUEXES=ext.gnu.out
-GOS=call0.7.go.s cmp1.u.go.s cmp1.7.go.s
-GNUS=${EXES:%.u.out=%.u.gnu.S} ${GNUEXES:%.gnu.out=%.dis.gnu.S} conv.gnu.S fconv.gnu.S mul.gnu.S atomic.gnu.S cmp1.gnu.S
-GNUOPTS=${GNUS:%.gnu.S=%.gnuopt.S}
-DATS=${EXES:%.u.out=%.u.dat}
+XCC=sparcv9-solaris2.12-gcc
+XLD=sparcv9-solaris2.12-gcc
+XOBJDUMP=sparcv9-solaris2.12-objdump
+XREADELF=sparcv9-solaris2.12-readelf 
 
-all:V: $EXES $GNUEXES $GNUS $GOS $DATS
+GCFLAGS=-+ -N
+LDFLAGS=-w
+XCFLAGS=-mflat -m64
+
+RUNTIMEOBJS=runtime.u data.u
+RUNTIME=pkg/solaris_sparc64/runtime.a
+
+GOEXES=empty.go.out\
+	cmp.go.out\
+	hello.go.out\
+	call.go.out\
+	virtreg.go.out\
+	bigoffset.go.out\
+	mov.go.out\
+	neg.go.out\
+	branch1.go.out\
+	new3.go.out\
+	order.go.out\
+	bigmov.go.out\
+	hugealu.go.out\
+	jmp.go.out\
+	sync.go.out\
+	movcc.go.out\
+	empty1.go.out
+
+GOS=call0.go.s\
+	cmp1_1.go.s
+
+GNUEXES=ext.gnu.out
+
+GNUOBJS=${GNUEXES:%.gnu.out=%.o}\
+	conv.o\
+	fconv.o\
+	mul.o\
+	atomic.o\
+	cmp1_2.o
+
+GNUS=${GOEXES:%.go.out=%.go.out.s}\
+	${GNUEXES:%.gnu.out=%.gnu.out.s}\
+	${GNUOBJS:%.o=%.o.s}
+
+DATS=${GOEXES:%.go.out=%.go.out.dat}\
+	${GNUEXES:%.gnu.out=%.gnu.out.dat}\
+	${GNUOBJS:%.o=%.o.dat}
+
+RELS=${GOEXES:%.go.out=%.go.out.rel} \
+	${GNUEXES:%.gnu.out=%.gnu.out.rel} \
+	${GNUOBJS:%.o=%.o.rel}
+
+all:V:	$GOEXES $GNUEXES $GOS $GNUS $DATS $RELS
 
 tools:V:
 	go install -v cmd/asm cmd/compile cmd/link cmd/pack
@@ -19,60 +64,46 @@ pkg/solaris_sparc64:
 	rm -rf pkg
 	mkdir -p pkg/solaris_sparc64
 
-%.u: tools 
+%.u: tools
 
 %.u: %.s
 	GOOS=solaris GOARCH=sparc64 go tool asm -o $target $stem.s
 
 %.u: %.go
-	GOOS=solaris GOARCH=sparc64 go tool compile -+ -N -o $target $stem.go
+	GOOS=solaris GOARCH=sparc64 go tool compile $GCFLAGS -o $target $stem.go
 
-%.6: tools
+%.go.s: %.go
+	GOOS=solaris GOARCH=sparc64 go tool compile $GCFLAGS -S -o /dev/null $stem.go >$target
 
-%.6: %.go
-	GOOS=darwin GOARCH=amd64 go tool compile -o $target $stem.go
+%.o: %.c
+	$XCC $XCFLAGS -c -o $target $stem.c
 
-%.6: %.s
-	GOOS=darwin GOARCH=amd64 go tool asm -o $target $stem.s
+$RUNTIME: pkg/solaris_sparc64 $RUNTIMEOBJS
+	go tool pack c $target $RUNTIMEOBJS
 
-$RT: pkg/solaris_sparc64 $RTOBJS
-	go tool pack c $target $RTOBJS
+%.go.out: %.u $RUNTIME
+	GOROOT=$ALTROOT GOOS=solaris GOARCH=sparc64 $LD $LDFLAGS -o $target $stem.u
 
-%.7.go.s: tools %.go
-	GOOS=linux GOARCH=arm64 go tool compile -N -S -o /dev/null $stem.go >$target
+%.gnu.out: %.o
+	$XLD -o $target $stem.o
 
-%.u.go.s: tools %.go
-	GOOS=solaris GOARCH=sparc64 go tool compile -N -S -o /dev/null $stem.go >$target
+%.out.dat: %.out
+	$XREADELF -x .data -x .rodata -x .noptrdata $prereq >$target 2>/dev/null
 
-call1.6.a: call1.6 call1_amd64.6
-	go tool pack c $target $prereq
+%.out.s: %.out
+	$XOBJDUMP -d $prereq >$target 2>/dev/null
 
-%.6.out: %.6.a
-	GOOS=darwin GOARCH=amd64 go tool link -o $target $prereq
+%.out.rel: %.out
+	$XREADELF -r $prereq >$target 2>/dev/null
 
-%.u.out: %.u $RT
-	GOROOT=$ALTROOT GOOS=solaris GOARCH=sparc64 $LD -w -o $target $stem.u
+%.o.dat: %.o
+	$XREADELF -x .data -x .rodata -x .noptrdata $prereq >$target 2>/dev/null
 
-%.u.gnu.S: %.u.out
-	sparc64-none-elf-objdump -d $prereq >$target
+%.o.s: %.o
+	$XOBJDUMP -d $prereq >$target 2>/dev/null
 
-%.dis.gnu.S: %.gnu.out
-	sparc64-none-elf-objdump -d $prereq >$target
-
-%.gnu.S: %.c
-	sparc64-none-elf-gcc -mflat -m64 -S -o $target $prereq
-
-%.gnuopt.S: %.c
-	sparc64-none-elf-gcc -mflat -m64 -O2 -S -o $target $prereq
-
-%.u.dat: %.u.out
-	sparc64-none-elf-readelf -x .data -x .rodata -x .noptrdata $prereq >$target
-
-%.gnu.out: %.c
-	sparcv9-solaris2.12-gcc -mflat -m64 -o $target $prereq
-
-copy:V: $EXES $GNUEXES
-	rsync -i $EXES $GNUEXES torside:~/x
+%.o.rel: %.o
+	$XREADELF -r $prereq >$target 2>/dev/null
 
 clean:V:
-	rm -rf pkg *.[a56789uo] *.gnu.S *.gnu.out *.gnuopt.S *.go.s *.out *.dat
+	rm -rf pkg *.asm *.[auo] *.out *.dat *.rel *.go.s *.out.s *.o.s
