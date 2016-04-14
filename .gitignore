@@ -26,6 +26,7 @@ alt/*.gnu.S
 alt/*.gnuopt.S
 alt/*.go.s
 alt/*.dat
+alt/*.go.ext.tmp/
 doc/articles/wiki/*.bin
 misc/cgo/life/run.out
 misc/cgo/stdio/run.out

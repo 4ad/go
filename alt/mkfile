@@ -31,6 +31,10 @@ GOEXES=empty.go.out\
 	movcc.go.out\
 #	empty1.go.out
 
+GOEXTEXES=call.go.ext
+
+GOEXTREADELF=${GOEXTEXES:%.go.ext=%.go.ext.tmp/go.o.readelf}\
+
 GOS=call0.go.s\
 	cmp1_1.go.s
 
@@ -84,6 +88,13 @@ $RUNTIME: pkg/solaris_sparc64 $RUNTIMEOBJS
 %.go.out: %.u $RUNTIME
 	GOROOT=$ALTROOT GOOS=solaris GOARCH=sparc64 $LD $LDFLAGS -o $target $stem.u
 
+%.go.ext: %.u $RUNTIME
+	mkdir -p $stem.go.ext.tmp
+	GO_EXTLINK_ENABLED=1 GOROOT=$ALTROOT GOOS=solaris GOARCH=sparc64 $LD $LDFLAGS -extld $XCC -extldflags="-Wl,-fuse-ld=gold" -tmpdir $stem.go.ext.tmp -linkmode=external -o $target $stem.u
+
+%.go.ext.tmp/go.o.readelf: %.go.ext.tmp/go.o
+	$XREADELF -a $stem.go.ext.tmp/go.o > $target 2>/dev/null
+
 %.gnu.out: %.o
 	$XLD -o $target $stem.o
 
@@ -106,4 +117,4 @@ $RUNTIME: pkg/solaris_sparc64 $RUNTIMEOBJS
 	$XREADELF -r $prereq >$target 2>/dev/null
 
 clean:V:
-	rm -rf pkg *.asm *.[auo] *.out *.dat *.rel *.go.s *.out.s *.o.s
+	rm -rf pkg *.asm *.[auo] *.out *.dat *.rel *.go.s *.out.s *.o.s *.ext.tmp
