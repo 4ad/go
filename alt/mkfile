@@ -29,7 +29,7 @@ GOEXES=empty.go.out\
 	jmp.go.out\
 	sync.go.out\
 	movcc.go.out\
-#	empty1.go.out
+	empty1.go.out\
 
 GOEXTEXES=${GOEXES:%.go.out=%.go.ext}
 
