@@ -152,7 +152,8 @@ func putelfsym(x *LSym, s string, t int, addr int64, size int64, ver int, go_ *L
 	// mark all Go symbols local (not global) in the final executable.
 	// But when we're dynamically linking, we need all those global symbols.
 	if !DynlinkingGo() && Linkmode == LinkExternal && !x.Attr.CgoExportStatic() && elfshnum != SHN_UNDEF {
-		bind = STB_LOCAL
+		// TODO(aram): re-enable
+		//bind = STB_LOCAL
 	}
 
 	if Linkmode == LinkExternal && elfshnum != SHN_UNDEF {
