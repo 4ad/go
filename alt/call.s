@@ -24,7 +24,6 @@ TEXT	foo4(SB),7,$0-0
 	MOVD	$msg(SB), R9
 	MOVD	$6, R10
 	MOVD	$4, TMP
-	MOVD	$1, TMP
 	TA	$0x40
 	CALL	foo5(SB)
 	RET

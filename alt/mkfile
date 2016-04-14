@@ -29,9 +29,9 @@ GOEXES=empty.go.out\
 	jmp.go.out\
 	sync.go.out\
 	movcc.go.out\
-	empty1.go.out\
 
-GOEXTEXES=${GOEXES:%.go.out=%.go.ext}
+GOEXTEXES=${GOEXES:%.go.out=%.go.ext}\
+	hello1.go.ext\
 
 GOEXTHOSTOBJS=${GOEXTEXES:%.go.ext=%.go.ext.tmp/go.o}
 

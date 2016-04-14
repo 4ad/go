@@ -11,3 +11,14 @@ TEXT	_rt0_sparc64_solaris(SB),7,$0-0
 	MOVD	$1, TMP
 	TA	$0x40
 	RET
+
+TEXT	hello(SB),7,$0-0
+	MOVD	$1, R8
+	MOVD	$hellomsg(SB), R9
+	MOVD	$7, R10
+	MOVD	$libc_write(SB), TMP
+	CALL	TMP
+	RET
+
+DATA hellomsg(SB)/8, $"hello!\n"
+GLOBL hellomsg(SB), 16, $8
