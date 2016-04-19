@@ -183,8 +183,10 @@ var optab = map[Optab]Opval{
 
 	Optab{AMOVD, ClassRegConst, ClassNone, ClassNone, ClassReg}: {42, 12},
 
-	Optab{ASTD, ClassReg, ClassNone, ClassNone, ClassIndir}: {43, 12},
-	Optab{ALDD, ClassIndir, ClassNone, ClassNone, ClassReg}: {44, 12},
+	Optab{ASTD, ClassReg, ClassNone, ClassNone, ClassIndir}:   {43, 12},
+	Optab{ASTDF, ClassDReg, ClassNone, ClassNone, ClassIndir}: {43, 12},
+	Optab{ALDD, ClassIndir, ClassNone, ClassNone, ClassReg}:   {44, 12},
+	Optab{ALDDF, ClassIndir, ClassNone, ClassNone, ClassDReg}: {44, 12},
 
 	Optab{obj.AJMP, ClassNone, ClassNone, ClassNone, ClassMem}: {45, 12},
 
