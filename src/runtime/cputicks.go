@@ -6,7 +6,6 @@
 // +build !arm64
 // +build !mips64
 // +build !mips64le
-// +build !sparc64
 
 package runtime
 

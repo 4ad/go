@@ -447,6 +447,12 @@ TEXT runtime·abort(SB),NOSPLIT,$-8-0
 	UNDEF
 	RET
 
+// func cputicks() int64
+TEXT runtime·cputicks(SB),NOSPLIT,$0-0
+	RD	TICK, R1
+	MOVD	R1, ret+0(FP)
+	RET
+
 // memhash_varlen(p unsafe.Pointer, h seed) uintptr
 // redirects to memhash(p, h, size) using the size
 // stored in the closure.
