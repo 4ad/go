@@ -22,10 +22,12 @@ build.out
 test.out
 alt/*.[56789u]
 alt/*.out
+alt/*.ext
 alt/*.gnu.S
 alt/*.gnuopt.S
 alt/*.go.s
 alt/*.dat
+alt/*.rel
 alt/*.go.ext.tmp/
 doc/articles/wiki/*.bin
 misc/cgo/life/run.out
