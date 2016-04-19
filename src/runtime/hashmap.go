@@ -241,7 +241,8 @@ func makemap(t *maptype, hint int64, h *hmap, bucket unsafe.Pointer) *hmap {
 
 	// find size parameter which will hold the requested # of elements
 	B := uint8(0)
-	for ; hint > bucketCnt && float32(hint) > loadFactor*float32(uintptr(1)<<B); B++ {
+	// TODO(aram): revert
+	for ; hint > bucketCnt && float32(hint) > loadFactor*float32(intptr(1)<<B); B++ {
 	}
 
 	// allocate initial hash table
@@ -505,7 +506,8 @@ again:
 	}
 
 	// did not find mapping for key. Allocate new cell & add entry.
-	if float32(h.count) >= loadFactor*float32((uintptr(1)<<h.B)) && h.count >= bucketCnt {
+	// TODO(aram): revert.
+	if float32(h.count) >= loadFactor*float32((intptr(1)<<h.B)) && h.count >= bucketCnt {
 		hashGrow(t, h)
 		goto again // Growing the table invalidates everything, so try again
 	}

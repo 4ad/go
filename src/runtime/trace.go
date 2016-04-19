@@ -373,7 +373,7 @@ func ReadTrace() []byte {
 		unlock(&trace.lock)
 		var data []byte
 		data = append(data, traceEvFrequency|0<<traceArgCountShift)
-		data = traceAppend(data, uint64(freq))
+		data = traceAppend(data, uint64(int64(freq)))
 		data = traceAppend(data, 0)
 		if timers.gp != nil {
 			data = append(data, traceEvTimerGoroutine|0<<traceArgCountShift)
