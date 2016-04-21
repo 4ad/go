@@ -6,13 +6,13 @@
 
 TEXT runtime·memclr(SB),NOSPLIT|NOFRAME,$0-16
 	// TODO(aram):
-	MOVD	$60, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$60, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET

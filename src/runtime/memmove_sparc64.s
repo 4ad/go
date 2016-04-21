@@ -7,13 +7,13 @@
 // void runtime·memmove(void*, void*, uintptr)
 TEXT runtime·memmove(SB), NOSPLIT, $-8-24
 	// TODO(aram):
-	MOVD	$50, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$50, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET

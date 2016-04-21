@@ -10,14 +10,14 @@ GLOBL dbgbuf(SB), 16, $2
 
 TEXT runtime·rt0_go(SB),NOSPLIT,$0
 	// TODO(aram):
-	MOVD	$1, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$1, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
@@ -26,14 +26,14 @@ GLOBL	runtime·mainPC(SB),RODATA,$8
 
 TEXT runtime·breakpoint(SB),NOSPLIT,$-8-0
 	// TODO(aram):
-	MOVD	$2, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$2, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
@@ -42,14 +42,14 @@ TEXT runtime·asminit(SB),NOSPLIT,$-8-0
 
 TEXT runtime·reginit(SB),NOSPLIT,$-8-0
 	// TODO(aram):
-	MOVD	$3, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$3, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
@@ -61,14 +61,14 @@ TEXT runtime·reginit(SB),NOSPLIT,$-8-0
 // save state in Gobuf; setjmp
 TEXT runtime·gosave(SB), NOSPLIT, $-8-8
 	// TODO(aram):
-	MOVD	$4, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$4, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
@@ -76,14 +76,14 @@ TEXT runtime·gosave(SB), NOSPLIT, $-8-8
 // restore state from Gobuf; longjmp
 TEXT runtime·gogo(SB), NOSPLIT, $-8-8
 	// TODO(aram):
-	MOVD	$5, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$5, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
@@ -93,14 +93,14 @@ TEXT runtime·gogo(SB), NOSPLIT, $-8-8
 // to keep running g.
 TEXT runtime·mcall(SB), NOSPLIT, $-8-8
 	// TODO(aram):
-	MOVD	$6, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$6, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
@@ -111,28 +111,28 @@ TEXT runtime·mcall(SB), NOSPLIT, $-8-8
 // the system stack terminates the stack walk (see topofstack()).
 TEXT runtime·systemstack_switch(SB), NOSPLIT, $0-0
 	// TODO(aram):
-	MOVD	$7, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$7, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
 // func systemstack(fn func())
 TEXT runtime·systemstack(SB), NOSPLIT, $0-8
 	// TODO(aram):
-	MOVD	$8, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$8, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
@@ -150,40 +150,40 @@ TEXT runtime·systemstack(SB), NOSPLIT, $0-8
 // record an argument size. For that purpose, it has no arguments.
 TEXT runtime·morestack(SB),NOSPLIT,$-8-0
 	// TODO(aram):
-	MOVD	$9, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$9, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
 TEXT runtime·morestack_noctxt(SB),NOSPLIT|NOFRAME,$0-0
 	// TODO(aram):
-	MOVD	$10, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$10, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
 TEXT runtime·stackBarrier(SB),NOSPLIT,$0
 	// TODO(aram):
-	MOVD	$11, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$11, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
@@ -198,77 +198,77 @@ TEXT reflect·call(SB), NOSPLIT, $0-0
 
 TEXT ·reflectcall(SB), NOSPLIT, $-8-32
 	// TODO(aram):
-	MOVD	$12, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$12, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
 // AES hashing not implemented for SPARC64.
 TEXT runtime·aeshash(SB),NOSPLIT,$-8-0
 	// TODO(aram):
-	MOVD	$13, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$13, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 TEXT runtime·aeshash32(SB),NOSPLIT,$-8-0
 	// TODO(aram):
-	MOVD	$14, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$14, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 TEXT runtime·aeshash64(SB),NOSPLIT,$-8-0
 	// TODO(aram):
-	MOVD	$15, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$15, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 TEXT runtime·aeshashstr(SB),NOSPLIT,$-8-0
 	// TODO(aram):
-	MOVD	$16, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$16, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 	
 TEXT runtime·procyield(SB),NOSPLIT,$0-0
 	// TODO(aram):
-	MOVD	$17, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$17, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
@@ -279,28 +279,28 @@ TEXT runtime·procyield(SB),NOSPLIT,$0-0
 // 3. BR to fn
 TEXT runtime·jmpdefer(SB), NOSPLIT, $-8-16
 	// TODO(aram):
-	MOVD	$18, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$18, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
 // Save state of caller into g->sched. Smashes R0.
 TEXT gosave<>(SB),NOSPLIT,$-8
 	// TODO(aram):
-	MOVD	$19, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$19, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
@@ -310,14 +310,14 @@ TEXT gosave<>(SB),NOSPLIT,$-8
 // See cgocall.go for more details.
 TEXT ·asmcgocall(SB),NOSPLIT,$0-20
 	// TODO(aram):
-	MOVD	$20, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$20, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
@@ -326,14 +326,14 @@ TEXT ·asmcgocall(SB),NOSPLIT,$0-20
 // cgocallback_gofunc.
 TEXT runtime·cgocallback(SB),NOSPLIT,$24-24
 	// TODO(aram):
-	MOVD	$21, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$21, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
@@ -341,14 +341,14 @@ TEXT runtime·cgocallback(SB),NOSPLIT,$24-24
 // See cgocall.go for more details.
 TEXT ·cgocallback_gofunc(SB),NOSPLIT,$24-24
 	// TODO(aram):
-	MOVD	$22, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$22, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
@@ -356,94 +356,94 @@ TEXT ·cgocallback_gofunc(SB),NOSPLIT,$24-24
 // Must obey the gcc calling convention.
 TEXT _cgo_topofstack(SB),NOSPLIT,$24
 	// TODO(aram):
-	MOVD	$23, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$23, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
 // void setg(G*); set g. for use by needm.
 TEXT runtime·setg(SB), NOSPLIT, $0-8
 	// TODO(aram):
-	MOVD	$24, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$24, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
 // void setg_gcc(G*); set g called from gcc
 TEXT setg_gcc<>(SB),NOSPLIT,$8
 	// TODO(aram):
-	MOVD	$25, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$25, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
 TEXT runtime·getcallerpc(SB),NOSPLIT,$8-16
 	// TODO(aram):
-	MOVD	$26, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$26, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
 TEXT runtime·setcallerpc(SB),NOSPLIT,$8-16
 	// TODO(aram):
-	MOVD	$27, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$27, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
 TEXT runtime·getcallersp(SB),NOSPLIT,$0-16
 	// TODO(aram):
-	MOVD	$28, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$28, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
 TEXT runtime·abort(SB),NOSPLIT,$-8-0
 	// TODO(aram):
-	MOVD	$29, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$29, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
@@ -458,68 +458,68 @@ TEXT runtime·cputicks(SB),NOSPLIT,$0-0
 // stored in the closure.
 TEXT runtime·memhash_varlen(SB),NOSPLIT,$40-24
 	// TODO(aram):
-	MOVD	$30, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$30, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
 // memequal(p, q unsafe.Pointer, size uintptr) bool
 TEXT runtime·memequal(SB),NOSPLIT,$-8-25
 	// TODO(aram):
-	MOVD	$31, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$31, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
 // memequal_varlen(a, b unsafe.Pointer) bool
 TEXT runtime·memequal_varlen(SB),NOSPLIT,$40-17
 	// TODO(aram):
-	MOVD	$32, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$32, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
 TEXT runtime·cmpstring(SB),NOSPLIT|NOFRAME,$0-40
 	// TODO(aram):
-	MOVD	$33, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$33, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
 TEXT bytes·Compare(SB),NOSPLIT|NOFRAME,$0-56
 	// TODO(aram):
-	MOVD	$34, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$34, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
@@ -534,14 +534,14 @@ TEXT bytes·Compare(SB),NOSPLIT|NOFRAME,$0-56
 // R4, R5, and R6 are clobbered
 TEXT runtime·cmpbody<>(SB),NOSPLIT|NOFRAME,$0-0
 	// TODO(aram):
-	MOVD	$35, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$35, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
@@ -552,14 +552,14 @@ TEXT runtime·cmpbody<>(SB),NOSPLIT|NOFRAME,$0-0
 // equivalent Go code.
 TEXT runtime·eqstring(SB),NOSPLIT,$0-33
 	// TODO(aram):
-	MOVD	$36, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$36, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
@@ -568,67 +568,67 @@ TEXT runtime·eqstring(SB),NOSPLIT,$0-33
 //
 TEXT bytes·IndexByte(SB),NOSPLIT,$0-40
 	// TODO(aram):
-	MOVD	$37, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$37, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
 TEXT strings·IndexByte(SB),NOSPLIT,$0-32
 	// TODO(aram):
-	MOVD	$38, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$38, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
 // TODO: share code with memequal?
 TEXT bytes·Equal(SB),NOSPLIT,$0-49
 	// TODO(aram):
-	MOVD	$39, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$39, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
 TEXT runtime·fastrand1(SB),NOSPLIT,$-8-4
 	// TODO(aram):
-	MOVD	$40, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$40, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
 TEXT runtime·return0(SB), NOSPLIT, $0
 	// TODO(aram):
-	MOVD	$41, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$41, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
@@ -636,14 +636,14 @@ TEXT runtime·return0(SB), NOSPLIT, $0
 // returns to goexit+PCQuantum.
 TEXT runtime·goexit(SB),NOSPLIT,$-8-0
 	// TODO(aram):
-	MOVD	$42, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$42, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
@@ -666,26 +666,26 @@ TEXT runtime·sigreturn(SB),NOSPLIT,$0-8
 // This is called from .init_array and follows the platform, not Go, ABI.
 TEXT runtime·addmoduledata(SB),NOSPLIT,$0-0
 	// TODO(aram):
-	MOVD	$43, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$43, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
 TEXT ·checkASM(SB),NOSPLIT,$0-1
 	// TODO(aram):
-	MOVD	$44, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$44, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET

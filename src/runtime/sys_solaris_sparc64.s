@@ -18,14 +18,14 @@
 // NOT USING GO CALLING CONVENTION.
 TEXT runtime·miniterrno(SB),NOSPLIT,$0
 	// TODO(aram):
-	MOVD	$70, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$70, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
@@ -38,14 +38,14 @@ TEXT runtime·miniterrno(SB),NOSPLIT,$0
 // NOT USING GO CALLING CONVENTION.
 TEXT runtime·nanotime1(SB),NOSPLIT,$0
 	// TODO(aram):
-	MOVD	$71, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$71, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
@@ -53,14 +53,14 @@ TEXT runtime·nanotime1(SB),NOSPLIT,$0
 // NOT USING GO CALLING CONVENTION.
 TEXT runtime·pipe1(SB),NOSPLIT,$0
 	// TODO(aram):
-	MOVD	$72, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$72, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
@@ -76,28 +76,28 @@ TEXT runtime·pipe1(SB),NOSPLIT,$0
 // NOT USING GO CALLING CONVENTION.
 TEXT runtime·asmsysvicall6(SB),NOSPLIT,$0
 	// TODO(aram):
-	MOVD	$73, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$73, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
 // uint32 tstart_sysvicall(M *newm);
 TEXT runtime·tstart_sysvicall(SB),NOSPLIT,$0
 	// TODO(aram):
-	MOVD	$74, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$74, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
@@ -105,14 +105,14 @@ TEXT runtime·tstart_sysvicall(SB),NOSPLIT,$0
 // registers as per AMD 64 ABI.
 TEXT runtime·sigtramp(SB),NOSPLIT,$0
 	// TODO(aram):
-	MOVD	$75, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$75, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
@@ -120,55 +120,55 @@ TEXT runtime·sigtramp(SB),NOSPLIT,$0
 // can also be called in cgo callback path without a g->m.
 TEXT runtime·usleep1(SB),NOSPLIT,$0
 	// TODO(aram):
-	MOVD	$76, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$76, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
 // Runs on OS stack. duration (in µs units) is in DI.
 TEXT runtime·usleep2(SB),NOSPLIT,$0
 	// TODO(aram):
-	MOVD	$77, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$77, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
 // Runs on OS stack, called from runtime·osyield.
 TEXT runtime·osyield1(SB),NOSPLIT,$0
 	// TODO(aram):
-	MOVD	$78, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$78, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
 
 // func now() (sec int64, nsec int32)
 TEXT time·now(SB),NOSPLIT,$8-12
 	// TODO(aram):
-	MOVD	$79, TMP
-	ADD	$'!', TMP, TMP
-	MOVD	TMP, dbgbuf(SB)
+	MOVD	$79, R1
+	ADD	$'!', R1, R1
+	MOVD	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), TMP
-	CALL	TMP
+	MOVD	$libc_exit(SB), R1
+	CALL	R1
 	UNDEF
 	RET
