@@ -23,8 +23,8 @@ test.out
 alt/*.[56789u]
 alt/*.out
 alt/*.ext
-alt/*.gnu.S
-alt/*.gnuopt.S
+alt/*.out.s
+alt/*.ext.s
 alt/*.go.s
 alt/*.dat
 alt/*.rel
