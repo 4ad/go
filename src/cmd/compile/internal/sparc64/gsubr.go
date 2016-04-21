@@ -41,7 +41,7 @@ var resvd = []int{
 	sparc64.REG_ZR,
 	sparc64.REG_RSP,
 	sparc64.REG_LR,
-	sparc64.REG_GOT,
+	sparc64.REG_TMP2,
 	sparc64.REG_TMP,
 	sparc64.REG_RT1,
 	sparc64.REG_RT2,

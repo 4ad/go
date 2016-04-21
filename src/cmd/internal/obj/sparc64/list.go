@@ -22,8 +22,8 @@ func Rconv(r int) string {
 		return "LR"
 	case r == REG_TMP:
 		return "TMP"
-	case r == REG_GOT:
-		return "GOT"
+	case r == REG_TMP2:
+		return "TMP2"
 	case r == REG_RSP:
 		return "RSP"
 	case r == REG_ZR:
