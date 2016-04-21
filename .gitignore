@@ -26,6 +26,7 @@ alt/*.ext
 alt/*.out.s
 alt/*.ext.s
 alt/*.go.s
+alt/*.o.s
 alt/*.dat
 alt/*.rel
 alt/*.go.ext.tmp/
