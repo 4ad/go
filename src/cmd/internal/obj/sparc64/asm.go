@@ -46,9 +46,9 @@ func ocmp(o1, o2 Optab) bool {
 }
 
 type Opval struct {
-	op   int8   // selects case in asmout switch
-	size int8   // *not* including delay-slot
-	op1  OpInfo // information about the instruction
+	op     int8 // selects case in asmout switch
+	size   int8 // *not* including delay-slot
+	OpInfo      // information about the instruction
 }
 
 type OpInfo int8
@@ -999,7 +999,10 @@ func span(ctxt *obj.Link, cursym *obj.LSym) {
 	for p := cursym.Text.Link; p != nil; p = p.Link {
 		p1 := autoeditprog(p)
 		o, _ := oplook(p1)
-		out, _ := asmout(p1, o, cursym)
+		out, err := asmout(p1, o, cursym)
+		if err != nil {
+			ctxt.Diag("span: can't assemble: %v", err)
+		}
 		text = append(text, out...)
 	}
 
@@ -1042,14 +1045,65 @@ func bigmove(addr *obj.Addr, reg int16) (out []uint32) {
 	return out
 }
 
+func usesRegs(a *obj.Addr) bool {
+	if a == nil {
+		return false
+	}
+	switch a.Class {
+	case ClassReg, ClassFReg, ClassDReg, ClassCond, ClassFCond, ClassSpcReg, ClassZero, ClassRegReg, ClassRegConst13, ClassRegConst, ClassIndirRegReg, ClassIndir0, ClassIndir13, ClassIndir:
+		return true
+	}
+	return false
+}
+
+func isTMP(r int16) bool {
+	return r == REG_TMP || r == REG_TMP2
+}
+
+func usesTMP(a *obj.Addr) bool {
+	return usesRegs(a) && (isTMP(a.Reg) || isTMP(a.Index))
+}
+
+func srcCount(p *obj.Prog) (c int) {
+	if p.From.Type != obj.TYPE_NONE {
+		c++
+	}
+	if p.Reg != obj.REG_NONE {
+		c++
+	}
+	if p.From3Type() != obj.TYPE_NONE {
+		c++
+	}
+	return c
+}
+
 func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	out = make([]uint32, 3)
 	o1 := &out[0]
 	o2 := &out[1]
 	o3 := &out[2]
+	if o.OpInfo == ClobberTMP {
+		if usesTMP(&p.From) {
+			return nil, fmt.Errorf("asmout: %q not allowed: synthetic instruction clobbers temporary registers", obj.Mconv(&p.From))
+		}
+		if isTMP(p.Reg) {
+			return nil, fmt.Errorf("asmout: %q not allowed: synthetic instruction clobbers temporary registers", Rconv(int(p.Reg)))
+		}
+		if usesTMP(p.From3) {
+			return nil, fmt.Errorf("asmout: %q not allowed: synthetic instruction clobbers temporary registers", obj.Mconv(p.From3))
+		}
+		if usesTMP(&p.To) {
+			if p.From.Type == obj.TYPE_NONE || srcCount(p) < 2 {
+				return nil, fmt.Errorf("asmout: illegal use of temporary register: synthetic instruction clobbers temporary registers")
+			}
+		}
+	}
 	switch o.op {
 	default:
-		return nil, fmt.Errorf("unknown asm %d", o)
+		return nil, fmt.Errorf("unknown asm %d in %v", o, p)
+
+	case 0: /* pseudo ops */
+		break
 
 	// op Rs,       Rd	-> Rd = Rs op Rd
 	// op Rs1, Rs2, Rd	-> Rd = Rs2 op Rs1
