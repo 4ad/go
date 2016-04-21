@@ -417,7 +417,12 @@ const (
 	// R_ADDRMIPS (only used on mips64) resolves to a 32-bit external address,
 	// by loading the address into a register with two instructions (lui, ori).
 	R_ADDRMIPS
-	R_ADDRSPARC64
+	// R_ADDRSPARC64LO (only used on sparc64) resolves to low 32bits of a
+	// 64-bit address, by loading the address into a register with two instructions.
+	R_ADDRSPARC64LO
+	// R_ADDRSPARC64HI (only used on sparc64) resolves to high 32bits of a
+	// 64-bit address, by loading the address into a register with two instructions.
+	R_ADDRSPARC64HI
 	R_SIZE
 	R_CALL
 	R_CALLARM

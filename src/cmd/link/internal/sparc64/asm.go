@@ -65,11 +65,17 @@ func elfreloc1(r *ld.Reloc, sectoff int64) int {
 			return -1
 		}
 
-	case obj.R_ADDRSPARC64:
+	case obj.R_ADDRSPARC64LO:
 		ld.Thearch.Vput(ld.R_SPARC_HI22 | uint64(elfsym)<<32)
 		ld.Thearch.Vput(uint64(r.Xadd))
 		ld.Thearch.Vput(uint64(sectoff + 4))
 		ld.Thearch.Vput(ld.R_SPARC_LO10 | uint64(elfsym)<<32)
+
+	case obj.R_ADDRSPARC64HI:
+		ld.Thearch.Vput(ld.R_SPARC_HH22 | uint64(elfsym)<<32)
+		ld.Thearch.Vput(uint64(r.Xadd))
+		ld.Thearch.Vput(uint64(sectoff + 4))
+		ld.Thearch.Vput(ld.R_SPARC_HM10 | uint64(elfsym)<<32)
 
 	case obj.R_CALLSPARC64:
 		if r.Siz != 4 {
@@ -99,7 +105,7 @@ func archreloc(r *ld.Reloc, s *ld.LSym, val *int64) int {
 		default:
 			return -1
 
-		case obj.R_ADDRSPARC64:
+		case obj.R_ADDRSPARC64LO, obj.R_ADDRSPARC64HI:
 			r.Done = 0
 
 			// set up addend for eventual relocation via outer symbol.
@@ -128,17 +134,26 @@ func archreloc(r *ld.Reloc, s *ld.LSym, val *int64) int {
 		*val = r.Add
 		return 0
 
-	case obj.R_ADDRSPARC64:
+	case obj.R_ADDRSPARC64LO:
 		t := ld.Symaddr(r.Sym) + r.Add
-		if t >= 1<<32 {
-			ld.Diag("data section can't be >4G, address = %d", t)
-		}
 
 		o0 := uint32(*val >> 32)
 		o1 := uint32(*val)
 
 		o0 |= uint32(t) >> 10
 		o1 |= uint32(t) & 0x3ff
+
+		*val = int64(o0)<<32 | int64(o1)
+		return 0
+
+	case obj.R_ADDRSPARC64HI:
+		t := ld.Symaddr(r.Sym) + r.Add
+
+		o0 := uint32(*val >> 32)
+		o1 := uint32(*val)
+
+		o0 |= uint32(uint64(t)>>32) >> 10
+		o1 |= uint32(uint64(t)>>32) & 0x3ff
 
 		*val = int64(o0)<<32 | int64(o1)
 		return 0
