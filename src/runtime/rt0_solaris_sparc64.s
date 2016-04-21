@@ -6,8 +6,8 @@
 #include "asm_sparc64.h"
 
 TEXT _rt0_sparc64_solaris(SB),NOSPLIT,$-8
-	MOVD	$(8+STACK_BIAS)(RSP), R8 // argv
-	MOVD	$STACK_BIAS(RSP), R9 // argc
+	MOVD	$(8+128+STACK_BIAS)(RSP), R8 // argv
+	MOVD	$(128+STACK_BIAS)(RSP), R9 // argc
 	MOVD	$main(SB), TMP
 	JMPL	TMP, ZR
 
