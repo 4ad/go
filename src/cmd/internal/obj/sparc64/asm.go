@@ -1312,8 +1312,8 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		rel := obj.Addrel(cursym)
 		rel.Off = int32(p.Pc)
 		rel.Siz = 8
-		rel.Sym = p.From.Sym
-		rel.Add = p.From.Offset
+		rel.Sym = p.To.Sym
+		rel.Add = p.To.Offset
 		rel.Type = obj.R_ADDRSPARC64HI
 		*o3 = opalu(ASLLD) | rsr(REG_TMP, 32, REG_TMP)
 		*o4 = opcode(ASETHI) | ir(0, REG_TMP2)
@@ -1321,8 +1321,8 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		rel = obj.Addrel(cursym)
 		rel.Off = int32(p.Pc + 12)
 		rel.Siz = 8
-		rel.Sym = p.From.Sym
-		rel.Add = p.From.Offset
+		rel.Sym = p.To.Sym
+		rel.Add = p.To.Offset
 		rel.Type = obj.R_ADDRSPARC64LO
 		*o6 = opstore(p.As) | rsr(REG_TMP2, 0, p.From.Reg)
 
