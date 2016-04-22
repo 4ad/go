@@ -8,7 +8,7 @@ go install -v cmd/vet
 GOOS=solaris GOARCH=sparc64 go install -gcflags="-e" -v runtime
 GOOS=solaris GOARCH=sparc64 go install -gcflags="-e" -v runtime/internal/atomic
 cd cmd/link/internal/sparc64
-cd cmd/link/ld/sparc64
+cd cmd/link/internal/ld
 cd cmd/compile/internal/sparc64
 cd cmd/compile/internal/gc
 cd cmd/cgo
