@@ -121,6 +121,8 @@ func archreloc(r *ld.Reloc, s *ld.LSym, val *int64) int {
 			}
 			r.Xsym = rs
 
+			return 0
+
 		case obj.R_CALLSPARC64:
 			r.Done = 0
 			r.Xsym = r.Sym
