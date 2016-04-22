@@ -5,8 +5,8 @@ go install -v cmd/asm cmd/link
 go install -v cmd/compile
 go install -v debug... cmd/cgo
 go install -v cmd/vet
-GOOS=solaris GOARCH=sparc64 go install -gcflags="-e" -v runtime
-GOOS=solaris GOARCH=sparc64 go install -gcflags="-e" -v runtime/internal/atomic
+GOOS=solaris GOARCH=sparc64 go install -a -gcflags="-e" -v runtime
+GOOS=solaris GOARCH=sparc64 go build -a -gcflags="-S" -asmflags="-S" runtime 2>/tmp/runtime.s
 cd cmd/link/internal/sparc64
 cd cmd/link/internal/ld
 cd cmd/compile/internal/sparc64
@@ -15,8 +15,9 @@ cd cmd/cgo
 cd /tmp && lsr /Users/aram/go/test | grep \.go$ | xargs egrep -L 'ERROR' | xargs egrep -L 'import' | GOOS=solaris GOARCH=sparc64 xargs -n1 go tool compile >/tmp/errors
 cd /tmp/2 && CC=sparcv9-solaris2.12-gcc GOARCH=sparc64 GOOS=solaris go tool cgo -godefs defs_solaris.go defs_solaris_sparc64.go >/tmp/2/defs1_solaris_sparc64.go
 GOARCH=sparc64 GOOS=solaris go vet runtime
-cd alt && mk clean && mk
-GO_EXTLINK_ENABLED=1 GOOS=solaris GOARCH=sparc64 go build -o /tmp/hello.out -x -ldflags='-w -extld=sparcv9-solaris2.12-gcc -linkmode=external' /Users/aram/go/test/helloworld.go
+cd alt && mk clean && mk bigmov.go.ext
+GO_EXTLINK_ENABLED=1 GOOS=solaris GOARCH=sparc64 go build -gcflags='-S' -o /tmp/hello.out -x -ldflags='-w -extld=sparcv9-solaris2.12-gcc -linkmode=external' /Users/aram/go/test/helloworld.go
+GOOS=solaris GOARCH=sparc64 go tool asm -S -o bigmov.u bigmov.s
 
 !!!
 NO DYNAMIC SIZED INSTRUCTIONS
