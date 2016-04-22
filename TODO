@@ -8,22 +8,15 @@ go install -v cmd/vet
 GOOS=solaris GOARCH=sparc64 go install -gcflags="-e" -v runtime
 GOOS=solaris GOARCH=sparc64 go install -gcflags="-e" -v runtime/internal/atomic
 cd cmd/link/internal/sparc64
+cd cmd/link/ld/sparc64
 cd cmd/compile/internal/sparc64
 cd cmd/compile/internal/gc
-cd runtime/internal/atomic
 cd cmd/cgo
-cd debug/elf
 cd /tmp && lsr /Users/aram/go/test | grep \.go$ | xargs egrep -L 'ERROR' | xargs egrep -L 'import' | GOOS=solaris GOARCH=sparc64 xargs -n1 go tool compile >/tmp/errors
 cd /tmp/2 && CC=sparcv9-solaris2.12-gcc GOARCH=sparc64 GOOS=solaris go tool cgo -godefs defs_solaris.go defs_solaris_sparc64.go >/tmp/2/defs1_solaris_sparc64.go
-cd /tmp/1 && sparcv9-solaris2.12-gcc -c -m64 a.c
-cd /tmp/1 && sparcv9-solaris2.12-gcc -w -Wno-error -o reloc.o -gdwarf-2 -c -xc reloc.c
-cd /tmp/1 && sparcv9-solaris2.12-gcc -m64 fpregset.c -o fpregset.64
-cd /tmp/1 && sparcv9-solaris2.12-objdump -r a.o
-cd /tmp/1 && sparcv9-solaris2.12-objdump -r reloc.o
-cd alt && mk atomic.gnu.S
-cd alt && mk sync.u.gnu.S
-sparc64-none-elf-objdump -d atomic.gnu.o
-GOARCH=sparc64 GOOS=solaris go vet runtime/internal/atomic
+GOARCH=sparc64 GOOS=solaris go vet runtime
+cd alt && mk clean && mk
+GO_EXTLINK_ENABLED=1 GOOS=solaris GOARCH=sparc64 go build -o /tmp/hello.out -x -ldflags='-w -extld=sparcv9-solaris2.12-gcc -linkmode=external' /Users/aram/go/test/helloworld.go
 
 !!!
 NO DYNAMIC SIZED INSTRUCTIONS
