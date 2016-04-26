@@ -1,6 +1,7 @@
 TEXT	main(SB),7,$24-0
 	MOVD	$1, fd-24(SP)
-	MOVD	$msg(SB), buf-16(SP)
+	MOVD	$msg(SB), R1
+	MOVD	R1, buf-16(SP)
 	CALL	foo0(SB)
 	RET
 
