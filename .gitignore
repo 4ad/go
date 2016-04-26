@@ -30,6 +30,14 @@ alt/*.o.s
 alt/*.dat
 alt/*.rel
 alt/*.go.ext.tmp/
+new/*.u
+new/*.go.s
+new/*.out
+new/*.objdump
+new/*.rel
+new/*.readelf
+new/*.gnu.s
+new/*.out.tmp/
 doc/articles/wiki/*.bin
 misc/cgo/life/run.out
 misc/cgo/stdio/run.out
