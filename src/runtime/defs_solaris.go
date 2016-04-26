@@ -143,6 +143,8 @@ type Sigaction C.struct_sigaction
 type Fpregset C.fpregset_t
 type Mcontext C.mcontext_t
 type Ucontext C.ucontext_t
+type Gwindows C.gwindows_t
+type Rwindow C.struct_rwindow
 
 type Timespec C.struct_timespec
 type Timeval C.struct_timeval

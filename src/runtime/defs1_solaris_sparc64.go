@@ -144,7 +144,7 @@ type fpregset struct {
 }
 type mcontext struct {
 	gregs  [21]int64
-	gwins  *byte
+	gwins  *gwindows
 	fpregs fpregset
 	// additional stuff follows, but for our purpose, this struct is opaque.
 }
@@ -157,6 +157,17 @@ type ucontext struct {
 	pad_cgo_1   [8]byte
 	uc_mcontext mcontext
 	uc_filler   [4]int64
+}
+
+type gwindows struct {
+	wbcnt     int32
+	pad_cgo_0 [4]byte
+	spbuf     [31]*int64
+	wbuf      [31]rwindow
+}
+type rwindow struct {
+	local [8]int64
+	in    [8]int64
 }
 
 type timespec struct {
@@ -208,8 +219,8 @@ type stat struct {
 }
 
 const (
+	_REG_CCR = 0x0
 	_REG_PC  = 0x1
-	_REG_nPC = 0x2
 	_REG_G1  = 0x4
 	_REG_G2  = 0x5
 	_REG_G3  = 0x6
