@@ -16,8 +16,8 @@ TEXT	hello(SB),7,$0-0
 	MOVD	$1, R8
 	MOVD	$hellomsg(SB), R9
 	MOVD	$7, R10
-	MOVD	$libc_write(SB), TMP
-	CALL	TMP
+	MOVD	$libc_write(SB), R1
+	CALL	R1
 	RET
 
 DATA hellomsg(SB)/8, $"hello!\n"
