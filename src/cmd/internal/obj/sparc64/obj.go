@@ -19,6 +19,7 @@ var isUncondJump = map[int16]bool{
 	obj.AJMP:      true,
 	obj.ARET:      true,
 	AFBA:          true,
+	AJMPL:         true,
 }
 
 var isCondJump = map[int16]bool{
