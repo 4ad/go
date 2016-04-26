@@ -167,11 +167,19 @@ func (c *sigctxt) pc() uint64     { return uint64(c.regs().gregs[_REG_PC]) }
 func (c *sigctxt) tstate() uint64 { return uint64(c.regs().gregs[_REG_CCR]) }
 
 func (c *sigctxt) sigcode() uint64 { return uint64(c.info.si_code) }
-func (c *sigctxt) sigaddr() uint64 { return *(*uint64)(unsafe.Pointer(&c.info.__data[0])) }
+func (c *sigctxt) fault() uint64   { return *(*uint64)(unsafe.Pointer(&c.info.__data[0])) }
 
 func (c *sigctxt) set_pc(x uint64) { c.regs().gregs[_REG_PC] = int64(x) }
 func (c *sigctxt) set_sp(x uint64) { c.regs().gregs[_REG_O6] = int64(x) }
 func (c *sigctxt) set_lr(x uint64) { c.regs().gregs[_REG_O7] = int64(x) }
+
+func (c *sigctxt) set_r31(x uint64) {
+	if c.regs().gwins != nil {
+		cwp := int(c.regs().gregs[_REG_CCR] & 0x1f)
+		c.regs().gwins.wbuf[cwp].in[7] = int64(x)
+	}
+	*(*uint64)(unsafe.Pointer((uintptr)(c.regs().gregs[_REG_O6] + sys.StackBias + 15*8))) = x
+}
 
 func (c *sigctxt) set_sigcode(x uint64) { c.info.si_code = int32(x) }
 func (c *sigctxt) set_sigaddr(x uint64) {
