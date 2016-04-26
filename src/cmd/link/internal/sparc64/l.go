@@ -64,6 +64,7 @@ package sparc64
 const (
 	thechar   = 'u'
 	MaxAlign  = 32 // max data alignment
+	MinAlign  = 1  // min data alignment
 	FuncAlign = 16
 	MINLC     = 4
 )

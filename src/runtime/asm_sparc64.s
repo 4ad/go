@@ -5,8 +5,8 @@
 #include "funcdata.h"
 #include "textflag.h"
 
-DATA dbgbuf(SB)/2, $"\n\n"
-GLOBL dbgbuf(SB), 16, $2
+DATA dbgbuf(SB)/8, $"\n\n"
+GLOBL dbgbuf(SB), $8
 
 TEXT runtime·rt0_go(SB),NOSPLIT,$0
 	// TODO(aram):
