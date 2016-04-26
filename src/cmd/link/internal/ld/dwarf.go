@@ -2223,7 +2223,7 @@ func dwarfaddelfsectionsyms() {
 func dwarfaddelfrelocheader(elfstr int, shdata *ElfShdr, off int64, size int64) {
 	sh := newElfShdr(elfstrdbg[elfstr])
 	switch Thearch.Thechar {
-	case '0', '6', '7', '9':
+	case '0', '6', '7', '9', 'u':
 		sh.type_ = SHT_RELA
 	default:
 		sh.type_ = SHT_REL
