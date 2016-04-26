@@ -9,11 +9,11 @@ TEXT runtime·memmove(SB), NOSPLIT, $-8-24
 	// TODO(aram):
 	MOVD	$50, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET

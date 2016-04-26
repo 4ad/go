@@ -12,11 +12,11 @@ TEXT runtime·rt0_go(SB),NOSPLIT,$0
 	// TODO(aram):
 	MOVD	$1, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -28,11 +28,11 @@ TEXT runtime·breakpoint(SB),NOSPLIT,$-8-0
 	// TODO(aram):
 	MOVD	$2, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -44,11 +44,11 @@ TEXT runtime·reginit(SB),NOSPLIT,$-8-0
 	// TODO(aram):
 	MOVD	$3, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -63,11 +63,11 @@ TEXT runtime·gosave(SB), NOSPLIT, $-8-8
 	// TODO(aram):
 	MOVD	$4, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -78,11 +78,11 @@ TEXT runtime·gogo(SB), NOSPLIT, $-8-8
 	// TODO(aram):
 	MOVD	$5, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -95,11 +95,11 @@ TEXT runtime·mcall(SB), NOSPLIT, $-8-8
 	// TODO(aram):
 	MOVD	$6, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -113,11 +113,11 @@ TEXT runtime·systemstack_switch(SB), NOSPLIT, $0-0
 	// TODO(aram):
 	MOVD	$7, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -127,11 +127,11 @@ TEXT runtime·systemstack(SB), NOSPLIT, $0-8
 	// TODO(aram):
 	MOVD	$8, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -152,11 +152,11 @@ TEXT runtime·morestack(SB),NOSPLIT,$-8-0
 	// TODO(aram):
 	MOVD	$9, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -165,11 +165,11 @@ TEXT runtime·morestack_noctxt(SB),NOSPLIT|NOFRAME,$0-0
 	// TODO(aram):
 	MOVD	$10, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -178,11 +178,11 @@ TEXT runtime·stackBarrier(SB),NOSPLIT,$0
 	// TODO(aram):
 	MOVD	$11, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -200,11 +200,11 @@ TEXT ·reflectcall(SB), NOSPLIT, $-8-32
 	// TODO(aram):
 	MOVD	$12, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -214,11 +214,11 @@ TEXT runtime·aeshash(SB),NOSPLIT,$-8-0
 	// TODO(aram):
 	MOVD	$13, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -226,11 +226,11 @@ TEXT runtime·aeshash32(SB),NOSPLIT,$-8-0
 	// TODO(aram):
 	MOVD	$14, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -238,11 +238,11 @@ TEXT runtime·aeshash64(SB),NOSPLIT,$-8-0
 	// TODO(aram):
 	MOVD	$15, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -250,11 +250,11 @@ TEXT runtime·aeshashstr(SB),NOSPLIT,$-8-0
 	// TODO(aram):
 	MOVD	$16, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -263,11 +263,11 @@ TEXT runtime·procyield(SB),NOSPLIT,$0-0
 	// TODO(aram):
 	MOVD	$17, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -281,11 +281,11 @@ TEXT runtime·jmpdefer(SB), NOSPLIT, $-8-16
 	// TODO(aram):
 	MOVD	$18, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -295,11 +295,11 @@ TEXT gosave<>(SB),NOSPLIT,$-8
 	// TODO(aram):
 	MOVD	$19, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -312,11 +312,11 @@ TEXT ·asmcgocall(SB),NOSPLIT,$0-20
 	// TODO(aram):
 	MOVD	$20, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -328,11 +328,11 @@ TEXT runtime·cgocallback(SB),NOSPLIT,$24-24
 	// TODO(aram):
 	MOVD	$21, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -343,11 +343,11 @@ TEXT ·cgocallback_gofunc(SB),NOSPLIT,$24-24
 	// TODO(aram):
 	MOVD	$22, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -358,11 +358,11 @@ TEXT _cgo_topofstack(SB),NOSPLIT,$24
 	// TODO(aram):
 	MOVD	$23, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -372,11 +372,11 @@ TEXT runtime·setg(SB), NOSPLIT, $0-8
 	// TODO(aram):
 	MOVD	$24, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -386,11 +386,11 @@ TEXT setg_gcc<>(SB),NOSPLIT,$8
 	// TODO(aram):
 	MOVD	$25, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -399,11 +399,11 @@ TEXT runtime·getcallerpc(SB),NOSPLIT,$8-16
 	// TODO(aram):
 	MOVD	$26, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -412,11 +412,11 @@ TEXT runtime·setcallerpc(SB),NOSPLIT,$8-16
 	// TODO(aram):
 	MOVD	$27, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -425,11 +425,11 @@ TEXT runtime·getcallersp(SB),NOSPLIT,$0-16
 	// TODO(aram):
 	MOVD	$28, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -438,11 +438,11 @@ TEXT runtime·abort(SB),NOSPLIT,$-8-0
 	// TODO(aram):
 	MOVD	$29, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -460,11 +460,11 @@ TEXT runtime·memhash_varlen(SB),NOSPLIT,$40-24
 	// TODO(aram):
 	MOVD	$30, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -474,11 +474,11 @@ TEXT runtime·memequal(SB),NOSPLIT,$-8-25
 	// TODO(aram):
 	MOVD	$31, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -488,11 +488,11 @@ TEXT runtime·memequal_varlen(SB),NOSPLIT,$40-17
 	// TODO(aram):
 	MOVD	$32, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -501,11 +501,11 @@ TEXT runtime·cmpstring(SB),NOSPLIT|NOFRAME,$0-40
 	// TODO(aram):
 	MOVD	$33, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -514,11 +514,11 @@ TEXT bytes·Compare(SB),NOSPLIT|NOFRAME,$0-56
 	// TODO(aram):
 	MOVD	$34, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -536,11 +536,11 @@ TEXT runtime·cmpbody<>(SB),NOSPLIT|NOFRAME,$0-0
 	// TODO(aram):
 	MOVD	$35, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -554,11 +554,11 @@ TEXT runtime·eqstring(SB),NOSPLIT,$0-33
 	// TODO(aram):
 	MOVD	$36, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -570,11 +570,11 @@ TEXT bytes·IndexByte(SB),NOSPLIT,$0-40
 	// TODO(aram):
 	MOVD	$37, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -583,11 +583,11 @@ TEXT strings·IndexByte(SB),NOSPLIT,$0-32
 	// TODO(aram):
 	MOVD	$38, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -597,11 +597,11 @@ TEXT bytes·Equal(SB),NOSPLIT,$0-49
 	// TODO(aram):
 	MOVD	$39, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -610,11 +610,11 @@ TEXT runtime·fastrand1(SB),NOSPLIT,$-8-4
 	// TODO(aram):
 	MOVD	$40, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -623,11 +623,11 @@ TEXT runtime·return0(SB), NOSPLIT, $0
 	// TODO(aram):
 	MOVD	$41, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -638,11 +638,11 @@ TEXT runtime·goexit(SB),NOSPLIT,$-8-0
 	// TODO(aram):
 	MOVD	$42, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -668,11 +668,11 @@ TEXT runtime·addmoduledata(SB),NOSPLIT,$0-0
 	// TODO(aram):
 	MOVD	$43, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
@@ -681,11 +681,11 @@ TEXT ·checkASM(SB),NOSPLIT,$0-1
 	// TODO(aram):
 	MOVD	$44, R1
 	ADD	$'!', R1, R1
-	MOVD	R1, dbgbuf(SB)
+	MOVB	R1, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_exit(SB), R1
+	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
 	RET
