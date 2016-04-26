@@ -1,5 +1,5 @@
 // created by cgo -godefs and then manually edited.
-// CC=sparcv9-solaris2.12-gcc GOARCH=sparc64 GOOS=solaris go tool cgo -godefs defs_solaris.go
+// CC=sparcv9-solaris2.12-gcc GOARCH=sparc64 GOOS=solaris go tool cgo -godefs defs_solaris.go defs_solaris_sparc64.go
 
 package runtime
 
@@ -206,3 +206,23 @@ type stat struct {
 	st_blocks  int64
 	st_fstype  [16]int8
 }
+
+const (
+	_REG_PC  = 0x1
+	_REG_nPC = 0x2
+	_REG_G1  = 0x4
+	_REG_G2  = 0x5
+	_REG_G3  = 0x6
+	_REG_G4  = 0x7
+	_REG_G5  = 0x8
+	_REG_G6  = 0x9
+	_REG_G7  = 0xa
+	_REG_O0  = 0xb
+	_REG_O1  = 0xc
+	_REG_O2  = 0xd
+	_REG_O3  = 0xe
+	_REG_O4  = 0xf
+	_REG_O5  = 0x10
+	_REG_O6  = 0x11
+	_REG_O7  = 0x12
+)
