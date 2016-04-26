@@ -148,12 +148,12 @@ var optab = map[Optab]Opval{
 	Optab{obj.ADUFFZERO, ClassNone, ClassNone, ClassNone, ClassMem}: {22, 4, 0},
 	Optab{obj.ADUFFCOPY, ClassNone, ClassNone, ClassNone, ClassMem}: {22, 4, 0},
 
-	Optab{AMOVD, ClassAddr, ClassNone, ClassNone, ClassReg}: {23, 20, ClobberTMP},
+	Optab{AMOVD, ClassAddr, ClassNone, ClassNone, ClassReg}: {23, 24, ClobberTMP},
 
-	Optab{ALDD, ClassMem, ClassNone, ClassNone, ClassReg}:   {24, 24, 0},
-	Optab{ALDDF, ClassMem, ClassNone, ClassNone, ClassDReg}: {24, 24, 0},
-	Optab{ASTD, ClassReg, ClassNone, ClassNone, ClassMem}:   {25, 24, ClobberTMP},
-	Optab{ASTDF, ClassDReg, ClassNone, ClassNone, ClassMem}: {25, 24, ClobberTMP},
+	Optab{ALDD, ClassMem, ClassNone, ClassNone, ClassReg}:   {24, 28, 0},
+	Optab{ALDDF, ClassMem, ClassNone, ClassNone, ClassDReg}: {24, 28, 0},
+	Optab{ASTD, ClassReg, ClassNone, ClassNone, ClassMem}:   {25, 28, ClobberTMP},
+	Optab{ASTDF, ClassDReg, ClassNone, ClassNone, ClassMem}: {25, 28, ClobberTMP},
 
 	Optab{obj.ARET, ClassNone, ClassNone, ClassNone, ClassNone}: {26, 4, 0},
 
@@ -195,7 +195,7 @@ var optab = map[Optab]Opval{
 	Optab{ALDD, ClassIndir, ClassNone, ClassNone, ClassReg}:   {44, 12, ClobberTMP},
 	Optab{ALDDF, ClassIndir, ClassNone, ClassNone, ClassDReg}: {44, 12, ClobberTMP},
 
-	Optab{obj.AJMP, ClassNone, ClassNone, ClassNone, ClassMem}: {45, 24, ClobberTMP},
+	Optab{obj.AJMP, ClassNone, ClassNone, ClassNone, ClassMem}: {45, 28, ClobberTMP},
 
 	Optab{AMOVA, ClassCond, ClassNone, ClassConst11, ClassReg}: {46, 4, 0},
 	Optab{AMOVA, ClassCond, ClassReg, ClassNone, ClassReg}:     {47, 4, 0},
@@ -1078,13 +1078,14 @@ func srcCount(p *obj.Prog) (c int) {
 }
 
 func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
-	out = make([]uint32, 6)
+	out = make([]uint32, 7)
 	o1 := &out[0]
 	o2 := &out[1]
 	o3 := &out[2]
 	o4 := &out[3]
 	o5 := &out[4]
 	o6 := &out[5]
+	o7 := &out[6]
 	if o.OpInfo == ClobberTMP {
 		if usesTMP(&p.From) {
 			return nil, fmt.Errorf("asmout: %q not allowed: synthetic instruction clobbers temporary registers", obj.Mconv(&p.From))
@@ -1252,7 +1253,8 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	// 	OR TMP, hm($sym), TMP
 	//	SLLD	$32, TMP, TMP
 	// 	SETHI hi($sym), R
-	// 	OR TMP, lo($sym), R
+	// 	OR R, lo($sym), R
+	// 	OR TMP, R, R
 	case 23:
 		*o1 = opcode(ASETHI) | ir(0, REG_TMP)
 		*o2 = opalu(AOR) | rsr(REG_TMP, 0, REG_TMP)
@@ -1264,20 +1266,22 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		rel.Type = obj.R_ADDRSPARC64HI
 		*o3 = opalu(ASLLD) | rsr(REG_TMP, 32, REG_TMP)
 		*o4 = opcode(ASETHI) | ir(0, p.To.Reg)
-		*o5 = opalu(AOR) | rsr(REG_TMP, 0, p.To.Reg)
+		*o5 = opalu(AOR) | rsr(p.To.Reg, 0, p.To.Reg)
 		rel = obj.Addrel(cursym)
 		rel.Off = int32(p.Pc + 12)
 		rel.Siz = 8
 		rel.Sym = p.From.Sym
 		rel.Add = p.From.Offset
 		rel.Type = obj.R_ADDRSPARC64LO
+		*o6 = opalu(AOR) | rrr(REG_TMP, 0, p.To.Reg, p.To.Reg)
 
 	// MOV sym(SB), R ->
 	// 	SETHI hh($sym), TMP
 	// 	OR TMP, hm($sym), TMP
 	//	SLLD	$32, TMP, TMP
 	// 	SETHI hi($sym), R
-	// 	OR TMP, lo($sym), R
+	// 	OR R, lo($sym), R
+	// 	OR TMP, R, R
 	//	MOV (R), R
 	case 24:
 		*o1 = opcode(ASETHI) | ir(0, REG_TMP)
@@ -1290,21 +1294,23 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		rel.Type = obj.R_ADDRSPARC64HI
 		*o3 = opalu(ASLLD) | rsr(REG_TMP, 32, REG_TMP)
 		*o4 = opcode(ASETHI) | ir(0, p.To.Reg)
-		*o5 = opalu(AOR) | rsr(REG_TMP, 0, p.To.Reg)
+		*o5 = opalu(AOR) | rsr(p.To.Reg, 0, p.To.Reg)
 		rel = obj.Addrel(cursym)
 		rel.Off = int32(p.Pc + 12)
 		rel.Siz = 8
 		rel.Sym = p.From.Sym
 		rel.Add = p.From.Offset
 		rel.Type = obj.R_ADDRSPARC64LO
-		*o6 = opload(p.As) | rsr(p.To.Reg, 0, p.To.Reg)
+		*o6 = opalu(AOR) | rrr(REG_TMP, 0, p.To.Reg, p.To.Reg)
+		*o7 = opload(p.As) | rsr(p.To.Reg, 0, p.To.Reg)
 
 	// MOV R, sym(SB) ->
 	// 	SETHI hh($sym), TMP
 	// 	OR TMP, hm($sym), TMP
 	//	SLLD	$32, TMP, TMP
 	// 	SETHI hi($sym), TMP2
-	// 	OR TMP, lo($sym), TMP2
+	// 	OR TMP2, lo($sym), TMP2
+	// 	OR TMP, TMP2, TMP2
 	//	MOV R, (TMP2)
 	case 25:
 		*o1 = opcode(ASETHI) | ir(0, REG_TMP)
@@ -1317,14 +1323,15 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		rel.Type = obj.R_ADDRSPARC64HI
 		*o3 = opalu(ASLLD) | rsr(REG_TMP, 32, REG_TMP)
 		*o4 = opcode(ASETHI) | ir(0, REG_TMP2)
-		*o5 = opalu(AOR) | rsr(REG_TMP, 0, REG_TMP2)
+		*o5 = opalu(AOR) | rsr(REG_TMP2, 0, REG_TMP2)
 		rel = obj.Addrel(cursym)
 		rel.Off = int32(p.Pc + 12)
 		rel.Siz = 8
 		rel.Sym = p.To.Sym
 		rel.Add = p.To.Offset
 		rel.Type = obj.R_ADDRSPARC64LO
-		*o6 = opstore(p.As) | rsr(REG_TMP2, 0, p.From.Reg)
+		*o6 = opalu(AOR) | rrr(REG_TMP, 0, REG_TMP2, REG_TMP2)
+		*o7 = opstore(p.As) | rsr(REG_TMP2, 0, p.From.Reg)
 
 	// RET
 	case 26:
@@ -1446,7 +1453,8 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	// 		OR TMP, hm($sym), TMP
 	//		SLLD	$32, TMP, TMP
 	// 		SETHI hi($sym), TMP2
-	// 		OR TMP, lo($sym), TMP2
+	// 		OR TMP2, lo($sym), TMP2
+	// 		OR TMP, TMP2, TMP2
 	//	JMPL	TMP2, ZR
 	case 45:
 		*o1 = opcode(ASETHI) | ir(0, REG_TMP)
@@ -1459,14 +1467,15 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		rel.Type = obj.R_ADDRSPARC64HI
 		*o3 = opalu(ASLLD) | rsr(REG_TMP, 32, REG_TMP)
 		*o4 = opcode(ASETHI) | ir(0, REG_TMP2)
-		*o5 = opalu(AOR) | rsr(REG_TMP, 0, REG_TMP2)
+		*o5 = opalu(AOR) | rsr(REG_TMP2, 0, REG_TMP2)
 		rel = obj.Addrel(cursym)
 		rel.Off = int32(p.Pc + 12)
 		rel.Siz = 8
 		rel.Sym = p.To.Sym
 		rel.Add = p.To.Offset
 		rel.Type = obj.R_ADDRSPARC64LO
-		*o6 = opcode(AJMPL) | rsr(REG_TMP2, 0, REG_ZR)
+		*o6 = opalu(AOR) | rrr(REG_TMP, 0, REG_TMP2, REG_TMP2)
+		*o7 = opcode(AJMPL) | rsr(REG_TMP2, 0, REG_ZR)
 
 	// MOVPOS XCC, $simm11, R
 	case 46:

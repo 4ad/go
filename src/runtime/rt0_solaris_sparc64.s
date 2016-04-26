@@ -13,4 +13,4 @@ TEXT main(SB),NOSPLIT,$-8
 	MOVD	$(8+128+STACK_BIAS)(RSP), R8 // argv
 	MOVD	$(128+STACK_BIAS)(RSP), R9 // argc
 	MOVD	$runtime·rt0_go(SB), R1
-	JMPL	TMP, ZR
+	JMPL	R1, ZR
