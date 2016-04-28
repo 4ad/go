@@ -48,7 +48,8 @@ GNUOBJS=${GNUEXES:%.gnu.out=%.o}\
 	fconv.o\
 	mul.o\
 	atomic.o\
-	cmp1_2.o
+	cmp1_2.o\
+	save.o\
 
 GNUS=${GOEXES:%.go.out=%.go.out.s}\
 	${GNUEXES:%.gnu.out=%.gnu.out.s}\
