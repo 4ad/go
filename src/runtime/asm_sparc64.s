@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+#include "go_asm.h"
 #include "funcdata.h"
 #include "textflag.h"
 
@@ -42,16 +43,14 @@ TEXT runtime·reginit(SB),NOSPLIT,$-8-0
 // void gosave(Gobuf*)
 // save state in Gobuf; setjmp
 TEXT runtime·gosave(SB), NOSPLIT, $-8-8
-	// TODO(aram):
-	MOVD	$4, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
+	MOVD	buf+0(FP), R3
+	MOVD	RSP, R1
+	MOVD	R1, gobuf_sp(R3)
+	MOVD	LR, gobuf_pc(R3)
+	MOVD	g, gobuf_g(R3)
+	MOVD	ZR, gobuf_lr(R3)
+	MOVD	ZR, gobuf_ret(R3)
+	MOVD	ZR, gobuf_ctxt(R3)
 	RET
 
 // void gogo(Gobuf*)
