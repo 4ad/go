@@ -246,6 +246,11 @@ func dynimport(obj string) {
 		}
 		for _, s := range sym {
 			targ := s.Name
+			if targ == "" {
+				// sometimes we get entries with no name in the symbol table
+				// ignore them, and hope for the best.
+				continue
+			}
 			if s.Version != "" {
 				targ += "#" + s.Version
 			}
