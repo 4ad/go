@@ -41,16 +41,7 @@ TEXT runtime·asminit(SB),NOSPLIT,$-8-0
 	RET
 
 TEXT runtime·reginit(SB),NOSPLIT,$-8-0
-	// TODO(aram):
-	MOVD	$3, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
+	// TODO(aram): do we need to initialize FP registers?
 	RET
 
 /*

@@ -61,3 +61,6 @@ tools:V:
 
 clean:V:
 	rm -rf *.out.tmp *.u *.go.s *.out *.out.objdump *.out.rel *.out.readelf
+
+copy:V: $GOEXES
+	rsync -ai *.out daffodil:x/
