@@ -417,17 +417,8 @@ TEXT runtime·getcallersp(SB),NOSPLIT,$0-16
 	RET
 
 TEXT runtime·abort(SB),NOSPLIT,$-8-0
-	// TODO(aram):
-	MOVD	$29, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
+	JMPL	ZR, ZR
 	UNDEF
-	RET
 
 // func cputicks() int64
 TEXT runtime·cputicks(SB),NOSPLIT,$0-0
