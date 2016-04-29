@@ -4,7 +4,7 @@ TEXT	_rt0_sparc64_solaris(SB),7,$0-0
 	OR	ZR, ZR, TMP
 	OR	ZR, ZR, R27
 	OR	ZR, ZR, R28
-	OR	ZR, ZR, R29
+	OR	ZR, ZR, CTXT
 	CALL	main(SB)
 	// sys_exit(1)
 	MOVD	$1, R8
