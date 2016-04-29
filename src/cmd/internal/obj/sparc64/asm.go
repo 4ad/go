@@ -202,6 +202,8 @@ var optab = map[Optab]Opval{
 
 	Optab{AMOVRZ, ClassReg, ClassNone, ClassConst10, ClassReg}: {48, 4, 0},
 	Optab{AMOVRZ, ClassReg, ClassReg, ClassNone, ClassReg}:     {49, 4, 0},
+
+	Optab{AMOVD, ClassTLSAddr, ClassNone, ClassNone, ClassReg}: {50, 12, 0},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -930,6 +932,9 @@ func aclass(a *obj.Addr) int8 {
 			if a.Sym == nil {
 				return ClassUnknown
 			}
+			if a.Sym.Type == obj.STLSBSS {
+				return ClassTLSMem
+			}
 			return ClassMem
 
 		case obj.NAME_AUTO, obj.NAME_PARAM:
@@ -965,6 +970,9 @@ func aclass(a *obj.Addr) int8 {
 		case obj.NAME_EXTERN, obj.NAME_STATIC:
 			if a.Sym == nil {
 				return ClassUnknown
+			}
+			if a.Sym.Type == obj.STLSBSS {
+				return ClassTLSAddr
 			}
 			return ClassAddr
 
@@ -1492,6 +1500,18 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	// MOVRZ	R, Rs, Rd
 	case 49:
 		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, p.Reg, p.To.Reg)
+
+	// MOVD $tlssym, R
+	case 50:
+		*o1 = opcode(ASETHI) | ir(0, p.To.Reg)
+		*o2 = opalu(AXOR) | rsr(p.To.Reg, 0, p.To.Reg)
+		rel := obj.Addrel(cursym)
+		rel.Off = int32(p.Pc)
+		rel.Siz = 8
+		rel.Sym = p.From.Sym
+		rel.Add = p.From.Offset
+		rel.Type = obj.R_SPARC64_TLS_LE
+		*o3 = opalu(AADD) | rrr(REG_TLS, 0, p.To.Reg, p.To.Reg)
 	}
 
 	return out[:o.size/4], nil

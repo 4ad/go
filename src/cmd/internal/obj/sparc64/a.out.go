@@ -231,8 +231,10 @@ const (
 
 	ClassBranch // n(PC) branch target, n is 21-bit signed, mod 4
 
-	ClassAddr // $sym(SB)
-	ClassMem  // sym(SB)
+	ClassAddr    // $sym(SB)
+	ClassMem     // sym(SB)
+	ClassTLSAddr // $tlssym(SB)
+	ClassTLSMem  // tlssym(SB)
 
 	ClassTextSize
 	ClassNone
@@ -267,6 +269,8 @@ var cnames = []string{
 	ClassBranch:      "ClassBranch",
 	ClassAddr:        "ClassAddr",
 	ClassMem:         "ClassMem",
+	ClassTLSAddr:     "ClassTLSAddr",
+	ClassTLSMem:      "ClassTLSMem",
 	ClassTextSize:    "ClassTextSize",
 	ClassNone:        "ClassNone",
 }

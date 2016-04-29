@@ -77,6 +77,12 @@ func elfreloc1(r *ld.Reloc, sectoff int64) int {
 		ld.Thearch.Vput(uint64(sectoff + 4))
 		ld.Thearch.Vput(ld.R_SPARC_HM10 | uint64(elfsym)<<32)
 
+	case obj.R_SPARC64_TLS_LE:
+		ld.Thearch.Vput(ld.R_SPARC_TLS_LE_HIX22 | uint64(elfsym)<<32)
+		ld.Thearch.Vput(uint64(r.Xadd))
+		ld.Thearch.Vput(uint64(sectoff + 4))
+		ld.Thearch.Vput(ld.R_SPARC_TLS_LE_LOX10 | uint64(elfsym)<<32)
+
 	case obj.R_CALLSPARC64:
 		if r.Siz != 4 {
 			return -1
@@ -123,7 +129,7 @@ func archreloc(r *ld.Reloc, s *ld.LSym, val *int64) int {
 
 			return 0
 
-		case obj.R_CALLSPARC64:
+		case obj.R_CALLSPARC64, obj.R_SPARC64_TLS_LE:
 			r.Done = 0
 			r.Xsym = r.Sym
 			r.Xadd = r.Add

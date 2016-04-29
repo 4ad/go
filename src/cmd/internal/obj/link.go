@@ -446,6 +446,10 @@ const (
 	// is not set on intel platforms but is set to a TLS symbol -- runtime.tlsg -- in
 	// the linker when externally linking).
 	R_TLS_IE
+	// R_SPARC64_TLS_LE is used to implement the "local exec" model for tls
+	// access. It resolves to the offset of the thread-local symbol from the
+	// thread pointer (R7) and inserts this value into a pair of instruction words.
+	R_SPARC64_TLS_LE
 	R_GOTOFF
 	R_PLT0
 	R_PLT1
