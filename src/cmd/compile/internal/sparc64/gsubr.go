@@ -39,6 +39,7 @@ import (
 
 var resvd = []int{
 	sparc64.REG_ZR,
+	sparc64.REG_TLS,
 	sparc64.REG_RSP,
 	sparc64.REG_LR,
 	sparc64.REG_TMP2,

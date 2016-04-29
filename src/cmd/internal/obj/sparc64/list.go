@@ -18,6 +18,8 @@ func Rconv(r int) string {
 	switch {
 	case r == REG_RFP:
 		return "RFP"
+	case r == REG_TLS:
+		return "TLS"
 	case r == REG_LR:
 		return "LR"
 	case r == REG_TMP:

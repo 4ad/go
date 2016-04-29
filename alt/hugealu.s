@@ -5,7 +5,7 @@ TEXT	main(SB),7,$-8
 	AND	$0xf00abcd, R1, R2
 	ADD	$0x1f00abcd, R3
 	MOVD	R4, 0xf00ddd(R5)
-	MOVD	R6, -16521(R7)
-	MOVUB	ZR, -16529(R7)
-	MOVUB	R1, 0xf00ddd(R7)
+	MOVD	R6, -16521(R8)
+	MOVUB	ZR, -16529(R8)
+	MOVUB	R1, 0xf00ddd(R8)
 	RET
