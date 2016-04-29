@@ -8,7 +8,8 @@ XREADELF=sparcv9-solaris2.12-readelf
 
 GCFLAGS=-+ -N
 LDFLAGS=-w
-XCFLAGS=-mflat -m64
+XCFLAGS=-mflat -m64 -pthread
+XLDFLAGS=-pthread
 
 RUNTIMEOBJS=runtime.u data.u
 RUNTIME=pkg/solaris_sparc64/runtime.a
@@ -40,7 +41,8 @@ GOEXTREADELF=${GOEXTHOSTOBJS:%.go.o=%.go.o.readelf}
 GOS=call0.go.s\
 	cmp1_1.go.s
 
-GNUEXES=ext.gnu.out
+GNUEXES=ext.gnu.out\
+	tls.gnu.out
 
 GNUOBJS=${GNUEXES:%.gnu.out=%.o}\
 	$GOEXTHOSTOBJS\
@@ -66,7 +68,12 @@ RELS=${GOEXES:%.go.out=%.go.out.rel} \
 	${GOEXTEXES:%.go.ext=%.go.ext.rel}\
 	${GNUOBJS:%.o=%.o.rel}
 
-all:V:	$GOEXES $GOEXTEXES $GNUEXES $GOS $GNUS $DATS $RELS $GOEXTREADELF
+READELFS=${GOEXES:%.go.out=%.go.out.readelf} \
+	${GNUEXES:%.gnu.out=%.gnu.out.readelf} \
+	${GOEXTEXES:%.go.ext=%.go.ext.readelf}\
+	${GNUOBJS:%.o=%.o.readelf}
+
+all:V:	$GOEXES $GOEXTEXES $GNUEXES $GOS $GNUS $DATS $RELS $GOEXTREADELF $READELFS
 
 tools:V:
 	go install -v cmd/asm cmd/compile cmd/link cmd/pack
@@ -101,11 +108,8 @@ $RUNTIME: pkg/solaris_sparc64 $RUNTIMEOBJS
 
 %.go.ext.tmp/go.o:V: %.go.ext
 
-%.go.ext.tmp/go.o.readelf: %.go.ext.tmp/go.o
-	$XREADELF -a $stem.go.ext.tmp/go.o > $target 2>/dev/null
-
 %.gnu.out: %.o
-	$XLD -o $target $stem.o
+	$XLD $XLDFLAGS -o $target $stem.o
 
 %.out.dat: %.out
 	$XREADELF -x .data -x .rodata -x .noptrdata $prereq >$target 2>/dev/null
@@ -134,8 +138,17 @@ $RUNTIME: pkg/solaris_sparc64 $RUNTIMEOBJS
 %.o.rel: %.o
 	$XREADELF -r $prereq >$target 2>/dev/null
 
+%.out.readelf: %.out
+	$XREADELF -a $stem.out > $target 2>/dev/null
+
+%.ext.readelf: %.ext
+	$XREADELF -a $stem.ext > $target 2>/dev/null
+
+%.o.readelf: %.o
+	$XREADELF -a $stem.o > $target 2>/dev/null
+
 torside:V:
 	rsync -i *.out *.ext torside:
 
 clean:V:
-	rm -rf pkg *.asm *.[auo] *.out *.dat *.rel *.go.s *.out.s *.o.s *.ext *.ext.s *.ext.tmp
+	rm -rf pkg *.asm *.[auo] *.out *.dat *.rel *.go.s *.out.s *.o.s *.ext *.ext.s *.ext.tmp *.readelf
