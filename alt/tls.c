@@ -7,7 +7,6 @@ __thread int64_t g;
 void *
 f(void *p)
 {
-	printf("f: %p\n", &g);
 	return &g;
 }
 
