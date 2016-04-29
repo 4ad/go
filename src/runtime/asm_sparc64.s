@@ -56,17 +56,23 @@ TEXT runtime·gosave(SB), NOSPLIT, $-8-8
 // void gogo(Gobuf*)
 // restore state from Gobuf; longjmp
 TEXT runtime·gogo(SB), NOSPLIT, $-8-8
-	// TODO(aram):
-	MOVD	$5, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
-	RET
+	MOVD	buf+0(FP), R5
+	MOVD	gobuf_g(R5), g
+	CALL	runtime·save_g(SB)
+
+	MOVD	0(g), R4	// make sure g is not nil
+	MOVD	gobuf_sp(R5), R1
+	MOVD	R1, RSP
+	MOVD	gobuf_lr(R5), LR
+	MOVD	gobuf_ret(R5), R1
+	MOVD	gobuf_ctxt(R5), CTXT
+	MOVD	ZR, gobuf_sp(R5)
+	MOVD	ZR, gobuf_ret(R5)
+	MOVD	ZR, gobuf_lr(R5)
+	MOVD	ZR, gobuf_ctxt(R5)
+	CMP	ZR, ZR // set condition codes for == test, needed by stack split
+	MOVD	gobuf_pc(R5), R6
+	JMPL	R6, ZR
 
 // void mcall(fn func(*g))
 // Switch to m->g0's stack, call fn(g).
@@ -660,4 +666,12 @@ TEXT ·checkASM(SB),NOSPLIT,$0-1
 	MOVD	$libc_write(SB), R1
 	CALL	R1
 	UNDEF
+	RET
+
+TEXT runtime·save_g(SB),NOSPLIT,$-8-0
+	// TODO(aram): TLS dance
+	RET
+
+TEXT runtime·load_g(SB),NOSPLIT,$-8-0
+	// TODO(aram): TLS dance
 	RET
