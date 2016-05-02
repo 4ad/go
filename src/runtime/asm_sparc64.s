@@ -182,24 +182,48 @@ noswitch:
 
 // Called during function prolog when more stack is needed.
 // Caller has already loaded:
-// R3 prolog's LR (R30)
+// R3 prolog's LR
 //
 // The traceback routines see morestack on a g0 as being
 // the top of a stack (for example, morestack calling newstack
 // calling the scheduler calling newm calling gc), so we must
 // record an argument size. For that purpose, it has no arguments.
 TEXT runtime·morestack(SB),NOSPLIT,$-8-0
-	// TODO(aram):
-	MOVD	$9, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
+	// Cannot grow scheduler stack (m->g0).
+	MOVD	g_m(g), R8
+	MOVD	m_g0(R8), R4
+	CMP	g, R4
+	BNED	2(PC)
+	JMP	runtime·abort(SB)
+
+	// Cannot grow signal stack (m->gsignal).
+	MOVD	m_gsignal(R8), R4
+	CMP	g, R4
+	BNED	2(PC)
+	JMP	runtime·abort(SB)
+
+	// Called from f.
+	// Set g->sched to context in f
+	MOVD	CTXT, (g_sched+gobuf_ctxt)(g)
+	MOVD	RSP, (g_sched+gobuf_sp)(g)
+	MOVD	LR, (g_sched+gobuf_pc)(g)
+	MOVD	R3, (g_sched+gobuf_lr)(g)
+
+	// Called from f.
+	// Set m->morebuf to f's callers.
+	MOVD	R3, (m_morebuf+gobuf_pc)(R8)	// f's caller's PC
+	MOVD	RSP, (m_morebuf+gobuf_sp)(R8)	// f's caller's RSP
+	MOVD	g, (m_morebuf+gobuf_g)(R8)
+
+	// Call newstack on m->g0's stack.
+	MOVD	m_g0(R8), g
+	CALL	runtime·save_g(SB)
+	MOVD	(g_sched+gobuf_sp)(g), RSP
+	CALL	runtime·newstack(SB)
+
+	// Not reached, but make sure the return PC from the call to newstack
+	// is still in this function, and not the beginning of the next.
 	UNDEF
-	RET
 
 TEXT runtime·morestack_noctxt(SB),NOSPLIT|NOFRAME,$0-0
 	// TODO(aram):
