@@ -226,30 +226,25 @@ TEXT runtime·morestack(SB),NOSPLIT,$-8-0
 	UNDEF
 
 TEXT runtime·morestack_noctxt(SB),NOSPLIT|NOFRAME,$0-0
-	// TODO(aram):
-	MOVD	$10, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
-	RET
+	MOVD	ZR, CTXT
+	JMP	runtime·morestack(SB)
 
 TEXT runtime·stackBarrier(SB),NOSPLIT,$0
-	// TODO(aram):
-	MOVD	$11, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
-	RET
+	// We came here via a RET to an overwritten LR.
+	// R1 may be live (see return0). Other registers are available.
+
+	// Get the original return PC, g.stkbar[g.stkbarPos].savedLRVal.
+	MOVD	(g_stkbar+slice_array)(g), R4
+	MOVD	g_stkbarPos(g), R5
+	MOVD	$stkbar__size, R6
+	MULD	R5, R6
+	ADD	R4, R6
+	MOVD	stkbar_savedLRVal(R6), R6
+	// Record that this stack barrier was hit.
+	ADD	$1, R5
+	MOVD	R5, g_stkbarPos(g)
+	// Jump to the original return PC.
+	JMPL	R6, ZR
 
 // reflectcall: call a function with the given argument list
 // func call(argtype *_type, f *FuncVal, arg *byte, argsize, retoffset uint32).
