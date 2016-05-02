@@ -667,11 +667,3 @@ TEXT ·checkASM(SB),NOSPLIT,$0-1
 	CALL	R1
 	UNDEF
 	RET
-
-TEXT runtime·save_g(SB),NOSPLIT,$-8-0
-	// TODO(aram): TLS dance
-	RET
-
-TEXT runtime·load_g(SB),NOSPLIT,$-8-0
-	// TODO(aram): TLS dance
-	RET
