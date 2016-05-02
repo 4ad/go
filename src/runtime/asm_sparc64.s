@@ -409,18 +409,13 @@ TEXT runtime·jmpdefer(SB), NOSPLIT, $-8-16
 	MOVD	0(CTXT), R3
 	JMPL	R3, ZR
 
-// Save state of caller into g->sched. Smashes R0.
+// Save state of caller into g->sched.
 TEXT gosave<>(SB),NOSPLIT,$-8
-	// TODO(aram):
-	MOVD	$19, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
+	MOVD	LR, (g_sched+gobuf_pc)(g)
+	MOVD	RSP, (g_sched+gobuf_sp)(g)
+	MOVD	$0, (g_sched+gobuf_lr)(g)
+	MOVD	$0, (g_sched+gobuf_ret)(g)
+	MOVD	$0, (g_sched+gobuf_ctxt)(g)
 	RET
 
 // func asmcgocall(fn, arg unsafe.Pointer) int32
