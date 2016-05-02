@@ -252,21 +252,132 @@ TEXT runtime·stackBarrier(SB),NOSPLIT,$0
 // of constant-sized-frame functions to encode a few bits of size in the pc.
 // Caution: ugly multiline assembly macros in your future!
 
+#define DISPATCH(NAME,MAXSIZE)		\
+	MOVD	$MAXSIZE, TMP;		\
+	CMP	TMP, RT1;		\
+	BGD	3(PC);			\
+	MOVD	$NAME(SB), RT1;	\
+	JMPL	RT1, ZR
+// Note: can't just "B NAME(SB)" - bad inlining results.
+
 TEXT reflect·call(SB), NOSPLIT, $0-0
 	JMP	·reflectcall(SB)
 
 TEXT ·reflectcall(SB), NOSPLIT, $-8-32
-	// TODO(aram):
-	MOVD	$12, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
+	MOVUW argsize+24(FP), RT1
+	// NOTE(rsc): No call16, because CALLFN needs four words
+	// of argument space to invoke callwritebarrier.
+	DISPATCH(runtime·call32, 32)
+	DISPATCH(runtime·call64, 64)
+	DISPATCH(runtime·call128, 128)
+	DISPATCH(runtime·call256, 256)
+	DISPATCH(runtime·call512, 512)
+	DISPATCH(runtime·call1024, 1024)
+	DISPATCH(runtime·call2048, 2048)
+	DISPATCH(runtime·call4096, 4096)
+	DISPATCH(runtime·call8192, 8192)
+	DISPATCH(runtime·call16384, 16384)
+	DISPATCH(runtime·call32768, 32768)
+	DISPATCH(runtime·call65536, 65536)
+	DISPATCH(runtime·call131072, 131072)
+	DISPATCH(runtime·call262144, 262144)
+	DISPATCH(runtime·call524288, 524288)
+	DISPATCH(runtime·call1048576, 1048576)
+	DISPATCH(runtime·call2097152, 2097152)
+	DISPATCH(runtime·call4194304, 4194304)
+	DISPATCH(runtime·call8388608, 8388608)
+	DISPATCH(runtime·call16777216, 16777216)
+	DISPATCH(runtime·call33554432, 33554432)
+	DISPATCH(runtime·call67108864, 67108864)
+	DISPATCH(runtime·call134217728, 134217728)
+	DISPATCH(runtime·call268435456, 268435456)
+	DISPATCH(runtime·call536870912, 536870912)
+	DISPATCH(runtime·call1073741824, 1073741824)
+	MOVD	$runtime·badreflectcall(SB), R1
+	JMPL	R1, ZR
+
+#define CALLFN(NAME,MAXSIZE)			\
+TEXT NAME(SB), WRAPPER, $MAXSIZE-24;		\
+	NO_LOCAL_POINTERS;			\
+	/* copy arguments to stack */		\
+	MOVD	arg+16(FP), R3;			\
+	MOVUW	argsize+24(FP), R4;			\
+	MOVD	RSP, R5;				\
+	ADD	$(8-1), R5;			\
+	SUB	$1, R3;				\
+	ADD	R5, R4;				\
+	CMP	R5, R4;				\
+	BED	6(PC);				\
+	MOVUB	1(R3), R6;			\
+	ADD	$1, R3;				\
+	MOVUB	R6, 1(R5);			\
+	ADD	$1, R5;				\
+	JMP	-6(PC);				\
+	/* call function */			\
+	MOVD	f+8(FP), CTXT;			\
+	MOVD	(CTXT), R1;			\
+	PCDATA  $PCDATA_StackMapIndex, $0;	\
+	CALL	(R1);				\
+	/* copy return values back */		\
+	MOVD	arg+16(FP), R3;			\
+	MOVUW	n+24(FP), R4;			\
+	MOVUW	retoffset+28(FP), R6;		\
+	MOVD	RSP, R5;				\
+	ADD	R6, R5; 			\
+	ADD	R6, R3;				\
+	SUB	R6, R4;				\
+	ADD	$(8-1), R5;			\
+	SUB	$1, R3;				\
+	ADD	R5, R4;				\
+loop:						\
+	CMP	R5, R4;				\
+	BED	end;				\
+	MOVUB	1(R5), R6;			\
+	ADD	$1, R5;				\
+	MOVUB	R6, 1(R3);			\
+	ADD	$1, R3;			\
+	JMP	loop;				\
+end:						\
+	/* execute write barrier updates */	\
+	MOVD	argtype+0(FP), R8;		\
+	MOVD	arg+16(FP), R3;			\
+	MOVUW	n+24(FP), R4;			\
+	MOVUW	retoffset+28(FP), R6;		\
+	MOVD	R8, 8(RSP);			\
+	MOVD	R3, 16(RSP);			\
+	MOVD	R4, 24(RSP);			\
+	MOVD	R6, 32(RSP);			\
+	CALL	runtime·callwritebarrier(SB);	\
 	RET
+
+// These have 8 added to make the overall frame size a multiple of 16,
+// as required by the ABI. (There is another +8 for the saved LR.)
+CALLFN(·call32, 40 )
+CALLFN(·call64, 72 )
+CALLFN(·call128, 136 )
+CALLFN(·call256, 264 )
+CALLFN(·call512, 520 )
+CALLFN(·call1024, 1032 )
+CALLFN(·call2048, 2056 )
+CALLFN(·call4096, 4104 )
+CALLFN(·call8192, 8200 )
+CALLFN(·call16384, 16392 )
+CALLFN(·call32768, 32776 )
+CALLFN(·call65536, 65544 )
+CALLFN(·call131072, 131080 )
+CALLFN(·call262144, 262152 )
+CALLFN(·call524288, 524296 )
+CALLFN(·call1048576, 1048584 )
+CALLFN(·call2097152, 2097160 )
+CALLFN(·call4194304, 4194312 )
+CALLFN(·call8388608, 8388616 )
+CALLFN(·call16777216, 16777224 )
+CALLFN(·call33554432, 33554440 )
+CALLFN(·call67108864, 67108872 )
+CALLFN(·call134217728, 134217736 )
+CALLFN(·call268435456, 268435464 )
+CALLFN(·call536870912, 536870920 )
+CALLFN(·call1073741824, 1073741832 )
 
 // AES hashing not implemented for SPARC64.
 TEXT runtime·aeshash(SB),NOSPLIT,$-8-0
