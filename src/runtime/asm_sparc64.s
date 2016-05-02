@@ -381,53 +381,13 @@ CALLFN(·call1073741824, 1073741832 )
 
 // AES hashing not implemented for SPARC64.
 TEXT runtime·aeshash(SB),NOSPLIT,$-8-0
-	// TODO(aram):
-	MOVD	$13, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
-	RET
+	MOVW	(ZR), R1
 TEXT runtime·aeshash32(SB),NOSPLIT,$-8-0
-	// TODO(aram):
-	MOVD	$14, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
-	RET
+	MOVW	(ZR), R1
 TEXT runtime·aeshash64(SB),NOSPLIT,$-8-0
-	// TODO(aram):
-	MOVD	$15, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
-	RET
+	MOVW	(ZR), R1
 TEXT runtime·aeshashstr(SB),NOSPLIT,$-8-0
-	// TODO(aram):
-	MOVD	$16, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
-	RET
+	MOVW	(ZR), R1
 	
 TEXT runtime·procyield(SB),NOSPLIT,$0-0
 	// TODO(aram):
