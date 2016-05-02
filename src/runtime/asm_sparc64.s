@@ -5,6 +5,7 @@
 #include "go_asm.h"
 #include "funcdata.h"
 #include "textflag.h"
+#include "asm_sparc64.h"
 
 DATA dbgbuf(SB)/8, $"\n\n"
 GLOBL dbgbuf(SB), $8
@@ -439,16 +440,14 @@ TEXT ·asmcgocall(SB),NOSPLIT,$0-20
 // Turn the fn into a Go func (by taking its address) and call
 // cgocallback_gofunc.
 TEXT runtime·cgocallback(SB),NOSPLIT,$24-24
-	// TODO(aram):
-	MOVD	$21, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
+	MOVD	$fn+0(FP), R1
+	MOVD	R1, (8+STACK_BIAS)(RSP)
+	MOVD	frame+8(FP), R1
+	MOVD	R1, (16+STACK_BIAS)(RSP)
+	MOVD	framesize+16(FP), R1
+	MOVD	R1, (24+STACK_BIAS)(RSP)
+	MOVD	$runtime·cgocallback_gofunc(SB), R1
 	CALL	R1
-	UNDEF
 	RET
 
 // cgocallback_gofunc(FuncVal*, void *frame, uintptr framesize)
