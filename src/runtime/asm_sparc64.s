@@ -232,7 +232,7 @@ TEXT runtime·morestack_noctxt(SB),NOSPLIT|NOFRAME,$0-0
 
 TEXT runtime·stackBarrier(SB),NOSPLIT,$0
 	// We came here via a RET to an overwritten LR.
-	// R1 may be live (see return0). Other registers are available.
+	// R8 may be live (see return0). Other registers are available.
 
 	// Get the original return PC, g.stkbar[g.stkbarPos].savedLRVal.
 	MOVD	(g_stkbar+slice_array)(g), R4
@@ -706,32 +706,14 @@ TEXT runtime·fastrand1(SB),NOSPLIT,$-8-4
 	RET
 
 TEXT runtime·return0(SB), NOSPLIT, $0
-	// TODO(aram):
-	MOVD	$41, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
+	MOVW	ZR, R8
 	RET
 
 // The top-most function running on a goroutine
 // returns to goexit+PCQuantum.
 TEXT runtime·goexit(SB),NOSPLIT,$-8-0
-	// TODO(aram):
-	MOVD	$42, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
-	RET
+	MOVD	R1, R1	// NOP
+	CALL	runtime·goexit1(SB)	// does not return
 
 // TODO(aram):
 TEXT runtime·prefetcht0(SB),NOSPLIT,$0-8
