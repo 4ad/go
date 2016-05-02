@@ -468,16 +468,18 @@ TEXT ·cgocallback_gofunc(SB),NOSPLIT,$24-24
 // Called from cgo wrappers, this function returns g->m->curg.stack.hi.
 // Must obey the gcc calling convention.
 TEXT _cgo_topofstack(SB),NOSPLIT,$24
-	// TODO(aram):
-	MOVD	$23, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
+	// g and TMP might be clobbered by load_g. They
+	// are callee-save in the gcc calling convention, so save them.
+	MOVD	TMP, savedTMP-8(SP)
+	MOVD	g, saveG-16(SP)
+
+	CALL	runtime·load_g(SB)
+	MOVD	g_m(g), R1
+	MOVD	m_curg(R1), R1
+	MOVD	(g_stack+stack_hi)(R1), R1
+
+	MOVD	saveG-16(SP), g
+	MOVD	savedTMP-8(SP), TMP
 	RET
 
 // void setg(G*); set g. for use by needm.
