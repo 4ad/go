@@ -116,16 +116,64 @@ TEXT runtime·systemstack_switch(SB), NOSPLIT, $0-0
 
 // func systemstack(fn func())
 TEXT runtime·systemstack(SB), NOSPLIT, $0-8
-	// TODO(aram):
-	MOVD	$8, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
+	MOVD	fn+0(FP), R3	// R3 = fn
+	MOVD	R3, CTXT		// context
+	MOVD	g_m(g), R4	// R4 = m
+
+	MOVD	m_gsignal(R4), R5	// R5 = gsignal
+	CMP	g, R5
+	BED	noswitch
+
+	MOVD	m_g0(R4), R5	// R5 = g0
+	CMP	g, R5
+	BED	noswitch
+
+	MOVD	m_curg(R4), R6
+	CMP	g, R6
+	BED	switch
+
+	// Bad: g is not gsignal, not g0, not curg. What is it?
+	// Hide call from linker nosplit analysis.
+	MOVD	$runtime·badsystemstack(SB), R3
+	CALL	(R3)
+
+switch:
+	// save our state in g->sched. Pretend to
+	// be systemstack_switch if the G stack is scanned.
+	MOVD	$runtime·systemstack_switch(SB), R6
+	ADD	$8, R6	// get past prologue
+	MOVD	R6, (g_sched+gobuf_pc)(g)
+	MOVD	RSP, (g_sched+gobuf_sp)(g)
+	MOVD	$0, (g_sched+gobuf_lr)(g)
+	MOVD	g, (g_sched+gobuf_g)(g)
+
+	// switch to g0
+	MOVD	R5, g
+	CALL	runtime·save_g(SB)
+	MOVD	(g_sched+gobuf_sp)(g), R3
+	// make it look like mstart called systemstack on g0, to stop traceback
+	SUB	$16, R3
+	AND	$~15, R3
+	MOVD	$runtime·mstart(SB), R4
+	MOVD	R4, 0(R3)
+	MOVD	R3, RSP
+
+	// call target function
+	MOVD	0(CTXT), R3	// code pointer
+	CALL	(R3)
+
+	// switch back to g
+	MOVD	g_m(g), R3
+	MOVD	m_curg(R3), g
+	CALL	runtime·save_g(SB)
+	MOVD	(g_sched+gobuf_sp)(g), RSP
+	MOVD	$0, (g_sched+gobuf_sp)(g)
+	RET
+
+noswitch:
+	// already on m stack, just call directly
+	MOVD	0(CTXT), R3	// code pointer
+	CALL	(R3)
 	RET
 
 /*
