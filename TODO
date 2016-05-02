@@ -24,6 +24,8 @@ cd new && mk clean && mk helloworld.out
 mk helloworld.out.tmp/go.o.readelf helloworld.out.tmp/go.o.rel
 scp helloworld.out torside:
 
+reserve R6
+
 !!!
 NO DYNAMIC SIZED INSTRUCTIONS
 !!!
