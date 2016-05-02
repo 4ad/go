@@ -79,17 +79,30 @@ TEXT runtime·gogo(SB), NOSPLIT, $-8-8
 // Fn must never return. It should gogo(&g->sched)
 // to keep running g.
 TEXT runtime·mcall(SB), NOSPLIT, $-8-8
-	// TODO(aram):
-	MOVD	$6, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
-	RET
+	// Save caller state in g->sched
+	MOVD	RSP, (g_sched+gobuf_sp)(g)
+	MOVD	LR, (g_sched+gobuf_pc)(g)
+	MOVD	$0, (g_sched+gobuf_lr)(g)
+	MOVD	g, (g_sched+gobuf_g)(g)
+
+	// Switch to m->g0 & its stack, call fn.
+	MOVD	g, R3
+	MOVD	g_m(g), R8
+	MOVD	m_g0(R8), g
+	CALL	runtime·save_g(SB)
+	CMP	g, R3
+	BNED	ok
+	JMP	runtime·badmcall(SB)
+ok:
+	MOVD	fn+0(FP), CTXT			// context
+	MOVD	0(CTXT), R4			// code pointer
+	MOVD	(g_sched+gobuf_sp)(g), TMP
+	MOVD	TMP, RSP	// sp = m->g0->sched.sp
+	MOVD	R3, -8(RSP)
+	MOVD	$0, -16(RSP)
+	SUB	$16, RSP
+	CALL	(R4)
+	JMP	runtime·badmcall2(SB)
 
 // systemstack_switch is a dummy routine that systemstack leaves at the bottom
 // of the G stack. We need to distinguish the routine that
