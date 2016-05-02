@@ -110,16 +110,8 @@ ok:
 // at the top of the system stack because the one at the top of
 // the system stack terminates the stack walk (see topofstack()).
 TEXT runtime·systemstack_switch(SB), NOSPLIT, $0-0
-	// TODO(aram):
-	MOVD	$7, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
 	UNDEF
+	CALL	(LR)	// make sure this function is not leaf
 	RET
 
 // func systemstack(fn func())
