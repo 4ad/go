@@ -399,17 +399,15 @@ TEXT runtime·procyield(SB),NOSPLIT,$0-0
 // 2. sub 4 bytes to get back to BL deferreturn
 // 3. BR to fn
 TEXT runtime·jmpdefer(SB), NOSPLIT, $-8-16
-	// TODO(aram):
-	MOVD	$18, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
-	RET
+	MOVD	0(RSP), R1
+	SUB	$4, R1
+	MOVD	R1, LR
+
+	MOVD	fv+0(FP), CTXT
+	MOVD	argp+8(FP), RSP
+	SUB	$8, RSP
+	MOVD	0(CTXT), R3
+	JMPL	R3, ZR
 
 // Save state of caller into g->sched. Smashes R0.
 TEXT gosave<>(SB),NOSPLIT,$-8
