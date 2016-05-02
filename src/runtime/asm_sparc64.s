@@ -524,16 +524,9 @@ TEXT runtime·setcallerpc(SB),NOSPLIT,$8-16
 	RET
 
 TEXT runtime·getcallersp(SB),NOSPLIT,$0-16
-	// TODO(aram):
-	MOVD	$28, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
+	MOVD	argp+0(FP), R1
+	SUB	$8, R1
+	MOVD	R1, ret+8(FP)
 	RET
 
 TEXT runtime·abort(SB),NOSPLIT,$-8-0
