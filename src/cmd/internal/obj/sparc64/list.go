@@ -16,24 +16,32 @@ func init() {
 
 func Rconv(r int) string {
 	switch {
-	case r == REG_RFP:
-		return "RFP"
-	case r == REG_TLS:
-		return "TLS"
-	case r == REG_LR:
-		return "LR"
-	case r == REG_TMP:
-		return "TMP"
-	case r == REG_TMP2:
-		return "TMP2"
-	case r == REG_RSP:
-		return "RSP"
 	case r == REG_ZR:
 		return "ZR"
+	case r == REG_TLS:
+		return "TLS"
+	case r == REG_RSP:
+		return "RSP"
+	case r == REG_LR:
+		return "LR"
+	case r == REG_TMP2:
+		return "TMP2"
+	case r == REG_TMP:
+		return "TMP"
+	case r == REG_RT1:
+		return "RT1"
+	case r == REG_RT2:
+		return "RT2"
 	case r == REG_CTXT:
 		return "CTXT"
+	case r == REG_RFP:
+		return "RFP"
 	case r == REG_G:
 		return "g"
+	case r == REG_FTMP:
+		return "FTMP"
+	case r == REG_DTMP:
+		return "DTMP"
 	case r == REG_ICC:
 		return "ICC"
 	case r == REG_XCC:
@@ -44,10 +52,6 @@ func Rconv(r int) string {
 		return "TICK"
 	case r == REG_RPC:
 		return "RPC"
-	case r == REG_FTMP:
-		return "FTMP"
-	case r == REG_DTMP:
-		return "DTMP"
 	}
 	switch {
 	case REG_R0 <= r && r <= REG_R31:
