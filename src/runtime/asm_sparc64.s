@@ -484,30 +484,17 @@ TEXT _cgo_topofstack(SB),NOSPLIT,$24
 
 // void setg(G*); set g. for use by needm.
 TEXT runtime·setg(SB), NOSPLIT, $0-8
-	// TODO(aram):
-	MOVD	$24, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
+	MOVD	gg+0(FP), g
+	// This only happens if iscgo, so jump straight to save_g
+	CALL	runtime·save_g(SB)
 	RET
 
 // void setg_gcc(G*); set g called from gcc
 TEXT setg_gcc<>(SB),NOSPLIT,$8
-	// TODO(aram):
-	MOVD	$25, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
+	MOVD	R8, g
+	MOVD	TMP, savedTMP-8(SP)
+	CALL	runtime·save_g(SB)
+	MOVD	savedTMP-8(SP), TMP
 	RET
 
 TEXT runtime·getcallerpc(SB),NOSPLIT,$8-16
