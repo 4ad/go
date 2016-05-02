@@ -746,14 +746,6 @@ TEXT runtime·addmoduledata(SB),NOSPLIT,$0-0
 	RET
 
 TEXT ·checkASM(SB),NOSPLIT,$0-1
-	// TODO(aram):
-	MOVD	$44, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
+	OR	$1, ZR, R3
+	MOVB	R3, ret+0(FP)
 	RET
