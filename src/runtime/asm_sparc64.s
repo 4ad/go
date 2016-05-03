@@ -701,16 +701,14 @@ TEXT bytes·Equal(SB),NOSPLIT,$0-49
 	RET
 
 TEXT runtime·fastrand1(SB),NOSPLIT,$-8-4
-	// TODO(aram):
-	MOVD	$40, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
+	MOVD	g_m(g), R4
+	MOVUW	m_fastrand(R4), R3
+	ADD	R3, R3
+	CMP	ZR, R3
+	BGEW	2(PC)
+	XOR	$0x88888eef, R3
+	MOVW	R3, m_fastrand(R4)
+	MOVW	R3, ret+0(FP)
 	RET
 
 TEXT runtime·return0(SB), NOSPLIT, $0
