@@ -22,7 +22,10 @@ READELFS=${GOEXES:%.out=%.out.readelf}\
 RELS=${GOEXES:%.out=%.out.rel}\
 	${GOEXES:%.out=%.out.tmp/go.o.rel}
 
-all:V:	$GOEXES $GOS $OBJDUMPS $RELS $READELFS
+GNUS=${GOEXES:%.out=%.out.s}\
+	${GOEXES:%.out=%.out.tmp/go.o.s}
+
+all:V:	$GOEXES $GOS $OBJDUMPS $RELS $READELFS $GNUS
 
 tools:V:
 	go install -v cmd/asm cmd/compile cmd/link cmd/pack runtime
@@ -48,6 +51,12 @@ tools:V:
 %.out.rel: %.out
 	$XREADELF -r $prereq >$target 2>/dev/null
 
+%.out.s: %.out
+	$XOBJDUMP -d $prereq >$target 2>/dev/null
+
+%.o.s: %.o
+	$XOBJDUMP -d $prereq >$target 2>/dev/null
+
 %.out.tmp/go.o:V: %.out
 
 %.out.tmp/go.o.objdump: %.out.tmp/go.o
@@ -60,7 +69,7 @@ tools:V:
 	$XREADELF -r $prereq >$target 2>/dev/null
 
 clean:V:
-	rm -rf *.out.tmp *.u *.go.s *.out *.out.objdump *.out.rel *.out.readelf
+	rm -rf *.out.tmp *.u *.go.s *.out *.out.objdump *.out.rel *.out.readelf *.out.s
 
 copy:V: $GOEXES
 	rsync -ai *.out daffodil:x/

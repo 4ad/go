@@ -34,6 +34,7 @@ alt/*.go.ext.tmp/
 new/*.u
 new/*.go.s
 new/*.out
+new/*.out.s
 new/*.objdump
 new/*.rel
 new/*.readelf
