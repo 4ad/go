@@ -591,54 +591,6 @@ TEXT runtime·memequal_varlen(SB),NOSPLIT,$40-17
 	UNDEF
 	RET
 
-TEXT runtime·cmpstring(SB),NOSPLIT|NOFRAME,$0-40
-	// TODO(aram):
-	MOVD	$33, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
-	RET
-
-TEXT bytes·Compare(SB),NOSPLIT|NOFRAME,$0-56
-	// TODO(aram):
-	MOVD	$34, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
-	RET
-
-// On entry:
-// R0 is the length of s1
-// R1 is the length of s2
-// R2 points to the start of s1
-// R3 points to the start of s2
-// R7 points to return value (-1/0/1 will be written here)
-//
-// On exit:
-// R4, R5, and R6 are clobbered
-TEXT runtime·cmpbody<>(SB),NOSPLIT|NOFRAME,$0-0
-	// TODO(aram):
-	MOVD	$35, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
-	RET
-
 // eqstring tests whether two strings are equal.
 // The compiler guarantees that strings passed
 // to eqstring have equal length.
