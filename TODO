@@ -75,9 +75,9 @@ Check resvd.
 
 [-frame, 0)(SP), automatics
 
-// automatic N at -(8+8N)(RFP)
-// incoming argument N at (176+8N)(RFP)
-// outgoing argument N at (176+8N)(RSP)
+// automatic N at -(8+8N)(BFP)
+// incoming argument N at (176+8N)(BFP)
+// outgoing argument N at (176+8N)(BSP)
 
 ==
 !sparc64.BIG
