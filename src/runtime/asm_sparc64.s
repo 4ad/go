@@ -310,7 +310,7 @@ TEXT NAME(SB), WRAPPER, $MAXSIZE-24;		\
 	MOVD	arg+16(FP), R3;			\
 	MOVUW	argsize+24(FP), R4;			\
 	MOVD	BSP, R5;				\
-	ADD	$(8-1), R5;			\
+	ADD	$(FIXED_FRAME-1), R5;			\
 	SUB	$1, R3;				\
 	ADD	R5, R4;				\
 	CMP	R5, R4;				\
@@ -333,7 +333,7 @@ TEXT NAME(SB), WRAPPER, $MAXSIZE-24;		\
 	ADD	R6, R5; 			\
 	ADD	R6, R3;				\
 	SUB	R6, R4;				\
-	ADD	$(8-1), R5;			\
+	ADD	$(FIXED_FRAME-1), R5;			\
 	SUB	$1, R3;				\
 	ADD	R5, R4;				\
 loop:						\
@@ -350,10 +350,10 @@ end:						\
 	MOVD	arg+16(FP), R3;			\
 	MOVUW	n+24(FP), R4;			\
 	MOVUW	retoffset+28(FP), R6;		\
-	MOVD	R8, (176+0)(BSP);			\
-	MOVD	R3, (176+8)(BSP);			\
-	MOVD	R4, (176+16)(BSP);			\
-	MOVD	R6, (176+24)(BSP);			\
+	MOVD	R8, (FIXED_FRAME+0)(BSP);			\
+	MOVD	R3, (FIXED_FRAME+8)(BSP);			\
+	MOVD	R4, (FIXED_FRAME+16)(BSP);			\
+	MOVD	R6, (FIXED_FRAME+24)(BSP);			\
 	CALL	runtime·callwritebarrier(SB);	\
 	RET
 
@@ -413,7 +413,7 @@ TEXT runtime·jmpdefer(SB), NOSPLIT, $-8-16
 	MOVD	fv+0(FP), CTXT
 	MOVD	argp+8(FP), TMP
 	MOVD	TMP, BSP
-	SUB	$8, BSP
+	SUB	$FIXED_FRAME, BSP
 	MOVD	0(CTXT), R3
 	JMPL	R3, ZR
 
@@ -449,11 +449,11 @@ TEXT ·asmcgocall(SB),NOSPLIT,$0-20
 // cgocallback_gofunc.
 TEXT runtime·cgocallback(SB),NOSPLIT,$24-24
 	MOVD	$fn+0(FP), R1
-	MOVD	R1, (8)(BSP)
+	MOVD	R1, (FIXED_FRAME+0)(BSP)
 	MOVD	frame+8(FP), R1
-	MOVD	R1, (16)(BSP)
+	MOVD	R1, (FIXED_FRAME+8)(BSP)
 	MOVD	framesize+16(FP), R1
-	MOVD	R1, (24)(BSP)
+	MOVD	R1, (FIXED_FRAME+16)(BSP)
 	MOVD	$runtime·cgocallback_gofunc(SB), R1
 	CALL	R1
 	RET
