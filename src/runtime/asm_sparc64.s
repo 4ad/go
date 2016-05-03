@@ -690,16 +690,35 @@ notfound:
 
 // TODO: share code with memequal?
 TEXT bytes·Equal(SB),NOSPLIT,$0-49
-	// TODO(aram):
-	MOVD	$39, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
+	MOVD	a_len+8(FP), R3
+	MOVD	b_len+32(FP), R4
+
+	CMP	R3, R4		// unequal lengths are not equal
+	BNED	noteq
+
+	MOVD	a+0(FP), R5
+	MOVD	b+24(FP), R6
+	SUB	$1, R5
+	SUB	$1, R6
+	ADD	R5, R3		// end-1
+
+loop:
+	CMP	R5, R3
+	BED	equal		// reached the end
+	MOVUB	1(R5), R4
+	ADD	$1, R5
+	MOVUB	1(R6), R8
+	ADD	$1, R6
+	CMP	R4, R8
+	BEW	loop
+
+noteq:
+	MOVB	ZR, ret+48(FP)
+	RET
+
+equal:
+	MOVD	$1, R3
+	MOVB	R3, ret+48(FP)
 	RET
 
 TEXT runtime·fastrand1(SB),NOSPLIT,$-8-4
