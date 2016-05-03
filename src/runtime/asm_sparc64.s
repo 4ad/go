@@ -597,16 +597,25 @@ TEXT runtime·memequal_varlen(SB),NOSPLIT,$40-17
 // See runtime_test.go:eqstring_generic for
 // equivalent Go code.
 TEXT runtime·eqstring(SB),NOSPLIT,$0-33
-	// TODO(aram):
-	MOVD	$36, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
+	MOVD	s1str+0(FP), R1
+	MOVD	s1len+8(FP), R2
+	MOVD	s2str+16(FP), R3
+	ADD	R1, R2		// end
+loop:
+	CMP	R1, R2
+	BED	equal		// reaches the end
+	MOVUB	1(R1), R4
+	ADD	$1, R1
+	MOVUB	1(R3), R5
+	ADD	$1, R3
+	CMP	R4, R5
+	BED	loop
+notequal:
+	MOVB	ZR, ret+32(FP)
+	RET
+equal:
+	MOVD	$1, R1
+	MOVB	R1, ret+32(FP)
 	RET
 
 //
