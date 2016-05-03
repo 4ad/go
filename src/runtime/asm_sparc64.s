@@ -639,16 +639,28 @@ equal:
 // functions for other packages
 //
 TEXT bytes·IndexByte(SB),NOSPLIT,$0-40
-	// TODO(aram):
-	MOVD	$37, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
+	MOVD	s+0(FP), R3
+	MOVD	s_len+8(FP), R4
+	MOVUB	c+24(FP), R5	// byte to find
+	MOVD	R3, R6		// store base for later
+	SUB	$1, R3
+	ADD	R3, R4		// end-1
+
+loop:
+	CMP	R3, R4
+	BED	notfound
+	MOVUB	1(R3), R8
+	ADD	$1, R3
+	CMP	R5, R8
+	BNEW	loop
+
+	SUB	R6, R3		// remove base
+	MOVD	R3, ret+32(FP)
+	RET
+
+notfound:
+	MOVD	$-1, R3
+	MOVD	R3, ret+32(FP)
 	RET
 
 TEXT strings·IndexByte(SB),NOSPLIT,$0-32
