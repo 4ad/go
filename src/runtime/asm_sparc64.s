@@ -11,17 +11,86 @@ DATA dbgbuf(SB)/8, $"\n\n"
 GLOBL dbgbuf(SB), $8
 
 TEXT runtime·rt0_go(SB),NOSPLIT,$0
-	// TODO(aram):
-	MOVD	$1, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
+	// BSP = stack; R9 = argc; R8 = argv
+
+	// initialize essential registers
+	CALL	runtime·reginit(SB)
+
+	SUB	$(FIXED_FRAME+16), BSP
+	MOVD	$(FIXED_FRAME+0)(BSP), RT1
+	MOVW	R9, (RT1) // argc
+	MOVD	R8, FIXED_FRAME+8(BSP) // argv
+
+	// create istack out of the given (operating system) stack.
+	// _cgo_init may update stackguard.
+	MOVD	$runtime·g0(SB), g
+	MOVD BSP, RT1
+	MOVD	$(-64*1024)(RT1), RT2
+	MOVD	RT2, g_stackguard0(g)
+	MOVD	RT2, g_stackguard1(g)
+	MOVD	RT2, (g_stack+stack_lo)(g)
+	MOVD	RT1, (g_stack+stack_hi)(g)
+
+	// if there is a _cgo_init, call it using the gcc ABI.
+	MOVD	_cgo_init(SB), R12
+	CMP	ZR, R12
+	BED	nocgo
+
+	MOVD	TLS, O3			// arg 3: TLS base pointer
+	MOVD	$runtime·tls_g(SB), O2 	// arg 2: &tls_g
+	MOVD	$setg_gcc<>(SB), O1	// arg 1: setg
+	MOVD	g, O0			// arg 0: G
+	// C functions expect FIXED_FRAME bytes of space on caller stack frame.
+	MOVD	BSP, L1
+	SUB	$FIXED_FRAME, BSP
+	CALL	(R12)
+	MOVD	L1, BSP
+	
+	MOVD	_cgo_init(SB), R12
+	CMP	ZR, R12
+	BED	nocgo
+
+nocgo:
+	// update stackguard after _cgo_init
+	MOVD	(g_stack+stack_lo)(g), R3
+	ADD	$const__StackGuard, R3
+	MOVD	R3, g_stackguard0(g)
+	MOVD	R3, g_stackguard1(g)
+
+	// set the per-goroutine and per-mach "registers"
+	MOVD	$runtime·m0(SB), R3
+
+	// save m->g0 = g0
+	MOVD	g, m_g0(R3)
+	// save m0 to g0->m
+	MOVD	R3, g_m(g)
+
+	CALL	runtime·check(SB)
+
+	MOVD	BSP, RT1
+	MOVW	8(RT1), R3	// copy argc
+	MOVW	R3, -8(RT1)
+	MOVD	16(RT1), R3		// copy argv
+	MOVD	R3, 0(RT1)
+	CALL	runtime·args(SB)
+	CALL	runtime·osinit(SB)
+	CALL	runtime·schedinit(SB)
+
+	// create a new goroutine to start program
+	MOVD	$runtime·mainPC(SB), RT1		// entry
+	SUB	$(32+FIXED_FRAME), BSP
+	MOVD	RT1, FIXED_FRAME+0(BSP)
+	MOVD	ZR, FIXED_FRAME+8(BSP)
+	MOVD	ZR, FIXED_FRAME+16(BSP)
+	MOVD	ZR, FIXED_FRAME+24(BSP)
+	CALL	runtime·newproc(SB)
+	ADD	$(32+FIXED_FRAME), BSP
+
+	// start this M
+	CALL	runtime·mstart(SB)
+
+	MOVD	ZR, (ZR)	// boom
 	UNDEF
-	RET
 
 DATA	runtime·mainPC+0(SB)/8,$runtime·main(SB)
 GLOBL	runtime·mainPC(SB),RODATA,$8

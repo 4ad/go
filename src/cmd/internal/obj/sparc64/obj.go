@@ -181,12 +181,15 @@ func biasfix(p *obj.Prog) {
 	switch p.As {
 	case AMOVD:
 		switch aclass(&p.From) {
-		case ClassReg:
+		case ClassReg, ClassZero:
 			switch {
 			// MOVD	R, BSP	-> ADD	-$STACK_BIAS, R, RSP
 			case aclass(&p.To) == ClassReg|ClassBias:
 				p.As = AADD
 				p.Reg = p.From.Reg
+				if p.From.Type == obj.TYPE_CONST {
+					p.Reg = REG_ZR
+				}
 				p.From.Reg = 0
 				p.From.Offset = -StackBias
 				p.From.Type = obj.TYPE_CONST
