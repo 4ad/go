@@ -100,9 +100,9 @@ ok:
 	MOVD	0(CTXT), R4			// code pointer
 	MOVD	(g_sched+gobuf_sp)(g), TMP
 	MOVD	TMP, BSP	// sp = m->g0->sched.sp
-	MOVD	R3, -8(BSP)
-	MOVD	$0, -16(BSP)
 	SUB	$16, BSP
+	MOVD	R3, (176+0)(BSP)
+	MOVD	$0, (176+8)(BSP)
 	CALL	(R4)
 	JMP	runtime·badmcall2(SB)
 
@@ -350,10 +350,10 @@ end:						\
 	MOVD	arg+16(FP), R3;			\
 	MOVUW	n+24(FP), R4;			\
 	MOVUW	retoffset+28(FP), R6;		\
-	MOVD	R8, 8(BSP);			\
-	MOVD	R3, 16(BSP);			\
-	MOVD	R4, 24(BSP);			\
-	MOVD	R6, 32(BSP);			\
+	MOVD	R8, (176+0)(BSP);			\
+	MOVD	R3, (176+8)(BSP);			\
+	MOVD	R4, (176+16)(BSP);			\
+	MOVD	R6, (176+24)(BSP);			\
 	CALL	runtime·callwritebarrier(SB);	\
 	RET
 
@@ -406,7 +406,7 @@ TEXT runtime·procyield(SB),NOSPLIT,$0-0
 // 2. sub 4 bytes to get back to BL deferreturn
 // 3. BR to fn
 TEXT runtime·jmpdefer(SB), NOSPLIT, $-8-16
-	MOVD	0(BSP), R1
+	MOVD	(8*15)(BSP), R1
 	SUB	$4, R1
 	MOVD	R1, LR
 
