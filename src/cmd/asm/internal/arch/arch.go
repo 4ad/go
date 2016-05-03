@@ -440,6 +440,11 @@ func archSparc64() *Arch {
 	for i := sparc64.REG_D0; i <= sparc64.REG_D62; i++ {
 		register[sparc64.Rconv(i)] = int16(i)
 	}
+	register["BSP"] = sparc64.REG_BSP
+	register["BFP"] = sparc64.REG_BFP
+	// Avoid accidental confusion between RSP and BSP, always use BSP.
+	delete(register, "RSP")
+	delete(register, "RFP")
 	register["ICC"] = sparc64.REG_ICC
 	register["XCC"] = sparc64.REG_XCC
 	register["FCC0"] = sparc64.REG_FCC0
@@ -454,7 +459,6 @@ func archSparc64() *Arch {
 	register["FP"] = RFP
 	register["PC"] = RPC
 	register["SP"] = RSP
-	// TODO: g register.
 	registerPrefix := map[string]bool{
 		"D": true,
 		"F": true,

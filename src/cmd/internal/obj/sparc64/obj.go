@@ -171,6 +171,66 @@ func yfix(p *obj.Prog) {
 	}
 }
 
+// biasfix rewrites referencing to BSP and BFP to RSP and RFP and
+// adding the stack bias.
+func biasfix(p *obj.Prog) {
+	// Only match 2-operand instructions.
+	if p.From3 != nil || p.Reg != 0 {
+		return
+	}
+	switch p.As {
+	case AMOVD:
+		switch aclass(&p.From) {
+		case ClassReg:
+			switch {
+			// MOVD	R, BSP	-> ADD	-$STACK_BIAS, R, RSP
+			case aclass(&p.To) == ClassReg|ClassBias:
+				p.As = AADD
+				p.Reg = p.From.Reg
+				p.From.Reg = 0
+				p.From.Offset = -StackBias
+				p.From.Type = obj.TYPE_CONST
+				p.From.Class = aclass(&p.From)
+				p.To.Reg -= 256 // must match a.out.go:/REG_BSP
+				p.To.Class = aclass(&p.To)
+
+			// MOVD	R, off(BSP)	-> MOVD	R, (off+STACK_BIAS)(RSP)
+			case aclass(&p.To)&ClassBias != 0 && isAddrCompatible(&p.To, ClassIndir):
+				p.To.Offset += StackBias
+				p.To.Reg -= 256 // must match a.out.go:/REG_BSP
+				p.To.Class = aclass(&p.To)
+			}
+
+		case ClassReg | ClassBias:
+			// MOVD	BSP, R	-> ADD	$STACK_BIAS, RSP, R
+			if aclass(&p.To) == ClassReg {
+				p.Reg = p.From.Reg - 256 // must match a.out.go:/REG_BSP
+				p.As = AADD
+				p.From.Reg = 0
+				p.From.Offset = StackBias
+				p.From.Type = obj.TYPE_CONST
+				p.From.Class = aclass(&p.From)
+			}
+
+		// MOVD	$off(BSP), R	-> MOVD	$(off+STACK_BIAS)(RSP), R
+		//
+		// MOVD	off(BSP), R	-> MOVD	(off+STACK_BIAS)(RSP), R
+		case ClassRegConst13 | ClassBias, ClassRegConst | ClassBias,
+			ClassIndir0 | ClassBias, ClassIndir13 | ClassBias, ClassIndir | ClassBias:
+			p.From.Reg -= 256 // must match a.out.go:/REG_BSP
+			p.From.Offset += StackBias
+			p.From.Class = aclass(&p.From)
+		}
+
+	case AADD, ASUB:
+		// ADD	$const, BSP	-> ADD	$const, RSP
+		if isAddrCompatible(&p.From, ClassConst) && aclass(&p.To) == ClassReg|ClassBias {
+			p.To.Reg -= 256 // must match a.out.go:/REG_BSP
+			p.To.Class = aclass(&p.To)
+		}
+	}
+}
+
 func progedit(ctxt *obj.Link, p *obj.Prog) {
 	// Rewrite constant moves to memory to go through an intermediary
 	// register
@@ -264,6 +324,8 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 	// TODO(aram): remove this when compiler can use F and
 	// D registers directly.
 	yfix(p)
+
+	biasfix(p)
 }
 
 // TODO(aram):

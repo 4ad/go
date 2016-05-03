@@ -223,6 +223,20 @@ var cc = map[int8][]int8{
 	ClassIndir:    {ClassIndir13, ClassIndir0},
 }
 
+func isAddrCompatible(a *obj.Addr, class int8) bool {
+	cls := aclass(a)
+	cls &= ^ClassBias
+	if cls == class {
+		return true
+	}
+	for _, v := range cc[class] {
+		if cls == v {
+			return true
+		}
+	}
+	return false
+}
+
 var isInstDouble = map[int16]bool{
 	AFADDD:  true,
 	AFSUBD:  true,
@@ -912,6 +926,8 @@ func rclass(r int16) int8 {
 		return ClassCond
 	case REG_FCC0 <= r && r <= REG_FCC3:
 		return ClassFCond
+	case r == REG_BSP || r == REG_BFP:
+		return ClassReg | ClassBias
 	case r >= REG_SPECIAL:
 		return ClassSpcReg
 	}
@@ -944,7 +960,7 @@ func aclass(a *obj.Addr) int8 {
 			if a.Scale == 1 {
 				return ClassIndirRegReg
 			}
-			return oregclass(a.Offset)
+			return oregclass(a.Offset) | rclass(a.Reg)&ClassBias
 		}
 
 	case obj.TYPE_FCONST:
@@ -963,7 +979,7 @@ func aclass(a *obj.Addr) int8 {
 				if a.Scale == 1 {
 					return ClassRegReg
 				}
-				return addrclass(a.Offset)
+				return addrclass(a.Offset) | rclass(a.Reg)&ClassBias
 			}
 			return constclass(a.Offset)
 

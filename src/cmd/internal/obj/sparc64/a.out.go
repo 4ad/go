@@ -153,6 +153,9 @@ const (
 	REG_TICK = REG_SPECIAL + 4
 	REG_RPC  = REG_SPECIAL + 5
 
+	REG_BSP = REG_RSP + 256
+	REG_BFP = REG_RFP + 256
+
 	REG_LAST = REG_R0 + 1024
 )
 
@@ -238,6 +241,8 @@ const (
 
 	ClassTextSize
 	ClassNone
+
+	ClassBias = 64 // BFP or BSP present in Addr, bitwise OR with classes above
 )
 
 var cnames = []string{
@@ -273,6 +278,7 @@ var cnames = []string{
 	ClassTLSMem:      "ClassTLSMem",
 	ClassTextSize:    "ClassTextSize",
 	ClassNone:        "ClassNone",
+	ClassBias:        "ClassBias",
 }
 
 //go:generate go run ../stringer.go -i $GOFILE -o anames.go -p sparc64

@@ -42,6 +42,10 @@ func Rconv(r int) string {
 		return "FTMP"
 	case r == REG_DTMP:
 		return "DTMP"
+	case r == REG_BSP:
+		return "BSP"
+	case r == REG_BFP:
+		return "BFP"
 	case r == REG_ICC:
 		return "ICC"
 	case r == REG_XCC:
@@ -70,9 +74,13 @@ func Rconv(r int) string {
 	return fmt.Sprintf("badreg(%d+%d)", REG_R0, r-REG_R0)
 }
 
-func DRconv(a int8) string {
+func DRconv(a int8) (cname string) {
+	if a&ClassBias != 0 {
+		cname = cnames[ClassBias] + "|"
+		a &= ^ClassBias
+	}
 	if a >= ClassUnknown && a <= ClassNone {
-		return cnames[a]
+		return cname + cnames[a]
 	}
 	return "C_??"
 }
