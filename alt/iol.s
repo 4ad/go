@@ -1,0 +1,8 @@
+TEXT	main(SB),7,$-8
+	MOVD	O(1), R1
+	MOVD	L(1), R1
+	MOVD	I(1), R1
+	MOVD	O1, R1
+	MOVD	L1, R1
+	MOVD	I1, R1
+	RET

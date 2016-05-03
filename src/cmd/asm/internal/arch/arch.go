@@ -434,6 +434,15 @@ func archSparc64() *Arch {
 	for i := sparc64.REG_R0; i <= sparc64.REG_R31; i++ {
 		register[sparc64.Rconv(i)] = int16(i)
 	}
+	for i := 0; i <= 5; i++ { // not 7
+		register[fmt.Sprintf("O%d", i)] = int16(sparc64.REG_R8 + i)
+	}
+	for i := 0; i <= 7; i++ {
+		register[fmt.Sprintf("L%d", i)] = int16(sparc64.REG_R16 + i)
+	}
+	for i := 0; i <= 5; i++ { // not 7
+		register[fmt.Sprintf("I%d", i)] = int16(sparc64.REG_R24 + i)
+	}
 	for i := sparc64.REG_F0; i <= sparc64.REG_F31; i++ {
 		register[sparc64.Rconv(i)] = int16(i)
 	}
@@ -463,6 +472,9 @@ func archSparc64() *Arch {
 		"D": true,
 		"F": true,
 		"R": true,
+		"O": true,
+		"I": true,
+		"L": true,
 	}
 
 	instructions := make(map[string]int)
