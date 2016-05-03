@@ -551,16 +551,17 @@ TEXT runtime·cputicks(SB),NOSPLIT,$0-0
 // redirects to memhash(p, h, size) using the size
 // stored in the closure.
 TEXT runtime·memhash_varlen(SB),NOSPLIT,$40-24
-	// TODO(aram):
-	MOVD	$30, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
+	GO_ARGS
+	NO_LOCAL_POINTERS
+	MOVD	p+0(FP), R3
+	MOVD	h+8(FP), R4
+	MOVD	8(CTXT), R5
+	MOVD	R3, FIXED_FRAME+0(R1)
+	MOVD	R4, FIXED_FRAME+8(R1)
+	MOVD	R5, FIXED_FRAME+16(R1)
+	CALL	runtime·memhash(SB)
+	MOVD	FIXED_FRAME+24(R1), R3
+	MOVD	R3, ret+16(FP)
 	RET
 
 // memequal(p, q unsafe.Pointer, size uintptr) bool
