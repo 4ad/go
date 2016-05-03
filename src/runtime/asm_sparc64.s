@@ -45,7 +45,7 @@ TEXT runtime·reginit(SB),NOSPLIT,$-8-0
 // save state in Gobuf; setjmp
 TEXT runtime·gosave(SB), NOSPLIT, $-8-8
 	MOVD	buf+0(FP), R3
-	MOVD	RSP, R1
+	MOVD	BSP, R1
 	MOVD	R1, gobuf_sp(R3)
 	MOVD	LR, gobuf_pc(R3)
 	MOVD	g, gobuf_g(R3)
@@ -63,7 +63,7 @@ TEXT runtime·gogo(SB), NOSPLIT, $-8-8
 
 	MOVD	0(g), R4	// make sure g is not nil
 	MOVD	gobuf_sp(R5), R1
-	MOVD	R1, RSP
+	MOVD	R1, BSP
 	MOVD	gobuf_lr(R5), LR
 	MOVD	gobuf_ret(R5), R1
 	MOVD	gobuf_ctxt(R5), CTXT
@@ -81,7 +81,8 @@ TEXT runtime·gogo(SB), NOSPLIT, $-8-8
 // to keep running g.
 TEXT runtime·mcall(SB), NOSPLIT, $-8-8
 	// Save caller state in g->sched
-	MOVD	RSP, (g_sched+gobuf_sp)(g)
+	MOVD	BSP, TMP
+	MOVD	TMP, (g_sched+gobuf_sp)(g)
 	MOVD	LR, (g_sched+gobuf_pc)(g)
 	MOVD	$0, (g_sched+gobuf_lr)(g)
 	MOVD	g, (g_sched+gobuf_g)(g)
@@ -98,10 +99,10 @@ ok:
 	MOVD	fn+0(FP), CTXT			// context
 	MOVD	0(CTXT), R4			// code pointer
 	MOVD	(g_sched+gobuf_sp)(g), TMP
-	MOVD	TMP, RSP	// sp = m->g0->sched.sp
-	MOVD	R3, -8(RSP)
-	MOVD	$0, -16(RSP)
-	SUB	$16, RSP
+	MOVD	TMP, BSP	// sp = m->g0->sched.sp
+	MOVD	R3, -8(BSP)
+	MOVD	$0, -16(BSP)
+	SUB	$16, BSP
 	CALL	(R4)
 	JMP	runtime·badmcall2(SB)
 
@@ -144,7 +145,8 @@ switch:
 	MOVD	$runtime·systemstack_switch(SB), R6
 	ADD	$8, R6	// get past prologue
 	MOVD	R6, (g_sched+gobuf_pc)(g)
-	MOVD	RSP, (g_sched+gobuf_sp)(g)
+	MOVD	BSP, TMP
+	MOVD	TMP, (g_sched+gobuf_sp)(g)
 	MOVD	$0, (g_sched+gobuf_lr)(g)
 	MOVD	g, (g_sched+gobuf_g)(g)
 
@@ -157,7 +159,7 @@ switch:
 	AND	$~15, R3
 	MOVD	$runtime·mstart(SB), R4
 	MOVD	R4, 0(R3)
-	MOVD	R3, RSP
+	MOVD	R3, BSP
 
 	// call target function
 	MOVD	0(CTXT), R3	// code pointer
@@ -167,7 +169,8 @@ switch:
 	MOVD	g_m(g), R3
 	MOVD	m_curg(R3), g
 	CALL	runtime·save_g(SB)
-	MOVD	(g_sched+gobuf_sp)(g), RSP
+	MOVD	(g_sched+gobuf_sp)(g), TMP
+	MOVD	TMP, BSP
 	MOVD	$0, (g_sched+gobuf_sp)(g)
 	RET
 
@@ -206,20 +209,23 @@ TEXT runtime·morestack(SB),NOSPLIT,$-8-0
 	// Called from f.
 	// Set g->sched to context in f
 	MOVD	CTXT, (g_sched+gobuf_ctxt)(g)
-	MOVD	RSP, (g_sched+gobuf_sp)(g)
+	MOVD	BSP, TMP
+	MOVD	TMP, (g_sched+gobuf_sp)(g)
 	MOVD	LR, (g_sched+gobuf_pc)(g)
 	MOVD	R3, (g_sched+gobuf_lr)(g)
 
 	// Called from f.
 	// Set m->morebuf to f's callers.
 	MOVD	R3, (m_morebuf+gobuf_pc)(R8)	// f's caller's PC
-	MOVD	RSP, (m_morebuf+gobuf_sp)(R8)	// f's caller's RSP
+	MOVD	BSP, TMP
+	MOVD	TMP, (m_morebuf+gobuf_sp)(R8)	// f's caller's BSP
 	MOVD	g, (m_morebuf+gobuf_g)(R8)
 
 	// Call newstack on m->g0's stack.
 	MOVD	m_g0(R8), g
 	CALL	runtime·save_g(SB)
-	MOVD	(g_sched+gobuf_sp)(g), RSP
+	MOVD	(g_sched+gobuf_sp)(g), TMP
+	MOVD	TMP, BSP
 	CALL	runtime·newstack(SB)
 
 	// Not reached, but make sure the return PC from the call to newstack
@@ -303,7 +309,7 @@ TEXT NAME(SB), WRAPPER, $MAXSIZE-24;		\
 	/* copy arguments to stack */		\
 	MOVD	arg+16(FP), R3;			\
 	MOVUW	argsize+24(FP), R4;			\
-	MOVD	RSP, R5;				\
+	MOVD	BSP, R5;				\
 	ADD	$(8-1), R5;			\
 	SUB	$1, R3;				\
 	ADD	R5, R4;				\
@@ -323,7 +329,7 @@ TEXT NAME(SB), WRAPPER, $MAXSIZE-24;		\
 	MOVD	arg+16(FP), R3;			\
 	MOVUW	n+24(FP), R4;			\
 	MOVUW	retoffset+28(FP), R6;		\
-	MOVD	RSP, R5;				\
+	MOVD	BSP, R5;				\
 	ADD	R6, R5; 			\
 	ADD	R6, R3;				\
 	SUB	R6, R4;				\
@@ -344,10 +350,10 @@ end:						\
 	MOVD	arg+16(FP), R3;			\
 	MOVUW	n+24(FP), R4;			\
 	MOVUW	retoffset+28(FP), R6;		\
-	MOVD	R8, 8(RSP);			\
-	MOVD	R3, 16(RSP);			\
-	MOVD	R4, 24(RSP);			\
-	MOVD	R6, 32(RSP);			\
+	MOVD	R8, 8(BSP);			\
+	MOVD	R3, 16(BSP);			\
+	MOVD	R4, 24(BSP);			\
+	MOVD	R6, 32(BSP);			\
 	CALL	runtime·callwritebarrier(SB);	\
 	RET
 
@@ -400,20 +406,22 @@ TEXT runtime·procyield(SB),NOSPLIT,$0-0
 // 2. sub 4 bytes to get back to BL deferreturn
 // 3. BR to fn
 TEXT runtime·jmpdefer(SB), NOSPLIT, $-8-16
-	MOVD	0(RSP), R1
+	MOVD	0(BSP), R1
 	SUB	$4, R1
 	MOVD	R1, LR
 
 	MOVD	fv+0(FP), CTXT
-	MOVD	argp+8(FP), RSP
-	SUB	$8, RSP
+	MOVD	argp+8(FP), TMP
+	MOVD	TMP, BSP
+	SUB	$8, BSP
 	MOVD	0(CTXT), R3
 	JMPL	R3, ZR
 
 // Save state of caller into g->sched.
 TEXT gosave<>(SB),NOSPLIT,$-8
 	MOVD	LR, (g_sched+gobuf_pc)(g)
-	MOVD	RSP, (g_sched+gobuf_sp)(g)
+	MOVD	BSP, TMP
+	MOVD	TMP, (g_sched+gobuf_sp)(g)
 	MOVD	$0, (g_sched+gobuf_lr)(g)
 	MOVD	$0, (g_sched+gobuf_ret)(g)
 	MOVD	$0, (g_sched+gobuf_ctxt)(g)
@@ -441,11 +449,11 @@ TEXT ·asmcgocall(SB),NOSPLIT,$0-20
 // cgocallback_gofunc.
 TEXT runtime·cgocallback(SB),NOSPLIT,$24-24
 	MOVD	$fn+0(FP), R1
-	MOVD	R1, (8+STACK_BIAS)(RSP)
+	MOVD	R1, (8)(BSP)
 	MOVD	frame+8(FP), R1
-	MOVD	R1, (16+STACK_BIAS)(RSP)
+	MOVD	R1, (16)(BSP)
 	MOVD	framesize+16(FP), R1
-	MOVD	R1, (24+STACK_BIAS)(RSP)
+	MOVD	R1, (24)(BSP)
 	MOVD	$runtime·cgocallback_gofunc(SB), R1
 	CALL	R1
 	RET
