@@ -19,11 +19,7 @@
 //
 // So a function that sets up a stack frame at all uses as least FIXED_FRAME
 // bytes of stack. This mostly affects assembly that calls other functions
-// with arguments (the arguments should be stored at FIXED_FRAME+0(R1),
-// FIXED_FRAME+8(R1) etc) and some other low-level places.
-//
-// The reason for using a constant is to make supporting PIC easier (although
-// we only support PIC on ppc64le which has a minimum 32 bytes of stack frame,
-// and currently always use that much, PIC on ppc64 would need to use 48).
+// with arguments (the arguments should be stored at FIXED_FRAME+0(BSP),
+// FIXED_FRAME+8(BSP) etc) and some other low-level places.
 
 #define FIXED_FRAME 176
