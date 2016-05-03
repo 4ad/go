@@ -5,14 +5,30 @@
 #include "textflag.h"
 
 TEXT runtime·memclr(SB),NOSPLIT|NOFRAME,$0-16
-	// TODO(aram):
-	MOVD	$60, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
+	MOVD	ptr+0(FP), R3
+	MOVD	n+8(FP), R4
+	AND $7, R4, R6
+
+	CMP	ZR, R5
+	BED	nowords
+
+	ADD	R3, R5, R5
+
+wordloop: // TODO: Optimize for unaligned ptr.
+	MOVD	ZR, (R3)
+	ADD	$8, R3
+	CMP	R3, R5
+	BNED	wordloop
+nowords:
+        CMP	$0, R6
+        BED	done
+
+	ADD	R3, R6, R6
+
+byteloop:
+	MOVUB	ZR, 1(R3)
+	ADD	$1, R3
+	CMP	R3, R6
+	BNED	byteloop
+done:
 	RET
