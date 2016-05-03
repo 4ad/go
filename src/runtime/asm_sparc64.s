@@ -506,29 +506,29 @@ TEXT setg_gcc<>(SB),NOSPLIT,$8
 	RET
 
 TEXT runtime·getcallerpc(SB),NOSPLIT,$8-16
-	// TODO(aram):
-	MOVD	$26, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
+	MOVD	FIXED_FRAME+8*15(BFP), R3		// LR saved by caller
+	MOVD	runtime·stackBarrierPC(SB), R4
+	CMP	R4, R3
+	BNED	nobar
+	// Get original return PC.
+	CALL	runtime·nextBarrierPC(SB)
+	MOVD	FIXED_FRAME+0(R1), R3
+nobar:
+	MOVD	R3, ret+8(FP)
 	RET
 
 TEXT runtime·setcallerpc(SB),NOSPLIT,$8-16
-	// TODO(aram):
-	MOVD	$27, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
+	MOVD	pc+8(FP), R3
+	MOVD	FIXED_FRAME+8(BSP), R4
+	MOVD	runtime·stackBarrierPC(SB), R5
+	CMP	R4, R5
+	BED	setbar
+	MOVD	R3, FIXED_FRAME+8*15(BFP)		// set LR in caller
+	RET
+setbar:
+	// Set the stack barrier return PC.
+	MOVD	R3, FIXED_FRAME+0(R1)
+	CALL	runtime·setNextBarrierPC(SB)
 	RET
 
 TEXT runtime·getcallersp(SB),NOSPLIT,$0-16
