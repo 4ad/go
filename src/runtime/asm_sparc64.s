@@ -565,30 +565,46 @@ TEXT runtime·memhash_varlen(SB),NOSPLIT,$40-24
 
 // memequal(p, q unsafe.Pointer, size uintptr) bool
 TEXT runtime·memequal(SB),NOSPLIT,$-8-25
-	// TODO(aram):
-	MOVD	$31, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
+	MOVD	a+0(FP), R1
+	MOVD	b+8(FP), R2
+	MOVD	size+16(FP), R3
+	ADD	R1, R3, R6
+	MOVD	$1, TMP
+	MOVB	TMP, ret+24(FP)
+	CMP	R1, R2
+	BED	done
+loop:
+	CMP	R1, R6
+	BED	done
+	MOVUB	1(R1), R4
+	ADD	$1, R1
+	MOVUB	1(R2), R5
+	ADD $1, R2
+	CMP	R4, R5
+	BED	loop
+
+	MOVB	ZR, ret+24(FP)
+done:
 	RET
 
 // memequal_varlen(a, b unsafe.Pointer) bool
 TEXT runtime·memequal_varlen(SB),NOSPLIT,$40-17
-	// TODO(aram):
-	MOVD	$32, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
+	MOVD	a+0(FP), R3
+	MOVD	b+8(FP), R4
+	CMP	R3, R4
+	BED	eq
+	MOVD	8(CTXT), R5    // compiler stores size at offset 8 in the closure
+	MOVD	R3, FIXED_FRAME+0(R1)
+	MOVD	R4, FIXED_FRAME+8(R1)
+	MOVD	R5, FIXED_FRAME+16(R1)
+	CALL	runtime·memequal(SB)
+	MOVD	$FIXED_FRAME+24(BSP), R3
+	MOVUB	(R3), R3
+	MOVB	R3, ret+16(FP)
+	RET
+eq:
+	MOVD	$1, R3
+	MOVB	R3, ret+16(FP)
 	RET
 
 // eqstring tests whether two strings are equal.
