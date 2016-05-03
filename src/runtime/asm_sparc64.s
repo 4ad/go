@@ -533,7 +533,7 @@ TEXT runtime·setcallerpc(SB),NOSPLIT,$8-16
 
 TEXT runtime·getcallersp(SB),NOSPLIT,$0-16
 	MOVD	argp+0(FP), R1
-	SUB	$8, R1
+	SUB	$FIXED_FRAME, R1
 	MOVD	R1, ret+8(FP)
 	RET
 
@@ -741,16 +741,9 @@ TEXT runtime·sigreturn(SB),NOSPLIT,$0-8
 
 // This is called from .init_array and follows the platform, not Go, ABI.
 TEXT runtime·addmoduledata(SB),NOSPLIT,$0-0
-	// TODO(aram):
-	MOVD	$43, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
+	MOVD	runtime·lastmoduledatap(SB), R1
+	MOVD	R8, moduledata_next(R1)
+	MOVD	R8, runtime·lastmoduledatap(SB)
 	RET
 
 TEXT ·checkASM(SB),NOSPLIT,$0-1
