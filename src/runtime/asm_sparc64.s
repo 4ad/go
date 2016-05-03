@@ -315,9 +315,9 @@ TEXT NAME(SB), WRAPPER, $MAXSIZE-24;		\
 	ADD	R5, R4;				\
 	CMP	R5, R4;				\
 	BED	6(PC);				\
-	MOVUB	1(R3), R6;			\
+	MOVUB	(R3), R6;			\
 	ADD	$1, R3;				\
-	MOVUB	R6, 1(R5);			\
+	MOVUB	R6, (R5);			\
 	ADD	$1, R5;				\
 	JMP	-6(PC);				\
 	/* call function */			\
@@ -339,9 +339,9 @@ TEXT NAME(SB), WRAPPER, $MAXSIZE-24;		\
 loop:						\
 	CMP	R5, R4;				\
 	BED	end;				\
-	MOVUB	1(R5), R6;			\
+	MOVUB	(R5), R6;			\
 	ADD	$1, R5;				\
-	MOVUB	R6, 1(R3);			\
+	MOVUB	R6, (R3);			\
 	ADD	$1, R3;			\
 	JMP	loop;				\
 end:						\
@@ -577,9 +577,9 @@ TEXT runtime·memequal(SB),NOSPLIT,$-8-25
 loop:
 	CMP	R1, R6
 	BED	done
-	MOVUB	1(R1), R4
+	MOVUB	(R1), R4
 	ADD	$1, R1
-	MOVUB	1(R2), R5
+	MOVUB	(R2), R5
 	ADD $1, R2
 	CMP	R4, R5
 	BED	loop
@@ -621,9 +621,9 @@ TEXT runtime·eqstring(SB),NOSPLIT,$0-33
 loop:
 	CMP	R1, R2
 	BED	equal		// reaches the end
-	MOVUB	1(R1), R4
+	MOVUB	(R1), R4
 	ADD	$1, R1
-	MOVUB	1(R3), R5
+	MOVUB	(R3), R5
 	ADD	$1, R3
 	CMP	R4, R5
 	BED	loop
@@ -649,7 +649,7 @@ TEXT bytes·IndexByte(SB),NOSPLIT,$0-40
 loop:
 	CMP	R3, R4
 	BED	notfound
-	MOVUB	1(R3), R8
+	MOVUB	(R3), R8
 	ADD	$1, R3
 	CMP	R5, R8
 	BNEW	loop
@@ -674,7 +674,7 @@ TEXT strings·IndexByte(SB),NOSPLIT,$0-32
 loop:
 	CMP	R3, R4
 	BED	notfound
-	MOVUB	1(R3), R8
+	MOVUB	(R3), R8
 	ADD	$1, R3
 	CMP	R5, R8
 	BNEW	loop
@@ -705,9 +705,9 @@ TEXT bytes·Equal(SB),NOSPLIT,$0-49
 loop:
 	CMP	R5, R3
 	BED	equal		// reached the end
-	MOVUB	1(R5), R4
+	MOVUB	(R5), R4
 	ADD	$1, R5
-	MOVUB	1(R6), R8
+	MOVUB	(R6), R8
 	ADD	$1, R6
 	CMP	R4, R8
 	BEW	loop

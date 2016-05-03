@@ -26,7 +26,7 @@ nowords:
 	ADD	R3, R6, R6
 
 byteloop:
-	MOVUB	ZR, 1(R3)
+	MOVUB	ZR, (R3)
 	ADD	$1, R3
 	CMP	R3, R6
 	BNED	byteloop
