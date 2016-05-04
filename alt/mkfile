@@ -37,6 +37,7 @@ GOEXTEXES=${GOEXES:%.go.out=%.go.ext}\
 	bpc.go.ext\
 	bias.go.ext\
 	iol.go.ext\
+	call1.go.ext\
 
 GOEXTHOSTOBJS=${GOEXTEXES:%.go.ext=%.go.ext.tmp/go.o}
 
