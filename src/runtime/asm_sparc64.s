@@ -95,14 +95,14 @@ nocgo:
 DATA	runtime·mainPC+0(SB)/8,$runtime·main(SB)
 GLOBL	runtime·mainPC(SB),RODATA,$8
 
-TEXT runtime·breakpoint(SB),NOSPLIT,$-8-0
+TEXT runtime·breakpoint(SB),NOSPLIT|NOFRAME,$0-0
 	TA	$0x81
 	RET
 
-TEXT runtime·asminit(SB),NOSPLIT,$-8-0
+TEXT runtime·asminit(SB),NOSPLIT|NOFRAME,$0-0
 	RET
 
-TEXT runtime·reginit(SB),NOSPLIT,$-8-0
+TEXT runtime·reginit(SB),NOSPLIT|NOFRAME,$0-0
 	// TODO(aram): do we need to initialize FP registers?
 	RET
 
@@ -112,7 +112,7 @@ TEXT runtime·reginit(SB),NOSPLIT,$-8-0
 
 // void gosave(Gobuf*)
 // save state in Gobuf; setjmp
-TEXT runtime·gosave(SB), NOSPLIT, $-8-8
+TEXT runtime·gosave(SB), NOSPLIT|NOFRAME, $0-8
 	MOVD	buf+0(FP), R3
 	MOVD	BSP, R1
 	MOVD	R1, gobuf_sp(R3)
@@ -125,7 +125,7 @@ TEXT runtime·gosave(SB), NOSPLIT, $-8-8
 
 // void gogo(Gobuf*)
 // restore state from Gobuf; longjmp
-TEXT runtime·gogo(SB), NOSPLIT, $-8-8
+TEXT runtime·gogo(SB), NOSPLIT|NOFRAME, $0-8
 	MOVD	buf+0(FP), R5
 	MOVD	gobuf_g(R5), g
 	CALL	runtime·save_g(SB)
@@ -148,7 +148,7 @@ TEXT runtime·gogo(SB), NOSPLIT, $-8-8
 // Switch to m->g0's stack, call fn(g).
 // Fn must never return. It should gogo(&g->sched)
 // to keep running g.
-TEXT runtime·mcall(SB), NOSPLIT, $-8-8
+TEXT runtime·mcall(SB), NOSPLIT|NOFRAME, $0-8
 	// Save caller state in g->sched
 	MOVD	BSP, TMP
 	MOVD	TMP, (g_sched+gobuf_sp)(g)
@@ -261,7 +261,7 @@ noswitch:
 // the top of a stack (for example, morestack calling newstack
 // calling the scheduler calling newm calling gc), so we must
 // record an argument size. For that purpose, it has no arguments.
-TEXT runtime·morestack(SB),NOSPLIT,$-8-0
+TEXT runtime·morestack(SB),NOSPLIT|NOFRAME,$0-0
 	// Cannot grow scheduler stack (m->g0).
 	MOVD	g_m(g), R8
 	MOVD	m_g0(R8), R4
@@ -339,7 +339,7 @@ TEXT runtime·stackBarrier(SB),NOSPLIT,$0
 TEXT reflect·call(SB), NOSPLIT, $0-0
 	JMP	·reflectcall(SB)
 
-TEXT ·reflectcall(SB), NOSPLIT, $-8-32
+TEXT ·reflectcall(SB), NOSPLIT|NOFRAME, $0-32
 	MOVUW argsize+24(FP), RT1
 	// NOTE(rsc): No call16, because CALLFN needs four words
 	// of argument space to invoke callwritebarrier.
@@ -456,13 +456,13 @@ CALLFN(·call536870912, 536870920 )
 CALLFN(·call1073741824, 1073741832 )
 
 // AES hashing not implemented for SPARC64.
-TEXT runtime·aeshash(SB),NOSPLIT,$-8-0
+TEXT runtime·aeshash(SB),NOSPLIT|NOFRAME,$0-0
 	MOVW	(ZR), R1
-TEXT runtime·aeshash32(SB),NOSPLIT,$-8-0
+TEXT runtime·aeshash32(SB),NOSPLIT|NOFRAME,$0-0
 	MOVW	(ZR), R1
-TEXT runtime·aeshash64(SB),NOSPLIT,$-8-0
+TEXT runtime·aeshash64(SB),NOSPLIT|NOFRAME,$0-0
 	MOVW	(ZR), R1
-TEXT runtime·aeshashstr(SB),NOSPLIT,$-8-0
+TEXT runtime·aeshashstr(SB),NOSPLIT|NOFRAME,$0-0
 	MOVW	(ZR), R1
 	
 TEXT runtime·procyield(SB),NOSPLIT,$0-0
@@ -474,7 +474,7 @@ TEXT runtime·procyield(SB),NOSPLIT,$0-0
 // 1. grab stored LR for caller
 // 2. sub 4 bytes to get back to BL deferreturn
 // 3. BR to fn
-TEXT runtime·jmpdefer(SB), NOSPLIT, $-8-16
+TEXT runtime·jmpdefer(SB), NOSPLIT|NOFRAME, $0-16
 	MOVD	(8*15)(BSP), R1
 	SUB	$4, R1
 	MOVD	R1, LR
@@ -487,7 +487,7 @@ TEXT runtime·jmpdefer(SB), NOSPLIT, $-8-16
 	JMPL	R3, ZR
 
 // Save state of caller into g->sched.
-TEXT gosave<>(SB),NOSPLIT,$-8
+TEXT gosave<>(SB),NOSPLIT|NOFRAME,$0
 	MOVD	LR, (g_sched+gobuf_pc)(g)
 	MOVD	BSP, TMP
 	MOVD	TMP, (g_sched+gobuf_sp)(g)
@@ -500,7 +500,7 @@ TEXT gosave<>(SB),NOSPLIT,$-8
 // Call fn(arg) on the scheduler stack,
 // aligned appropriately for the gcc ABI.
 // See cgocall.go for more details.
-TEXT ·asmcgocall(SB),NOSPLIT,$0-20
+TEXT ·asmcgocall(SB),NOSPLIT|NOFRAME,$0-20
 	MOVD	fn+0(FP), R3
 	MOVD	arg+8(FP), R4
 
@@ -735,7 +735,7 @@ TEXT runtime·getcallersp(SB),NOSPLIT,$0-16
 	MOVD	R1, ret+8(FP)
 	RET
 
-TEXT runtime·abort(SB),NOSPLIT,$-8-0
+TEXT runtime·abort(SB),NOSPLIT|NOFRAME,$0-0
 	JMPL	ZR, ZR
 	UNDEF
 
@@ -763,7 +763,7 @@ TEXT runtime·memhash_varlen(SB),NOSPLIT,$40-24
 	RET
 
 // memequal(p, q unsafe.Pointer, size uintptr) bool
-TEXT runtime·memequal(SB),NOSPLIT,$-8-25
+TEXT runtime·memequal(SB),NOSPLIT|NOFRAME,$0-25
 	MOVD	a+0(FP), R1
 	MOVD	b+8(FP), R2
 	MOVD	size+16(FP), R3
@@ -919,7 +919,7 @@ equal:
 	MOVB	R3, ret+48(FP)
 	RET
 
-TEXT runtime·fastrand1(SB),NOSPLIT,$-8-4
+TEXT runtime·fastrand1(SB),NOSPLIT|NOFRAME,$0-4
 	MOVD	g_m(g), R4
 	MOVUW	m_fastrand(R4), R3
 	ADD	R3, R3
@@ -936,7 +936,7 @@ TEXT runtime·return0(SB), NOSPLIT, $0
 
 // The top-most function running on a goroutine
 // returns to goexit+PCQuantum.
-TEXT runtime·goexit(SB),NOSPLIT,$-8-0
+TEXT runtime·goexit(SB),NOSPLIT|NOFRAME,$0-0
 	MOVD	R1, R1	// NOP
 	CALL	runtime·goexit1(SB)	// does not return
 

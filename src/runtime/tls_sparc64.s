@@ -13,7 +13,7 @@
 // If !iscgo, this is a no-op.
 //
 // NOTE: setg_gcc<> assume this clobbers only TMP.
-TEXT runtime·save_g(SB),NOSPLIT,$-8-0
+TEXT runtime·save_g(SB),NOSPLIT|NOFRAME,$0-0
 	MOVB	runtime·iscgo(SB), TMP
 	CMP	TMP, ZR
 	BEW	nocgo
@@ -32,7 +32,7 @@ nocgo:
 // usual Go registers aren't set up.
 //
 // NOTE: _cgo_topofstack assumes this only clobbers g, and TMP.
-TEXT runtime·load_g(SB),NOSPLIT,$-8-0
+TEXT runtime·load_g(SB),NOSPLIT|NOFRAME,$0-0
 	MOVB	runtime·iscgo(SB), TMP
 	CMP	TMP, ZR
 	BEW	nocgo

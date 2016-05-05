@@ -5,11 +5,11 @@
 #include "textflag.h"
 #include "asm_sparc64.h"
 
-TEXT _rt0_sparc64_solaris(SB),NOSPLIT,$-8
+TEXT _rt0_sparc64_solaris(SB),NOSPLIT|NOFRAME,$0
 	MOVD	$main(SB), R1
 	JMPL	R1, ZR
 
-TEXT main(SB),NOSPLIT,$-8
+TEXT main(SB),NOSPLIT|NOFRAME,$0
 	MOVD	$(8+128)(BSP), R8 // argv
 	MOVD	$128(BSP), R9 // argc
 	MOVD	$runtime·rt0_go(SB), R1
