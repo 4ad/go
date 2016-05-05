@@ -336,7 +336,7 @@ TEXT runtime·stackBarrier(SB),NOSPLIT,$0
 	JMPL	RT1, ZR
 // Note: can't just "B NAME(SB)" - bad inlining results.
 
-TEXT reflect·call(SB), NOSPLIT, $0-0
+TEXT reflect·call(SB), NOSPLIT|NOFRAME, $0-0
 	JMP	·reflectcall(SB)
 
 TEXT ·reflectcall(SB), NOSPLIT|NOFRAME, $0-32

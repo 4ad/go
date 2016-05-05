@@ -45,7 +45,7 @@ TEXT runtime∕internal∕atomic·Cas64(SB), NOSPLIT, $0-25
 	MOVB	R1, ret+24(FP)
 	RET
 
-TEXT runtime∕internal∕atomic·Casuintptr(SB), NOSPLIT, $0-25
+TEXT runtime∕internal∕atomic·Casuintptr(SB), NOSPLIT|NOFRAME, $0-25
 	JMP	runtime∕internal∕atomic·Cas64(SB)
 
 TEXT runtime∕internal∕atomic·Loaduintptr(SB),  NOSPLIT|NOFRAME, $0-16
@@ -54,16 +54,16 @@ TEXT runtime∕internal∕atomic·Loaduintptr(SB),  NOSPLIT|NOFRAME, $0-16
 TEXT runtime∕internal∕atomic·Loaduint(SB), NOSPLIT|NOFRAME, $0-16
 	JMP	runtime∕internal∕atomic·Load64(SB)
 
-TEXT runtime∕internal∕atomic·Storeuintptr(SB), NOSPLIT, $0-16
+TEXT runtime∕internal∕atomic·Storeuintptr(SB), NOSPLIT|NOFRAME, $0-16
 	JMP	runtime∕internal∕atomic·Store64(SB)
 
-TEXT runtime∕internal∕atomic·Xadduintptr(SB), NOSPLIT, $0-24
+TEXT runtime∕internal∕atomic·Xadduintptr(SB), NOSPLIT|NOFRAME, $0-24
 	JMP	runtime∕internal∕atomic·Xadd64(SB)
 
-TEXT runtime∕internal∕atomic·Loadint64(SB), NOSPLIT, $0-16
+TEXT runtime∕internal∕atomic·Loadint64(SB), NOSPLIT|NOFRAME, $0-16
 	JMP	runtime∕internal∕atomic·Load64(SB)
 
-TEXT runtime∕internal∕atomic·Xaddint64(SB), NOSPLIT, $0-24
+TEXT runtime∕internal∕atomic·Xaddint64(SB), NOSPLIT|NOFRAME, $0-24
 	JMP	runtime∕internal∕atomic·Xadd64(SB)
 
 // bool casp(void **val, void *old, void *new)
@@ -73,7 +73,7 @@ TEXT runtime∕internal∕atomic·Xaddint64(SB), NOSPLIT, $0-24
 //		return 1;
 //	} else
 //		return 0;
-TEXT runtime∕internal∕atomic·Casp1(SB), NOSPLIT, $0-25
+TEXT runtime∕internal∕atomic·Casp1(SB), NOSPLIT|NOFRAME, $0-25
 	JMP runtime∕internal∕atomic·Cas64(SB)
 
 // uint32 xadd(uint32 volatile *ptr, int32 delta)
@@ -138,11 +138,11 @@ again:
 	MOVD	R2, ret+16(FP)
 	RET
 
-TEXT runtime∕internal∕atomic·Xchguintptr(SB), NOSPLIT, $0-24
+TEXT runtime∕internal∕atomic·Xchguintptr(SB), NOSPLIT|NOFRAME, $0-24
 	JMP	runtime∕internal∕atomic·Xchg64(SB)
 
 
-TEXT runtime∕internal∕atomic·Storep1(SB), NOSPLIT, $0-16
+TEXT runtime∕internal∕atomic·Storep1(SB), NOSPLIT|NOFRAME, $0-16
 	JMP	runtime∕internal∕atomic·Store64(SB)
 
 TEXT runtime∕internal∕atomic·Store(SB), NOSPLIT, $0-12
@@ -159,34 +159,4 @@ TEXT runtime∕internal∕atomic·Store64(SB), NOSPLIT, $0-16
 	MEMBAR	$12
 	STD	R2, (R1)
 	MEMBAR	$10
-	RET
-
-// void	runtime∕internal∕atomic·Or8(byte volatile*, byte);
-TEXT runtime∕internal∕atomic·Or8(SB), NOSPLIT, $0-9
-	MOVD	ptr+0(FP), R4
-	MOVUB	val+8(FP), R1
-	MEMBAR	$15
-	MOVUB	(R4), R3
-retry:
-	OR	R3, R1, R2
-	CASW	(R4), R3, R2
-	CMP	R3, R2
-	MOVNE	ICC, R2, R3
-	BNEW	retry
-	MEMBAR	$15
-	RET
-
-// void	runtime∕internal∕atomic·And8(byte volatile*, byte);
-TEXT runtime∕internal∕atomic·And8(SB), NOSPLIT, $0-9
-	MOVD	ptr+0(FP), R4
-	MOVUB	val+8(FP), R1
-	MEMBAR	$15
-	MOVUB	(R4), R3
-retry:
-	AND	R3, R1, R2
-	CASW	(R4), R3, R2
-	CMP	R3, R2
-	MOVNE	ICC, R2, R3
-	BNEW	retry
-	MEMBAR	$15
 	RET

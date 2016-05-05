@@ -33,11 +33,37 @@ func Load64(ptr *uint64) uint64
 //go:noescape
 func Loadp(ptr unsafe.Pointer) unsafe.Pointer
 
-//go:noescape
-func And8(ptr *uint8, val uint8)
+//go:nosplit
+func And8(addr *uint8, v uint8) {
+	// TODO(aram) implement this in asm.
+	// Align down to 4 bytes and use 32-bit CAS.
+	uaddr := uintptr(unsafe.Pointer(addr))
+	addr32 := (*uint32)(unsafe.Pointer(uaddr &^ 3))
+	word := (uint32(v) << 24) >> ((uaddr & 3) * 8)    // big endian
+	mask := (uint32(0xFF) << 24) >> ((uaddr & 3) * 8) // big endian
+	word |= ^mask
+	for {
+		old := *addr32
+		if Cas(addr32, old, old&word) {
+			return
+		}
+	}
+}
 
-//go:noescape
-func Or8(ptr *uint8, val uint8)
+//go:nosplit
+func Or8(addr *uint8, v uint8) {
+	// TODO(aram) implement this in asm.
+	// Align down to 4 bytes and use 32-bit CAS.
+	uaddr := uintptr(unsafe.Pointer(addr))
+	addr32 := (*uint32)(unsafe.Pointer(uaddr &^ 3))
+	word := (uint32(v) << 24) >> ((uaddr & 3) * 8) // big endian
+	for {
+		old := *addr32
+		if Cas(addr32, old, old|word) {
+			return
+		}
+	}
+}
 
 // NOTE: Do not add atomicxor8 (XOR is not idempotent).
 

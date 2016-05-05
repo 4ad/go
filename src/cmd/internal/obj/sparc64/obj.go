@@ -346,6 +346,10 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 	biasfix(p)
 }
 
+func isNOFRAME(p *obj.Prog) bool {
+	return p.From3Offset()&obj.NOFRAME != 0
+}
+
 // TODO(aram):
 func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 	cursym.Text.Pc = 0
@@ -402,48 +406,6 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 	for p := cursym.Text; p != nil; p = p.Link {
 		switch p.As {
 		case obj.ATEXT:
-			// TODO(aram):
-			// 	mdb(1) seems to work with this leaf prolog, but DTrace
-			// 	doesn't. We need Dtrace, so we disable it for now.
-			//
-			// if cursym.Leaf == 1 {
-			// 	frameSize := cursym.Locals
-			// 	if frameSize == -8 {
-			// 		frameSize = 0
-			// }
-			// if frameSize % 8 != 0 {
-			// 	ctxt.Diag("%v: unaligned frame size %d - must be 0 mod 8", p, frameSize)
-			// }
-
-			// 	// MOVD RFP, (112+bias)(RSP)
-			// 	p = obj.Appendp(ctxt, p)
-			// 	p.As = AMOVD
-			// 	p.From.Type = obj.TYPE_REG
-			// 	p.From.Reg = REG_RFP
-			// 	p.To.Type = obj.TYPE_MEM
-			// 	p.To.Reg = REG_RSP
-			// 	p.To.Offset = int64(112 + StackBias)
-
-			// 	// ADD -(frame+128), RSP
-			// 	p = obj.Appendp(ctxt, p)
-			// 	p.As = AADD
-			// 	p.From.Type = obj.TYPE_CONST
-			// 	p.From.Offset = -int64(frameSize + WindowSaveAreaSize)
-			// 	p.To.Type = obj.TYPE_REG
-			// 	p.To.Reg = REG_RSP
-
-			// 	// SUB -(frame+128), RSP, RFP
-			// 	p = obj.Appendp(ctxt, p)
-			// 	p.As = ASUB
-			// 	p.From.Type = obj.TYPE_CONST
-			// 	p.From.Offset = -int64(frameSize + WindowSaveAreaSize)
-			// 	p.Reg = REG_RSP
-			// 	p.To.Type = obj.TYPE_REG
-			// 	p.To.Reg = REG_RFP
-
-			// 	break
-			// }
-
 			frameSize := cursym.Locals
 			if frameSize < 0 {
 				ctxt.Diag("%v: negative frame size %d", p, frameSize)
@@ -451,8 +413,12 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			if frameSize%8 != 0 {
 				ctxt.Diag("%v: unaligned frame size %d - must be 0 mod 8", p, frameSize)
 			}
-			if frameSize != 0 && p.From3Offset()&obj.NOFRAME != 0 {
+			if frameSize != 0 && isNOFRAME(p) {
 				ctxt.Diag("%v: non-zero framesize for NOFRAME function", p)
+			}
+
+			if isNOFRAME(p) {
+				break
 			}
 
 			// MOVD RFP, (112+bias)(RSP)
@@ -547,40 +513,9 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			}
 
 		case obj.ARET:
-			// TODO(aram):
-			// 	mdb(1) seems to work with this leaf epilog, but DTrace
-			// 	doesn't. We need Dtrace, so we disable it for now.
-			//
-			// if cursym.Leaf == 1 {
-			// 	// MOVD RFP, TMP
-			// 	q1 = p
-			// 	p = obj.Appendp(ctxt, p)
-			// 	p.As = obj.ARET
-			// 	q1.As = AMOVD
-			// 	q1.From.Type = obj.TYPE_REG
-			// 	q1.From.Reg = REG_RFP
-			// 	q1.To.Type = obj.TYPE_REG
-			// 	q1.To.Reg = REG_TMP
-
-			// 	// MOVD (112+StackBias)(RFP), RFP
-			// 	q1 = obj.Appendp(ctxt, q1)
-			// 	q1.As = AMOVD
-			// 	q1.From.Type = obj.TYPE_MEM
-			// 	q1.From.Reg = REG_RFP
-			// 	q1.From.Offset = 112 + StackBias
-			// 	q1.To.Type = obj.TYPE_REG
-			// 	q1.To.Reg = REG_RFP
-
-			// 	// MOVD TMP, RSP
-			// 	q1 = obj.Appendp(ctxt, q1)
-			// 	q1.As = AMOVD
-			// 	q1.From.Type = obj.TYPE_REG
-			// 	q1.From.Reg = REG_TMP
-			// 	q1.To.Type = obj.TYPE_REG
-			// 	q1.To.Reg = REG_RSP
-
-			// 	break
-			// }
+			if isNOFRAME(cursym.Text) {
+				break
+			}
 
 			// MOVD RFP, TMP
 			q1 = p
