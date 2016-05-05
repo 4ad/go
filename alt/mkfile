@@ -9,6 +9,7 @@ XREADELF=sparcv9-solaris2.12-readelf
 GCFLAGS=-+ -N
 LDFLAGS=-w
 XCFLAGS=-mflat -m64 -pthread
+XCFLAGS_OPTIMIZED=$XCFLAGS -O2
 XLDFLAGS=-pthread
 
 RUNTIMEOBJS=runtime.u data.u
@@ -47,38 +48,51 @@ GOS=call0.go.s\
 	cmp1_1.go.s
 
 GNUEXES=ext.gnu.out\
-	tls.gnu.out
+	tls.gnu.out\
+	call2.gnu.out\
 
-GNUOBJS=${GNUEXES:%.gnu.out=%.o}\
-	$GOEXTHOSTOBJS\
-	conv.o\
+GNUEXES_OPTIMIZED=${GNUEXES:%.gnu.out=%.O2.gnu.out}\
+
+GNUCOBJS=conv.o\
 	fconv.o\
 	mul.o\
 	atomic.o\
 	cmp1_2.o\
 	save.o\
 
+GNUOBJS=${GNUEXES:%.gnu.out=%.o}\
+	$GOEXTHOSTOBJS\
+	$GNUCOBJS\
+
+GNUOBJS_OPTIMIZED=${GNUEXES_OPTIMIZED:%.O2.gnu.out=%.O2.o}\
+	${GNUCOBJS:%.o=%.O2.o}\
+
 GNUS=${GOEXES:%.go.out=%.go.out.s}\
 	${GNUEXES:%.gnu.out=%.gnu.out.s}\
+	${GNUEXES_OPTIMIZED:%.gnu.out=%.gnu.out.s}\
 	${GOEXTEXES:%.go.ext=%.go.ext.s}\
-	${GNUOBJS:%.o=%.o.s}
+	${GNUOBJS:%.o=%.o.s}\
+	${GNUOBJS_OPTIMIZED:%.o=%.o.s}\
 
 DATS=${GOEXES:%.go.out=%.go.out.dat}\
 	${GNUEXES:%.gnu.out=%.gnu.out.dat}\
 	${GOEXTEXES:%.go.ext=%.go.ext.dat}\
-	${GNUOBJS:%.o=%.o.dat}
+	${GNUOBJS:%.o=%.o.dat}\
+	${GNUOBJS_OPTIMIZED:%.o=%.o.dat}\
 
 RELS=${GOEXES:%.go.out=%.go.out.rel} \
 	${GNUEXES:%.gnu.out=%.gnu.out.rel} \
 	${GOEXTEXES:%.go.ext=%.go.ext.rel}\
-	${GNUOBJS:%.o=%.o.rel}
+	${GNUOBJS:%.o=%.o.rel}\
+	${GNUOBJS_OPTIMIZED:%.o=%.o.rel}\
 
 READELFS=${GOEXES:%.go.out=%.go.out.readelf} \
 	${GNUEXES:%.gnu.out=%.gnu.out.readelf} \
 	${GOEXTEXES:%.go.ext=%.go.ext.readelf}\
-	${GNUOBJS:%.o=%.o.readelf}
+	${GNUOBJS:%.o=%.o.readelf}\
+	${GNUOBJS_OPTIMIZED:%.o=%.o.readelf}\
 
-all:V:	$GOEXES $GOEXTEXES $GNUEXES $GOS $GNUS $DATS $RELS $GOEXTREADELF $READELFS
+all:V:	$GOEXES $GOEXTEXES $GNUEXES $GOS $GNUS $DATS $RELS $GOEXTREADELF $READELFS $GNUEXES_OPTIMIZED $GNUOBJS_OPTIMIZED
 
 tools:V:
 	go install -v cmd/asm cmd/compile cmd/link cmd/pack
@@ -100,6 +114,9 @@ pkg/solaris_sparc64:
 
 %.o: %.c
 	$XCC $XCFLAGS -c -o $target $stem.c
+
+%.O2.o: %.c
+	$XCC $XCFLAGS_OPTIMIZED -c -o $target $stem.c
 
 $RUNTIME: pkg/solaris_sparc64 $RUNTIMEOBJS
 	go tool pack c $target $RUNTIMEOBJS
