@@ -24,6 +24,8 @@ func Rconv(r int) string {
 		return "RSP"
 	case r == REG_LR:
 		return "LR"
+	case r == REG_G:
+		return "g"
 	case r == REG_TMP2:
 		return "TMP2"
 	case r == REG_TMP:
@@ -36,8 +38,8 @@ func Rconv(r int) string {
 		return "CTXT"
 	case r == REG_RFP:
 		return "RFP"
-	case r == REG_G:
-		return "g"
+	case r == REG_OLR:
+		return "OLR"
 	case r == REG_FTMP:
 		return "FTMP"
 	case r == REG_DTMP:
