@@ -445,11 +445,14 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			// }
 
 			frameSize := cursym.Locals
-			if frameSize == -8 {
-				frameSize = 0
+			if frameSize < 0 {
+				ctxt.Diag("%v: negative frame size %d", p, frameSize)
 			}
 			if frameSize%8 != 0 {
 				ctxt.Diag("%v: unaligned frame size %d - must be 0 mod 8", p, frameSize)
+			}
+			if frameSize != 0 && p.From3Offset()&obj.NOFRAME != 0 {
+				ctxt.Diag("%v: non-zero framesize for NOFRAME function", p)
 			}
 
 			// MOVD RFP, (112+bias)(RSP)
