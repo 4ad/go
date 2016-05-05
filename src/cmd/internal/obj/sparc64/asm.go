@@ -701,9 +701,9 @@ func opcode(a int16) uint32 {
 		return op(1)
 
 	case ACASW:
-		return op3(3, 0x3C) | 1<<13
+		return op3(3, 0x3C)
 	case ACASD:
-		return op3(3, 0x3E) | 1<<13
+		return op3(3, 0x3E)
 
 	case AFABSS:
 		return op3(2, 0x34) | opf(9)
@@ -1180,7 +1180,7 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 
 	// CASD/CASW
 	case 10:
-		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, p.Reg, p.To.Reg)
+		*o1 = opcode(p.As) | rrr(p.From.Reg, 0x80, p.Reg, p.To.Reg)
 
 	// fop Fs, Fd
 	case 11:
