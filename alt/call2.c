@@ -1,9 +1,11 @@
+#include <unistd.h>
 #include <stdio.h>
 
 int __attribute__ ((noinline))
 foo3(void)
 {
-	return 3;
+	int64_t buf[16];
+	return buf[15];
 }
 
 int __attribute__ ((noinline))
