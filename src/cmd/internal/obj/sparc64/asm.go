@@ -223,8 +223,8 @@ var cc = map[int8][]int8{
 	ClassIndir:    {ClassIndir13, ClassIndir0},
 }
 
-func isAddrCompatible(a *obj.Addr, class int8) bool {
-	cls := aclass(a)
+func isAddrCompatible(ctxt *obj.Link, a *obj.Addr, class int8) bool {
+	cls := aclass(ctxt, a)
 	cls &= ^ClassBias
 	if cls == class {
 		return true
@@ -934,7 +934,7 @@ func rclass(r int16) int8 {
 	return ClassUnknown
 }
 
-func aclass(a *obj.Addr) int8 {
+func aclass(ctxt *obj.Link, a *obj.Addr) int8 {
 	switch a.Type {
 	case obj.TYPE_NONE:
 		return ClassNone
@@ -954,7 +954,7 @@ func aclass(a *obj.Addr) int8 {
 			return ClassMem
 
 		case obj.NAME_AUTO, obj.NAME_PARAM:
-			return aclass(autoeditaddr(a))
+			return aclass(ctxt, autoeditaddr(ctxt, a))
 
 		case obj.TYPE_NONE:
 			if a.Scale == 1 {
@@ -993,7 +993,7 @@ func aclass(a *obj.Addr) int8 {
 			return ClassAddr
 
 		case obj.NAME_AUTO, obj.NAME_PARAM:
-			return aclass(autoeditaddr(a))
+			return aclass(ctxt, autoeditaddr(ctxt, a))
 		}
 	case obj.TYPE_BRANCH:
 		return ClassBranch
@@ -1008,7 +1008,7 @@ func span(ctxt *obj.Link, cursym *obj.LSym) {
 
 	var pc int64 // relative to entry point
 	for p := cursym.Text.Link; p != nil; p = p.Link {
-		o, err := oplook(autoeditprog(p))
+		o, err := oplook(autoeditprog(ctxt, p))
 		if err != nil {
 			ctxt.Diag(err.Error())
 		}
@@ -1021,7 +1021,7 @@ func span(ctxt *obj.Link, cursym *obj.LSym) {
 
 	var text []uint32 // actual assembled bytes
 	for p := cursym.Text.Link; p != nil; p = p.Link {
-		p1 := autoeditprog(p)
+		p1 := autoeditprog(ctxt, p)
 		o, _ := oplook(p1)
 		out, err := asmout(p1, o, cursym)
 		if err != nil {
@@ -1038,9 +1038,9 @@ func span(ctxt *obj.Link, cursym *obj.LSym) {
 }
 
 // bigmove assembles a move of the constant part of addr into reg.
-func bigmove(addr *obj.Addr, reg int16) (out []uint32) {
+func bigmove(ctxt *obj.Link, addr *obj.Addr, reg int16) (out []uint32) {
 	out = make([]uint32, 2)
-	class := aclass(addr)
+	class := aclass(ctxt, addr)
 	switch class {
 	case ClassRegConst, ClassIndir:
 		class = constclass(addr.Offset)
@@ -1208,7 +1208,7 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	// MOVD $imm32, R
 	// MOVD -$imm31, R
 	case 15, 16:
-		out := bigmove(&p.From, p.To.Reg)
+		out := bigmove(p.Ctxt, &p.From, p.To.Reg)
 		return out, nil
 
 	// BLE XCC, n(PC)
@@ -1445,7 +1445,7 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	// ADD $huge, Rd
 	// AND $huge, Rs, Rd
 	case 41:
-		move := bigmove(&p.From, REG_TMP)
+		move := bigmove(p.Ctxt, &p.From, REG_TMP)
 		*o1, *o2 = move[0], move[1]
 		reg := p.To.Reg
 		if p.Reg != 0 {
@@ -1455,19 +1455,19 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 
 	// AMOVD $huge(R), R
 	case 42:
-		move := bigmove(&p.From, REG_TMP)
+		move := bigmove(p.Ctxt, &p.From, REG_TMP)
 		*o1, *o2 = move[0], move[1]
 		*o3 = opalu(AADD) | rrr(p.From.Reg, 0, REG_TMP, p.To.Reg)
 
 	// AMOVD R, huge(R)
 	case 43:
-		move := bigmove(&p.To, REG_TMP)
+		move := bigmove(p.Ctxt, &p.To, REG_TMP)
 		*o1, *o2 = move[0], move[1]
 		*o3 = opstore(p.As) | rrr(p.To.Reg, 0, REG_TMP, p.From.Reg)
 
 	// AMOVD huge(R), R
 	case 44:
-		move := bigmove(&p.From, REG_TMP)
+		move := bigmove(p.Ctxt, &p.From, REG_TMP)
 		*o1, *o2 = move[0], move[1]
 		*o3 = opload(p.As) | rrr(p.From.Reg, 0, REG_TMP, p.To.Reg)
 

@@ -104,18 +104,18 @@ func init() {
 
 // AutoeditProg returns a new obj.Prog, with off(SP), off(FP), $off(SP),
 // and $off(FP) replaced with new(RFP).
-func autoeditprog(p *obj.Prog) *obj.Prog {
+func autoeditprog(ctxt *obj.Link, p *obj.Prog) *obj.Prog {
 	r := new(obj.Prog)
 	*r = *p
-	r.From = *autoeditaddr(&r.From)
-	r.From3 = autoeditaddr(r.From3)
-	r.To = *autoeditaddr(&r.To)
+	r.From = *autoeditaddr(ctxt, &r.From)
+	r.From3 = autoeditaddr(ctxt, r.From3)
+	r.To = *autoeditaddr(ctxt, &r.To)
 	return r
 }
 
 // Autoeditaddr returns a new obj.Addr, with off(SP), off(FP), $off(SP),
 // and $off(FP) replaced with new(RFP).
-func autoeditaddr(a *obj.Addr) *obj.Addr {
+func autoeditaddr(ctxt *obj.Link, a *obj.Addr) *obj.Addr {
 	if a == nil {
 		return nil
 	}
@@ -180,11 +180,11 @@ func biasfix(p *obj.Prog) {
 	}
 	switch p.As {
 	case AMOVD:
-		switch aclass(&p.From) {
+		switch aclass(p.Ctxt, &p.From) {
 		case ClassReg, ClassZero:
 			switch {
 			// MOVD	R, BSP	-> ADD	-$STACK_BIAS, R, RSP
-			case aclass(&p.To) == ClassReg|ClassBias:
+			case aclass(p.Ctxt, &p.To) == ClassReg|ClassBias:
 				p.As = AADD
 				p.Reg = p.From.Reg
 				if p.From.Type == obj.TYPE_CONST {
@@ -193,54 +193,54 @@ func biasfix(p *obj.Prog) {
 				p.From.Reg = 0
 				p.From.Offset = -StackBias
 				p.From.Type = obj.TYPE_CONST
-				p.From.Class = aclass(&p.From)
+				p.From.Class = aclass(p.Ctxt, &p.From)
 				p.To.Reg -= 256 // must match a.out.go:/REG_BSP
-				p.To.Class = aclass(&p.To)
+				p.To.Class = aclass(p.Ctxt, &p.To)
 			}
 
 		case ClassReg | ClassBias:
 			// MOVD	BSP, R	-> ADD	$STACK_BIAS, RSP, R
-			if aclass(&p.To) == ClassReg {
+			if aclass(p.Ctxt, &p.To) == ClassReg {
 				p.Reg = p.From.Reg - 256 // must match a.out.go:/REG_BSP
 				p.As = AADD
 				p.From.Reg = 0
 				p.From.Offset = StackBias
 				p.From.Type = obj.TYPE_CONST
-				p.From.Class = aclass(&p.From)
+				p.From.Class = aclass(p.Ctxt, &p.From)
 			}
 
 		// MOVD	$off(BSP), R	-> MOVD	$(off+STACK_BIAS)(RSP), R
 		case ClassRegConst13 | ClassBias, ClassRegConst | ClassBias:
 			p.From.Reg -= 256 // must match a.out.go:/REG_BSP
 			p.From.Offset += StackBias
-			p.From.Class = aclass(&p.From)
+			p.From.Class = aclass(p.Ctxt, &p.From)
 		}
 
 	case AADD, ASUB:
 		// ADD	$const, BSP	-> ADD	$const, RSP
-		if isAddrCompatible(&p.From, ClassConst) && aclass(&p.To) == ClassReg|ClassBias {
+		if isAddrCompatible(p.Ctxt, &p.From, ClassConst) && aclass(p.Ctxt, &p.To) == ClassReg|ClassBias {
 			p.To.Reg -= 256 // must match a.out.go:/REG_BSP
-			p.To.Class = aclass(&p.To)
+			p.To.Class = aclass(p.Ctxt, &p.To)
 		}
 	}
 	switch p.As {
 	case AMOVD, AMOVW, AMOVUW, AMOVH, AMOVUH, AMOVB, AMOVUB,
 		AFMOVD, AFMOVS:
-		switch aclass(&p.From) {
+		switch aclass(p.Ctxt, &p.From) {
 		case ClassZero, ClassReg, ClassFReg, ClassDReg:
 			switch {
 			// MOVD	R, off(BSP)	-> MOVD	R, (off+STACK_BIAS)(RSP)
-			case aclass(&p.To)&ClassBias != 0 && isAddrCompatible(&p.To, ClassIndir):
+			case aclass(p.Ctxt, &p.To)&ClassBias != 0 && isAddrCompatible(p.Ctxt, &p.To, ClassIndir):
 				p.To.Offset += StackBias
 				p.To.Reg -= 256 // must match a.out.go:/REG_BSP
-				p.To.Class = aclass(&p.To)
+				p.To.Class = aclass(p.Ctxt, &p.To)
 			}
 
 		// MOVD	off(BSP), R	-> MOVD	(off+STACK_BIAS)(RSP), R
 		case ClassIndir0 | ClassBias, ClassIndir13 | ClassBias, ClassIndir | ClassBias:
 			p.From.Reg -= 256 // must match a.out.go:/REG_BSP
 			p.From.Offset += StackBias
-			p.From.Class = aclass(&p.From)
+			p.From.Class = aclass(p.Ctxt, &p.From)
 		}
 	}
 }
@@ -299,7 +299,7 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 	// to values stored in memory.
 	switch p.As {
 	case AMOVD:
-		if aclass(&p.From) == ClassConst {
+		if aclass(p.Ctxt, &p.From) == ClassConst {
 			literal := fmt.Sprintf("$i64.%016x", p.From.Offset)
 			s := obj.Linklookup(ctxt, literal, 0)
 			s.Size = 8
@@ -635,11 +635,11 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 
 	// For future use by oplook and friends.
 	for p := cursym.Text; p != nil; p = p.Link {
-		p.From.Class = aclass(&p.From)
+		p.From.Class = aclass(ctxt, &p.From)
 		if p.From3 != nil {
-			p.From3.Class = aclass(p.From3)
+			p.From3.Class = aclass(ctxt, p.From3)
 		}
-		p.To.Class = aclass(&p.To)
+		p.To.Class = aclass(ctxt, &p.To)
 	}
 }
 
