@@ -31,7 +31,7 @@ func Main() {
 	gc.Thearch.Thechar = thechar
 	gc.Thearch.Thestring = thestring
 	gc.Thearch.Thelinkarch = thelinkarch
-	gc.Thearch.REGSP = sparc64.REG_RSP
+	gc.Thearch.REGSP = sparc64.REG_BSP
 	gc.Thearch.REGCTXT = sparc64.REG_CTXT
 	gc.Thearch.REGCALLX = sparc64.REG_RT1
 	gc.Thearch.REGCALLX2 = sparc64.REG_RT2
