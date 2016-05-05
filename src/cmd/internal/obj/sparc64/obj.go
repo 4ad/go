@@ -126,6 +126,10 @@ func autoeditaddr(ctxt *obj.Link, a *obj.Addr) *obj.Addr {
 	*r = *a
 	if r.Name == obj.NAME_PARAM {
 		r.Reg = REG_RFP
+		if ctxt.Cursym.Text.From3Offset()&obj.NOFRAME != 0 {
+			// NOFRAME functions live in caller's frame.
+			r.Reg = REG_RSP
+		}
 		r.Offset += MinStackFrameSize + StackBias
 		r.Name = obj.TYPE_NONE
 		return r
