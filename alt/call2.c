@@ -23,7 +23,8 @@ foo1(int a0, int a1, int a2, int a3, int a4, int a5, int b6, int b7)
 int __attribute__ ((noinline))
 foo0(int a0, int a1, int a2, int a3, int a4, int a5, int b6, int b7)
 {
-	return foo1(0, 1, 2, 3, 4, 5, 6, 7) + foo2(0, 1, 2, 3, 4, 5, 6, 7) + foo3();
+	int64_t buf[16];
+	return foo1(0, 1, 2, 3, 4, 5, 6, 7) + foo2(0, 1, 2, 3, 4, 5, 6, 7) + foo3() + buf[15];
 }
 
 int

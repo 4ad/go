@@ -8,8 +8,9 @@ XREADELF=sparcv9-solaris2.12-readelf
 
 GCFLAGS=-+ -N
 LDFLAGS=-w
-XCFLAGS=-mflat -m64 -pthread
-XCFLAGS_OPTIMIZED=$XCFLAGS -O2
+XCFLAGS=-mflat -m64 -pthread -fno-omit-frame-pointer
+XCFLAGS_OPTIMIZED=-mflat -O2 -m64 -pthread -fno-omit-frame-pointer
+XCFLAGS_NOFP=-mflat -O2 -m64 -pthread -fomit-frame-pointer
 XLDFLAGS=-pthread
 
 RUNTIMEOBJS=runtime.u data.u
@@ -53,6 +54,8 @@ GNUEXES=ext.gnu.out\
 
 GNUEXES_OPTIMIZED=${GNUEXES:%.gnu.out=%.O2.gnu.out}\
 
+GNUEXES_NOFP=${GNUEXES:%.gnu.out=%.nofp.gnu.out}\
+
 GNUCOBJS=conv.o\
 	fconv.o\
 	mul.o\
@@ -67,32 +70,46 @@ GNUOBJS=${GNUEXES:%.gnu.out=%.o}\
 GNUOBJS_OPTIMIZED=${GNUEXES_OPTIMIZED:%.O2.gnu.out=%.O2.o}\
 	${GNUCOBJS:%.o=%.O2.o}\
 
+GNUOBJS_NOFP=${GNUEXES_OPTIMIZED:%.nofp.gnu.out=%.nofp.o}\
+	${GNUCOBJS:%.o=%.nofp.o}\
+
 GNUS=${GOEXES:%.go.out=%.go.out.s}\
 	${GNUEXES:%.gnu.out=%.gnu.out.s}\
 	${GNUEXES_OPTIMIZED:%.gnu.out=%.gnu.out.s}\
+	${GNUEXES_NOFP:%.gnu.out=%.gnu.out.s}\
 	${GOEXTEXES:%.go.ext=%.go.ext.s}\
 	${GNUOBJS:%.o=%.o.s}\
 	${GNUOBJS_OPTIMIZED:%.o=%.o.s}\
+	${GNUOBJS_NOFP:%.o=%.o.s}\
 
 DATS=${GOEXES:%.go.out=%.go.out.dat}\
 	${GNUEXES:%.gnu.out=%.gnu.out.dat}\
+	${GNUOBJS_OPTIMIZED:%.gnu.out=%.gnu.out.dat}\
+	${GNUEXES_NOFP:%.gnu.out=%.gnu.out.dat}\
 	${GOEXTEXES:%.go.ext=%.go.ext.dat}\
 	${GNUOBJS:%.o=%.o.dat}\
 	${GNUOBJS_OPTIMIZED:%.o=%.o.dat}\
+	${GNUOBJS_NOFP:%.o=%.o.dat}\
 
 RELS=${GOEXES:%.go.out=%.go.out.rel} \
 	${GNUEXES:%.gnu.out=%.gnu.out.rel} \
+	${GNUEXES_OPTIMIZED:%.gnu.out=%.gnu.out.rel} \
+	${GNUEXES_NOFP:%.gnu.out=%.gnu.out.rel} \
 	${GOEXTEXES:%.go.ext=%.go.ext.rel}\
 	${GNUOBJS:%.o=%.o.rel}\
 	${GNUOBJS_OPTIMIZED:%.o=%.o.rel}\
+	${GNUOBJS_NOFP:%.o=%.o.rel}\
 
 READELFS=${GOEXES:%.go.out=%.go.out.readelf} \
 	${GNUEXES:%.gnu.out=%.gnu.out.readelf} \
+	${GNUEXES_OPTIMIZED:%.gnu.out=%.gnu.out.readelf} \
+	${GNUEXES_NOFP:%.gnu.out=%.gnu.out.readelf} \
 	${GOEXTEXES:%.go.ext=%.go.ext.readelf}\
 	${GNUOBJS:%.o=%.o.readelf}\
 	${GNUOBJS_OPTIMIZED:%.o=%.o.readelf}\
+	${GNUOBJS_NOFP:%.o=%.o.readelf}\
 
-all:V:	$GOEXES $GOEXTEXES $GNUEXES $GOS $GNUS $DATS $RELS $GOEXTREADELF $READELFS $GNUEXES_OPTIMIZED $GNUOBJS_OPTIMIZED
+all:V:	$GOEXES $GOEXTEXES $GNUEXES $GOS $GNUS $DATS $RELS $GOEXTREADELF $READELFS $GNUEXES_OPTIMIZED $GNUOBJS_OPTIMIZED $GNUEXES_NOFP $GNUOBJS_NOFP
 
 tools:V:
 	go install -v cmd/asm cmd/compile cmd/link cmd/pack
@@ -117,6 +134,9 @@ pkg/solaris_sparc64:
 
 %.O2.o: %.c
 	$XCC $XCFLAGS_OPTIMIZED -c -o $target $stem.c
+
+%.nofp.o: %.c
+	$XCC $XCFLAGS_NOFP -c -o $target $stem.c
 
 $RUNTIME: pkg/solaris_sparc64 $RUNTIMEOBJS
 	go tool pack c $target $RUNTIMEOBJS
