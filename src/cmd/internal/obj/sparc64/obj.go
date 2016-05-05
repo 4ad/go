@@ -196,12 +196,6 @@ func biasfix(p *obj.Prog) {
 				p.From.Class = aclass(&p.From)
 				p.To.Reg -= 256 // must match a.out.go:/REG_BSP
 				p.To.Class = aclass(&p.To)
-
-			// MOVD	R, off(BSP)	-> MOVD	R, (off+STACK_BIAS)(RSP)
-			case aclass(&p.To)&ClassBias != 0 && isAddrCompatible(&p.To, ClassIndir):
-				p.To.Offset += StackBias
-				p.To.Reg -= 256 // must match a.out.go:/REG_BSP
-				p.To.Class = aclass(&p.To)
 			}
 
 		case ClassReg | ClassBias:
@@ -216,10 +210,7 @@ func biasfix(p *obj.Prog) {
 			}
 
 		// MOVD	$off(BSP), R	-> MOVD	$(off+STACK_BIAS)(RSP), R
-		//
-		// MOVD	off(BSP), R	-> MOVD	(off+STACK_BIAS)(RSP), R
-		case ClassRegConst13 | ClassBias, ClassRegConst | ClassBias,
-			ClassIndir0 | ClassBias, ClassIndir13 | ClassBias, ClassIndir | ClassBias:
+		case ClassRegConst13 | ClassBias, ClassRegConst | ClassBias:
 			p.From.Reg -= 256 // must match a.out.go:/REG_BSP
 			p.From.Offset += StackBias
 			p.From.Class = aclass(&p.From)
@@ -230,6 +221,26 @@ func biasfix(p *obj.Prog) {
 		if isAddrCompatible(&p.From, ClassConst) && aclass(&p.To) == ClassReg|ClassBias {
 			p.To.Reg -= 256 // must match a.out.go:/REG_BSP
 			p.To.Class = aclass(&p.To)
+		}
+	}
+	switch p.As {
+	case AMOVD, AMOVW, AMOVUW, AMOVH, AMOVUH, AMOVB, AMOVUB,
+		AFMOVD, AFMOVS:
+		switch aclass(&p.From) {
+		case ClassZero, ClassReg, ClassFReg, ClassDReg:
+			switch {
+			// MOVD	R, off(BSP)	-> MOVD	R, (off+STACK_BIAS)(RSP)
+			case aclass(&p.To)&ClassBias != 0 && isAddrCompatible(&p.To, ClassIndir):
+				p.To.Offset += StackBias
+				p.To.Reg -= 256 // must match a.out.go:/REG_BSP
+				p.To.Class = aclass(&p.To)
+			}
+
+		// MOVD	off(BSP), R	-> MOVD	(off+STACK_BIAS)(RSP), R
+		case ClassIndir0 | ClassBias, ClassIndir13 | ClassBias, ClassIndir | ClassBias:
+			p.From.Reg -= 256 // must match a.out.go:/REG_BSP
+			p.From.Offset += StackBias
+			p.From.Class = aclass(&p.From)
 		}
 	}
 }
