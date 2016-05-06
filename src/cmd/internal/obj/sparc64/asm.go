@@ -1058,10 +1058,6 @@ func bigmove(ctxt *obj.Link, addr *obj.Addr, reg int16) (out []uint32) {
 	// 	XOR R, lo($imm32)|0x1C00, R
 	case ClassConst31_:
 		out[0] = opcode(ASETHI) | ir(^(uint32(addr.Offset))>>10, reg)
-		if addr.Offset&0x3FF == 0 {
-			out[1] = opalu(ASRAD) | rrr(reg, 0, REG_ZR, reg)
-			return out
-		}
 		out[1] = opalu(AXOR) | rsr(reg, int64(uint32(addr.Offset)&0x3ff|0x1C00), reg)
 	default:
 		panic("unexpected operand class: " + DRconv(class))
