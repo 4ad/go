@@ -1,4 +1,4 @@
-TEXT	main(SB),7,$-8
+TEXT	main(SB),512|7,$0
 	ADD	R1, R2
 	ADD	R1, R2, R2
 	ADD R1, R2, R3

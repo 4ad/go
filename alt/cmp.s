@@ -1,4 +1,4 @@
-TEXT	main(SB),7,$-8
+TEXT	main(SB),512|7,$0
 	CMP	R1, R2
 	SUBCC	R1, R2, ZR
 	BLE	ICC, label

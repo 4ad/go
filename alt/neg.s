@@ -1,3 +1,3 @@
-TEXT	main(SB),7,$-8
+TEXT	main(SB),512|7,$0
 	NEG	R3, R4
 	RET

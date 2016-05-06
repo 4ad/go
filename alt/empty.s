@@ -1,2 +1,2 @@
-TEXT	main(SB),7,$-8
+TEXT	main(SB),512|7,$0
 	RET

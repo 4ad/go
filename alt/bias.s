@@ -1,4 +1,4 @@
-TEXT	main(SB),7,$-8
+TEXT	main(SB),512|7,$0
 	MOVD	$32(BSP), R4
 	MOVD	32(BFP), R5
 	MOVD	BFP, R1

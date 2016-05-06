@@ -1,4 +1,4 @@
-TEXT	main(SB),7,$-8
+TEXT	main(SB),512|7,$0
 	MOVD	O(1), R1
 	MOVD	L(1), R1
 	MOVD	I(1), R1

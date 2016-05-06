@@ -1,4 +1,4 @@
-TEXT	main(SB),7,$-8
+TEXT	main(SB),512|7,$0
 	BNE	XCC, l1
 	BNED	l1
 	BLE	ICC, l2

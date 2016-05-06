@@ -1,4 +1,4 @@
-TEXT	main(SB),7,$-8
+TEXT	main(SB),512|7,$0
 	MOVRZ	R3, R2, R1
 	MOVRLEZ	R3, R2, R1
 	MOVRLZ	R3, R2, R1

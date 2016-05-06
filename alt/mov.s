@@ -1,4 +1,4 @@
-TEXT	main(SB),7,$-8
+TEXT	main(SB),512|7,$0
 	MOVUB	R2, R3
 	MOVUH	R2, R3
 	MOVUW	R2, R3

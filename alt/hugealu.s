@@ -1,4 +1,4 @@
-TEXT	main(SB),7,$-8
+TEXT	main(SB),512|7,$0
 	MOVUB	0xf00ddd(R1), R2
 	MOVD	-16529(R2), R3
 	ADD	$0xf00abcd, R1

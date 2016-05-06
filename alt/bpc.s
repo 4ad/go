@@ -1,4 +1,4 @@
-TEXT	main(SB),7,$-8
+TEXT	main(SB),512|7,$0
 	CMP	R1, R2
 	BED	2(PC)
 	MOVD	R3, R4
