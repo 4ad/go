@@ -8,7 +8,7 @@
 
 // save_g saves the g register into pthread-provided
 // thread-local memory, so that we can call externally compiled
-// arm64 code that will overwrite this register.
+// sparc64 code that will overwrite this register.
 //
 // If !iscgo, this is a no-op.
 //

@@ -501,6 +501,7 @@ TEXT gosave<>(SB),NOSPLIT|NOFRAME,$0
 // aligned appropriately for the gcc ABI.
 // See cgocall.go for more details.
 TEXT ·asmcgocall(SB),NOSPLIT|NOFRAME,$0-20
+	MOVD	LR, R21	// save LR
 	MOVD	fn+0(FP), R3
 	MOVD	arg+8(FP), O0
 	MOVD	O0, FIXED_FRAME(BSP)
@@ -523,28 +524,25 @@ TEXT ·asmcgocall(SB),NOSPLIT|NOFRAME,$0-20
 
 	// Now on a scheduling stack (a pthread-created stack).
 g0:
-	// Save room for two of our pointers.
-	SUB	$16, BSP
-	MOVD	R5, -8(BFP)	// save old g on stack
+	MOVD	R5, R19	// save old g
 	MOVD	(g_stack+stack_hi)(R5), R5
 	SUB	R10, R5
-	MOVD	R5, -16(BFP)	// save depth in old g stack (can't just save SP, as stack might be copied during a callback)
+	MOVD	R5, R20	// save depth in old g stack (can't just save SP, as stack might be copied during a callback)
 	CALL	(R3)
 	MOVD	R8, R9
 
 	// Restore g, stack pointer.
 	// R8 is errno, so don't touch it
-	MOVD	-8(BFP), g
+	MOVD	R19, g
 	MOVD    (g_stack+stack_hi)(g), R5
-	MOVD    -16(BFP), R6
-	SUB     R6, R5
+	SUB     R20, R5
 	MOVD    24(R5), R2
 	CALL	runtime·save_g(SB)
-	MOVD	(g_stack+stack_hi)(g), R5
-	MOVD	-16(BFP), R6
-	SUB	R6, R5
+	MOVD    (g_stack+stack_hi)(g), R5
+	SUB     R20, R5
 	MOVD	R5, BSP
 
+	MOVD	R21, LR
 	MOVW	R8, ret+16(FP)
 	RET
 
