@@ -1097,7 +1097,7 @@ func hostlink() {
 		argv = append(argv, "-shared")
 	}
 
-	if Iself && DynlinkingGo() {
+	if Iself && (DynlinkingGo() || goos == "solaris") {
 		// We force all symbol resolution to be done at program startup
 		// because lazy PLT resolution can use large amounts of stack at
 		// times we cannot allow it to do so.
