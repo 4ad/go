@@ -40,6 +40,7 @@ GOEXTEXES=${GOEXES:%.go.out=%.go.ext}\
 	bias.go.ext\
 	iol.go.ext\
 	call1.go.ext\
+	addrconst.go.ext
 
 GOEXTHOSTOBJS=${GOEXTEXES:%.go.ext=%.go.ext.tmp/go.o}
 
@@ -122,6 +123,9 @@ pkg/solaris_sparc64:
 
 %.u: %.s
 	GOOS=solaris GOARCH=sparc64 go tool asm -o $target $stem.s
+
+%.go.s: %.s
+	GOOS=solaris GOARCH=sparc64 go tool asm -S -o /dev/null $stem.s >$target
 
 %.u: %.go
 	GOOS=solaris GOARCH=sparc64 go tool compile $GCFLAGS -o $target $stem.go
