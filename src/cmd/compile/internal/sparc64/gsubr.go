@@ -475,7 +475,7 @@ fsrccpy:
 		p1 := gins(st, f, nil)
 		p1.To.Type = obj.TYPE_MEM
 		p1.To.Reg = sparc64.REG_RSP
-		p1.To.Offset = -8
+		p1.To.Offset = -8 + sparc64.StackBias
 
 		gc.Regalloc(&r1, t.Type, nil)
 		ld := sparc64.AFMOVD
@@ -485,7 +485,7 @@ fsrccpy:
 		p1 = gins(ld, nil, &r1)
 		p1.From.Type = obj.TYPE_MEM
 		p1.From.Reg = sparc64.REG_RSP
-		p1.From.Offset = -8
+		p1.From.Offset = -8 + sparc64.StackBias
 
 		gc.Regalloc(&r2, t.Type, t)
 		gins(a, &r1, &r2)
@@ -510,7 +510,7 @@ fdstcpy:
 		p1 := gins(st, &r1, nil)
 		p1.To.Type = obj.TYPE_MEM
 		p1.To.Reg = sparc64.REG_RSP
-		p1.To.Offset = -8
+		p1.To.Offset = -8 + sparc64.StackBias
 
 		gc.Regalloc(&r2, t.Type, t)
 		ld := sparc64.AMOVD
@@ -520,7 +520,7 @@ fdstcpy:
 		p1 = gins(ld, nil, &r2)
 		p1.From.Type = obj.TYPE_MEM
 		p1.From.Reg = sparc64.REG_RSP
-		p1.From.Offset = -8
+		p1.From.Offset = -8 + sparc64.StackBias
 
 		gc.Regfree(&r2)
 		gc.Regfree(&r1)
