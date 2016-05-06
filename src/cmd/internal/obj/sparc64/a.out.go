@@ -407,6 +407,8 @@ const (
 	AORN
 	AORNCC
 	ARD
+	ARESTORE // not used under normal circumstances
+	ASAVE    // not used under normal circumstances
 	ASDIVD
 	ASETHI
 	AUDIVD

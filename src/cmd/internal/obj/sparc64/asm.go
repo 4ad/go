@@ -72,6 +72,7 @@ var optab = map[Optab]Opval{
 	Optab{AMULD, ClassReg, ClassReg, ClassNone, ClassReg}:  {1, 4, 0},
 	Optab{ASLLD, ClassReg, ClassReg, ClassNone, ClassReg}:  {1, 4, 0},
 	Optab{ASLLW, ClassReg, ClassReg, ClassNone, ClassReg}:  {1, 4, 0},
+	Optab{ASAVE, ClassReg, ClassReg, ClassNone, ClassReg}:  {1, 4, 0},
 
 	Optab{AFADDD, ClassDReg, ClassNone, ClassNone, ClassDReg}:  {1, 4, 0},
 	Optab{AFADDD, ClassDReg, ClassDReg, ClassNone, ClassDReg}:  {1, 4, 0},
@@ -89,6 +90,7 @@ var optab = map[Optab]Opval{
 	Optab{AMULD, ClassConst13, ClassReg, ClassNone, ClassReg}:  {3, 4, 0},
 	Optab{ASLLD, ClassConst6, ClassReg, ClassNone, ClassReg}:   {3, 4, 0},
 	Optab{ASLLW, ClassConst5, ClassReg, ClassNone, ClassReg}:   {3, 4, 0},
+	Optab{ASAVE, ClassConst13, ClassReg, ClassNone, ClassReg}:  {3, 4, 0},
 
 	Optab{AMOVD, ClassConst13, ClassNone, ClassNone, ClassReg}: {4, 4, 0},
 
@@ -325,6 +327,7 @@ var ci = map[int16][]int16{
 	ASLLW:  {ASLLW, ASRLW, ASRAW},
 	ASTD:   {ASTB, ASTH, ASTW, AMOVB, AMOVH, AMOVW, AMOVUB, AMOVUH, AMOVUW, AMOVD},
 	ASTDF:  {ASTSF, AFMOVD, AFMOVS},
+	ASAVE:  {ARESTORE},
 }
 
 func opkeys() OptabSlice {
@@ -640,6 +643,11 @@ func opalu(a int16) uint32 {
 		return op3(2, 0x26) | 1<<12
 	case ASRAD:
 		return op3(2, 0x27) | 1<<12
+
+	case ASAVE:
+		return op3(2, 0x3C)
+	case ARESTORE:
+		return op3(2, 0x3D)
 
 	default:
 		panic("unknown instruction: " + obj.Aconv(int(a)))

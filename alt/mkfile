@@ -40,7 +40,8 @@ GOEXTEXES=${GOEXES:%.go.out=%.go.ext}\
 	bias.go.ext\
 	iol.go.ext\
 	call1.go.ext\
-	addrconst.go.ext
+	addrconst.go.ext\
+	windows.go.ext\
 
 GOEXTHOSTOBJS=${GOEXTEXES:%.go.ext=%.go.ext.tmp/go.o}
 

@@ -122,6 +122,8 @@ var Anames = []string{
 	"ORN",
 	"ORNCC",
 	"RD",
+	"RESTORE",
+	"SAVE",
 	"SDIVD",
 	"SETHI",
 	"UDIVD",

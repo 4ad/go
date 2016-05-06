@@ -1,0 +1,6 @@
+TEXT	main(SB),512|7,$0
+	SAVE	R1, R2, R3
+	SAVE	$8, R2, R3
+	RESTORE	R1, R2, R3
+	RESTORE	$8, R2, R3
+	RET
