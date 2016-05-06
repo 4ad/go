@@ -67,24 +67,56 @@ TEXT runtime·pipe1(SB),NOSPLIT,$0
 // Call a library function with SysV calling conventions.
 // The called function can take a maximum of 6 INTEGER class arguments,
 // see 
-//   Michael Matz, Jan Hubicka, Andreas Jaeger, and Mark Mitchell
-//   System V Application Binary Interface 
-//   AMD64 Architecture Processor Supplement
-// section 3.2.3.
+// 	SYSTEM V APPLICATION BINARY INTERFACE
+// 	SPARC Version 9 Processor Supplement
+// section 3.2.2.
 //
 // Called by runtime·asmcgocall or runtime·cgocall.
 // NOT USING GO CALLING CONVENTION.
 TEXT runtime·asmsysvicall6(SB),NOSPLIT,$0
-	// TODO(aram):
-	MOVD	$73, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
+	// asmcgocall will put first argument into O0.
+	MOVD	O0, R16
+	MOVD	libcall_fn(O0), R1
+	MOVD	libcall_args(O0), R17
+	MOVD	libcall_n(O0), R18
+
+	CMP	ZR, g
+	BED	skiperrno1
+	MOVD	g_m(g), R2
+	MOVD	(m_mOS+mOS_perrno)(R2), R3
+	CMP	R3, ZR
+	BED	skiperrno1
+	MOVW	ZR, (R3)
+
+skiperrno1:
+	CMP	R11, ZR
+	BED	skipargs
+	// Load 6 args into correspondent registers.
+	MOVD	0(R17), O0
+	MOVD	8(R17), O1
+	MOVD	16(R17), O2
+	MOVD	24(R17), O3
+	MOVD	32(R17), O4
+	MOVD	40(R17), O5
+skipargs:
+
+	// Call SysV function
 	CALL	R1
-	UNDEF
+
+	// Return result
+	MOVD	O0, libcall_r1(R16)
+	MOVD	O1, libcall_r2(R16)
+
+	CMP	g, ZR
+	BED	skiperrno2
+	MOVD	g_m(g), R2
+	MOVD	(m_mOS+mOS_perrno)(R2), R3
+	CMP	R3, ZR
+	BED	skiperrno2
+	MOVW	(R3), R4
+	MOVD	R4, libcall_err(R16)
+
+skiperrno2:	
 	RET
 
 // uint32 tstart_sysvicall(M *newm);

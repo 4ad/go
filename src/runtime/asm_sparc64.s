@@ -502,7 +502,8 @@ TEXT gosave<>(SB),NOSPLIT|NOFRAME,$0
 // See cgocall.go for more details.
 TEXT ·asmcgocall(SB),NOSPLIT|NOFRAME,$0-20
 	MOVD	fn+0(FP), R3
-	MOVD	arg+8(FP), R4
+	MOVD	arg+8(FP), O0
+	MOVD	O0, FIXED_FRAME(BSP)
 
 	MOVD	BSP, R10		// save original stack pointer
 	MOVD	g, R5
