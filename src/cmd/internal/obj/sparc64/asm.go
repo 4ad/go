@@ -93,6 +93,7 @@ var optab = map[Optab]Opval{
 	Optab{ASAVE, ClassConst13, ClassReg, ClassNone, ClassReg}:  {3, 4, 0},
 
 	Optab{AMOVD, ClassConst13, ClassNone, ClassNone, ClassReg}: {4, 4, 0},
+	Optab{AMOVW, ClassConst13, ClassNone, ClassNone, ClassReg}: {4, 4, 0},
 
 	Optab{ALDD, ClassIndirRegReg, ClassNone, ClassNone, ClassReg}:   {5, 4, 0},
 	Optab{ASTD, ClassReg, ClassNone, ClassNone, ClassIndirRegReg}:   {6, 4, 0},
@@ -575,7 +576,7 @@ func opalu(a int16) uint32 {
 		return op3(2, 0xD)
 
 	// OR logical operation.
-	case AOR, AMOVD:
+	case AOR, AMOVD, AMOVW:
 		return op3(2, 2)
 	case AORCC:
 		return op3(2, 18)
