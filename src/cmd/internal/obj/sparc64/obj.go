@@ -411,13 +411,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				ctxt.Diag("%v: negative frame size %d", p, frameSize)
 			}
 			if frameSize%16 != 0 {
-				if frameSize%16 == 8 {
-					cursym.Text.To.Offset += 8
-					cursym.Locals += 8
-					frameSize += 8
-				} else {
-					ctxt.Diag("%v: unaligned frame size %d - must be 0 mod 16", p, frameSize)
-				}
+				ctxt.Diag("%v: unaligned frame size %d - must be 0 mod 16", p, frameSize)
 			}
 			if frameSize != 0 && isNOFRAME(p) {
 				ctxt.Diag("%v: non-zero framesize for NOFRAME function", p)

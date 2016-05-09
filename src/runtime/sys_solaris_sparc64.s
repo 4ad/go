@@ -88,7 +88,7 @@ TEXT runtime·asmsysvicall6(SB),NOSPLIT,$0
 	MOVW	ZR, (R3)
 
 skiperrno1:
-	CMP	R11, ZR
+	CMP	R17, ZR
 	BED	skipargs
 	// Load 6 args into correspondent registers.
 	MOVD	0(R17), O0
@@ -191,7 +191,7 @@ TEXT runtime·osyield1(SB),NOSPLIT,$0
 	RET
 
 // func now() (sec int64, nsec int32)
-TEXT time·now(SB),NOSPLIT,$8-12
+TEXT time·now(SB),NOSPLIT,$16-12
 	// TODO(aram):
 	MOVD	$79, R1
 	ADD	$'!', R1, R1

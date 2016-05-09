@@ -19,8 +19,8 @@ func defframe(ptxt *obj.Prog) {
 	frame := uint32(gc.Rnd(gc.Stksize+gc.Maxarg, int64(gc.Widthreg)))
 
 	// sparc64 requires that the frame size (not counting saved LR)
-	// be empty or be 8 mod 16. If not, pad it.
-	if frame != 0 && frame%16 != 8 {
+	// be empty or be 0 mod 16. If not, pad it.
+	if frame != 0 && frame%16 == 8 {
 		frame += 8
 	}
 

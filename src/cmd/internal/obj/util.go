@@ -487,7 +487,12 @@ func Mconv(a *Addr) string {
 		case a.Offset == 0:
 			str = fmt.Sprintf("(%v)", Rconv(int(a.Reg)))
 		case a.Offset != 0:
-			str = fmt.Sprintf("%d(%v)", a.Offset, Rconv(int(a.Reg)))
+			// TODO(aram): remove hack
+			reg := Rconv(int(a.Reg))
+			if (reg == "RSP" || reg == "RFP") && a.Offset > 0x7ff {
+				return fmt.Sprintf("%d+176+2047(%v)", a.Offset-0x7ff-176, reg)
+			}
+			str = fmt.Sprintf("%d(%v)", a.Offset, reg)
 		}
 
 	case NAME_EXTERN:

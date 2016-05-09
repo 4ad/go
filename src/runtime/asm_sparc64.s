@@ -426,34 +426,33 @@ end:						\
 	CALL	runtime·callwritebarrier(SB);	\
 	RET
 
-// These have 8 added to make the overall frame size a multiple of 16,
-// as required by the ABI. (There is another +8 for the saved LR.)
-CALLFN(·call32, 40 )
-CALLFN(·call64, 72 )
-CALLFN(·call128, 136 )
-CALLFN(·call256, 264 )
-CALLFN(·call512, 520 )
-CALLFN(·call1024, 1032 )
-CALLFN(·call2048, 2056 )
-CALLFN(·call4096, 4104 )
-CALLFN(·call8192, 8200 )
-CALLFN(·call16384, 16392 )
-CALLFN(·call32768, 32776 )
-CALLFN(·call65536, 65544 )
-CALLFN(·call131072, 131080 )
-CALLFN(·call262144, 262152 )
-CALLFN(·call524288, 524296 )
-CALLFN(·call1048576, 1048584 )
-CALLFN(·call2097152, 2097160 )
-CALLFN(·call4194304, 4194312 )
-CALLFN(·call8388608, 8388616 )
-CALLFN(·call16777216, 16777224 )
-CALLFN(·call33554432, 33554440 )
-CALLFN(·call67108864, 67108872 )
-CALLFN(·call134217728, 134217736 )
-CALLFN(·call268435456, 268435464 )
-CALLFN(·call536870912, 536870920 )
-CALLFN(·call1073741824, 1073741832 )
+CALLFN(·call32, 32)
+CALLFN(·call64, 64)
+CALLFN(·call128, 128)
+CALLFN(·call256, 256)
+CALLFN(·call512, 512)
+CALLFN(·call1024, 1024)
+CALLFN(·call2048, 2048)
+CALLFN(·call4096, 4096)
+CALLFN(·call8192, 8192)
+CALLFN(·call16384, 16384)
+CALLFN(·call32768, 32768)
+CALLFN(·call65536, 65536)
+CALLFN(·call131072, 131072)
+CALLFN(·call262144, 262144)
+CALLFN(·call524288, 524288)
+CALLFN(·call1048576, 1048576)
+CALLFN(·call2097152, 2097152)
+CALLFN(·call4194304, 4194304)
+CALLFN(·call8388608, 8388608)
+CALLFN(·call16777216, 16777216)
+CALLFN(·call33554432, 33554432)
+CALLFN(·call67108864, 67108864)
+CALLFN(·call134217728, 134217728)
+CALLFN(·call268435456, 268435456)
+CALLFN(·call536870912, 536870912)
+CALLFN(·call1073741824, 1073741824)
+
 
 // AES hashing not implemented for SPARC64.
 TEXT runtime·aeshash(SB),NOSPLIT|NOFRAME,$0-0
@@ -549,7 +548,7 @@ g0:
 // cgocallback(void (*fn)(void*), void *frame, uintptr framesize)
 // Turn the fn into a Go func (by taking its address) and call
 // cgocallback_gofunc.
-TEXT runtime·cgocallback(SB),NOSPLIT,$24-24
+TEXT runtime·cgocallback(SB),NOSPLIT,$32-24
 	MOVD	$fn+0(FP), R1
 	MOVD	R1, (FIXED_FRAME+0)(BSP)
 	MOVD	frame+8(FP), R1
@@ -562,7 +561,7 @@ TEXT runtime·cgocallback(SB),NOSPLIT,$24-24
 
 // cgocallback_gofunc(FuncVal*, void *frame, uintptr framesize)
 // See cgocall.go for more details.
-TEXT ·cgocallback_gofunc(SB),NOSPLIT,$24-24
+TEXT ·cgocallback_gofunc(SB),NOSPLIT,$32-24
 	NO_LOCAL_POINTERS
 
 	// Load m and g from thread-local storage.
@@ -672,7 +671,7 @@ droppedm:
 
 // Called from cgo wrappers, this function returns g->m->curg.stack.hi.
 // Must obey the gcc calling convention.
-TEXT _cgo_topofstack(SB),NOSPLIT,$24
+TEXT _cgo_topofstack(SB),NOSPLIT,$32
 	// g and TMP might be clobbered by load_g. They
 	// are callee-save in the gcc calling convention, so save them.
 	MOVD	TMP, savedTMP-8(SP)
@@ -695,14 +694,14 @@ TEXT runtime·setg(SB), NOSPLIT, $0-8
 	RET
 
 // void setg_gcc(G*); set g called from gcc
-TEXT setg_gcc<>(SB),NOSPLIT,$8
+TEXT setg_gcc<>(SB),NOSPLIT,$16
 	MOVD	R8, g
 	MOVD	TMP, savedTMP-8(SP)
 	CALL	runtime·save_g(SB)
 	MOVD	savedTMP-8(SP), TMP
 	RET
 
-TEXT runtime·getcallerpc(SB),NOSPLIT,$8-16
+TEXT runtime·getcallerpc(SB),NOSPLIT,$16-16
 	MOVD	FIXED_FRAME+8*15(BFP), R3		// LR saved by caller
 	MOVD	runtime·stackBarrierPC(SB), R4
 	CMP	R4, R3
@@ -714,7 +713,7 @@ nobar:
 	MOVD	R3, ret+8(FP)
 	RET
 
-TEXT runtime·setcallerpc(SB),NOSPLIT,$8-16
+TEXT runtime·setcallerpc(SB),NOSPLIT,$16-16
 	MOVD	pc+8(FP), R3
 	MOVD	FIXED_FRAME+8(BSP), R4
 	MOVD	runtime·stackBarrierPC(SB), R5
@@ -747,7 +746,7 @@ TEXT runtime·cputicks(SB),NOSPLIT,$0-0
 // memhash_varlen(p unsafe.Pointer, h seed) uintptr
 // redirects to memhash(p, h, size) using the size
 // stored in the closure.
-TEXT runtime·memhash_varlen(SB),NOSPLIT,$40-24
+TEXT runtime·memhash_varlen(SB),NOSPLIT,$48-24
 	GO_ARGS
 	NO_LOCAL_POINTERS
 	MOVD	p+0(FP), R3
@@ -786,7 +785,7 @@ done:
 	RET
 
 // memequal_varlen(a, b unsafe.Pointer) bool
-TEXT runtime·memequal_varlen(SB),NOSPLIT,$40-17
+TEXT runtime·memequal_varlen(SB),NOSPLIT,$48-17
 	MOVD	a+0(FP), R3
 	MOVD	b+8(FP), R4
 	CMP	R3, R4
