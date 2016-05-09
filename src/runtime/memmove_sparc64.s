@@ -14,7 +14,7 @@ TEXT runtime·memmove(SB), NOSPLIT|NOFRAME, $0-24
 	RET
 
 check:
-	AND $7, R5, R6
+	AND $7, R5, R11
 
 	CMP	R3, R4
 	BLD	backward
@@ -36,12 +36,12 @@ forwardlargeloop:
 	BNED	forwardlargeloop
 
 noforwardlarge:
-	CMP	ZR, R6		// Do we need to do any byte-by-byte copying?
+	CMP	ZR, R11		// Do we need to do any byte-by-byte copying?
 	BNED	forwardtail
 	RET
 
 forwardtail:
-	ADD	R3, R6, R9	// R9 points just past the destination memory
+	ADD	R3, R11, R9	// R9 points just past the destination memory
 
 forwardtailloop:
 	MOVUB (R4), R8
@@ -60,10 +60,10 @@ backward:
 	ADD	R4, R5, R4	// R4 points just past the last source byte
 	ADD	R3, R5, R3	// R3 points just past the last destination byte
 
-	CMP	ZR, R6		// Do we need to do any byte-by-byte copying?
+	CMP	ZR, R11		// Do we need to do any byte-by-byte copying?
 	BED	nobackwardtail
 
-	SUB	R6, R3, R9	// R9 points at the lowest destination byte that should be copied by byte.
+	SUB	R11, R3, R9	// R9 points at the lowest destination byte that should be copied by byte.
 backwardtailloop:
 	ADD	$-1, R4
 	MOVUB	(R4), R8

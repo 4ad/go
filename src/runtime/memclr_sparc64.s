@@ -7,7 +7,7 @@
 TEXT runtime·memclr(SB),NOSPLIT|NOFRAME,$0-16
 	MOVD	ptr+0(FP), R3
 	MOVD	n+8(FP), R4
-	AND $7, R4, R6
+	AND $7, R4, R9
 
 	CMP	ZR, R5
 	BED	nowords
@@ -20,15 +20,15 @@ wordloop: // TODO: Optimize for unaligned ptr.
 	CMP	R3, R5
 	BNED	wordloop
 nowords:
-        CMP	$0, R6
+        CMP	$0, R9
         BED	done
 
-	ADD	R3, R6, R6
+	ADD	R3, R9, R9
 
 byteloop:
 	MOVUB	ZR, (R3)
 	ADD	$1, R3
-	CMP	R3, R6
+	CMP	R3, R9
 	BNED	byteloop
 done:
 	RET

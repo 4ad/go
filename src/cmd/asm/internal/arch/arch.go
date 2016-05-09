@@ -454,6 +454,7 @@ func archSparc64() *Arch {
 	// Avoid accidental confusion between RSP and BSP, always use BSP.
 	delete(register, "RSP")
 	delete(register, "RFP")
+	delete(register, "R6")
 	register["ICC"] = sparc64.REG_ICC
 	register["XCC"] = sparc64.REG_XCC
 	register["FCC0"] = sparc64.REG_FCC0
