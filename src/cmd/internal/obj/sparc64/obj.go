@@ -410,16 +410,32 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			if frameSize < 0 {
 				ctxt.Diag("%v: negative frame size %d", p, frameSize)
 			}
-			if frameSize%8 != 0 {
-				ctxt.Diag("%v: unaligned frame size %d - must be 0 mod 8", p, frameSize)
+			if frameSize%16 != 0 {
+				if frameSize%16 == 8 {
+					cursym.Text.To.Offset += 8
+					cursym.Locals += 8
+					frameSize += 8
+				} else {
+					ctxt.Diag("%v: unaligned frame size %d - must be 0 mod 16", p, frameSize)
+				}
 			}
 			if frameSize != 0 && isNOFRAME(p) {
 				ctxt.Diag("%v: non-zero framesize for NOFRAME function", p)
 			}
 
 			if isNOFRAME(p) {
+				// Without this NOP, DTrace changes the execution of the binary,
+				// This should never happen, but this NOP seems to fix it.
+				// Keep this NOP in here until we understand the DTrace behavior.
+				p = obj.Appendp(ctxt, p)
+				p.As = ARNOP
 				break
 			}
+			// Without this NOP, DTrace changes the execution of the binary,
+			// This should never happen, but this NOP seems to fix it.
+			// Keep this NOP in here until we understand the DTrace behavior.
+			p = obj.Appendp(ctxt, p)
+			p.As = ARNOP
 
 			// MOVD RFP, (112+bias)(RSP)
 			p = obj.Appendp(ctxt, p)
@@ -464,60 +480,12 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			p.To.Type = obj.TYPE_REG
 			p.To.Reg = REG_R31
 
-			if cursym.Args == obj.ArgsSizeUnknown {
-				break
-			}
-			args := int(cursym.Args) / 8
-			// At this point we have a stack frame that
-			// can be unwinded and register window spilled
-			// by native target code. However, the native
-			// target code (e.g. mdb(1)) doesn't know where
-			// to look for function arguments. Since we
-			// have argument information, we copy the
-			// arguments in the place where native tools
-			// expect them.
-
-			// TODO(aram): arrange for the compiler to set the %i
-			// registers and remove this code.
-
-			// For all functions copy at most 6 arguments into the
-			// %i registers.
-			if args > 6 {
-				args = 6
-			}
-			for i := 0; i < args; i++ {
-				// MOVD	argN+8N(FP), %iN
-				p = obj.Appendp(ctxt, p)
-				p.As = AMOVD
-				p.From.Type = obj.TYPE_MEM
-				p.From.Reg = REG_RFP
-				p.From.Offset = int64(i*8 + MinStackFrameSize + StackBias)
-				p.To.Type = obj.TYPE_REG
-				p.To.Reg = int16(REG_R24 + i) // %i0+i
-			}
-
-			// If the function is not a leaf, save incoming arguments
-			// into the slot reserved for register window spill.
-			if cursym.Leaf == 1 {
-				break
-			}
-			for i := 0; i < 6; i++ {
-				// MOVD %iN, (bias+64+8N)(RSP)
-				p = obj.Appendp(ctxt, p)
-				p.As = AMOVD
-				p.From.Type = obj.TYPE_REG
-				p.From.Reg = int16(REG_R24 + i) // %i0+i
-				p.To.Type = obj.TYPE_MEM
-				p.To.Reg = REG_RSP
-				p.To.Offset = int64(i*8 + 64 + StackBias)
-			}
-
 		case obj.ARET:
 			if isNOFRAME(cursym.Text) {
 				break
 			}
 
-			// MOVD RFP, TMP
+			// MOVD RFP, R1
 			q1 = p
 			p = obj.Appendp(ctxt, p)
 			p.As = obj.ARET
@@ -525,7 +493,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			q1.From.Type = obj.TYPE_REG
 			q1.From.Reg = REG_RFP
 			q1.To.Type = obj.TYPE_REG
-			q1.To.Reg = REG_TMP
+			q1.To.Reg = REG_R1
 
 			// MOVD R31, LR
 			q1 = obj.Appendp(ctxt, q1)
@@ -553,11 +521,11 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			q1.To.Type = obj.TYPE_REG
 			q1.To.Reg = REG_RFP
 
-			// MOVD TMP, RSP
+			// MOVD R1, RSP
 			q1 = obj.Appendp(ctxt, q1)
 			q1.As = AMOVD
 			q1.From.Type = obj.TYPE_REG
-			q1.From.Reg = REG_TMP
+			q1.From.Reg = REG_R1
 			q1.To.Type = obj.TYPE_REG
 			q1.To.Reg = REG_RSP
 		}
