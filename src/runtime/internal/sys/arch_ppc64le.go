@@ -13,6 +13,7 @@ const (
 	Int64Align    = 8
 	HugePageSize  = 0
 	MinFrameSize  = 32
+	SpAlign       = 1
 )
 
 type Uintreg uint64
