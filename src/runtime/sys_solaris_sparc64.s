@@ -36,17 +36,16 @@ TEXT runtime·miniterrno(SB),NOSPLIT,$0
 //
 // Called using runtime·sysvicall6 from os_solaris.c:/nanotime.
 // NOT USING GO CALLING CONVENTION.
-TEXT runtime·nanotime1(SB),NOSPLIT,$0
-	// TODO(aram):
-	MOVD	$71, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
+TEXT runtime·nanotime1(SB),NOSPLIT,$64
+	MOVW	$3, O0	// CLOCK_REALTIME from <sys/time_impl.h>
+	MOVD	$-16(BFP), O1
+	MOVD	$libc_clock_gettime(SB), R1
 	CALL	R1
-	UNDEF
+	MOVD	-16(BFP), R1	// tv_sec from struct timespec
+	MOVD	$1000000000, R3
+	MULD	R3, R1	// multiply into nanoseconds
+	MOVD	-8(BFP), R2	// tv_nsec, offset should be stable.
+	ADD	R2, R1, O0
 	RET
 
 // pipe(3c) wrapper that returns fds in AX, DX.
