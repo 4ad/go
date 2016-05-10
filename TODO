@@ -12,17 +12,10 @@ cd cmd/link/internal/sparc64
 cd cmd/link/internal/ld
 cd cmd/compile/internal/sparc64
 cd cmd/compile/internal/gc
-cd runtime/cgo
-cd /tmp && lsr /Users/aram/go/test | grep \.go$ | xargs egrep -L 'ERROR' | xargs egrep -L 'import' | GOOS=solaris GOARCH=sparc64 xargs -n1 go tool compile >/tmp/errors
-cd /tmp/2 && CC=sparcv9-solaris2.12-gcc GOARCH=sparc64 GOOS=solaris go tool cgo -godefs defs_solaris.go defs_solaris_sparc64.go >/tmp/2/defs1_solaris_sparc64.go
 GOARCH=sparc64 GOOS=solaris go vet runtime
 cd alt && mk clean && mk bigmov.go.ext
-GO_EXTLINK_ENABLED=1 GOOS=solaris GOARCH=sparc64 go build -o /tmp/hello.out -x -ldflags='-w -extld=sparcv9-solaris2.12-gcc -linkmode=external' /Users/aram/go/test/helloworld.go
-cd alt && mk clean && mk tls.gnu.out.readelf tls.o.readelf
-scp /tmp/hello.out torside:
-cd new && mk clean && mk helloworld.out
-mk helloworld.out.tmp/go.o.readelf helloworld.out.tmp/go.o.rel
-scp helloworld.out torside:
+cd new && mk clean && mk helloworld.out.s
+scp helloworld.out daffodil:
 
 reserve R6
 
