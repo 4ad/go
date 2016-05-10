@@ -415,6 +415,9 @@ func main() {
 		if strings.Contains(out, "i386") {
 			gohostarch = "386"
 		}
+		if strings.Contains(out, "sparcv9") {
+			gohostarch = "sparc64"
+		}
 	case "plan9":
 		gohostarch = os.Getenv("objtype")
 		if gohostarch == "" {
