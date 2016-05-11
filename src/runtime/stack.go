@@ -511,6 +511,25 @@ var ptrnames = []string{
 // +------------------+
 // |  return address  |
 // +------------------+ <- frame->sp
+//
+// (sparc64)
+//                 +------------------+
+//                 | args from caller |
+// RFP+BIAS+176 -> +------------------+ <- frame->argp
+//                 |    save area     |
+//                 +------------------+
+//                 | caller's retaddr |
+// RFP+BIAS+120 -> +------------------+
+//                 |   caller's RFP   |
+// RFP+BIAS+112 -> +------------------+
+//                 |     save area    |                 CALLER
+// --- RFP+BIAS -> +------------------+ <- frame->varp -------
+//                 |      locals      |                 CALLEE
+//                 +------------------+
+//                 |  args to callee  |
+// RSP+BIAS+176 -> +------------------+
+//                 |     save area    |
+//     RSP+BIAS -> +------------------+ <- frame->sp
 
 type adjustinfo struct {
 	old   stack
