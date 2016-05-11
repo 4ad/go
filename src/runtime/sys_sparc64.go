@@ -23,3 +23,19 @@ func gostartcall(buf *gobuf, fn, ctxt unsafe.Pointer) {
 func rewindmorestack(buf *gobuf) {
 	throw("not implemented")
 }
+
+func usleep2(uint32)
+
+//go:linkname usleep1_go runtime.usleep1
+//go:nosplit
+func usleep1_go(µs uint32) {
+	_g_ := getg()
+
+	// Check the validity of m because we might be called in cgo callback
+	// path early enough where there isn't a m available yet.
+	if _g_ != nil && _g_.m != nil {
+		usleep2(µs)
+		return
+	}
+	sysvicall1(&libc_usleep, uintptr(µs))
+}

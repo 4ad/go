@@ -137,33 +137,11 @@ TEXT runtime·sigtramp(SB),NOSPLIT,$0
 	UNDEF
 	RET
 
-// Called from runtime·usleep (Go). Can be called on Go stack, on OS stack,
-// can also be called in cgo callback path without a g->m.
-TEXT runtime·usleep1(SB),NOSPLIT,$0
-	// TODO(aram):
-	MOVD	$76, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
-	RET
-
-// Runs on OS stack. duration (in µs units) is in DI.
+// Runs on OS stack, called from runtime·usleep1_go.
 TEXT runtime·usleep2(SB),NOSPLIT,$0
-	// TODO(aram):
-	MOVD	$77, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
+	MOVW	usec+0(FP), O0
+	MOVD	$libc_usleep(SB), R1
 	CALL	R1
-	UNDEF
 	RET
 
 // Runs on OS stack, called from runtime·osyield.
