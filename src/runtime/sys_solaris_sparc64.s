@@ -8,7 +8,7 @@
 #include "go_asm.h"
 #include "go_tls.h"
 #include "textflag.h"
-
+#include "asm_sparc64.h"
 
 // void libc_miniterrno(void *(*___errno)(void));
 //
@@ -17,16 +17,11 @@
 // Called using runtime·asmcgocall from os_solaris.c:/minit.
 // NOT USING GO CALLING CONVENTION.
 TEXT runtime·miniterrno(SB),NOSPLIT,$0
-	// TODO(aram):
-	MOVD	$70, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
-	UNDEF
+	// asmcgocall will put first argument into O0.
+	CALL	O0	// SysV ABI so returns in O0
+	CALL	runtime·load_g(SB)
+	MOVD	g_m(g), R1
+	MOVD	O0,	(m_mOS+mOS_perrno)(R1)
 	RET
 
 // int64 runtime·nanotime1(void);
@@ -50,17 +45,12 @@ TEXT runtime·nanotime1(SB),NOSPLIT,$64
 
 // pipe(3c) wrapper that returns fds in AX, DX.
 // NOT USING GO CALLING CONVENTION.
-TEXT runtime·pipe1(SB),NOSPLIT,$0
-	// TODO(aram):
-	MOVD	$72, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
+TEXT runtime·pipe1(SB),NOSPLIT,$16
+	MOVD	$FIXED_FRAME(BSP), O0
+	MOVD	$libc_pipe(SB), R1
 	CALL	R1
-	UNDEF
+	MOVW	(FIXED_FRAME+0)(BSP), O0
+	MOVW	(FIXED_FRAME+4)(BSP), O1
 	RET
 
 // Call a library function with SysV calling conventions.
