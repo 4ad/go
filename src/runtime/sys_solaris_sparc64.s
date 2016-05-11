@@ -146,16 +146,8 @@ TEXT runtime·usleep2(SB),NOSPLIT,$0
 
 // Runs on OS stack, called from runtime·osyield.
 TEXT runtime·osyield1(SB),NOSPLIT,$0
-	// TODO(aram):
-	MOVD	$78, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
+	MOVD	$libc_sched_yield(SB), R1
 	CALL	R1
-	UNDEF
 	RET
 
 // func now() (sec int64, nsec int32)
