@@ -488,5 +488,9 @@ const (
 	AWORD
 	ADWORD
 
+	// JMPL $8(OLR), ZR
+	//	RESTORE	$0, ZR, ZR
+	ARETRESTORE
+
 	ALAST
 )

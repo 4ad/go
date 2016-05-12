@@ -190,5 +190,6 @@ var Anames = []string{
 	"BVSD",
 	"WORD",
 	"DWORD",
+	"RETRESTORE",
 	"LAST",
 }

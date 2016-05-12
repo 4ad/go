@@ -207,6 +207,8 @@ var optab = map[Optab]Opval{
 	Optab{AMOVRZ, ClassReg, ClassReg, ClassNone, ClassReg}:     {49, 4, 0},
 
 	Optab{AMOVD, ClassTLSAddr, ClassNone, ClassNone, ClassReg}: {50, 12, 0},
+
+	Optab{ARETRESTORE, ClassNone, ClassNone, ClassNone, ClassNone}: {51, 8, 0},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
@@ -1533,6 +1535,11 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		rel.Add = p.From.Offset
 		rel.Type = obj.R_SPARC64_TLS_LE
 		*o3 = opalu(AADD) | rrr(REG_TLS, 0, p.To.Reg, p.To.Reg)
+
+	// RETRESTORE
+	case 51:
+		*o1 = opcode(AJMPL) | rsr(REG_OLR, 8, REG_ZR)
+		*o2 = opalu(ARESTORE) | rsr(REG_ZR, 0, REG_ZR)
 	}
 
 	return out[:o.size/4], nil

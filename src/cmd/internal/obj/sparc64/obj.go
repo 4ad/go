@@ -20,6 +20,7 @@ var isUncondJump = map[int16]bool{
 	obj.ARET:      true,
 	AFBA:          true,
 	AJMPL:         true,
+	ARETRESTORE:   true,
 }
 
 var isCondJump = map[int16]bool{
@@ -418,74 +419,27 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			}
 
 			if isNOFRAME(p) {
-				// Without this NOP, DTrace changes the execution of the binary,
-				// This should never happen, but this NOP seems to fix it.
-				// Keep this NOP in here until we understand the DTrace behavior.
-				p = obj.Appendp(ctxt, p)
-				p.As = ARNOP
 				break
 			}
-			// Without this NOP, DTrace changes the execution of the binary,
-			// This should never happen, but this NOP seems to fix it.
-			// Keep this NOP in here until we understand the DTrace behavior.
-			p = obj.Appendp(ctxt, p)
-			p.As = ARNOP
-
-			// MOVD RFP, (112+bias)(RSP)
+			// MOVD	$-(frameSize+MinStackFrameSize), RT1
 			p = obj.Appendp(ctxt, p)
 			p.As = AMOVD
-			p.From.Type = obj.TYPE_REG
-			p.From.Reg = REG_RFP
-			p.To.Type = obj.TYPE_MEM
-			p.To.Reg = REG_RSP
-			p.To.Offset = int64(112 + StackBias)
-
-			// MOVD R31, (120+bias)(RSP)
-			p = obj.Appendp(ctxt, p)
-			p.As = AMOVD
-			p.From.Type = obj.TYPE_REG
-			p.From.Reg = REG_R31
-			p.To.Type = obj.TYPE_MEM
-			p.To.Reg = REG_RSP
-			p.To.Offset = int64(120 + StackBias)
-
-			// ADD -(frame+128|176), RSP
-			p = obj.Appendp(ctxt, p)
-			p.As = AADD
 			p.From.Type = obj.TYPE_CONST
 			p.From.Offset = -int64(frameSize + MinStackFrameSize)
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = REG_RT1
+
+			// SAVE	RT1, RSP
+			p = obj.Appendp(ctxt, p)
+			p.As = ASAVE
+			p.From.Type = obj.TYPE_REG
+			p.From.Reg = REG_RT1
+			p.Reg = REG_RSP
 			p.To.Type = obj.TYPE_REG
 			p.To.Reg = REG_RSP
 			p.Spadj = frameSize + MinStackFrameSize
 
-			// SUB -(frame+128|176), RSP, RFP
-			p = obj.Appendp(ctxt, p)
-			p.As = ASUB
-			p.From.Type = obj.TYPE_CONST
-			p.From.Offset = -int64(frameSize + MinStackFrameSize)
-			p.Reg = REG_RSP
-			p.To.Type = obj.TYPE_REG
-			p.To.Reg = REG_RFP
-
-			// MOVD LR, R31
-			p = obj.Appendp(ctxt, p)
-			p.As = AMOVD
-			p.From.Type = obj.TYPE_REG
-			p.From.Reg = REG_LR
-			p.To.Type = obj.TYPE_REG
-			p.To.Reg = REG_R31
-
 			// MOVD LR, (120+bias)(RSP)
-			//
-			// Normally the old link register (caller's return address) is saved by the callee.
-			// However, Go doesn't save the old link register in its stack structures,
-			// it expects to find return addresses on the stack. A nil call would not
-			// save the old link register on the stack, so Go can't find it.
-			// Because of this, we save the link register in the corresponding stack slot
-			// in the caller (the same place the callee would place it. This means
-			// we wouldn't have to save it in the callee too, however saving it in the callee
-			// makes the function prolog more recognizable to native debug tools,
-			// so we do it anyway.
 			p = obj.Appendp(ctxt, p)
 			p.As = AMOVD
 			p.From.Type = obj.TYPE_REG
@@ -499,50 +453,13 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				break
 			}
 
-			// MOVD RFP, R1
-			q1 = p
-			p = obj.Appendp(ctxt, p)
-			p.As = obj.ARET
-			q1.As = AMOVD
-			q1.From.Type = obj.TYPE_REG
-			q1.From.Reg = REG_RFP
-			q1.To.Type = obj.TYPE_REG
-			q1.To.Reg = REG_R1
-
-			// MOVD R31, LR
-			q1 = obj.Appendp(ctxt, q1)
-			q1.As = AMOVD
-			q1.From.Type = obj.TYPE_REG
-			q1.From.Reg = REG_R31
-			q1.To.Type = obj.TYPE_REG
-			q1.To.Reg = REG_LR
-
-			// MOVD (120+StackBias)(RFP), R31
-			q1 = obj.Appendp(ctxt, q1)
-			q1.As = AMOVD
-			q1.From.Type = obj.TYPE_MEM
-			q1.From.Reg = REG_RFP
-			q1.From.Offset = 120 + StackBias
-			q1.To.Type = obj.TYPE_REG
-			q1.To.Reg = REG_R31
-
-			// MOVD (112+StackBias)(RFP), RFP
-			q1 = obj.Appendp(ctxt, q1)
-			q1.As = AMOVD
-			q1.From.Type = obj.TYPE_MEM
-			q1.From.Reg = REG_RFP
-			q1.From.Offset = 112 + StackBias
-			q1.To.Type = obj.TYPE_REG
-			q1.To.Reg = REG_RFP
-
-			// MOVD R1, RSP
-			q1 = obj.Appendp(ctxt, q1)
-			q1.As = AMOVD
-			q1.From.Type = obj.TYPE_REG
-			q1.From.Reg = REG_R1
-			q1.To.Type = obj.TYPE_REG
-			q1.To.Reg = REG_RSP
-			q1.Spadj = -(cursym.Locals + MinStackFrameSize)
+			p.As = ARETRESTORE
+			p.From.Type = obj.TYPE_NONE
+			p.From.Offset = 0
+			p.Reg = 0
+			p.To.Type = obj.TYPE_NONE
+			p.To.Reg = 0
+			p.Spadj = -(cursym.Locals + MinStackFrameSize)
 
 		case AADD, ASUB:
 			if p.To.Type == obj.TYPE_REG && p.To.Reg == REG_BSP && p.From.Type == obj.TYPE_CONST {
@@ -557,7 +474,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 
 	// Schedule delay-slots. Only RNOPs for now.
 	for p := cursym.Text; p != nil; p = p.Link {
-		if !isJump[p.As] {
+		if !isJump[p.As] || p.As == ARETRESTORE {
 			continue
 		}
 		if p.Link != nil && p.Link.As == ARNOP {
