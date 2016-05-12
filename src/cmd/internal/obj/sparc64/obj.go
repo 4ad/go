@@ -456,6 +456,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			p.From.Offset = -int64(frameSize + MinStackFrameSize)
 			p.To.Type = obj.TYPE_REG
 			p.To.Reg = REG_RSP
+			p.Spadj = frameSize + MinStackFrameSize
 
 			// SUB -(frame+128|176), RSP, RFP
 			p = obj.Appendp(ctxt, p)
@@ -541,6 +542,16 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			q1.From.Reg = REG_R1
 			q1.To.Type = obj.TYPE_REG
 			q1.To.Reg = REG_RSP
+			q1.Spadj = -(cursym.Locals + MinStackFrameSize)
+
+		case AADD, ASUB:
+			if p.To.Type == obj.TYPE_REG && p.To.Reg == REG_BSP && p.From.Type == obj.TYPE_CONST {
+				if p.As == AADD {
+					p.Spadj = int32(-p.From.Offset)
+				} else {
+					p.Spadj = int32(+p.From.Offset)
+				}
+			}
 		}
 	}
 
