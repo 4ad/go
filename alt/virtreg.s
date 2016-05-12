@@ -1,4 +1,4 @@
-TEXT	main(SB),7,$24-0
+TEXT	main(SB),7,$32-0
 	MOVD	$1, fd-24(SP)
 	MOVD	$msg(SB), R1
 	MOVD	R1, buf-16(SP)
