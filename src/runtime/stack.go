@@ -529,6 +529,10 @@ var ptrnames = []string{
 //                 |  args to callee  |
 // RSP+BIAS+176 -> +------------------+
 //                 |     save area    |
+//                 +------------------+
+//                 |  return address  |
+// RSP+BIAS+120 -> +------------------+
+//                 |     save area    |
 //     RSP+BIAS -> +------------------+ <- frame->sp
 
 type adjustinfo struct {
