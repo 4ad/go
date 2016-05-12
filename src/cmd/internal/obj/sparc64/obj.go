@@ -474,6 +474,25 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			p.To.Type = obj.TYPE_REG
 			p.To.Reg = REG_R31
 
+			// MOVD LR, (120+bias)(RSP)
+			//
+			// Normally the old link register (caller's return address) is saved by the callee.
+			// However, Go doesn't save the old link register in its stack structures,
+			// it expects to find return addresses on the stack. A nil call would not
+			// save the old link register on the stack, so Go can't find it.
+			// Because of this, we save the link register in the corresponding stack slot
+			// in the caller (the same place the callee would place it. This means
+			// we wouldn't have to save it in the callee too, however saving it in the callee
+			// makes the function prolog more recognizable to native debug tools,
+			// so we do it anyway.
+			p = obj.Appendp(ctxt, p)
+			p.As = AMOVD
+			p.From.Type = obj.TYPE_REG
+			p.From.Reg = REG_LR
+			p.To.Type = obj.TYPE_MEM
+			p.To.Reg = REG_RSP
+			p.To.Offset = int64(120 + StackBias)
+
 		case obj.ARET:
 			if isNOFRAME(cursym.Text) {
 				break
