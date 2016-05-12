@@ -126,22 +126,22 @@ TEXT runtime·gosave(SB), NOSPLIT|NOFRAME, $0-8
 // void gogo(Gobuf*)
 // restore state from Gobuf; longjmp
 TEXT runtime·gogo(SB), NOSPLIT|NOFRAME, $0-8
-	MOVD	buf+0(FP), R5
-	MOVD	gobuf_g(R5), g
+	MOVD	buf+0(FP), R22
+	MOVD	gobuf_g(R22), g
 	CALL	runtime·save_g(SB)
 
 	MOVD	0(g), R4	// make sure g is not nil
-	MOVD	gobuf_sp(R5), R1
+	MOVD	gobuf_sp(R22), R1
 	MOVD	R1, BSP
-	MOVD	gobuf_lr(R5), LR
-	MOVD	gobuf_ret(R5), R1
-	MOVD	gobuf_ctxt(R5), CTXT
-	MOVD	ZR, gobuf_sp(R5)
-	MOVD	ZR, gobuf_ret(R5)
-	MOVD	ZR, gobuf_lr(R5)
-	MOVD	ZR, gobuf_ctxt(R5)
+	MOVD	gobuf_lr(R22), LR
+	MOVD	gobuf_ret(R22), R1
+	MOVD	gobuf_ctxt(R22), CTXT
+	MOVD	ZR, gobuf_sp(R22)
+	MOVD	ZR, gobuf_ret(R22)
+	MOVD	ZR, gobuf_lr(R22)
+	MOVD	ZR, gobuf_ctxt(R22)
 	CMP	ZR, ZR // set condition codes for == test, needed by stack split
-	MOVD	gobuf_pc(R5), R8
+	MOVD	gobuf_pc(R22), R8
 	JMPL	R8, ZR
 
 // void mcall(fn func(*g))
@@ -191,12 +191,12 @@ TEXT runtime·systemstack(SB), NOSPLIT, $0-8
 	MOVD	R3, CTXT		// context
 	MOVD	g_m(g), R4	// R4 = m
 
-	MOVD	m_gsignal(R4), R5	// R5 = gsignal
-	CMP	g, R5
+	MOVD	m_gsignal(R4), R22	// R22 = gsignal
+	CMP	g, R22
 	BED	noswitch
 
-	MOVD	m_g0(R4), R5	// R5 = g0
-	CMP	g, R5
+	MOVD	m_g0(R4), R22	// R22 = g0
+	CMP	g, R22
 	BED	noswitch
 
 	MOVD	m_curg(R4), R8
@@ -220,7 +220,7 @@ switch:
 	MOVD	g, (g_sched+gobuf_g)(g)
 
 	// switch to g0
-	MOVD	R5, g
+	MOVD	R22, g
 	CALL	runtime·save_g(SB)
 	MOVD	(g_sched+gobuf_sp)(g), R3
 	// make it look like mstart called systemstack on g0, to stop traceback
@@ -311,14 +311,14 @@ TEXT runtime·stackBarrier(SB),NOSPLIT,$0
 
 	// Get the original return PC, g.stkbar[g.stkbarPos].savedLRVal.
 	MOVD	(g_stkbar+slice_array)(g), R4
-	MOVD	g_stkbarPos(g), R5
+	MOVD	g_stkbarPos(g), R22
 	MOVD	$stkbar__size, R9
-	MULD	R5, R9
+	MULD	R22, R9
 	ADD	R4, R9
 	MOVD	stkbar_savedLRVal(R9), R9
 	// Record that this stack barrier was hit.
-	ADD	$1, R5
-	MOVD	R5, g_stkbarPos(g)
+	ADD	$1, R22
+	MOVD	R22, g_stkbarPos(g)
 	// Jump to the original return PC.
 	JMPL	R9, ZR
 
@@ -378,16 +378,16 @@ TEXT NAME(SB), WRAPPER, $MAXSIZE-24;		\
 	/* copy arguments to stack */		\
 	MOVD	arg+16(FP), R3;			\
 	MOVUW	argsize+24(FP), R4;			\
-	MOVD	BSP, R5;				\
-	ADD	$(FIXED_FRAME-1), R5;			\
+	MOVD	BSP, R22;				\
+	ADD	$(FIXED_FRAME-1), R22;			\
 	SUB	$1, R3;				\
-	ADD	R5, R4;				\
-	CMP	R5, R4;				\
+	ADD	R22, R4;				\
+	CMP	R22, R4;				\
 	BED	6(PC);				\
 	MOVUB	(R3), R9;			\
 	ADD	$1, R3;				\
-	MOVUB	R9, (R5);			\
-	ADD	$1, R5;				\
+	MOVUB	R9, (R22);			\
+	ADD	$1, R22;				\
 	JMP	-6(PC);				\
 	/* call function */			\
 	MOVD	f+8(FP), CTXT;			\
@@ -398,18 +398,18 @@ TEXT NAME(SB), WRAPPER, $MAXSIZE-24;		\
 	MOVD	arg+16(FP), R3;			\
 	MOVUW	n+24(FP), R4;			\
 	MOVUW	retoffset+28(FP), R9;		\
-	MOVD	BSP, R5;				\
-	ADD	R9, R5; 			\
+	MOVD	BSP, R22;				\
+	ADD	R9, R22; 			\
 	ADD	R9, R3;				\
 	SUB	R9, R4;				\
-	ADD	$(FIXED_FRAME-1), R5;			\
+	ADD	$(FIXED_FRAME-1), R22;			\
 	SUB	$1, R3;				\
-	ADD	R5, R4;				\
+	ADD	R22, R4;				\
 loop:						\
-	CMP	R5, R4;				\
+	CMP	R22, R4;				\
 	BED	end;				\
-	MOVUB	(R5), R9;			\
-	ADD	$1, R5;				\
+	MOVUB	(R22), R9;			\
+	ADD	$1, R22;				\
 	MOVUB	R9, (R3);			\
 	ADD	$1, R3;			\
 	JMP	loop;				\
@@ -506,7 +506,7 @@ TEXT ·asmcgocall(SB),NOSPLIT|NOFRAME,$0-20
 	MOVD	O0, FIXED_FRAME(BSP)
 
 	MOVD	BSP, R10		// save original stack pointer
-	MOVD	g, R5
+	MOVD	g, R22
 
 	// Figure out if we need to switch to m->g0 stack.
 	// We get called to create new OS threads too, and those
@@ -523,23 +523,23 @@ TEXT ·asmcgocall(SB),NOSPLIT|NOFRAME,$0-20
 
 	// Now on a scheduling stack (a pthread-created stack).
 g0:
-	MOVD	R5, R19	// save old g
-	MOVD	(g_stack+stack_hi)(R5), R5
-	SUB	R10, R5
-	MOVD	R5, R20	// save depth in old g stack (can't just save SP, as stack might be copied during a callback)
+	MOVD	R22, R19	// save old g
+	MOVD	(g_stack+stack_hi)(R22), R22
+	SUB	R10, R22
+	MOVD	R22, R20	// save depth in old g stack (can't just save SP, as stack might be copied during a callback)
 	CALL	(R3)
 	MOVD	R8, R9
 
 	// Restore g, stack pointer.
 	// R8 is errno, so don't touch it
 	MOVD	R19, g
-	MOVD    (g_stack+stack_hi)(g), R5
-	SUB     R20, R5
-	MOVD    24(R5), R2
+	MOVD    (g_stack+stack_hi)(g), R22
+	SUB     R20, R22
+	MOVD    24(R22), R2
 	CALL	runtime·save_g(SB)
-	MOVD    (g_stack+stack_hi)(g), R5
-	SUB     R20, R5
-	MOVD	R5, BSP
+	MOVD    (g_stack+stack_hi)(g), R22
+	SUB     R20, R22
+	MOVD	R22, BSP
 
 	MOVD	R21, LR
 	MOVW	R8, ret+16(FP)
@@ -634,15 +634,15 @@ havem:
 	MOVD	m_curg(R8), g
 	CALL	runtime·save_g(SB)
 	MOVD	(g_sched+gobuf_sp)(g), R4 // prepare stack as R4
-	MOVD	(g_sched+gobuf_pc)(g), R5
-	MOVD	R5, -(FIXED_FRAME+16)(R4)
+	MOVD	(g_sched+gobuf_pc)(g), R22
+	MOVD	R22, -(FIXED_FRAME+16)(R4)
 	MOVD	$-(FIXED_FRAME+16)(R4), TMP
 	MOVD	TMP, BSP
 	CALL	runtime·cgocallbackg(SB)
 
 	// Restore g->sched (== m->curg->sched) from saved values.
-	MOVD	0(BSP), R5
-	MOVD	R5, (g_sched+gobuf_pc)(g)
+	MOVD	0(BSP), R22
+	MOVD	R22, (g_sched+gobuf_pc)(g)
 	MOVD	$(FIXED_FRAME+16)(BSP), R4
 	MOVD	R4, (g_sched+gobuf_sp)(g)
 
@@ -716,8 +716,8 @@ nobar:
 TEXT runtime·setcallerpc(SB),NOSPLIT,$16-16
 	MOVD	pc+8(FP), R3
 	MOVD	FIXED_FRAME+8(BSP), R4
-	MOVD	runtime·stackBarrierPC(SB), R5
-	CMP	R4, R5
+	MOVD	runtime·stackBarrierPC(SB), R22
+	CMP	R4, R22
 	BED	setbar
 	MOVD	R3, FIXED_FRAME+8*15(BFP)		// set LR in caller
 	RET
@@ -751,10 +751,10 @@ TEXT runtime·memhash_varlen(SB),NOSPLIT,$48-24
 	NO_LOCAL_POINTERS
 	MOVD	p+0(FP), R3
 	MOVD	h+8(FP), R4
-	MOVD	8(CTXT), R5
+	MOVD	8(CTXT), R22
 	MOVD	R3, FIXED_FRAME+0(R1)
 	MOVD	R4, FIXED_FRAME+8(R1)
-	MOVD	R5, FIXED_FRAME+16(R1)
+	MOVD	R22, FIXED_FRAME+16(R1)
 	CALL	runtime·memhash(SB)
 	MOVD	FIXED_FRAME+24(R1), R3
 	MOVD	R3, ret+16(FP)
@@ -775,9 +775,9 @@ loop:
 	BED	done
 	MOVUB	(R1), R4
 	ADD	$1, R1
-	MOVUB	(R2), R5
+	MOVUB	(R2), R22
 	ADD $1, R2
-	CMP	R4, R5
+	CMP	R4, R22
 	BED	loop
 
 	MOVB	ZR, ret+24(FP)
@@ -790,10 +790,10 @@ TEXT runtime·memequal_varlen(SB),NOSPLIT,$48-17
 	MOVD	b+8(FP), R4
 	CMP	R3, R4
 	BED	eq
-	MOVD	8(CTXT), R5    // compiler stores size at offset 8 in the closure
+	MOVD	8(CTXT), R22    // compiler stores size at offset 8 in the closure
 	MOVD	R3, FIXED_FRAME+0(R1)
 	MOVD	R4, FIXED_FRAME+8(R1)
-	MOVD	R5, FIXED_FRAME+16(R1)
+	MOVD	R22, FIXED_FRAME+16(R1)
 	CALL	runtime·memequal(SB)
 	MOVD	$FIXED_FRAME+24(BSP), R3
 	MOVUB	(R3), R3
@@ -819,9 +819,9 @@ loop:
 	BED	equal		// reaches the end
 	MOVUB	(R1), R4
 	ADD	$1, R1
-	MOVUB	(R3), R5
+	MOVUB	(R3), R22
 	ADD	$1, R3
-	CMP	R4, R5
+	CMP	R4, R22
 	BED	loop
 notequal:
 	MOVB	ZR, ret+32(FP)
@@ -837,7 +837,7 @@ equal:
 TEXT bytes·IndexByte(SB),NOSPLIT,$0-40
 	MOVD	s+0(FP), R3
 	MOVD	s_len+8(FP), R4
-	MOVUB	c+24(FP), R5	// byte to find
+	MOVUB	c+24(FP), R22	// byte to find
 	MOVD	R3, R9		// store base for later
 	SUB	$1, R3
 	ADD	R3, R4		// end-1
@@ -847,7 +847,7 @@ loop:
 	BED	notfound
 	MOVUB	(R3), R8
 	ADD	$1, R3
-	CMP	R5, R8
+	CMP	R22, R8
 	BNEW	loop
 
 	SUB	R9, R3		// remove base
@@ -862,7 +862,7 @@ notfound:
 TEXT strings·IndexByte(SB),NOSPLIT,$0-32
 	MOVD	p+0(FP), R3
 	MOVD	b_len+8(FP), R4
-	MOVUB	c+16(FP), R5	// byte to find
+	MOVUB	c+16(FP), R22	// byte to find
 	MOVD	R3, R9		// store base for later
 	SUB	$1, R3
 	ADD	R3, R4		// end-1
@@ -872,7 +872,7 @@ loop:
 	BED	notfound
 	MOVUB	(R3), R8
 	ADD	$1, R3
-	CMP	R5, R8
+	CMP	R22, R8
 	BNEW	loop
 
 	SUB	R9, R3		// remove base
@@ -892,17 +892,17 @@ TEXT bytes·Equal(SB),NOSPLIT,$0-49
 	CMP	R3, R4		// unequal lengths are not equal
 	BNED	noteq
 
-	MOVD	a+0(FP), R5
+	MOVD	a+0(FP), R22
 	MOVD	b+24(FP), R9
-	SUB	$1, R5
+	SUB	$1, R22
 	SUB	$1, R9
-	ADD	R5, R3		// end-1
+	ADD	R22, R3		// end-1
 
 loop:
-	CMP	R5, R3
+	CMP	R22, R3
 	BED	equal		// reached the end
-	MOVUB	(R5), R4
-	ADD	$1, R5
+	MOVUB	(R22), R4
+	ADD	$1, R22
 	MOVUB	(R9), R8
 	ADD	$1, R9
 	CMP	R4, R8

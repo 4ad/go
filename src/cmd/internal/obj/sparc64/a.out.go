@@ -162,10 +162,10 @@ const (
 // Register assignments:
 const (
 	REG_ZR   = REG_R0
+	REG_G    = REG_R5
 	REG_TLS  = REG_R7
 	REG_RSP  = REG_R14
 	REG_LR   = REG_R15
-	REG_G    = REG_R22
 	REG_TMP2 = REG_R23
 	REG_TMP  = REG_R26
 	REG_RT1  = REG_R27
