@@ -6,20 +6,20 @@
 
 // uint32 runtime∕internal∕atomic·Load(uint32 volatile* addr)
 TEXT ·Load(SB),NOSPLIT|NOFRAME,$0-12
-	MOVD	ptr+0(FP), R3
+	MOVD	ptr+0(FP), R25
 	MEMBAR	$3
-	LDUW	(R3), R3
+	LDUW	(R25), R25
 	MEMBAR	$5
-	MOVUW	R3, ret+8(FP)
+	MOVUW	R25, ret+8(FP)
 	RET
 
 // uint64 runtime∕internal∕atomic·Load64(uint64 volatile* addr)
 TEXT ·Load64(SB),NOSPLIT|NOFRAME,$0-16
-	MOVD	ptr+0(FP), R3
+	MOVD	ptr+0(FP), R25
 	MEMBAR	$3
-	LDD	(R3), R3
+	LDD	(R25), R25
 	MEMBAR	$5
-	MOVD	R3, ret+8(FP)
+	MOVD	R25, ret+8(FP)
 	RET
 
 // void *runtime∕internal∕atomic·Loadp(void *volatile *addr)

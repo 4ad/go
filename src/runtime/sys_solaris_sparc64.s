@@ -20,8 +20,8 @@ TEXT runtime·miniterrno(SB),NOSPLIT,$0
 	// asmcgocall will put first argument into I0.
 	CALL	I0	// SysV ABI so returns in O0
 	CALL	runtime·load_g(SB)
-	MOVD	g_m(g), R1
-	MOVD	O0,	(m_mOS+mOS_perrno)(R1)
+	MOVD	g_m(g), R27
+	MOVD	O0,	(m_mOS+mOS_perrno)(R27)
 	RET
 
 // int64 runtime·nanotime1(void);
@@ -34,21 +34,21 @@ TEXT runtime·miniterrno(SB),NOSPLIT,$0
 TEXT runtime·nanotime1(SB),NOSPLIT,$64
 	MOVW	$3, O0	// CLOCK_REALTIME from <sys/time_impl.h>
 	MOVD	$-16(BFP), O1
-	MOVD	$libc_clock_gettime(SB), R1
-	CALL	R1
-	MOVD	-16(BFP), R1	// tv_sec from struct timespec
-	MOVD	$1000000000, R3
-	MULD	R3, R1	// multiply into nanoseconds
-	MOVD	-8(BFP), R2	// tv_nsec, offset should be stable.
-	ADD	R2, R1, O0
+	MOVD	$libc_clock_gettime(SB), R27
+	CALL	R27
+	MOVD	-16(BFP), R27	// tv_sec from struct timespec
+	MOVD	$1000000000, R25
+	MULD	R25, R27	// multiply into nanoseconds
+	MOVD	-8(BFP), R29	// tv_nsec, offset should be stable.
+	ADD	R29, R27, O0
 	RET
 
 // pipe(3c) wrapper that returns fds in AX, DX.
 // NOT USING GO CALLING CONVENTION.
 TEXT runtime·pipe1(SB),NOSPLIT,$16
 	MOVD	$FIXED_FRAME(BSP), O0
-	MOVD	$libc_pipe(SB), R1
-	CALL	R1
+	MOVD	$libc_pipe(SB), R27
+	CALL	R27
 	MOVW	(FIXED_FRAME+0)(BSP), O0
 	MOVW	(FIXED_FRAME+4)(BSP), O1
 	RET
@@ -64,18 +64,18 @@ TEXT runtime·pipe1(SB),NOSPLIT,$16
 // NOT USING GO CALLING CONVENTION.
 TEXT runtime·asmsysvicall6(SB),NOSPLIT,$0
 	// asmcgocall will put first argument into I0.
-	MOVD	I0, R16
-	MOVD	libcall_fn(I0), R1
+	MOVD	I0, R23
+	MOVD	libcall_fn(I0), R27
 	MOVD	libcall_args(I0), R17
 	MOVD	libcall_n(I0), R18
 
 	CMP	ZR, g
 	BED	skiperrno1
-	MOVD	g_m(g), R2
-	MOVD	(m_mOS+mOS_perrno)(R2), R3
-	CMP	R3, ZR
+	MOVD	g_m(g), R29
+	MOVD	(m_mOS+mOS_perrno)(R29), R25
+	CMP	R25, ZR
 	BED	skiperrno1
-	MOVW	ZR, (R3)
+	MOVW	ZR, (R25)
 
 skiperrno1:
 	CMP	R17, ZR
@@ -91,21 +91,21 @@ skipargs:
 
 	MOVD	g, L0
 	// Call SysV function
-	CALL	R1
+	CALL	R27
 	MOVD	L0, g
 
 	// Return result
-	MOVD	O0, libcall_r1(R16)
-	MOVD	O1, libcall_r2(R16)
+	MOVD	O0, libcall_r1(R23)
+	MOVD	O1, libcall_r2(R23)
 
 	CMP	g, ZR
 	BED	skiperrno2
-	MOVD	g_m(g), R2
-	MOVD	(m_mOS+mOS_perrno)(R2), R3
-	CMP	R3, ZR
+	MOVD	g_m(g), R29
+	MOVD	(m_mOS+mOS_perrno)(R29), R25
+	CMP	R25, ZR
 	BED	skiperrno2
-	MOVW	(R3), R4
-	MOVD	R4, libcall_err(R16)
+	MOVW	(R25), R28
+	MOVD	R28, libcall_err(R23)
 
 skiperrno2:	
 	RET
@@ -113,14 +113,14 @@ skiperrno2:
 // uint32 tstart_sysvicall(M *newm);
 TEXT runtime·tstart_sysvicall(SB),NOSPLIT,$0
 	// TODO(aram):
-	MOVD	$74, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
+	MOVD	$74, R27
+	ADD	$'!', R27, R27
+	MOVB	R27, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
+	MOVD	$libc_write(SB), R27
+	CALL	R27
 	UNDEF
 	RET
 
@@ -128,40 +128,40 @@ TEXT runtime·tstart_sysvicall(SB),NOSPLIT,$0
 // registers as per AMD 64 ABI.
 TEXT runtime·sigtramp(SB),NOSPLIT,$0
 	// TODO(aram):
-	MOVD	$75, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
+	MOVD	$75, R27
+	ADD	$'!', R27, R27
+	MOVB	R27, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
+	MOVD	$libc_write(SB), R27
+	CALL	R27
 	UNDEF
 	RET
 
 // Runs on OS stack, called from runtime·usleep1_go.
 TEXT runtime·usleep2(SB),NOSPLIT,$0
 	MOVW	usec+0(FP), O0
-	MOVD	$libc_usleep(SB), R1
-	CALL	R1
+	MOVD	$libc_usleep(SB), R27
+	CALL	R27
 	RET
 
 // Runs on OS stack, called from runtime·osyield.
 TEXT runtime·osyield1(SB),NOSPLIT,$0
-	MOVD	$libc_sched_yield(SB), R1
-	CALL	R1
+	MOVD	$libc_sched_yield(SB), R27
+	CALL	R27
 	RET
 
 // func now() (sec int64, nsec int32)
 TEXT time·now(SB),NOSPLIT,$16-12
 	// TODO(aram):
-	MOVD	$79, R1
-	ADD	$'!', R1, R1
-	MOVB	R1, dbgbuf(SB)
+	MOVD	$79, R27
+	ADD	$'!', R27, R27
+	MOVB	R27, dbgbuf(SB)
 	MOVD	$2, R8
 	MOVD	$dbgbuf(SB), R9
 	MOVD	$2, R10
-	MOVD	$libc_write(SB), R1
-	CALL	R1
+	MOVD	$libc_write(SB), R27
+	CALL	R27
 	UNDEF
 	RET
