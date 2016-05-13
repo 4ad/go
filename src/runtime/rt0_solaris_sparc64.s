@@ -9,8 +9,8 @@ TEXT _rt0_sparc64_solaris(SB),NOSPLIT|NOFRAME,$0
 	MOVD	$main(SB), R27
 	JMPL	R27, ZR
 
-TEXT main(SB),NOSPLIT|NOFRAME,$0
-	MOVD	$(8+176)(BSP), R8 // argv
-	MOVD	176(BSP), R9 // argc
-	MOVD	$runtime·rt0_go(SB), R27
-	JMPL	R27, ZR
+TEXT main(SB),NOSPLIT,$0
+	MOVD	I0, O0 // argc
+	MOVD	I1, O1 // argv
+	CALL	runtime·rt0_go(SB)
+	RET
