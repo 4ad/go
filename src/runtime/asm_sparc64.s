@@ -43,12 +43,10 @@ TEXT runtime·rt0_go(SB),NOSPLIT,$0
 	// C functions expect FIXED_FRAME bytes of space on caller stack frame.
 	MOVD	BSP, L1
 	SUB	$FIXED_FRAME, BSP
+	MOVD	g, L2
 	CALL	(R12)
 	MOVD	L1, BSP
-	
-	MOVD	_cgo_init(SB), R12
-	CMP	ZR, R12
-	BED	nocgo
+	MOVD	L2, g
 
 nocgo:
 	// update stackguard after _cgo_init
