@@ -162,15 +162,15 @@ const (
 // Register assignments:
 const (
 	REG_ZR   = REG_R0
-	REG_G    = REG_R5
+	REG_RT1  = REG_R1
+	REG_CTXT = REG_R2
+	REG_G    = REG_R3
+	REG_RT2  = REG_R4
+	REG_TMP  = REG_R5
 	REG_TLS  = REG_R7
 	REG_RSP  = REG_R14
 	REG_LR   = REG_R15
-	REG_TMP2 = REG_R23
-	REG_TMP  = REG_R26
-	REG_RT1  = REG_R27
-	REG_RT2  = REG_R28
-	REG_CTXT = REG_R29
+	REG_TMP2 = REG_R16
 	REG_RFP  = REG_R30
 	REG_OLR  = REG_R31
 	REG_FTMP = REG_F0
@@ -180,7 +180,7 @@ const (
 
 const (
 	REG_MIN = REG_R0
-	REG_MAX = REG_R25
+	REG_MAX = REG_R29
 )
 
 const (
