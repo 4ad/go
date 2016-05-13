@@ -10,7 +10,7 @@
 DATA dbgbuf(SB)/8, $"\n\n"
 GLOBL dbgbuf(SB), $8
 
-TEXT runtime·rt0_go(SB),NOSPLIT,$32-0
+TEXT runtime·rt0_go(SB),NOSPLIT,$16-0
 	// BSP = stack; I0 = argc; I1 = argv
 
 	// initialize essential registers
@@ -66,11 +66,9 @@ nocgo:
 	CALL	runtime·schedinit(SB)
 
 	// create a new goroutine to start program
+	MOVD	ZR, FIXED_FRAME+0(BSP)
 	MOVD	$runtime·mainPC(SB), RT1		// entry
-	MOVD	RT1, FIXED_FRAME+0(BSP)
-	MOVD	ZR, FIXED_FRAME+8(BSP)
-	MOVD	ZR, FIXED_FRAME+16(BSP)
-	MOVD	ZR, FIXED_FRAME+24(BSP)
+	MOVD	RT1, FIXED_FRAME+8(BSP)
 	CALL	runtime·newproc(SB)
 
 	// start this M
@@ -103,7 +101,7 @@ TEXT runtime·gosave(SB), NOSPLIT|NOFRAME, $0-8
 	MOVD	buf+0(FP), R25
 	MOVD	BSP, R27
 	MOVD	R27, gobuf_sp(R25)
-	MOVD	LR, gobuf_pc(R25)
+	MOVD	OLR, gobuf_pc(R25)
 	MOVD	g, gobuf_g(R25)
 	MOVD	ZR, gobuf_lr(R25)
 	MOVD	ZR, gobuf_ret(R25)
@@ -120,7 +118,7 @@ TEXT runtime·gogo(SB), NOSPLIT|NOFRAME, $0-8
 	MOVD	0(g), R28	// make sure g is not nil
 	MOVD	gobuf_sp(R22), R27
 	MOVD	R27, BSP
-	MOVD	gobuf_lr(R22), LR
+	MOVD	gobuf_lr(R22), OLR
 	MOVD	gobuf_ret(R22), R27
 	MOVD	gobuf_ctxt(R22), CTXT
 	MOVD	ZR, gobuf_sp(R22)
@@ -139,7 +137,7 @@ TEXT runtime·mcall(SB), NOSPLIT|NOFRAME, $0-8
 	// Save caller state in g->sched
 	MOVD	BSP, TMP
 	MOVD	TMP, (g_sched+gobuf_sp)(g)
-	MOVD	LR, (g_sched+gobuf_pc)(g)
+	MOVD	OLR, (g_sched+gobuf_pc)(g)
 	MOVD	$0, (g_sched+gobuf_lr)(g)
 	MOVD	g, (g_sched+gobuf_g)(g)
 
@@ -169,7 +167,7 @@ ok:
 // the system stack terminates the stack walk (see topofstack()).
 TEXT runtime·systemstack_switch(SB), NOSPLIT, $0-0
 	UNDEF
-	CALL	(LR)	// make sure this function is not leaf
+	CALL	(ILR)	// make sure this function is not leaf
 	RET
 
 // func systemstack(fn func())
@@ -267,7 +265,7 @@ TEXT runtime·morestack(SB),NOSPLIT|NOFRAME,$0-0
 	MOVD	CTXT, (g_sched+gobuf_ctxt)(g)
 	MOVD	BSP, TMP
 	MOVD	TMP, (g_sched+gobuf_sp)(g)
-	MOVD	LR, (g_sched+gobuf_pc)(g)
+	MOVD	OLR, (g_sched+gobuf_pc)(g)
 	MOVD	R25, (g_sched+gobuf_lr)(g)
 
 	// Called from f.
@@ -463,7 +461,7 @@ TEXT runtime·procyield(SB),NOSPLIT,$0-0
 TEXT runtime·jmpdefer(SB), NOSPLIT|NOFRAME, $0-16
 	MOVD	(8*15)(BSP), R27
 	SUB	$4, R27
-	MOVD	R27, LR
+	MOVD	R27, OLR
 
 	MOVD	fv+0(FP), CTXT
 	MOVD	argp+8(FP), TMP
@@ -474,7 +472,7 @@ TEXT runtime·jmpdefer(SB), NOSPLIT|NOFRAME, $0-16
 
 // Save state of caller into g->sched.
 TEXT gosave<>(SB),NOSPLIT|NOFRAME,$0
-	MOVD	LR, (g_sched+gobuf_pc)(g)
+	MOVD	OLR, (g_sched+gobuf_pc)(g)
 	MOVD	BSP, TMP
 	MOVD	TMP, (g_sched+gobuf_sp)(g)
 	MOVD	$0, (g_sched+gobuf_lr)(g)
@@ -487,7 +485,7 @@ TEXT gosave<>(SB),NOSPLIT|NOFRAME,$0
 // aligned appropriately for the gcc ABI.
 // See cgocall.go for more details.
 TEXT ·asmcgocall(SB),NOSPLIT|NOFRAME,$0-20
-	MOVD	LR, R21	// save LR
+	MOVD	OLR, R21	// save LR
 	MOVD	fn+0(FP), R25
 	MOVD	arg+8(FP), O0
 	MOVD	O0, FIXED_FRAME(BSP)
@@ -528,7 +526,7 @@ g0:
 	SUB     R20, R22
 	MOVD	R22, BSP
 
-	MOVD	R21, LR
+	MOVD	R21, OLR
 	MOVW	R8, ret+16(FP)
 	RET
 

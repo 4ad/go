@@ -458,7 +458,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			p = obj.Appendp(ctxt, p)
 			p.As = AMOVD
 			p.From.Type = obj.TYPE_REG
-			p.From.Reg = REG_LR
+			p.From.Reg = REG_ILR
 			p.To.Type = obj.TYPE_MEM
 			p.To.Reg = REG_RSP
 			p.To.Offset = int64(120 + StackBias)

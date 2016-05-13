@@ -113,7 +113,7 @@ func regnames(n *int) []string {
 
 func excludedregs() uint64 {
 	// Exclude registers with fixed functions in [R8, REG_MAX] range.
-	regbits := RtoB(sparc64.REG_RSP) | RtoB(sparc64.REG_LR) | RtoB(sparc64.REG_TMP2)
+	regbits := RtoB(sparc64.REG_RSP) | RtoB(sparc64.REG_OLR) | RtoB(sparc64.REG_TMP2)
 
 	// Exclude R0 - R7.
 	for r := sparc64.REG_R0; r <= sparc64.REG_R7; r++ {

@@ -22,8 +22,8 @@ func Rconv(r int) string {
 		return "TLS"
 	case r == REG_RSP:
 		return "RSP"
-	case r == REG_LR:
-		return "LR"
+	case r == REG_ILR:
+		return "ILR"
 	case r == REG_G:
 		return "g"
 	case r == REG_TMP2:

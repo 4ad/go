@@ -1366,7 +1366,7 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 
 	// RET
 	case 26:
-		*o1 = opcode(AJMPL) | rsr(REG_LR, 8, REG_ZR)
+		*o1 = opcode(AJMPL) | rsr(REG_OLR, 8, REG_ZR)
 
 	// TA $tn
 	case 27:
@@ -1447,7 +1447,7 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	// CALL (R)
 	// CALL R, R
 	case 40:
-		*o1 = opcode(AJMPL) | rsr(p.To.Reg, 0, REG_LR)
+		*o1 = opcode(AJMPL) | rsr(p.To.Reg, 0, REG_OLR)
 
 	// ADD $huge, Rd
 	// AND $huge, Rs, Rd
@@ -1538,7 +1538,7 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 
 	// RETRESTORE
 	case 51:
-		*o1 = opcode(AJMPL) | rsr(REG_OLR, 8, REG_ZR)
+		*o1 = opcode(AJMPL) | rsr(REG_ILR, 8, REG_ZR)
 		*o2 = opalu(ARESTORE) | rsr(REG_ZR, 0, REG_ZR)
 	}
 

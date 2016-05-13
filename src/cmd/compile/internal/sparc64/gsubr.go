@@ -47,10 +47,10 @@ var resvd = []int{
 	sparc64.REG_R6,
 	sparc64.REG_TLS,
 	sparc64.REG_RSP,
-	sparc64.REG_LR,
+	sparc64.REG_OLR,
 	sparc64.REG_TMP2,
 	sparc64.REG_RFP,
-	sparc64.REG_OLR,
+	sparc64.REG_ILR,
 	sparc64.REG_YTMP,
 }
 
