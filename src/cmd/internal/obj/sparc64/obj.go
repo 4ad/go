@@ -419,8 +419,23 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			}
 
 			if isNOFRAME(p) {
+				// Without these NOPs, DTrace changes the execution of the binary,
+				// This should never happen, but these NOPs seems to fix it.
+				// Keep these NOPs in here until we understand the DTrace behavior.
+				p = obj.Appendp(ctxt, p)
+				p.As = ARNOP
+				p = obj.Appendp(ctxt, p)
+				p.As = ARNOP
 				break
 			}
+			// Without these NOPs, DTrace changes the execution of the binary,
+			// This should never happen, but these NOPs seems to fix it.
+			// Keep these NOPs in here until we understand the DTrace behavior.
+			p = obj.Appendp(ctxt, p)
+			p.As = ARNOP
+			p = obj.Appendp(ctxt, p)
+			p.As = ARNOP
+
 			// MOVD	$-(frameSize+MinStackFrameSize), RT1
 			p = obj.Appendp(ctxt, p)
 			p.As = AMOVD
