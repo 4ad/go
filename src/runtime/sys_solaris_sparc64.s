@@ -17,8 +17,8 @@
 // Called using runtime·asmcgocall from os_solaris.c:/minit.
 // NOT USING GO CALLING CONVENTION.
 TEXT runtime·miniterrno(SB),NOSPLIT,$0
-	// asmcgocall will put first argument into O0.
-	CALL	O0	// SysV ABI so returns in O0
+	// asmcgocall will put first argument into I0.
+	CALL	I0	// SysV ABI so returns in O0
 	CALL	runtime·load_g(SB)
 	MOVD	g_m(g), R1
 	MOVD	O0,	(m_mOS+mOS_perrno)(R1)
@@ -63,11 +63,11 @@ TEXT runtime·pipe1(SB),NOSPLIT,$16
 // Called by runtime·asmcgocall or runtime·cgocall.
 // NOT USING GO CALLING CONVENTION.
 TEXT runtime·asmsysvicall6(SB),NOSPLIT,$0
-	// asmcgocall will put first argument into O0.
-	MOVD	O0, R16
-	MOVD	libcall_fn(O0), R1
-	MOVD	libcall_args(O0), R17
-	MOVD	libcall_n(O0), R18
+	// asmcgocall will put first argument into I0.
+	MOVD	I0, R16
+	MOVD	libcall_fn(I0), R1
+	MOVD	libcall_args(I0), R17
+	MOVD	libcall_n(I0), R18
 
 	CMP	ZR, g
 	BED	skiperrno1
