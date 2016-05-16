@@ -43,8 +43,6 @@ func return0()
 
 func close(fd int32) int32
 
-func brk(addr uintptr) uintptr
-
 func Exit(x int32) {
 	exit(x)
 }

@@ -44,6 +44,7 @@ import "unsafe"
 //go:cgo_import_dynamic libc_sysconf sysconf "libc.so"
 //go:cgo_import_dynamic libc_usleep usleep "libc.so"
 //go:cgo_import_dynamic libc_write write "libc.so"
+//go:cgo_import_dynamic libc_brk brk "libc.so"
 
 //go:linkname libc____errno libc____errno
 //go:linkname libc_clock_gettime libc_clock_gettime
@@ -79,6 +80,7 @@ import "unsafe"
 //go:linkname libc_sysconf libc_sysconf
 //go:linkname libc_usleep libc_usleep
 //go:linkname libc_write libc_write
+//go:linkname libc_brk libc_brk
 
 var (
 	libc____errno,
@@ -114,7 +116,8 @@ var (
 	libc_sigprocmask,
 	libc_sysconf,
 	libc_usleep,
-	libc_write libcFunc
+	libc_write,
+	libc_brk libcFunc
 )
 
 //go:nosplit
@@ -284,4 +287,8 @@ func osyield() {
 		return
 	}
 	osyield1()
+}
+
+func brk(addr uintptr) uintptr {
+	return sysvicall1(&libc_brk, addr)
 }
