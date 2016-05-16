@@ -26,7 +26,6 @@ func concatstring5(_ string, _ string, _ string, _ string, _ string) /*(_ string
 }
 func concatstrings(_ []string)/*(_ string)*/ { unimpl("concatstrings") }
 func cmpstring(_ string, _ string)/*(_ int)*/ { unimpl("cmpstring") }
-func eqstring(_ string, _ string)/*(_ bool)*/ { unimpl("eqstring") }
 func intstring(_ int64)/*(_ string)*/ { unimpl("intstring") }
 func slicebytetostring(_ []byte)/*(_ string)*/ { unimpl("slicebytetostring") }
 func slicebytetostringtmp(_ []byte)/*(_ string)*/ { unimpl("slicebytetostringtmp") }
@@ -123,7 +122,6 @@ func selectgo(sel *byte) { unimpl("selectgo") }
 func block()             { unimpl("block") }
 func makeslice(typ *byte, nel int64, cap int64)/*(ary sliceStruct)*/ { unimpl("makeslice") }
 func growslice(typ *byte, old sliceStruct, n int64)/*(ary sliceStruct)*/ { unimpl("growslice") }
-func memequal(x unsafe.Pointer, y unsafe.Pointer, size uintptr)/*(_ bool)*/ { unimpl("memequal") }
 func memequal8(x unsafe.Pointer, y unsafe.Pointer)/*(_ bool)*/ { unimpl("memequal8") }
 func memequal16(x unsafe.Pointer, y unsafe.Pointer)/*(_ bool)*/ { unimpl("memequal16") }
 func memequal32(x unsafe.Pointer, y unsafe.Pointer)/*(_ bool)*/ { unimpl("memequal32") }
