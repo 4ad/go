@@ -291,21 +291,7 @@ TEXT runtime·morestack_noctxt(SB),NOSPLIT|NOFRAME,$0-0
 	JMP	runtime·morestack(SB)
 
 TEXT runtime·stackBarrier(SB),NOSPLIT,$0
-	// We came here via a RET to an overwritten LR.
-	// R8 may be live (see return0). Other registers are available.
-
-	// Get the original return PC, g.stkbar[g.stkbarPos].savedLRVal.
-	MOVD	(g_stkbar+slice_array)(g), R28
-	MOVD	g_stkbarPos(g), R22
-	MOVD	$stkbar__size, R9
-	MULD	R22, R9
-	ADD	R28, R9
-	MOVD	stkbar_savedLRVal(R9), R9
-	// Record that this stack barrier was hit.
-	ADD	$1, R22
-	MOVD	R22, g_stkbarPos(g)
-	// Jump to the original return PC.
-	JMPL	R9, ZR
+	RET
 
 // reflectcall: call a function with the given argument list
 // func call(argtype *_type, f *FuncVal, arg *byte, argsize, retoffset uint32).
@@ -938,13 +924,6 @@ TEXT runtime·prefetchnta(SB),NOSPLIT,$0-8
 
 TEXT runtime·sigreturn(SB),NOSPLIT,$0-8
         RET
-
-// This is called from .init_array and follows the platform, not Go, ABI.
-TEXT runtime·addmoduledata(SB),NOSPLIT,$0-0
-	MOVD	runtime·lastmoduledatap(SB), R27
-	MOVD	R8, moduledata_next(R27)
-	MOVD	R8, runtime·lastmoduledatap(SB)
-	RET
 
 TEXT ·checkASM(SB),NOSPLIT,$0-1
 	OR	$1, ZR, R25
