@@ -58,3 +58,9 @@ func memclr(ptr unsafe.Pointer, length uintptr)
 
 //go:noescape
 func asmcgocall(fn, arg unsafe.Pointer) int32
+
+//go:nosplit
+func exitsyscall(dummy int32) {}
+
+//go:nosplit
+func entersyscallblock(dummy int32) {}
