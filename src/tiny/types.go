@@ -52,15 +52,6 @@ type g struct {
 	waiting      *sudog // sudog structures this g is waiting on (that have a valid elem ptr)
 }
 
-type mts struct {
-	tv_sec  int64
-	tv_nsec int64
-}
-
-type mscratch struct {
-	v [6]uintptr
-}
-
 type gobuf struct {
 	// The offsets of sp, pc, and g are known to (hard-coded in) libmach.
 	sp   uintptr
