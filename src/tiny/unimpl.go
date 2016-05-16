@@ -3,7 +3,7 @@ package runtime
 import "unsafe"
 
 func unimpl(name string) {
-	print("UNIMPLEMENTED: ", name)
+	println("UNIMPLEMENTED: ", name)
 	exit(1)
 }
 

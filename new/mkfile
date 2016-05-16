@@ -9,7 +9,8 @@ GCFLAGS=
 LDFLAGS=-w
 EXTLDFLAGS='-Wl,-fuse-ld=gold'
 
-GOEXES=helloworld.out
+GOEXES=helloworld.out\
+	sieve.out\
 
 GOS=${GOEXES:%.out=%.go.s}
 
