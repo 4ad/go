@@ -40,6 +40,15 @@ new/*.rel
 new/*.readelf
 new/*.gnu.s
 new/*.out.tmp/
+test2/*.u
+test2/*.go.s
+test2/*.out
+test2/*.out.s
+test2/*.objdump
+test2/*.rel
+test2/*.readelf
+test2/*.gnu.s
+test2/*.out.tmp/
 doc/articles/wiki/*.bin
 misc/cgo/life/run.out
 misc/cgo/stdio/run.out
