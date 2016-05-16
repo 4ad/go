@@ -1,5 +1,3 @@
-// +build arm64
-
 package runtime
 
 // Helpers for Go. Must be NOSPLIT, must only call NOSPLIT functions, and must not block.

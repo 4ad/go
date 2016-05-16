@@ -1,5 +1,3 @@
-// +build arm64
-
 package runtime
 
 import "unsafe"

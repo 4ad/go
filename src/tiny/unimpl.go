@@ -1,12 +1,10 @@
-// +build arm64
-
 package runtime
 
 import "unsafe"
 
 func unimpl(name string) {
-	print("UNIMPLEMENTED ", name, "!\n")
-	exit(42)
+	print("UNIMPLEMENTED: ", name)
+	exit(1)
 }
 
 // NOTE: please do not trust the prototype defined in this file.

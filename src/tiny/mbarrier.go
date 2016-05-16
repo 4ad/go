@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build arm64
-
 // Garbage collector: write barriers.
 //
 // For the concurrent garbage collector, the Go compiler implements
