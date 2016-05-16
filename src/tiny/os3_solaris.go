@@ -117,36 +117,6 @@ var (
 	libc_write libcFunc
 )
 
-var sigset_all = sigset{[4]uint32{^uint32(0), ^uint32(0), ^uint32(0), ^uint32(0)}}
-
-func getncpu() int32 {
-	n := int32(sysconf(__SC_NPROCESSORS_ONLN))
-	if n < 1 {
-		return 1
-	}
-	return n
-}
-
-func osinit() {
-	ncpu = getncpu()
-}
-
-func tstart_sysvicall()
-
-var urandom_dev = []byte("/dev/urandom\x00")
-
-//go:nosplit
-func getRandomData(r []byte) {
-	fd := open(&urandom_dev[0], 0 /* O_RDONLY */, 0)
-	n := read(fd, unsafe.Pointer(&r[0]), int32(len(r)))
-	closefd(fd)
-	extendRandom(r, int(n))
-}
-
-func goenvs() {
-	goenvs_unix()
-}
-
 //go:nosplit
 func closefd(fd int32) int32 {
 	return int32(sysvicall1(&libc_close, uintptr(fd)))
