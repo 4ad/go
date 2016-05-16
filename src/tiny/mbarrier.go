@@ -81,3 +81,12 @@ func typedslicecopy(typ *_type, dst, src slice) int {
 func reflect_typedslicecopy(elemType *_type, dst, src slice) int {
 	return typedslicecopy(elemType, dst, src)
 }
+
+// The compiler knows about this variable.
+// If you change it, you must change the compiler too.
+var writeBarrier struct {
+	enabled bool   // compiler emits a check of this before calling write barrier
+	needed  bool   // whether we need a write barrier for current GC phase
+	cgo     bool   // whether we need a write barrier for a cgo check
+	alignme uint64 // guarantee alignment so that compiler can use a 32 or 64-bit load
+}
