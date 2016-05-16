@@ -57,22 +57,11 @@ nocgo:
 	// save m0 to g0->m
 	MOVD	R25, g_m(g)
 
-	CALL	runtime·check(SB)
-
-	MOVD	L1, FIXED_FRAME+0(BSP)	// copy argc
-	MOVD	L2, FIXED_FRAME+8(BSP)	// copy argv
-	CALL	runtime·args(SB)
-	CALL	runtime·osinit(SB)
-	CALL	runtime·schedinit(SB)
-
-	// create a new goroutine to start program
-	MOVD	ZR, FIXED_FRAME+0(BSP)
-	MOVD	$runtime·mainPC(SB), RT1		// entry
-	MOVD	RT1, FIXED_FRAME+8(BSP)
-	CALL	runtime·newproc(SB)
-
-	// start this M
-	CALL	runtime·mstart(SB)
+	CALL	runtime·rtinit(SB)
+	CALL	main·init(SB)
+	CALL	main·main(SB)
+	CALL	runtime·exit(SB)
+	// NOT REACHED.
 
 	MOVD	ZR, (ZR)	// boom
 	UNDEF
