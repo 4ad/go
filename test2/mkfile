@@ -1,0 +1,75 @@
+GOROOT=`go env GOROOT`
+
+XCC=sparcv9-solaris2.12-gcc
+XLD=sparcv9-solaris2.12-gcc
+XOBJDUMP=sparcv9-solaris2.12-objdump
+XREADELF=sparcv9-solaris2.12-readelf
+
+GCFLAGS=
+LDFLAGS=-w
+EXTLDFLAGS='-Wl,-fuse-ld=gold'
+
+GOEXES=closure0.out\
+
+GOS=${GOEXES:%.out=%.go.s}
+
+OBJDUMPS=${GOEXES:%.out=%.out.objdump}\
+	${GOEXES:%.out=%.out.tmp/go.o.objdump}
+
+READELFS=${GOEXES:%.out=%.out.readelf}\
+	${GOEXES:%.out=%.out.tmp/go.o.readelf}
+
+RELS=${GOEXES:%.out=%.out.rel}\
+	${GOEXES:%.out=%.out.tmp/go.o.rel}
+
+GNUS=${GOEXES:%.out=%.out.s}\
+	${GOEXES:%.out=%.out.tmp/go.o.s}
+
+all:V:	$GOEXES $GOS $OBJDUMPS $RELS $READELFS $GNUS
+
+tools:V:
+	go install -v cmd/asm cmd/compile cmd/link cmd/pack runtime
+
+%.u: tools
+
+%.u: $GOROOT/test2/%.go
+	GOOS=solaris GOARCH=sparc64 go tool compile $GCFLAGS -o $target $GOROOT/test2/$stem.go
+
+%.go.s: $GOROOT/test2/%.go
+	GOOS=solaris GOARCH=sparc64 go tool compile $GCFLAGS -S -o /dev/null $GOROOT/test2/$stem.go >$target
+
+%.out: %.u
+	mkdir -p $stem.out.tmp
+	GO_EXTLINK_ENABLED=1 GOOS=solaris GOARCH=sparc64 go tool link $LDFLAGS -extldflags="$EXTLDFLAGS" -extld $XCC -linkmode=external -tmpdir $stem.out.tmp -o $target $stem.u
+
+%.out.objdump: %.out
+	$XOBJDUMP -x $stem.out >$target
+
+%.out.readelf: %.out
+	$XOBJDUMP -a $stem.out >$target
+
+%.out.rel: %.out
+	$XREADELF -r $prereq >$target 2>/dev/null
+
+%.out.s: %.out
+	$XOBJDUMP -d $prereq >$target 2>/dev/null
+
+%.o.s: %.o
+	$XOBJDUMP -d $prereq >$target 2>/dev/null
+
+%.out.tmp/go.o:V: %.out
+
+%.out.tmp/go.o.objdump: %.out.tmp/go.o
+	$XOBJDUMP -x $stem.out.tmp/go.o > $target 2>/dev/null
+
+%.out.tmp/go.o.readelf: %.out.tmp/go.o
+	$XREADELF -a $stem.out.tmp/go.o > $target 2>/dev/null
+
+%.out.tmp/go.o.rel: %.out.tmp/go.o
+	$XREADELF -r $prereq >$target 2>/dev/null
+
+clean:V:
+	rm -rf *.out.tmp *.u *.go.s *.out *.out.objdump *.out.rel *.out.readelf *.out.s
+
+copy:V: $GOEXES
+	rsync -ai *.out daffodil:x/
