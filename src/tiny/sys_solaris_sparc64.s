@@ -6,23 +6,8 @@
 //
 
 #include "go_asm.h"
-#include "go_tls.h"
 #include "textflag.h"
 #include "asm_sparc64.h"
-
-// void libc_miniterrno(void *(*___errno)(void));
-//
-// Set the TLS errno pointer in M.
-//
-// Called using runtime·asmcgocall from os_solaris.c:/minit.
-// NOT USING GO CALLING CONVENTION.
-TEXT runtime·miniterrno(SB),NOSPLIT,$0
-	// asmcgocall will put first argument into I0.
-	CALL	I0	// SysV ABI so returns in O0
-	CALL	runtime·load_g(SB)
-	MOVD	g_m(g), R27
-	MOVD	O0,	(m_mOS+mOS_perrno)(R27)
-	RET
 
 // int64 runtime·nanotime1(void);
 //
@@ -69,15 +54,6 @@ TEXT runtime·asmsysvicall6(SB),NOSPLIT,$0
 	MOVD	libcall_args(I0), R17
 	MOVD	libcall_n(I0), R18
 
-	CMP	ZR, g
-	BED	skiperrno1
-	MOVD	g_m(g), R29
-	MOVD	(m_mOS+mOS_perrno)(R29), R25
-	CMP	R25, ZR
-	BED	skiperrno1
-	MOVW	ZR, (R25)
-
-skiperrno1:
 	CMP	R17, ZR
 	BED	skipargs
 	// Load 6 args into correspondent registers.
@@ -96,18 +72,7 @@ skipargs:
 
 	// Return result
 	MOVD	O0, libcall_r1(R23)
-	MOVD	O1, libcall_r2(R23)
-
-	CMP	g, ZR
-	BED	skiperrno2
-	MOVD	g_m(g), R29
-	MOVD	(m_mOS+mOS_perrno)(R29), R25
-	CMP	R25, ZR
-	BED	skiperrno2
-	MOVW	(R25), R28
-	MOVD	R28, libcall_err(R23)
-
-skiperrno2:	
+	MOVD	O1, libcall_r2(R23)	
 	RET
 
 // uint32 tstart_sysvicall(M *newm);
