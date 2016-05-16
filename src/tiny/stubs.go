@@ -55,3 +55,6 @@ func memmove(to unsafe.Pointer, frm unsafe.Pointer, length uintptr)
 
 //go:noescape
 func memclr(ptr unsafe.Pointer, length uintptr)
+
+//go:noescape
+func asmcgocall(fn, arg unsafe.Pointer) int32
