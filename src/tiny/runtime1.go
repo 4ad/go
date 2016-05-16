@@ -1,5 +1,10 @@
 package runtime
 
+import (
+	"runtime/internal/sys"
+	"unsafe"
+)
+
 type libcall struct {
 	fn   uintptr
 	n    uintptr // number of parameters
@@ -26,4 +31,11 @@ func releasem(mp *m) {
 	//	// restore the preemption request in case we've cleared it in newstack
 	//	_g_.stackguard0 = stackPreempt
 	//}
+}
+
+// funcPC returns the entry PC of the function f.
+// It assumes that f is a func value. Otherwise the behavior is undefined.
+//go:nosplit
+func funcPC(f interface{}) uintptr {
+	return **(**uintptr)(add(unsafe.Pointer(&f), sys.PtrSize))
 }
