@@ -6,7 +6,7 @@ XOBJDUMP=sparcv9-solaris2.12-objdump
 XREADELF=sparcv9-solaris2.12-readelf
 
 GCFLAGS=
-LDFLAGS=
+LDFLAGS=-w
 EXTLDFLAGS='-Wl,-fuse-ld=gold'
 
 GOEXES=helloworld.out
