@@ -1,5 +1,14 @@
 package runtime
 
+type libcall struct {
+	fn   uintptr
+	n    uintptr // number of parameters
+	args uintptr // parameters
+	r1   uintptr // return values
+	r2   uintptr
+	err  uintptr // error number
+}
+
 // Helpers for Go. Must be NOSPLIT, must only call NOSPLIT functions, and must not block.
 
 //go:nosplit
