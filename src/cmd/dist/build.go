@@ -527,6 +527,9 @@ func install(dir string) {
 
 	// path = full path to dir.
 	path := pathf("%s/src/%s", goroot, dir)
+	if gohostarch == "sparc64" && strings.HasPrefix(dir, "runtime") {
+		path = pathf("%s/src/tiny%s", goroot, strings.TrimPrefix(dir, "runtime"))
+	}
 	name := filepath.Base(dir)
 
 	ispkg := !strings.HasPrefix(dir, "cmd/") || strings.HasPrefix(dir, "cmd/internal/") || strings.HasPrefix(dir, "cmd/asm/internal/")
