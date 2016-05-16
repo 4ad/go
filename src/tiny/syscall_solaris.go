@@ -121,24 +121,6 @@ func syscall_forkx(flags uintptr) (pid uintptr, err uintptr) {
 	return call.r1, call.err
 }
 
-func syscall_gethostname() (name string, err uintptr) {
-	cname := new([_MAXHOSTNAMELEN]byte)
-	var args = [2]uintptr{uintptr(unsafe.Pointer(&cname[0])), _MAXHOSTNAMELEN}
-	call := libcall{
-		fn:   uintptr(unsafe.Pointer(&libc_gethostname)),
-		n:    2,
-		args: uintptr(unsafe.Pointer(&args[0])),
-	}
-	entersyscallblock(0)
-	asmcgocall(unsafe.Pointer(&asmsysvicall6), unsafe.Pointer(&call))
-	exitsyscall(0)
-	if call.r1 != 0 {
-		return "", call.err
-	}
-	cname[_MAXHOSTNAMELEN-1] = 0
-	return gostringnocopy(&cname[0]), 0
-}
-
 //go:nosplit
 func syscall_getpid() (pid, err uintptr) {
 	call := libcall{
