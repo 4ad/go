@@ -87,3 +87,7 @@ Check Prog.Reg
 ==
 
 Optimize duffcopy
+
+==
+
+Why not CAS retry?
