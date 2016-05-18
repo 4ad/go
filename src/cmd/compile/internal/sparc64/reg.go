@@ -156,7 +156,7 @@ func RtoB(r int) uint64 {
 	if r >= sparc64.REG_R0 && r <= sparc64.REG_R31 {
 		return 1 << uint(r-sparc64.REG_R0)
 	}
-	if r >= sparc64.REG_Y0 && r <= sparc64.REG_Y15 {
+	if r >= sparc64.REG_Y0 && r <= sparc64.REG_Y0+31 {
 		return 1 << uint(32+r-sparc64.REG_Y0)
 	}
 	return 0
