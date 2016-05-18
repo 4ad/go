@@ -19,6 +19,7 @@ if [[ "$GOOS" -eq "solaris" ]]; then
 fi
 
 uname=$(uname)
+UNAME=${UNAME:-$uname}
 
 includes_Darwin='
 #define _DARWIN_C_SOURCE
@@ -241,7 +242,7 @@ ccflags="$@"
 	echo package syscall
 	echo
 	echo '/*'
-	indirect="includes_$(uname)"
+	indirect="includes_$UNAME"
 	echo "${!indirect} $includes"
 	echo '*/'
 	echo 'import "C"'
