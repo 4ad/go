@@ -221,7 +221,8 @@ func main() {
 
 		switch f*100 + t {
 		default:
-			println("missing case", i, v, f, t)
+			// println("missing case", i, v, f, t)
+			println("missing case", i)
 			w = v
 
 		case ti8*100 + ti8:
