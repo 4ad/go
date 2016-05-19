@@ -88,6 +88,7 @@ GNUS=${GOEXES:%.go.out=%.go.out.s}\
 	${GNUEXES:%.gnu.out=%.gnu.out.s}\
 	${GNUEXES_OPTIMIZED:%.gnu.out=%.gnu.out.s}\
 	${GNUEXES_NOFP:%.gnu.out=%.gnu.out.s}\
+	${GNUEXES_WINDOWS:%.gnu.out=%.gnu.out.s}\
 	${GOEXTEXES:%.go.ext=%.go.ext.s}\
 	${GNUOBJS:%.o=%.o.s}\
 	${GNUOBJS_OPTIMIZED:%.o=%.o.s}\
