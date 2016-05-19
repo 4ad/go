@@ -221,8 +221,7 @@ func main() {
 
 		switch f*100 + t {
 		default:
-			// println("missing case", i, v, f, t)
-			println("missing case", i, int64(v), f, t)
+			println("missing case", i, int(v), f, t)
 			w = v
 
 		case ti8*100 + ti8:
@@ -253,6 +252,10 @@ func main() {
 			i8 = int8(v)
 			i64 = int64(i8)
 			w = big(i64)
+		case ti8*100 + tu64:
+			i8 = int8(v)
+			u64 = uint64(i8)
+			w = big(u64)
 		case ti8*100 + tf32:
 			i8 = int8(v)
 			f32 = float32(i8)
@@ -260,6 +263,47 @@ func main() {
 		case ti8*100 + tf64:
 			i8 = int8(v)
 			f64 = float64(i8)
+			w = big(f64)
+
+		case tu8*100 + ti8:
+			u8 = uint8(v)
+			i8 = int8(u8)
+			w = big(i8)
+		case tu8*100 + tu8:
+			u8 = uint8(v)
+			u8 = uint8(u8)
+			w = big(u8)
+		case tu8*100 + ti16:
+			u8 = uint8(v)
+			i16 = int16(u8)
+			w = big(i16)
+		case tu8*100 + tu16:
+			u8 = uint8(v)
+			u16 = uint16(u8)
+			w = big(u16)
+		case tu8*100 + ti32:
+			u8 = uint8(v)
+			i32 = int32(u8)
+			w = big(i32)
+		case tu8*100 + tu32:
+			u8 = uint8(v)
+			u32 = uint32(u8)
+			w = big(u32)
+		case tu8*100 + ti64:
+			u8 = uint8(v)
+			i64 = int64(u8)
+			w = big(i64)
+		case tu8*100 + tu64:
+			u8 = uint8(v)
+			u64 = uint64(u8)
+			w = big(u64)
+		case tu8*100 + tf32:
+			u8 = uint8(v)
+			f32 = float32(u8)
+			w = big(f32)
+		case tu8*100 + tf64:
+			u8 = uint8(v)
+			f64 = float64(u8)
 			w = big(f64)
 
 		case ti16*100 + ti8:
@@ -290,6 +334,10 @@ func main() {
 			i16 = int16(v)
 			i64 = int64(i16)
 			w = big(i64)
+		case ti16*100 + tu64:
+			i16 = int16(v)
+			u64 = uint64(i16)
+			w = big(u64)
 		case ti16*100 + tf32:
 			i16 = int16(v)
 			f32 = float32(i16)
@@ -297,6 +345,47 @@ func main() {
 		case ti16*100 + tf64:
 			i16 = int16(v)
 			f64 = float64(i16)
+			w = big(f64)
+
+		case tu16*100 + ti8:
+			u16 = uint16(v)
+			i8 = int8(u16)
+			w = big(i8)
+		case tu16*100 + tu8:
+			u16 = uint16(v)
+			u8 = uint8(u16)
+			w = big(u8)
+		case tu16*100 + ti16:
+			u16 = uint16(v)
+			i16 = int16(u16)
+			w = big(i16)
+		case tu16*100 + tu16:
+			u16 = uint16(v)
+			u16 = uint16(u16)
+			w = big(u16)
+		case tu16*100 + ti32:
+			u16 = uint16(v)
+			i32 = int32(u16)
+			w = big(i32)
+		case tu16*100 + tu32:
+			u16 = uint16(v)
+			u32 = uint32(u16)
+			w = big(u32)
+		case tu16*100 + ti64:
+			u16 = uint16(v)
+			i64 = int64(u16)
+			w = big(i64)
+		case tu16*100 + tu64:
+			u16 = uint16(v)
+			u64 = uint64(u16)
+			w = big(u64)
+		case tu16*100 + tf32:
+			u16 = uint16(v)
+			f32 = float32(u16)
+			w = big(f32)
+		case tu16*100 + tf64:
+			u16 = uint16(v)
+			f64 = float64(u16)
 			w = big(f64)
 
 		case ti32*100 + ti8:
@@ -327,6 +416,10 @@ func main() {
 			i32 = int32(v)
 			i64 = int64(i32)
 			w = big(i64)
+		case ti32*100 + tu64:
+			i32 = int32(v)
+			u64 = uint64(i32)
+			w = big(u64)
 		case ti32*100 + tf32:
 			i32 = int32(v)
 			f32 = float32(i32)
@@ -334,6 +427,47 @@ func main() {
 		case ti32*100 + tf64:
 			i32 = int32(v)
 			f64 = float64(i32)
+			w = big(f64)
+
+		case tu32*100 + ti8:
+			u32 = uint32(v)
+			i8 = int8(u32)
+			w = big(i8)
+		case tu32*100 + tu8:
+			u32 = uint32(v)
+			u8 = uint8(u32)
+			w = big(u8)
+		case tu32*100 + ti16:
+			u32 = uint32(v)
+			i16 = int16(u32)
+			w = big(i16)
+		case tu32*100 + tu16:
+			u32 = uint32(v)
+			u16 = uint16(u32)
+			w = big(u16)
+		case tu32*100 + ti32:
+			u32 = uint32(v)
+			i32 = int32(u32)
+			w = big(i32)
+		case tu32*100 + tu32:
+			u32 = uint32(v)
+			u32 = uint32(u32)
+			w = big(u32)
+		case tu32*100 + ti64:
+			u32 = uint32(v)
+			i64 = int64(u32)
+			w = big(i64)
+		case tu32*100 + tu64:
+			u32 = uint32(v)
+			u64 = uint64(u32)
+			w = big(u64)
+		case tu32*100 + tf32:
+			u32 = uint32(v)
+			f32 = float32(u32)
+			w = big(f32)
+		case tu32*100 + tf64:
+			u32 = uint32(v)
+			f64 = float64(u32)
 			w = big(f64)
 
 		case ti64*100 + ti8:
@@ -364,6 +498,10 @@ func main() {
 			i64 = int64(v)
 			i64 = int64(i64)
 			w = big(i64)
+		case ti64*100 + tu64:
+			i64 = int64(v)
+			u64 = uint64(i64)
+			w = big(u64)
 		case ti64*100 + tf32:
 			i64 = int64(v)
 			f32 = float32(i64)
@@ -373,22 +511,79 @@ func main() {
 			f64 = float64(i64)
 			w = big(f64)
 
+		case tu64*100 + ti8:
+			u64 = uint64(v)
+			i8 = int8(u64)
+			w = big(i8)
+		case tu64*100 + tu8:
+			u64 = uint64(v)
+			u8 = uint8(u64)
+			w = big(u8)
+		case tu64*100 + ti16:
+			u64 = uint64(v)
+			i16 = int16(u64)
+			w = big(i16)
+		case tu64*100 + tu16:
+			u64 = uint64(v)
+			u16 = uint16(u64)
+			w = big(u16)
+		case tu64*100 + ti32:
+			u64 = uint64(v)
+			i32 = int32(u64)
+			w = big(i32)
+		case tu64*100 + tu32:
+			u64 = uint64(v)
+			u32 = uint32(u64)
+			w = big(u32)
+		case tu64*100 + ti64:
+			u64 = uint64(v)
+			i64 = int64(u64)
+			w = big(i64)
+		case tu64*100 + tu64:
+			u64 = uint64(v)
+			u64 = uint64(u64)
+			w = big(u64)
+		case tu64*100 + tf32:
+			u64 = uint64(v)
+			f32 = float32(u64)
+			w = big(f32)
+		case tu64*100 + tf64:
+			u64 = uint64(v)
+			f64 = float64(u64)
+			w = big(f64)
+
 		case tf32*100 + ti8:
 			f32 = float32(v)
 			i8 = int8(f32)
 			w = big(i8)
+		case tf32*100 + tu8:
+			f32 = float32(v)
+			u8 = uint8(f32)
+			w = big(u8)
 		case tf32*100 + ti16:
 			f32 = float32(v)
 			i16 = int16(f32)
 			w = big(i16)
+		case tf32*100 + tu16:
+			f32 = float32(v)
+			u16 = uint16(f32)
+			w = big(u16)
 		case tf32*100 + ti32:
 			f32 = float32(v)
 			i32 = int32(f32)
 			w = big(i32)
+		case tf32*100 + tu32:
+			f32 = float32(v)
+			u32 = uint32(f32)
+			w = big(u32)
 		case tf32*100 + ti64:
 			f32 = float32(v)
 			i64 = int64(f32)
 			w = big(i64)
+		case tf32*100 + tu64:
+			f32 = float32(v)
+			u64 = uint64(f32)
+			w = big(u64)
 		case tf32*100 + tf32:
 			f32 = float32(v)
 			f32 = float32(f32)
@@ -402,18 +597,34 @@ func main() {
 			f64 = float64(v)
 			i8 = int8(f64)
 			w = big(i8)
+		case tf64*100 + tu8:
+			f64 = float64(v)
+			u8 = uint8(f64)
+			w = big(u8)
 		case tf64*100 + ti16:
 			f64 = float64(v)
 			i16 = int16(f64)
 			w = big(i16)
+		case tf64*100 + tu16:
+			f64 = float64(v)
+			u16 = uint16(f64)
+			w = big(u16)
 		case tf64*100 + ti32:
 			f64 = float64(v)
 			i32 = int32(f64)
 			w = big(i32)
+		case tf64*100 + tu32:
+			f64 = float64(v)
+			u32 = uint32(f64)
+			w = big(u32)
 		case tf64*100 + ti64:
 			f64 = float64(v)
 			i64 = int64(f64)
 			w = big(i64)
+		case tf64*100 + tu64:
+			f64 = float64(v)
+			u64 = uint64(f64)
+			w = big(u64)
 		case tf64*100 + tf32:
 			f64 = float64(v)
 			f32 = float32(f64)
@@ -424,7 +635,7 @@ func main() {
 			w = big(f64)
 		}
 		if v != w {
-			println(i, v, w, f, t)
+			println(i, int(v), int(w), f, t)
 		}
 	}
 }
