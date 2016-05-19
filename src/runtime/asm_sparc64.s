@@ -88,7 +88,8 @@ TEXT runtime·asminit(SB),NOSPLIT|NOFRAME,$0-0
 	RET
 
 TEXT runtime·reginit(SB),NOSPLIT|NOFRAME,$0-0
-	// TODO(aram): do we need to initialize FP registers?
+	// initialize essential FP registers
+	FMOVD	$2.0, D28
 	RET
 
 /*
