@@ -3,7 +3,7 @@ TEXT	main(SB),512|7,$0
 	BNED	l1
 	BLE	ICC, l2
 	BLEW	l2
-	MOVD	$1, R1
+	MOVD	$1, L1
 l1:
 l2:
 	RET

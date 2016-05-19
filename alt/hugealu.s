@@ -1,11 +1,11 @@
 TEXT	main(SB),512|7,$0
-	MOVUB	0xf00ddd(R1), R2
-	MOVD	-16529(R2), R3
-	ADD	$0xf00abcd, R1
-	AND	$0xf00abcd, R1, R2
-	ADD	$0x1f00abcd, R3
-	MOVD	R4, 0xf00ddd(R5)
-	MOVD	R8, -16521(R8)
-	MOVUB	ZR, -16529(R8)
-	MOVUB	R1, 0xf00ddd(R8)
+	MOVUB	0xf00ddd(L1), L2
+	MOVD	-16529(L2), L3
+	ADD	$0xf00abcd, L1
+	AND	$0xf00abcd, L1, L2
+	ADD	$0x1f00abcd, L3
+	MOVD	L4, 0xf00ddd(L5)
+	MOVD	O5, -16521(O5)
+	MOVUB	ZR, -16529(O5)
+	MOVUB	L1, 0xf00ddd(O5)
 	RET

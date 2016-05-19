@@ -1,5 +1,5 @@
 TEXT	main(SB),7,$0-0
-	MOVD	$foo3(SB), R5
+	MOVD	$foo3(SB), L5
 	CALL	foo0(SB)
 	RET
 
