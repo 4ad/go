@@ -1,13 +1,18 @@
 #include <unistd.h>
 
+double __attribute__ ((noinline))
+int8_to_float64(int8_t v)
+{
+	return (double)v;
+}
+
 int
 main()
 {
-	int8_t i8;
-	double f64;
+	int8_t i8 = 42;
+	volatile double f64;
 
-	i8 = 42;
-	f64 = i8;
+	f64 = int8_to_float64(i8);
 
-	return 0;
+	return (int)f64;
 }
