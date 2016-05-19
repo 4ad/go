@@ -4,7 +4,15 @@
 
 package runtime
 
-import "unsafe"
+import (
+	"runtime/internal/sys"
+	"unsafe"
+)
+
+const (
+	c0 = uintptr((8-sys.PtrSize)/4*2860486313 + (sys.PtrSize-4)/4*33054211828000289)
+	c1 = uintptr((8-sys.PtrSize)/4*3267000013 + (sys.PtrSize-4)/4*23344194077549503)
+)
 
 // type algorithms - known to compiler
 const (
@@ -89,4 +97,28 @@ var algarray = [alg_max]typeAlg{
 	alg_FLOAT64:  {nil, nil}, //{f64hash, f64equal},
 	alg_CPLX64:   {nil, nil}, //{c64hash, c64equal},
 	alg_CPLX128:  {nil, nil}, //{c128hash, c128equal},
+}
+
+func f32hash(p unsafe.Pointer, h uintptr) uintptr {
+	f := *(*float32)(p)
+	switch {
+	case f == 0:
+		return c1 * (c0 ^ h) // +0, -0
+	case f != f:
+		return c1 * (c0 ^ h ^ uintptr(fastrand1())) // any kind of NaN
+	default:
+		return memhash(p, h, 4)
+	}
+}
+
+func f64hash(p unsafe.Pointer, h uintptr) uintptr {
+	f := *(*float64)(p)
+	switch {
+	case f == 0:
+		return c1 * (c0 ^ h) // +0, -0
+	case f != f:
+		return c1 * (c0 ^ h ^ uintptr(fastrand1())) // any kind of NaN
+	default:
+		return memhash(p, h, 8)
+	}
 }

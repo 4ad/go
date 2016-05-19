@@ -62,3 +62,5 @@ func exitsyscall(dummy int32) {}
 
 //go:nosplit
 func entersyscallblock(dummy int32) {}
+
+func fastrand1() uint32
