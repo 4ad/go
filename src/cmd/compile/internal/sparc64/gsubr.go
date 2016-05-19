@@ -458,20 +458,10 @@ fsrccpy:
 	{
 		var st int
 		switch ft {
-		case gc.TINT8:
-			st = sparc64.AMOVB
-		case gc.TINT16:
-			st = sparc64.AMOVH
-		case gc.TINT32:
-			st = sparc64.AMOVW
+		case gc.TINT8, gc.TUINT8, gc.TINT16, gc.TUINT16, gc.TINT32, gc.TUINT32:
+			st = sparc64.ASTW
 		case gc.TINT64, gc.TUINT64:
-			st = sparc64.AMOVD
-		case gc.TUINT8:
-			st = sparc64.AMOVUB
-		case gc.TUINT16:
-			st = sparc64.AMOVUH
-		case gc.TUINT32:
-			st = sparc64.AMOVUW
+			st = sparc64.ASTD
 		}
 		p1 := gins(st, f, nil)
 		p1.To.Type = obj.TYPE_MEM
@@ -480,7 +470,8 @@ fsrccpy:
 
 		gc.Regalloc(&r1, t.Type, nil)
 		ld := sparc64.AFMOVD
-		if tt == gc.TFLOAT32 {
+		switch ft {
+		case gc.TINT8, gc.TUINT8, gc.TINT16, gc.TUINT16, gc.TINT32, gc.TUINT32:
 			ld = sparc64.AFMOVS
 		}
 		p1 = gins(ld, nil, &r1)
