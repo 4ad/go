@@ -504,7 +504,7 @@ fdstcpy:
 		gins(a, f, &r1)
 
 		st := sparc64.AFMOVD
-		if ft == gc.TFLOAT32 {
+		if tt == gc.TFLOAT32 {
 			st = sparc64.AFMOVS
 		}
 		p1 := gins(st, &r1, nil)
