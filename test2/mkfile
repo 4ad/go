@@ -10,6 +10,7 @@ LDFLAGS=-w
 EXTLDFLAGS='-Wl,-fuse-ld=gold'
 
 GOEXES=closure0.out\
+	test2.out\
 
 GOS=${GOEXES:%.out=%.go.s}
 
