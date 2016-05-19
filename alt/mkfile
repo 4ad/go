@@ -56,6 +56,7 @@ GNUEXES=ext.gnu.out\
 	tls.gnu.out\
 	call2.gnu.out\
 	argv.gnu.out\
+	fconv2.gnu.out\
 
 GNUEXES_OPTIMIZED=${GNUEXES:%.gnu.out=%.O2.gnu.out}\
 
