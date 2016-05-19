@@ -153,8 +153,8 @@ var optab = map[Optab]Opval{
 
 	Optab{AMOVD, ClassAddr, ClassNone, ClassNone, ClassReg}: {23, 24, ClobberTMP},
 
-	Optab{ALDD, ClassMem, ClassNone, ClassNone, ClassReg}:   {24, 28, 0},
-	Optab{ALDDF, ClassMem, ClassNone, ClassNone, ClassDReg}: {24, 28, 0},
+	Optab{ALDD, ClassMem, ClassNone, ClassNone, ClassReg}:   {24, 28, ClobberTMP},
+	Optab{ALDDF, ClassMem, ClassNone, ClassNone, ClassDReg}: {24, 28, ClobberTMP},
 	Optab{ASTD, ClassReg, ClassNone, ClassNone, ClassMem}:   {25, 28, ClobberTMP},
 	Optab{ASTDF, ClassDReg, ClassNone, ClassNone, ClassMem}: {25, 28, ClobberTMP},
 
