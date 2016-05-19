@@ -43,6 +43,7 @@ GOEXTEXES=${GOEXES:%.go.out=%.go.ext}\
 	call1.go.ext\
 	addrconst.go.ext\
 	windows.go.ext\
+	fmov.go.ext\
 
 GOEXTHOSTOBJS=${GOEXTEXES:%.go.ext=%.go.ext.tmp/go.o}
 
