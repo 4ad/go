@@ -12,14 +12,14 @@
 //
 // If !iscgo, this is a no-op.
 //
-// NOTE: setg_gcc<> assume this clobbers only TMP.
+// NOTE: setg_gcc<> assume this clobbers only RT1.
 TEXT runtime·save_g(SB),NOSPLIT|NOFRAME,$0-0
-	MOVB	runtime·iscgo(SB), TMP
-	CMP	TMP, ZR
+	MOVB	runtime·iscgo(SB), RT1
+	CMP	RT1, ZR
 	BEW	nocgo
 
-	MOVD	$runtime·tls_g(SB), TMP
-	MOVD	g, (TMP)
+	MOVD	$runtime·tls_g(SB), RT1
+	MOVD	g, (RT1)
 nocgo:
 	RET
 
@@ -31,14 +31,14 @@ nocgo:
 // follow the C ABI), but it may be called from a C context, where the
 // usual Go registers aren't set up.
 //
-// NOTE: _cgo_topofstack assumes this only clobbers g, and TMP.
+// NOTE: _cgo_topofstack assumes this only clobbers g, and RT1.
 TEXT runtime·load_g(SB),NOSPLIT|NOFRAME,$0-0
-	MOVB	runtime·iscgo(SB), TMP
-	CMP	TMP, ZR
+	MOVB	runtime·iscgo(SB), RT1
+	CMP	RT1, ZR
 	BEW	nocgo
 
-	MOVD	$runtime·tls_g(SB), TMP
-	MOVD	(TMP), g
+	MOVD	$runtime·tls_g(SB), RT1
+	MOVD	(RT1), g
 nocgo:
 	RET
 
