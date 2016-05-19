@@ -410,17 +410,25 @@ func gmove(f *gc.Node, t *gc.Node) {
 
 		goto fsrccpy
 
-	case gc.TINT64<<16 | gc.TFLOAT32,
-		gc.TUINT32<<16 | gc.TFLOAT32:
+	case gc.TINT64<<16 | gc.TFLOAT32:
 		a = sparc64.AFXTOS
 
 		goto fsrccpy
 
-	case gc.TINT64<<16 | gc.TFLOAT64,
-		gc.TUINT32<<16 | gc.TFLOAT64:
+	case gc.TUINT32<<16 | gc.TFLOAT32:
+		cvt = gc.Types[gc.TINT64]
+
+		goto hard
+
+	case gc.TINT64<<16 | gc.TFLOAT64:
 		a = sparc64.AFXTOD
 
 		goto fsrccpy
+
+	case gc.TUINT32<<16 | gc.TFLOAT64:
+		cvt = gc.Types[gc.TINT64]
+
+		goto hard
 
 	// TODO(aram):
 	//case gc.TUINT64<<16 | gc.TFLOAT32:
@@ -458,7 +466,7 @@ fsrccpy:
 	{
 		var st int
 		switch ft {
-		case gc.TINT8, gc.TUINT8, gc.TINT16, gc.TUINT16, gc.TINT32, gc.TUINT32:
+		case gc.TINT8, gc.TUINT8, gc.TINT16, gc.TUINT16, gc.TINT32:
 			st = sparc64.ASTW
 		case gc.TINT64, gc.TUINT64:
 			st = sparc64.ASTD
@@ -471,7 +479,7 @@ fsrccpy:
 		gc.Regalloc(&r1, t.Type, nil)
 		ld := sparc64.AFMOVD
 		switch ft {
-		case gc.TINT8, gc.TUINT8, gc.TINT16, gc.TUINT16, gc.TINT32, gc.TUINT32:
+		case gc.TINT8, gc.TUINT8, gc.TINT16, gc.TUINT16, gc.TINT32:
 			ld = sparc64.AFMOVS
 		}
 		p1 = gins(ld, nil, &r1)
