@@ -122,3 +122,13 @@ func f64hash(p unsafe.Pointer, h uintptr) uintptr {
 		return memhash(p, h, 8)
 	}
 }
+
+type stringStruct struct {
+	str unsafe.Pointer
+	len int
+}
+
+func strhash(a unsafe.Pointer, h uintptr) uintptr {
+	x := (*stringStruct)(a)
+	return memhash(x.str, h, uintptr(x.len))
+}
