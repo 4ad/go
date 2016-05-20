@@ -370,20 +370,24 @@ func gmove(f *gc.Node, t *gc.Node) {
 	* float to integer
 	 */
 	case gc.TFLOAT32<<16 | gc.TINT32,
-		gc.TFLOAT64<<16 | gc.TINT32,
 		gc.TFLOAT32<<16 | gc.TINT64,
-		gc.TFLOAT64<<16 | gc.TINT64,
 		gc.TFLOAT32<<16 | gc.TINT16,
 		gc.TFLOAT32<<16 | gc.TINT8,
 		gc.TFLOAT32<<16 | gc.TUINT16,
 		gc.TFLOAT32<<16 | gc.TUINT8,
+		gc.TFLOAT32<<16 | gc.TUINT32,
+		gc.TFLOAT32<<16 | gc.TUINT64:
+		cvt = gc.Types[gc.TFLOAT64]
+
+		goto hard
+
+	case gc.TFLOAT64<<16 | gc.TINT32,
+		gc.TFLOAT64<<16 | gc.TINT64,
 		gc.TFLOAT64<<16 | gc.TINT16,
 		gc.TFLOAT64<<16 | gc.TINT8,
 		gc.TFLOAT64<<16 | gc.TUINT16,
 		gc.TFLOAT64<<16 | gc.TUINT8,
-		gc.TFLOAT32<<16 | gc.TUINT32,
 		gc.TFLOAT64<<16 | gc.TUINT32,
-		gc.TFLOAT32<<16 | gc.TUINT64,
 		gc.TFLOAT64<<16 | gc.TUINT64:
 		bignodes()
 
@@ -394,7 +398,7 @@ func gmove(f *gc.Node, t *gc.Node) {
 			gc.Regalloc(&r2, gc.Types[gc.TFLOAT64], nil)
 			gmove(&bigf, &r2)
 			gins(sparc64.AFCMPD, &r1, &r2)
-			p1 := gc.Gbranch(optoas(gc.OLT, gc.Types[gc.TFLOAT64]), nil, +1)
+			p1 := gc.Gbranch(optoas(gc.OGT, gc.Types[gc.TFLOAT64]), nil, +1)
 			gins(sparc64.AFSUBD, &r2, &r1)
 			gc.Patch(p1, gc.Pc)
 			gc.Regfree(&r2)
@@ -415,7 +419,7 @@ func gmove(f *gc.Node, t *gc.Node) {
 		gc.Regfree(&r2)
 		gc.Regfree(&r1)
 		if tt == gc.TUINT64 {
-			p1 := gc.Gbranch(optoas(gc.OLT, gc.Types[gc.TFLOAT64]), nil, +1)
+			p1 := gc.Gbranch(optoas(gc.OGT, gc.Types[gc.TFLOAT64]), nil, +1)
 			gc.Nodreg(&r1, gc.Types[gc.TINT64], sparc64.REG_RT1)
 			gins(sparc64.AMOVD, &bigi, &r1)
 			gins(sparc64.AADD, &r1, &r3)
@@ -436,18 +440,26 @@ func gmove(f *gc.Node, t *gc.Node) {
 	 */
 	case gc.TINT32<<16 | gc.TFLOAT32,
 		gc.TINT32<<16 | gc.TFLOAT64,
-		gc.TINT64<<16 | gc.TFLOAT32,
-		gc.TINT64<<16 | gc.TFLOAT64,
 		gc.TINT16<<16 | gc.TFLOAT32,
 		gc.TINT16<<16 | gc.TFLOAT64,
 		gc.TINT8<<16 | gc.TFLOAT32,
-		gc.TINT8<<16 | gc.TFLOAT64,
-		gc.TUINT16<<16 | gc.TFLOAT32,
+		gc.TINT8<<16 | gc.TFLOAT64:
+		cvt = gc.Types[gc.TINT64]
+
+		goto hard
+
+	case gc.TUINT16<<16 | gc.TFLOAT32,
 		gc.TUINT16<<16 | gc.TFLOAT64,
 		gc.TUINT8<<16 | gc.TFLOAT32,
 		gc.TUINT8<<16 | gc.TFLOAT64,
 		gc.TUINT32<<16 | gc.TFLOAT32,
-		gc.TUINT32<<16 | gc.TFLOAT64,
+		gc.TUINT32<<16 | gc.TFLOAT64:
+		cvt = gc.Types[gc.TUINT64]
+
+		goto hard
+
+	case gc.TINT64<<16 | gc.TFLOAT32,
+		gc.TINT64<<16 | gc.TFLOAT64,
 		gc.TUINT64<<16 | gc.TFLOAT32,
 		gc.TUINT64<<16 | gc.TFLOAT64:
 		bignodes()
@@ -458,8 +470,8 @@ func gmove(f *gc.Node, t *gc.Node) {
 		if ft == gc.TUINT64 {
 			gc.Nodreg(&r2, gc.Types[gc.TUINT64], sparc64.REG_RT1)
 			gmove(&bigi, &r2)
-			gins(sparc64.ACMP, &r1, &r2)
-			p1 := gc.Gbranch(optoas(gc.OLT, gc.Types[gc.TUINT64]), nil, +1)
+			gins(sparc64.ACMP, &r2, &r1)
+			p1 := gc.Gbranch(sparc64.ABGUD, nil, +1)
 			p2 := gins(sparc64.ASRLD, nil, &r1)
 			p2.From.Type = obj.TYPE_CONST
 			p2.From.Offset = 1
@@ -478,7 +490,7 @@ func gmove(f *gc.Node, t *gc.Node) {
 		gins(sparc64.AFXTOD, &r2, &r2)
 		gc.Regfree(&r1)
 		if ft == gc.TUINT64 {
-			p1 := gc.Gbranch(optoas(gc.OLT, gc.Types[gc.TUINT64]), nil, +1)
+			p1 := gc.Gbranch(sparc64.ABGUD, nil, +1)
 			gc.Nodreg(&r1, gc.Types[gc.TFLOAT64], sparc64.REG_YTWO)
 			gins(sparc64.AFMULD, &r1, &r2)
 			gc.Patch(p1, gc.Pc)
