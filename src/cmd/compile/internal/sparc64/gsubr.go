@@ -397,7 +397,7 @@ func gmove(f *gc.Node, t *gc.Node) {
 		if tt == gc.TUINT64 {
 			gc.Regalloc(&r2, gc.Types[gc.TFLOAT64], nil)
 			gmove(&bigf, &r2)
-			gins(sparc64.AFCMPD, &r1, &r2)
+			gins(sparc64.AFCMPD, &r2, &r1)
 			p1 := gc.Gbranch(optoas(gc.OGT, gc.Types[gc.TFLOAT64]), nil, +1)
 			gins(sparc64.AFSUBD, &r2, &r1)
 			gc.Patch(p1, gc.Pc)

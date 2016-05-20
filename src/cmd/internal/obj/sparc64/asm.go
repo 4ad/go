@@ -1210,7 +1210,7 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 
 	// FCMPD F, F, FCC
 	case 14:
-		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, p.Reg, p.To.Reg&3)
+		*o1 = opcode(p.As) | rrr(p.Reg, 0, p.From.Reg, p.To.Reg&3)
 
 	// MOVD $imm32, R
 	// MOVD -$imm31, R
