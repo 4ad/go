@@ -83,3 +83,19 @@ func GC() {}
 
 func SetFinalizer(obj interface{}, finalizer interface{}) {
 }
+
+//go:linkname reflect_chanlen reflect.chanlen
+func reflect_chanlen(c *hchan) int {
+	if c == nil {
+		return 0
+	}
+	return int(c.qcount)
+}
+
+//go:linkname reflect_chancap reflect.chancap
+func reflect_chancap(c *hchan) int {
+	if c == nil {
+		return 0
+	}
+	return int(c.dataqsiz)
+}

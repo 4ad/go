@@ -258,3 +258,22 @@ type p struct{}
 type Func struct {
 	opaque struct{} // unexported field to disallow conversions
 }
+
+type hchan struct {
+	qcount   uint           // total data in the queue
+	dataqsiz uint           // size of the circular queue
+	buf      unsafe.Pointer // points to an array of dataqsiz elements
+	elemsize uint16
+	closed   uint32
+	elemtype *_type // element type
+	sendx    uint   // send index
+	recvx    uint   // receive index
+	recvq    waitq  // list of recv waiters
+	sendq    waitq  // list of send waiters
+	//	lock     mutex
+}
+
+type waitq struct {
+	first *sudog
+	last  *sudog
+}

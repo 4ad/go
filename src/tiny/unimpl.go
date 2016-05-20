@@ -156,3 +156,14 @@ func (f *Func) Name() string {
 	unimpl("Func.Name")
 	return ""
 }
+
+//go:linkname reflect_chanclose reflect.chanclose
+func reflect_chanclose(c *hchan) {
+	unimpl("reflect_chanclose")
+}
+
+//go:linkname reflect_typelinks reflect.typelinks
+func reflect_typelinks() [][]*_type {
+	unimpl("reflect_typelinks")
+	return nil
+}
