@@ -80,3 +80,6 @@ func GOROOT() string {
 }
 
 func GC() {}
+
+func SetFinalizer(obj interface{}, finalizer interface{}) {
+}
