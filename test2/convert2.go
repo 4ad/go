@@ -17,4 +17,5 @@ func main() {
 	f64 = 16717361816799281152
 	u64 = uint64(f64)
 	w = float64(u64)
+	println(w)
 }
