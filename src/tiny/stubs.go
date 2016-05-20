@@ -78,3 +78,5 @@ const GOOS string = sys.TheGoos
 func GOROOT() string {
 	return sys.DefaultGoroot
 }
+
+func GC() {}

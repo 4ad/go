@@ -144,3 +144,15 @@ func racereadrange(addr uintptr, size uintptr)  { unimpl("racereadrange") }
 func racewriterange(addr uintptr, size uintptr) { unimpl("racewriterange") }
 
 func newproc() { unimpl("newproc") }
+
+func FuncForPC(pc uintptr) *Func {
+	unimpl("FuncForPC")
+	return nil
+}
+
+func Caller(skip int) (pc uintptr, file string, line int, ok bool) { return }
+
+func (f *Func) Name() string {
+	unimpl("Func.Name")
+	return ""
+}

@@ -253,3 +253,8 @@ type _panic struct {
 
 // Dummy types
 type p struct{}
+
+// A Func represents a Go function in the running binary.
+type Func struct {
+	opaque struct{} // unexported field to disallow conversions
+}
