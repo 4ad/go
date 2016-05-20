@@ -40,6 +40,20 @@ const (
 	tf64
 )
 
+var s = []string{
+	"",
+	"int8",
+	"uint8",
+	"int16",
+	"uint16",
+	"int32",
+	"uint32",
+	"int64",
+	"uint64",
+	"float32",
+	"float64",
+}
+
 var x = []t{
 
 	/* value good in all types (10) */
@@ -221,7 +235,7 @@ func main() {
 
 		switch f*100 + t {
 		default:
-			println("missing case", i, int(v), f, t)
+			println("missing case", i, int(v), s[f], s[t])
 			w = v
 
 		case ti8*100 + ti8:
@@ -635,7 +649,7 @@ func main() {
 			w = big(f64)
 		}
 		if v != w {
-			println(i, int(v), int(w), f, t)
+			println(i, int(v), int(w), s[f], s[t])
 		}
 	}
 }
