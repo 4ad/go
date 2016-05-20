@@ -43,6 +43,7 @@ GOEXTEXES=${GOEXES:%.go.out=%.go.ext}\
 	call1.go.ext\
 	addrconst.go.ext\
 	windows.go.ext\
+	fmov.go.ext\
 
 GOEXTHOSTOBJS=${GOEXTEXES:%.go.ext=%.go.ext.tmp/go.o}
 
@@ -55,6 +56,7 @@ GNUEXES=ext.gnu.out\
 	tls.gnu.out\
 	call2.gnu.out\
 	argv.gnu.out\
+	fconv2.gnu.out\
 
 GNUEXES_OPTIMIZED=${GNUEXES:%.gnu.out=%.O2.gnu.out}\
 
@@ -86,6 +88,7 @@ GNUS=${GOEXES:%.go.out=%.go.out.s}\
 	${GNUEXES:%.gnu.out=%.gnu.out.s}\
 	${GNUEXES_OPTIMIZED:%.gnu.out=%.gnu.out.s}\
 	${GNUEXES_NOFP:%.gnu.out=%.gnu.out.s}\
+	${GNUEXES_WINDOWS:%.gnu.out=%.gnu.out.s}\
 	${GOEXTEXES:%.go.ext=%.go.ext.s}\
 	${GNUOBJS:%.o=%.o.s}\
 	${GNUOBJS_OPTIMIZED:%.o=%.o.s}\

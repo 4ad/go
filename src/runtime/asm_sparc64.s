@@ -88,7 +88,8 @@ TEXT runtime·asminit(SB),NOSPLIT|NOFRAME,$0-0
 	RET
 
 TEXT runtime·reginit(SB),NOSPLIT|NOFRAME,$0-0
-	// TODO(aram): do we need to initialize FP registers?
+	// initialize essential FP registers
+	FMOVD	$2.0, D28
 	RET
 
 /*
@@ -657,9 +658,9 @@ droppedm:
 // Called from cgo wrappers, this function returns g->m->curg.stack.hi.
 // Must obey the gcc calling convention.
 TEXT _cgo_topofstack(SB),NOSPLIT,$32
-	// g and TMP might be clobbered by load_g. They
+	// g and RT1 might be clobbered by load_g. They
 	// are callee-save in the gcc calling convention, so save them.
-	MOVD	TMP, savedTMP-8(SP)
+	MOVD	RT1, savedRT1-8(SP)
 	MOVD	g, saveG-16(SP)
 
 	CALL	runtime·load_g(SB)
@@ -668,7 +669,7 @@ TEXT _cgo_topofstack(SB),NOSPLIT,$32
 	MOVD	(g_stack+stack_hi)(R27), R27
 
 	MOVD	saveG-16(SP), g
-	MOVD	savedTMP-8(SP), TMP
+	MOVD	savedRT1-8(SP), RT1
 	RET
 
 // void setg(G*); set g. for use by needm.
@@ -681,9 +682,9 @@ TEXT runtime·setg(SB), NOSPLIT, $0-8
 // void setg_gcc(G*); set g called from gcc
 TEXT setg_gcc<>(SB),NOSPLIT,$16
 	MOVD	R8, g
-	MOVD	TMP, savedTMP-8(SP)
+	MOVD	RT1, savedRT1-8(SP)
 	CALL	runtime·save_g(SB)
-	MOVD	savedTMP-8(SP), TMP
+	MOVD	savedRT1-8(SP), RT1
 	RET
 
 TEXT runtime·getcallerpc(SB),NOSPLIT,$16-16

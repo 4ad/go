@@ -9,8 +9,10 @@ GCFLAGS=
 LDFLAGS=-w
 EXTLDFLAGS='-Wl,-fuse-ld=gold'
 
-GOEXES=helloworld.out\
-	sieve.out\
+GOEXES=closure0.out\
+	test2.out\
+	convert.out\
+	convert2.out\
 
 GOS=${GOEXES:%.out=%.go.s}
 
@@ -33,11 +35,11 @@ tools:V:
 
 %.u: tools
 
-%.u: $GOROOT/test/%.go
-	GOOS=solaris GOARCH=sparc64 go tool compile $GCFLAGS -o $target $GOROOT/test/$stem.go
+%.u: $GOROOT/test2/%.go
+	GOOS=solaris GOARCH=sparc64 go tool compile $GCFLAGS -o $target $GOROOT/test2/$stem.go
 
-%.go.s: $GOROOT/test/%.go
-	GOOS=solaris GOARCH=sparc64 go tool compile $GCFLAGS -S -o /dev/null $GOROOT/test/$stem.go >$target
+%.go.s: $GOROOT/test2/%.go
+	GOOS=solaris GOARCH=sparc64 go tool compile $GCFLAGS -S -o /dev/null $GOROOT/test2/$stem.go >$target
 
 %.out: %.u
 	mkdir -p $stem.out.tmp

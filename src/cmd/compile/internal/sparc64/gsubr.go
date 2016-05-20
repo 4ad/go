@@ -31,6 +31,7 @@
 package sparc64
 
 import (
+	"cmd/compile/internal/big"
 	"cmd/compile/internal/gc"
 	"cmd/internal/obj"
 	"cmd/internal/obj/sparc64"
@@ -52,6 +53,7 @@ var resvd = []int{
 	sparc64.REG_RFP,
 	sparc64.REG_ILR,
 	sparc64.REG_YTMP,
+	sparc64.REG_YTWO,
 }
 
 /*
@@ -133,6 +135,29 @@ func ginscmp(op gc.Op, t *gc.Type, n1, n2 *gc.Node, likely int) *obj.Prog {
 	gc.Regfree(&g1)
 	gc.Regfree(&r1)
 	return gc.Gbranch(optoas(op, t), nil, likely)
+}
+
+// set up nodes representing 2^63
+var (
+	bigi         gc.Node
+	bigf         gc.Node
+	bignodes_did bool
+)
+
+func bignodes() {
+	if bignodes_did {
+		return
+	}
+	bignodes_did = true
+
+	var i big.Int
+	i.SetInt64(1)
+	i.Lsh(&i, 63)
+
+	gc.Nodconst(&bigi, gc.Types[gc.TUINT64], 0)
+	bigi.SetBigInt(&i)
+
+	bigi.Convconst(&bigf, gc.Types[gc.TFLOAT64])
 }
 
 /*
@@ -337,99 +362,143 @@ func gmove(f *gc.Node, t *gc.Node) {
 
 		goto rdst
 
+	//return;
+	// algorithm is:
+	//	if small enough, use native float64 -> int64 conversion.
+	//	otherwise, subtract 2^63, convert, and add it back.
 	/*
 	* float to integer
 	 */
-	case gc.TFLOAT32<<16 | gc.TINT32:
-		a = sparc64.AFSTOI
-		goto fdstcpy
-
-	case gc.TFLOAT64<<16 | gc.TINT32:
-		a = sparc64.AFDTOI
-		goto fdstcpy
-
-	case gc.TFLOAT32<<16 | gc.TINT64:
-		a = sparc64.AFSTOX
-		goto fdstcpy
-
-	case gc.TFLOAT64<<16 | gc.TINT64:
-		a = sparc64.AFDTOX
-		goto fdstcpy
-
-	// TODO(aram):
-	//case gc.TFLOAT32<<16 | gc.TUINT32:
-	//	a = sparc64.AFCVTZUSW
-	//	goto fdstcpy
-	//
-	//case gc.TFLOAT64<<16 | gc.TUINT32:
-	//	a = sparc64.AFCVTZUDW
-	//	goto fdstcpy
-	//
-	//case gc.TFLOAT32<<16 | gc.TUINT64:
-	//	a = sparc64.AFCVTZUS
-	//	goto fdstcpy
-	//
-	//case gc.TFLOAT64<<16 | gc.TUINT64:
-	//	a = sparc64.AFCVTZUD
-	//	goto fdstcpy
-
-	case gc.TFLOAT32<<16 | gc.TINT16,
+	case gc.TFLOAT32<<16 | gc.TINT32,
+		gc.TFLOAT32<<16 | gc.TINT64,
+		gc.TFLOAT32<<16 | gc.TINT16,
 		gc.TFLOAT32<<16 | gc.TINT8,
-		gc.TFLOAT64<<16 | gc.TINT16,
-		gc.TFLOAT64<<16 | gc.TINT8:
-		cvt = gc.Types[gc.TINT32]
-
-		goto hard
-
-	case gc.TFLOAT32<<16 | gc.TUINT16,
+		gc.TFLOAT32<<16 | gc.TUINT16,
 		gc.TFLOAT32<<16 | gc.TUINT8,
-		gc.TFLOAT64<<16 | gc.TUINT16,
-		gc.TFLOAT64<<16 | gc.TUINT8:
-		cvt = gc.Types[gc.TUINT32]
+		gc.TFLOAT32<<16 | gc.TUINT32,
+		gc.TFLOAT32<<16 | gc.TUINT64:
+		cvt = gc.Types[gc.TFLOAT64]
 
 		goto hard
 
+	case gc.TFLOAT64<<16 | gc.TINT32,
+		gc.TFLOAT64<<16 | gc.TINT64,
+		gc.TFLOAT64<<16 | gc.TINT16,
+		gc.TFLOAT64<<16 | gc.TINT8,
+		gc.TFLOAT64<<16 | gc.TUINT16,
+		gc.TFLOAT64<<16 | gc.TUINT8,
+		gc.TFLOAT64<<16 | gc.TUINT32,
+		gc.TFLOAT64<<16 | gc.TUINT64:
+		bignodes()
+
+		var r1 gc.Node
+		gc.Regalloc(&r1, gc.Types[ft], f)
+		gmove(f, &r1)
+		if tt == gc.TUINT64 {
+			gc.Regalloc(&r2, gc.Types[gc.TFLOAT64], nil)
+			gmove(&bigf, &r2)
+			gins(sparc64.AFCMPD, &r2, &r1)
+			p1 := gc.Gbranch(optoas(gc.OGT, gc.Types[gc.TFLOAT64]), nil, +1)
+			gins(sparc64.AFSUBD, &r2, &r1)
+			gc.Patch(p1, gc.Pc)
+			gc.Regfree(&r2)
+		}
+
+		gc.Regalloc(&r2, gc.Types[gc.TFLOAT64], nil)
+		var r3 gc.Node
+		gc.Regalloc(&r3, gc.Types[gc.TINT64], t)
+		gins(sparc64.AFDTOX, &r1, &r2)
+		p1 := gins(sparc64.AFMOVD, &r2, nil)
+		p1.To.Type = obj.TYPE_MEM
+		p1.To.Reg = sparc64.REG_RSP
+		p1.To.Offset = -8 + sparc64.StackBias
+		p1 = gins(sparc64.AMOVD, nil, &r3)
+		p1.From.Type = obj.TYPE_MEM
+		p1.From.Reg = sparc64.REG_RSP
+		p1.From.Offset = -8 + sparc64.StackBias
+		gc.Regfree(&r2)
+		gc.Regfree(&r1)
+		if tt == gc.TUINT64 {
+			p1 := gc.Gbranch(optoas(gc.OGT, gc.Types[gc.TFLOAT64]), nil, +1)
+			gc.Nodreg(&r1, gc.Types[gc.TINT64], sparc64.REG_RT1)
+			gins(sparc64.AMOVD, &bigi, &r1)
+			gins(sparc64.AADD, &r1, &r3)
+			gc.Patch(p1, gc.Pc)
+		}
+
+		gmove(&r3, t)
+		gc.Regfree(&r3)
+		return
+
+		//warn("gmove: convert int to float not implemented: %N -> %N\n", f, t);
+	//return;
+	// algorithm is:
+	//	if small enough, use native int64 -> uint64 conversion.
+	//	otherwise, halve (rounding to odd?), convert, and double.
 	/*
 	 * integer to float
 	 */
-	case gc.TINT8<<16 | gc.TFLOAT32,
-		gc.TINT16<<16 | gc.TFLOAT32,
-		gc.TINT32<<16 | gc.TFLOAT32,
-		gc.TUINT8<<16 | gc.TFLOAT32,
-		gc.TUINT16<<16 | gc.TFLOAT32:
-		a = sparc64.AFITOS
-
-		goto fsrccpy
-
-	case gc.TINT8<<16 | gc.TFLOAT64,
-		gc.TINT16<<16 | gc.TFLOAT64,
+	case gc.TINT32<<16 | gc.TFLOAT32,
 		gc.TINT32<<16 | gc.TFLOAT64,
-		gc.TUINT8<<16 | gc.TFLOAT64,
-		gc.TUINT16<<16 | gc.TFLOAT64:
-		a = sparc64.AFITOD
+		gc.TINT16<<16 | gc.TFLOAT32,
+		gc.TINT16<<16 | gc.TFLOAT64,
+		gc.TINT8<<16 | gc.TFLOAT32,
+		gc.TINT8<<16 | gc.TFLOAT64:
+		cvt = gc.Types[gc.TINT64]
 
-		goto fsrccpy
+		goto hard
+
+	case gc.TUINT16<<16 | gc.TFLOAT32,
+		gc.TUINT16<<16 | gc.TFLOAT64,
+		gc.TUINT8<<16 | gc.TFLOAT32,
+		gc.TUINT8<<16 | gc.TFLOAT64,
+		gc.TUINT32<<16 | gc.TFLOAT32,
+		gc.TUINT32<<16 | gc.TFLOAT64:
+		cvt = gc.Types[gc.TUINT64]
+
+		goto hard
 
 	case gc.TINT64<<16 | gc.TFLOAT32,
-		gc.TUINT32<<16 | gc.TFLOAT32:
-		a = sparc64.AFXTOS
+		gc.TINT64<<16 | gc.TFLOAT64,
+		gc.TUINT64<<16 | gc.TFLOAT32,
+		gc.TUINT64<<16 | gc.TFLOAT64:
+		bignodes()
 
-		goto fsrccpy
+		var r1 gc.Node
+		gc.Regalloc(&r1, gc.Types[gc.TINT64], nil)
+		gmove(f, &r1)
+		if ft == gc.TUINT64 {
+			gc.Nodreg(&r2, gc.Types[gc.TUINT64], sparc64.REG_RT1)
+			gmove(&bigi, &r2)
+			gins(sparc64.ACMP, &r2, &r1)
+			p1 := gc.Gbranch(sparc64.ABGUD, nil, +1)
+			p2 := gins(sparc64.ASRLD, nil, &r1)
+			p2.From.Type = obj.TYPE_CONST
+			p2.From.Offset = 1
+			gc.Patch(p1, gc.Pc)
+		}
 
-	case gc.TINT64<<16 | gc.TFLOAT64,
-		gc.TUINT32<<16 | gc.TFLOAT64:
-		a = sparc64.AFXTOD
+		gc.Regalloc(&r2, gc.Types[gc.TFLOAT64], t)
+		p1 := gins(sparc64.AMOVD, &r1, nil)
+		p1.To.Type = obj.TYPE_MEM
+		p1.To.Reg = sparc64.REG_RSP
+		p1.To.Offset = -8 + sparc64.StackBias
+		p1 = gins(sparc64.AFMOVD, nil, &r2)
+		p1.From.Type = obj.TYPE_MEM
+		p1.From.Reg = sparc64.REG_RSP
+		p1.From.Offset = -8 + sparc64.StackBias
+		gins(sparc64.AFXTOD, &r2, &r2)
+		gc.Regfree(&r1)
+		if ft == gc.TUINT64 {
+			p1 := gc.Gbranch(sparc64.ABGUD, nil, +1)
+			gc.Nodreg(&r1, gc.Types[gc.TFLOAT64], sparc64.REG_YTWO)
+			gins(sparc64.AFMULD, &r1, &r2)
+			gc.Patch(p1, gc.Pc)
+		}
 
-		goto fsrccpy
-
-	// TODO(aram):
-	//case gc.TUINT64<<16 | gc.TFLOAT32:
-	//	a = sparc64.AUCVTFS
-	//	goto fsrccpy
-	//
-	//case gc.TUINT64<<16 | gc.TFLOAT64:
-	//	a = sparc64.AUCVTFD
-	//	goto fsrccpy
+		gmove(&r2, t)
+		gc.Regfree(&r2)
+		return
 
 	/*
 	 * float to float
@@ -451,82 +520,6 @@ func gmove(f *gc.Node, t *gc.Node) {
 
 	gins(a, f, t)
 	return
-
-	// require copying bits (no conversion) from integer register
-	// to floating-point  register.
-fsrccpy:
-	{
-		var st int
-		switch ft {
-		case gc.TINT8:
-			st = sparc64.AMOVB
-		case gc.TINT16:
-			st = sparc64.AMOVH
-		case gc.TINT32:
-			st = sparc64.AMOVW
-		case gc.TINT64, gc.TUINT64:
-			st = sparc64.AMOVD
-		case gc.TUINT8:
-			st = sparc64.AMOVUB
-		case gc.TUINT16:
-			st = sparc64.AMOVUH
-		case gc.TUINT32:
-			st = sparc64.AMOVUW
-		}
-		p1 := gins(st, f, nil)
-		p1.To.Type = obj.TYPE_MEM
-		p1.To.Reg = sparc64.REG_RSP
-		p1.To.Offset = -8 + sparc64.StackBias
-
-		gc.Regalloc(&r1, t.Type, nil)
-		ld := sparc64.AFMOVD
-		if tt == gc.TFLOAT32 {
-			ld = sparc64.AFMOVS
-		}
-		p1 = gins(ld, nil, &r1)
-		p1.From.Type = obj.TYPE_MEM
-		p1.From.Reg = sparc64.REG_RSP
-		p1.From.Offset = -8 + sparc64.StackBias
-
-		gc.Regalloc(&r2, t.Type, t)
-		gins(a, &r1, &r2)
-		gmove(&r2, t)
-
-		gc.Regfree(&r2)
-		gc.Regfree(&r1)
-		return
-	}
-
-	// require copying bits (no conversion) from floating-point register
-	// to integer register.
-fdstcpy:
-	{
-		gc.Regalloc(&r1, f.Type, nil)
-		gins(a, f, &r1)
-
-		st := sparc64.AFMOVD
-		if ft == gc.TFLOAT32 {
-			st = sparc64.AFMOVS
-		}
-		p1 := gins(st, &r1, nil)
-		p1.To.Type = obj.TYPE_MEM
-		p1.To.Reg = sparc64.REG_RSP
-		p1.To.Offset = -8 + sparc64.StackBias
-
-		gc.Regalloc(&r2, t.Type, t)
-		ld := sparc64.AMOVD
-		if tt == gc.TINT32 {
-			ld = sparc64.AMOVW
-		}
-		p1 = gins(ld, nil, &r2)
-		p1.From.Type = obj.TYPE_MEM
-		p1.From.Reg = sparc64.REG_RSP
-		p1.From.Offset = -8 + sparc64.StackBias
-
-		gc.Regfree(&r2)
-		gc.Regfree(&r1)
-		return
-	}
 
 	// requires register destination
 rdst:

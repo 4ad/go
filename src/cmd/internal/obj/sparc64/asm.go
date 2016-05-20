@@ -153,8 +153,8 @@ var optab = map[Optab]Opval{
 
 	Optab{AMOVD, ClassAddr, ClassNone, ClassNone, ClassReg}: {23, 24, ClobberTMP},
 
-	Optab{ALDD, ClassMem, ClassNone, ClassNone, ClassReg}:   {24, 28, 0},
-	Optab{ALDDF, ClassMem, ClassNone, ClassNone, ClassDReg}: {24, 28, 0},
+	Optab{ALDD, ClassMem, ClassNone, ClassNone, ClassReg}:   {24, 28, ClobberTMP},
+	Optab{ALDDF, ClassMem, ClassNone, ClassNone, ClassDReg}: {24, 28, ClobberTMP},
 	Optab{ASTD, ClassReg, ClassNone, ClassNone, ClassMem}:   {25, 28, ClobberTMP},
 	Optab{ASTDF, ClassDReg, ClassNone, ClassNone, ClassMem}: {25, 28, ClobberTMP},
 
@@ -1210,7 +1210,7 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 
 	// FCMPD F, F, FCC
 	case 14:
-		*o1 = opcode(p.As) | rrr(p.From.Reg, 0, p.Reg, p.To.Reg&3)
+		*o1 = opcode(p.As) | rrr(p.Reg, 0, p.From.Reg, p.To.Reg&3)
 
 	// MOVD $imm32, R
 	// MOVD -$imm31, R
@@ -1310,10 +1310,10 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	// 	SETHI hh($sym), TMP
 	// 	OR TMP, hm($sym), TMP
 	//	SLLD	$32, TMP, TMP
-	// 	SETHI hi($sym), R
-	// 	OR R, lo($sym), R
-	// 	OR TMP, R, R
-	//	MOV (R), R
+	// 	SETHI hi($sym), TMP2
+	// 	OR TMP2, lo($sym), TMP2
+	// 	OR TMP, TMP2, TMP2
+	//	MOV (TMP2), R
 	case 24:
 		*o1 = opcode(ASETHI) | ir(0, REG_TMP)
 		*o2 = opalu(AOR) | rsr(REG_TMP, 0, REG_TMP)
@@ -1324,16 +1324,16 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		rel.Add = p.From.Offset
 		rel.Type = obj.R_ADDRSPARC64HI
 		*o3 = opalu(ASLLD) | rsr(REG_TMP, 32, REG_TMP)
-		*o4 = opcode(ASETHI) | ir(0, p.To.Reg)
-		*o5 = opalu(AOR) | rsr(p.To.Reg, 0, p.To.Reg)
+		*o4 = opcode(ASETHI) | ir(0, REG_TMP2)
+		*o5 = opalu(AOR) | rsr(REG_TMP2, 0, REG_TMP2)
 		rel = obj.Addrel(cursym)
 		rel.Off = int32(p.Pc + 12)
 		rel.Siz = 8
 		rel.Sym = p.From.Sym
 		rel.Add = p.From.Offset
 		rel.Type = obj.R_ADDRSPARC64LO
-		*o6 = opalu(AOR) | rrr(REG_TMP, 0, p.To.Reg, p.To.Reg)
-		*o7 = opload(p.As) | rsr(p.To.Reg, 0, p.To.Reg)
+		*o6 = opalu(AOR) | rrr(REG_TMP, 0, REG_TMP2, REG_TMP2)
+		*o7 = opload(p.As) | rsr(REG_TMP2, 0, p.To.Reg)
 
 	// MOV R, sym(SB) ->
 	// 	SETHI hh($sym), TMP

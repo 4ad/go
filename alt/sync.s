@@ -3,16 +3,16 @@ TEXT	main(SB),512|7,$0
 	RET
 
 TEXT cas(SB), 7, $0-17
-	MOVD	ptr+0(FP), R3
-	MOVUW	old+8(FP), R1
-	MOVUW	new+12(FP), R2
+	MOVD	ptr+0(FP), L3
+	MOVUW	old+8(FP), L1
+	MOVUW	new+12(FP), L2
 	MEMBAR	$15
-	CASW	(R3), R1, R2
-	XOR	R1, R2, R1
-	SUBCC	R1, ZR, ZR
-	SUBC	$-1, ZR, R1
+	CASW	(L3), L1, L2
+	XOR	L1, L2, L1
+	SUBCC	L1, ZR, ZR
+	SUBC	$-1, ZR, L1
 	MEMBAR	$15
-	AND	$0xff, R1, R1
-	SRAW	$0, R1, R1
-	MOVB	R1, ret+16(FP)
+	AND	$0xff, L1, L1
+	SRAW	$0, L1, L1
+	MOVB	L1, ret+16(FP)
 	RET

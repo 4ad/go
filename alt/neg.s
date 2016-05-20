@@ -1,3 +1,3 @@
 TEXT	main(SB),512|7,$0
-	NEG	R3, R4
+	NEG	L3, L4
 	RET

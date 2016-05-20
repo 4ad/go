@@ -305,7 +305,7 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 	switch p.As {
 	case AMOVD:
 		if aclass(p.Ctxt, &p.From) == ClassConst {
-			literal := fmt.Sprintf("$i64.%016x", p.From.Offset)
+			literal := fmt.Sprintf("$i64.%016x", uint64(p.From.Offset))
 			s := obj.Linklookup(ctxt, literal, 0)
 			s.Size = 8
 			p.From.Type = obj.TYPE_MEM
@@ -474,7 +474,19 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			p.Reg = 0
 			p.To.Type = obj.TYPE_NONE
 			p.To.Reg = 0
-			p.Spadj = -(cursym.Locals + MinStackFrameSize)
+			// The SP restore operation needs a Spadj of
+			// -(cursym.Locals + MinStackFrameSize),
+			// and the JMP operation needs a Spadj of
+			// +(cursym.Locals + MinStackFrameSize).
+			//
+			// Since this operation does both, they cancel out
+			// so we don't do any Spadj adjustment.
+			//
+			// The best solution would be to split RETRESTORE
+			// into the constituent instructions, but that requires
+			// more sophisticated delay-slot processing,
+			// since the RESTORE has to be in the delay
+			// slot of the branch.
 
 		case AADD, ASUB:
 			if p.To.Type == obj.TYPE_REG && p.To.Reg == REG_BSP && p.From.Type == obj.TYPE_CONST {

@@ -176,6 +176,7 @@ const (
 	REG_FTMP = REG_F30
 	REG_DTMP = REG_D30
 	REG_YTMP = REG_Y15
+	REG_YTWO = REG_Y14
 )
 
 const (

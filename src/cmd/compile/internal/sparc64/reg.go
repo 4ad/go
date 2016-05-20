@@ -125,7 +125,7 @@ func excludedregs() uint64 {
 	}
 
 	// Exclude floating point registers with fixed functions
-	regbits |= RtoB(sparc64.REG_YTMP)
+	regbits |= RtoB(sparc64.REG_YTMP) | RtoB(sparc64.REG_YTWO)
 
 	// Exclude Y16-Y31, since they don't exist.
 	for r := sparc64.REG_Y15 + 1; r <= (sparc64.REG_Y0 + 31); r++ {
