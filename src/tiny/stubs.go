@@ -4,7 +4,10 @@
 
 package runtime
 
-import "unsafe"
+import (
+	"runtime/internal/sys"
+	"unsafe"
+)
 
 // Declarations for runtime services implemented in C or assembly.
 
@@ -64,3 +67,14 @@ func exitsyscall(dummy int32) {}
 func entersyscallblock(dummy int32) {}
 
 func fastrand1() uint32
+
+func GOMAXPROCS(n int) int {
+	return 1
+}
+
+const GOARCH string = sys.TheGoarch
+const GOOS string = sys.TheGoos
+
+func GOROOT() string {
+	return sys.DefaultGoroot
+}
