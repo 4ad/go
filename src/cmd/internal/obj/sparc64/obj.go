@@ -305,7 +305,7 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 	switch p.As {
 	case AMOVD:
 		if aclass(p.Ctxt, &p.From) == ClassConst {
-			literal := fmt.Sprintf("$i64.%016x", p.From.Offset)
+			literal := fmt.Sprintf("$i64.%016x", uint64(p.From.Offset))
 			s := obj.Linklookup(ctxt, literal, 0)
 			s.Size = 8
 			p.From.Type = obj.TYPE_MEM
