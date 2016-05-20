@@ -99,3 +99,9 @@ func reflect_chancap(c *hchan) int {
 	}
 	return int(c.dataqsiz)
 }
+
+func callwritebarrier(typ *_type, frame unsafe.Pointer, framesize, retoffset uintptr) {}
+
+func badreflectcall() {
+	panic("runtime: arg size to reflect.call more than 1GB")
+}
