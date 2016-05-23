@@ -151,17 +151,3 @@ TEXT runtime·osyield1(SB),NOSPLIT,$0
 	MOVD	$libc_sched_yield(SB), R27
 	CALL	R27
 	RET
-
-// func now() (sec int64, nsec int32)
-TEXT time·now(SB),NOSPLIT,$16-12
-	// TODO(aram):
-	MOVD	$79, R27
-	ADD	$'!', R27, R27
-	MOVB	R27, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R27
-	CALL	R27
-	UNDEF
-	RET
