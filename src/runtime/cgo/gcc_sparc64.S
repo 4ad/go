@@ -28,21 +28,6 @@
 EXT(crosscall1):
 	save  %sp, -304, %sp
 
-	stx %l0, [%fp-STACK_BIAS-0*8]
-	stx %l1, [%fp-STACK_BIAS-1*8]
-	stx %l2, [%fp-STACK_BIAS-2*8]
-	stx %l3, [%fp-STACK_BIAS-3*8]
-	stx %l4, [%fp-STACK_BIAS-4*8]
-	stx %l5, [%fp-STACK_BIAS-5*8]
-	stx %l6, [%fp-STACK_BIAS-6*8]
-	stx %l7, [%fp-STACK_BIAS-7*8]
-	stx %i0, [%fp-STACK_BIAS-64-0*8]
-	stx %i1, [%fp-STACK_BIAS-64-1*8]
-	stx %i2, [%fp-STACK_BIAS-64-2*8]
-	stx %i3, [%fp-STACK_BIAS-64-3*8]
-	stx %i4, [%fp-STACK_BIAS-64-4*8]
-	stx %i5, [%fp-STACK_BIAS-64-5*8]
-
 	mov	%i0, %l0
 	mov	%i1, %l1
 	mov	%i2, %o0
@@ -51,21 +36,6 @@ EXT(crosscall1):
 	nop
 	call %l0
 	nop
-
-	stx %i5, [%fp-STACK_BIAS-64-5*8]
-	stx %i4, [%fp-STACK_BIAS-64-4*8]
-	stx %i3, [%fp-STACK_BIAS-64-3*8]
-	stx %i2, [%fp-STACK_BIAS-64-2*8]
-	stx %i1, [%fp-STACK_BIAS-64-1*8]
-	stx %i0, [%fp-STACK_BIAS-64-0*8]
-	stx %l7, [%fp-STACK_BIAS-7*8]
-	stx %l6, [%fp-STACK_BIAS-6*8]
-	stx %l5, [%fp-STACK_BIAS-5*8]
-	stx %l4, [%fp-STACK_BIAS-4*8]
-	stx %l3, [%fp-STACK_BIAS-3*8]
-	stx %l2, [%fp-STACK_BIAS-2*8]
-	stx %l1, [%fp-STACK_BIAS-1*8]
-	stx %l0, [%fp-STACK_BIAS-0*8]
 
 	rett  %i7 + 8
 	nop
