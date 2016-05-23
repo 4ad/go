@@ -10,9 +10,13 @@ LDFLAGS=-w
 EXTLDFLAGS='-Wl,-fuse-ld=gold'
 
 GOEXES=closure0.out\
-	test2.out\
 	convert.out\
 	convert2.out\
+	closure.out\
+	divide.out\
+	func6.out\
+	func7.out\
+	func8.out\
 
 GOS=${GOEXES:%.out=%.go.s}
 
