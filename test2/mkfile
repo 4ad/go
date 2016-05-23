@@ -17,6 +17,7 @@ GOEXES=closure0.out\
 	func6.out\
 	func7.out\
 	func8.out\
+	divmod.out\
 
 GOS=${GOEXES:%.out=%.go.s}
 
