@@ -1,459 +1,249 @@
 // run
 
-// Copyright 2013 The Go Authors.  All rights reserved.
+// Copyright 2009 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Test division of variables. Generate many test cases,
-// compute correct answer using shift and subtract,
-// and then compare against results from division and
-// modulus operators.
-//
-// Primarily useful for testing software div/mod.
+// Test integer division and modulus.
 
 package main
 
-const long = false
+const (
+	// example from the spec
+	n1 = +5
+	n2 = -5
+	d1 = +3
+	d2 = -3
+
+	q1 = +1
+	q2 = -1
+	q3 = -1
+	q4 = +1
+
+	r1 = +2
+	r2 = -2
+	r3 = +2
+	r4 = -2
+)
 
 func main() {
-	if long {
-		// About 3e9 test cases (calls to checkdiv3).
-		// Too long for everyday testing.
-		gen2(3, 64, 2, 64, checkdiv1)
-		println(ntest)
-	} else {
-		// About 4e6 test cases (calls to checkdiv3).
-		// Runs for 8 seconds on ARM chromebook, much faster elsewhere.
-		gen2(2, 64, 1, 64, checkdiv1)
+	/* ideals */
+	if n1/d1 != q1 || n1%d1 != r1 {
+		println("ideal-1", n1, d1, n1/d1, n1%d1)
+		panic("fail")
 	}
-}
-
-// generate all uint64 values x where x has at most n bits set in the low w
-// and call f(x) for each.
-func gen1(n, w int, f func(uint64)) {
-	gen(0, 0, n, w-1, f)
-}
-
-func gen(val uint64, nbits, maxbits, pos int, f func(uint64)) {
-	if pos < 0 {
-		f(val)
-		return
+	if n2/d1 != q2 || n2%d1 != r2 {
+		println("ideal-2", n2, d1, n2/d1, n2%d1)
+		panic("fail")
 	}
-	gen(val, nbits, maxbits, pos-1, f)
-	if nbits < maxbits {
-		gen(val|1<<uint(pos), nbits+1, maxbits, pos-1, f)
+	if n1/d2 != q3 || n1%d2 != r3 {
+		println("ideal-3", n1, d2, n1/d2, n1%d2)
+		panic("fail")
 	}
-}
-
-// generate all uint64 values x, y where x has at most n1 bits set in the low w1
-// and y has at most n2 bits set in the low w2 and call f(x, y) for each.
-func gen2(n1, w1, n2, w2 int, f func(uint64, uint64)) {
-	gen1(n1, w1, func(x uint64) {
-		gen1(n2, w2, func(y uint64) {
-			f(x, y)
-		})
-	})
-}
-
-// x and y are uint64s with at most 2 bits set.
-// Check those values and values above and below,
-// along with bitwise inversions of the same (done in checkdiv2).
-func checkdiv1(x, y uint64) {
-	checkdiv2(x, y)
-	// If the low bit is set in x or y, adding or subtracting 1
-	// produces a number that checkdiv1 is going to be called
-	// with anyway, so don't duplicate effort.
-	if x&1 == 0 {
-		checkdiv2(x+1, y)
-		checkdiv2(x-1, y)
-	}
-	if y&1 == 0 {
-		checkdiv2(x, y-1)
-		checkdiv2(x, y+1)
-		if x&1 == 0 {
-			checkdiv2(x+1, y-1)
-			checkdiv2(x-1, y-1)
-			checkdiv2(x-1, y+1)
-			checkdiv2(x+1, y+1)
-		}
-	}
-}
-
-func checkdiv2(x, y uint64) {
-	checkdiv3(x, y)
-	checkdiv3(^x, y)
-	checkdiv3(x, ^y)
-	checkdiv3(^x, ^y)
-}
-
-var ntest int64 = 0
-
-func checkdiv3(x, y uint64) {
-	ntest++
-	if ntest&(ntest-1) == 0 && long {
-		println(ntest, "...")
-	}
-	checkuint64(x, y)
-	if (uint64(uint32(x)) == x || uint64(uint32(^x)) == ^x) && (uint64(uint32(y)) == y || uint64(uint32(^y)) == ^y) {
-		checkuint32(uint32(x), uint32(y))
-	}
-	if (uint64(uint16(x)) == x || uint64(uint16(^x)) == ^x) && (uint64(uint16(y)) == y || uint64(uint16(^y)) == ^y) {
-		checkuint16(uint16(x), uint16(y))
-	}
-	if (uint64(uint8(x)) == x || uint64(uint8(^x)) == ^x) && (uint64(uint8(y)) == y || uint64(uint8(^y)) == ^y) {
-		checkuint8(uint8(x), uint8(y))
+	if n2/d2 != q4 || n2%d2 != r4 {
+		println("ideal-4", n2, d2, n2/d2, n2%d2)
+		panic("fail")
 	}
 
-	sx := int64(x)
-	sy := int64(y)
-	checkint64(sx, sy)
-	if (int64(int32(sx)) == sx || int64(int32(^sx)) == ^sx) && (int64(int32(sy)) == sy || int64(int32(^sy)) == ^sy) {
-		checkint32(int32(sx), int32(sy))
-	}
-	if (int64(int16(sx)) == sx || int64(int16(^sx)) == ^sx) && (int64(int16(sy)) == sy || int64(int16(^sy)) == ^sy) {
-		checkint16(int16(sx), int16(sy))
-	}
-	if (int64(int8(sx)) == sx || int64(int8(^sx)) == ^sx) && (int64(int8(sy)) == sy || int64(int8(^sy)) == ^sy) {
-		checkint8(int8(sx), int8(sy))
-	}
-}
+	/* int */
+	var in1 int = +5
+	var in2 int = -5
+	var id1 int = +3
+	var id2 int = -3
 
-// Check result of x/y, x%y for various types.
+	if in1/id1 != q1 || in1%id1 != r1 {
+		println("int-1", in1, id1, in1/id1, in1%id1)
+		panic("fail")
+	}
+	if in2/id1 != q2 || in2%id1 != r2 {
+		println("int-2", in2, id1, in2/id1, in2%id1)
+		panic("fail")
+	}
+	if in1/id2 != q3 || in1%id2 != r3 {
+		println("int-3", in1, id2, in1/id2, in1%id2)
+		panic("fail")
+	}
+	if in2/id2 != q4 || in2%id2 != r4 {
+		println("int-4", in2, id2, in2/id2, in2%id2)
+		panic("fail")
+	}
 
-func checkuint(x, y uint) {
-	if y == 0 {
-		divzerouint(x, y)
-		modzerouint(x, y)
-		return
-	}
-	q, r := udiv(uint64(x), uint64(y))
-	q1 := x / y
-	r1 := x % y
-	if q1 != uint(q) {
-		print("uint(", x, "/", y, ") = ", q1, ", want ", q, "\n")
-	}
-	if r1 != uint(r) {
-		print("uint(", x, "%", y, ") = ", r1, ", want ", r, "\n")
-	}
-}
+	/* int8 */
+	var bn1 int8 = +5
+	var bn2 int8 = -5
+	var bd1 int8 = +3
+	var bd2 int8 = -3
 
-func checkuint64(x, y uint64) {
-	if y == 0 {
-		divzerouint64(x, y)
-		modzerouint64(x, y)
-		return
+	if bn1/bd1 != q1 || bn1%bd1 != r1 {
+		println("int8-1", bn1, bd1, bn1/bd1, bn1%bd1)
+		panic("fail")
 	}
-	q, r := udiv(x, y)
-	q1 := x / y
-	r1 := x % y
-	if q1 != q {
-		print("uint64(", x, "/", y, ") = ", q1, ", want ", q, "\n")
+	if bn2/bd1 != q2 || bn2%bd1 != r2 {
+		println("int8-2", bn2, bd1, bn2/bd1, bn2%bd1)
+		panic("fail")
 	}
-	if r1 != r {
-		print("uint64(", x, "%", y, ") = ", r1, ", want ", r, "\n")
+	if bn1/bd2 != q3 || bn1%bd2 != r3 {
+		println("int8-3", bn1, bd2, bn1/bd2, bn1%bd2)
+		panic("fail")
 	}
-}
+	if bn2/bd2 != q4 || bn2%bd2 != r4 {
+		println("int8-4", bn2, bd2, bn2/bd2, bn2%bd2)
+		panic("fail")
+	}
 
-func checkuint32(x, y uint32) {
-	if y == 0 {
-		divzerouint32(x, y)
-		modzerouint32(x, y)
-		return
-	}
-	q, r := udiv(uint64(x), uint64(y))
-	q1 := x / y
-	r1 := x % y
-	if q1 != uint32(q) {
-		print("uint32(", x, "/", y, ") = ", q1, ", want ", q, "\n")
-	}
-	if r1 != uint32(r) {
-		print("uint32(", x, "%", y, ") = ", r1, ", want ", r, "\n")
-	}
-}
+	/* int16 */
+	var sn1 int16 = +5
+	var sn2 int16 = -5
+	var sd1 int16 = +3
+	var sd2 int16 = -3
 
-func checkuint16(x, y uint16) {
-	if y == 0 {
-		divzerouint16(x, y)
-		modzerouint16(x, y)
-		return
+	if sn1/sd1 != q1 || sn1%sd1 != r1 {
+		println("int16-1", sn1, sd1, sn1/sd1, sn1%sd1)
+		panic("fail")
 	}
-	q, r := udiv(uint64(x), uint64(y))
-	q1 := x / y
-	r1 := x % y
-	if q1 != uint16(q) {
-		print("uint16(", x, "/", y, ") = ", q1, ", want ", q, "\n")
+	if sn2/sd1 != q2 || sn2%sd1 != r2 {
+		println("int16-2", sn2, sd1, sn2/sd1, sn2%sd1)
+		panic("fail")
 	}
-	if r1 != uint16(r) {
-		print("uint16(", x, "%", y, ") = ", r1, ", want ", r, "\n")
+	if sn1/sd2 != q3 || sn1%sd2 != r3 {
+		println("int16-3", sn1, sd2, sn1/sd2, sn1%sd2)
+		panic("fail")
 	}
-}
-
-func checkuint8(x, y uint8) {
-	if y == 0 {
-		divzerouint8(x, y)
-		modzerouint8(x, y)
-		return
+	if sn2/sd2 != q4 || sn2%sd2 != r4 {
+		println("int16-4", sn2, sd2, sn2/sd2, sn2%sd2)
+		panic("fail")
 	}
-	q, r := udiv(uint64(x), uint64(y))
-	q1 := x / y
-	r1 := x % y
-	if q1 != uint8(q) {
-		print("uint8(", x, "/", y, ") = ", q1, ", want ", q, "\n")
+
+	/* int32 */
+	var ln1 int32 = +5
+	var ln2 int32 = -5
+	var ld1 int32 = +3
+	var ld2 int32 = -3
+
+	if ln1/ld1 != q1 || ln1%ld1 != r1 {
+		println("int32-1", ln1, ld1, ln1/ld1, ln1%ld1)
+		panic("fail")
 	}
-	if r1 != uint8(r) {
-		print("uint8(", x, "%", y, ") = ", r1, ", want ", r, "\n")
+	if ln2/ld1 != q2 || ln2%ld1 != r2 {
+		println("int32-2", ln2, ld1, ln2/ld1, ln2%ld1)
+		panic("fail")
 	}
-}
-
-func checkint(x, y int) {
-	if y == 0 {
-		divzeroint(x, y)
-		modzeroint(x, y)
-		return
+	if ln1/ld2 != q3 || ln1%ld2 != r3 {
+		println("int32-3", ln1, ld2, ln1/ld2, ln1%ld2)
+		panic("fail")
 	}
-	q, r := idiv(int64(x), int64(y))
-	q1 := x / y
-	r1 := x % y
-	if q1 != int(q) {
-		print("int(", x, "/", y, ") = ", q1, ", want ", q, "\n")
+	if ln2/ld2 != q4 || ln2%ld2 != r4 {
+		println("int32-4", ln2, ld2, ln2/ld2, ln2%ld2)
+		panic("fail")
 	}
-	if r1 != int(r) {
-		print("int(", x, "%", y, ") = ", r1, ", want ", r, "\n")
+
+	/* int64 */
+	var qn1 int64 = +5
+	var qn2 int64 = -5
+	var qd1 int64 = +3
+	var qd2 int64 = -3
+
+	if qn1/qd1 != q1 || qn1%qd1 != r1 {
+		println("int64-1", qn1, qd1, qn1/qd1, qn1%qd1)
+		panic("fail")
 	}
-}
-
-func checkint64(x, y int64) {
-	if y == 0 {
-		divzeroint64(x, y)
-		modzeroint64(x, y)
-		return
+	if qn2/qd1 != q2 || qn2%qd1 != r2 {
+		println("int64-2", qn2, qd1, qn2/qd1, qn2%qd1)
+		panic("fail")
 	}
-	q, r := idiv(x, y)
-	q1 := x / y
-	r1 := x % y
-	if q1 != q {
-		print("int64(", x, "/", y, ") = ", q1, ", want ", q, "\n")
+	if qn1/qd2 != q3 || qn1%qd2 != r3 {
+		println("int64-3", qn1, qd2, qn1/qd2, qn1%qd2)
+		panic("fail")
 	}
-	if r1 != r {
-		print("int64(", x, "%", y, ") = ", r1, ", want ", r, "\n")
+	if qn2/qd2 != q4 || qn2%qd2 != r4 {
+		println("int64-4", qn2, qd2, qn2/qd2, qn2%qd2)
+		panic("fail")
 	}
-}
 
-func checkint32(x, y int32) {
-	if y == 0 {
-		divzeroint32(x, y)
-		modzeroint32(x, y)
-		return
+	if n1/qd1 != q1 || n1%qd1 != r1 {
+		println("mixed int64-1", n1, qd1, n1/qd1, n1%qd1)
+		panic("fail")
 	}
-	q, r := idiv(int64(x), int64(y))
-	q1 := x / y
-	r1 := x % y
-	if q1 != int32(q) {
-		print("int32(", x, "/", y, ") = ", q1, ", want ", q, "\n")
+	if n2/qd1 != q2 || n2%qd1 != r2 {
+		println("mixed int64-2", n2, qd1, n2/qd1, n2%qd1)
+		panic("fail")
 	}
-	if r1 != int32(r) {
-		print("int32(", x, "%", y, ") = ", r1, ", want ", r, "\n")
+	if n1/qd2 != q3 || n1%qd2 != r3 {
+		println("mixed int64-3", n1, qd2, n1/qd2, n1%qd2)
+		panic("fail")
 	}
-}
-
-func checkint16(x, y int16) {
-	if y == 0 {
-		divzeroint16(x, y)
-		modzeroint16(x, y)
-		return
+	if n2/qd2 != q4 || n2%qd2 != r4 {
+		println("mixed int64-4", n2, qd2, n2/qd2, n2%qd2)
+		panic("fail")
 	}
-	q, r := idiv(int64(x), int64(y))
-	q1 := x / y
-	r1 := x % y
-	if q1 != int16(q) {
-		print("int16(", x, "/", y, ") = ", q1, ", want ", q, "\n")
+
+	if qn1/d1 != q1 || qn1%d1 != r1 {
+		println("mixed int64-5", qn1, d1, qn1/d1, qn1%d1)
+		panic("fail")
 	}
-	if r1 != int16(r) {
-		print("int16(", x, "%", y, ") = ", r1, ", want ", r, "\n")
+	if qn2/d1 != q2 || qn2%d1 != r2 {
+		println("mixed int64-6", qn2, d1, qn2/d1, qn2%d1)
+		panic("fail")
 	}
-}
-
-func checkint8(x, y int8) {
-	if y == 0 {
-		divzeroint8(x, y)
-		modzeroint8(x, y)
-		return
+	if qn1/d2 != q3 || qn1%d2 != r3 {
+		println("mixed int64-7", qn1, d2, qn1/d2, qn1%d2)
+		panic("fail")
 	}
-	q, r := idiv(int64(x), int64(y))
-	q1 := x / y
-	r1 := x % y
-	if q1 != int8(q) {
-		print("int8(", x, "/", y, ") = ", q1, ", want ", q, "\n")
+	if qn2/d2 != q4 || qn2%d2 != r4 {
+		println("mixed int64-8", qn2, d2, qn2/d2, qn2%d2)
+		panic("fail")
 	}
-	if r1 != int8(r) {
-		print("int8(", x, "%", y, ") = ", r1, ", want ", r, "\n")
+
+	/* uint */
+	var uin1 uint = +5
+	var uid1 uint = +3
+
+	if uin1/uid1 != q1 || uin1%uid1 != r1 {
+		println("uint", uin1, uid1, uin1/uid1, uin1%uid1)
+		panic("fail")
 	}
-}
 
-func divzerouint(x, y uint) uint {
-	defer checkudivzero("uint", uint64(x))
-	return x / y
-}
+	/* uint8 */
+	var ubn1 uint8 = +5
+	var ubd1 uint8 = +3
 
-func divzerouint64(x, y uint64) uint64 {
-	defer checkudivzero("uint64", uint64(x))
-	return x / y
-}
-
-func divzerouint32(x, y uint32) uint32 {
-	defer checkudivzero("uint32", uint64(x))
-	return x / y
-}
-
-func divzerouint16(x, y uint16) uint16 {
-	defer checkudivzero("uint16", uint64(x))
-	return x / y
-}
-
-func divzerouint8(x, y uint8) uint8 {
-	defer checkudivzero("uint8", uint64(x))
-	return x / y
-}
-
-func checkudivzero(typ string, x uint64) {
-	if recover() == nil {
-		print(typ, "(", x, " / 0) did not panic")
+	if ubn1/ubd1 != q1 || ubn1%ubd1 != r1 {
+		println("uint8", ubn1, ubd1, ubn1/ubd1, ubn1%ubd1)
+		panic("fail")
 	}
-}
 
-func divzeroint(x, y int) int {
-	defer checkdivzero("int", int64(x))
-	return x / y
-}
+	/* uint16 */
+	var usn1 uint16 = +5
+	var usd1 uint16 = +3
 
-func divzeroint64(x, y int64) int64 {
-	defer checkdivzero("int64", int64(x))
-	return x / y
-}
-
-func divzeroint32(x, y int32) int32 {
-	defer checkdivzero("int32", int64(x))
-	return x / y
-}
-
-func divzeroint16(x, y int16) int16 {
-	defer checkdivzero("int16", int64(x))
-	return x / y
-}
-
-func divzeroint8(x, y int8) int8 {
-	defer checkdivzero("int8", int64(x))
-	return x / y
-}
-
-func checkdivzero(typ string, x int64) {
-	if recover() == nil {
-		print(typ, "(", x, " / 0) did not panic")
+	if usn1/usd1 != q1 || usn1%usd1 != r1 {
+		println("uint16", usn1, usd1, usn1/usd1, usn1%usd1)
+		panic("fail")
 	}
-}
 
-func modzerouint(x, y uint) uint {
-	defer checkumodzero("uint", uint64(x))
-	return x % y
-}
+	/* uint32 */
+	var uln1 uint32 = +5
+	var uld1 uint32 = +3
 
-func modzerouint64(x, y uint64) uint64 {
-	defer checkumodzero("uint64", uint64(x))
-	return x % y
-}
-
-func modzerouint32(x, y uint32) uint32 {
-	defer checkumodzero("uint32", uint64(x))
-	return x % y
-}
-
-func modzerouint16(x, y uint16) uint16 {
-	defer checkumodzero("uint16", uint64(x))
-	return x % y
-}
-
-func modzerouint8(x, y uint8) uint8 {
-	defer checkumodzero("uint8", uint64(x))
-	return x % y
-}
-
-func checkumodzero(typ string, x uint64) {
-	if recover() == nil {
-		print(typ, "(", x, " % 0) did not panic")
+	if uln1/uld1 != q1 || uln1%uld1 != r1 {
+		println("uint32", uln1, uld1, uln1/uld1, uln1%uld1)
+		panic("fail")
 	}
-}
 
-func modzeroint(x, y int) int {
-	defer checkmodzero("int", int64(x))
-	return x % y
-}
+	/* uint64 */
+	var uqn1 uint64 = +5
+	var uqd1 uint64 = +3
 
-func modzeroint64(x, y int64) int64 {
-	defer checkmodzero("int64", int64(x))
-	return x % y
-}
-
-func modzeroint32(x, y int32) int32 {
-	defer checkmodzero("int32", int64(x))
-	return x % y
-}
-
-func modzeroint16(x, y int16) int16 {
-	defer checkmodzero("int16", int64(x))
-	return x % y
-}
-
-func modzeroint8(x, y int8) int8 {
-	defer checkmodzero("int8", int64(x))
-	return x % y
-}
-
-func checkmodzero(typ string, x int64) {
-	if recover() == nil {
-		print(typ, "(", x, " % 0) did not panic")
+	if uqn1/uqd1 != q1 || uqn1%uqd1 != r1 {
+		println("uint64", uqn1, uqd1, uqn1/uqd1, uqn1%uqd1)
+		panic("fail")
 	}
-}
-
-// unsigned divide and mod using shift and subtract.
-func udiv(x, y uint64) (q, r uint64) {
-	sh := 0
-	for y+y > y && y+y <= x {
-		sh++
-		y <<= 1
+	if n1/uqd1 != q1 || n1%uqd1 != r1 {
+		println("mixed uint64-1", n1, uqd1, n1/uqd1, n1%uqd1)
+		panic("fail")
 	}
-	for ; sh >= 0; sh-- {
-		q <<= 1
-		if x >= y {
-			x -= y
-			q |= 1
-		}
-		y >>= 1
+	if uqn1/d1 != q1 || uqn1%d1 != r1 {
+		println("mixed uint64-2", uqn1, d1, uqn1/d1, uqn1%d1)
+		panic("fail")
 	}
-	return q, x
-}
-
-// signed divide and mod: do unsigned and adjust signs.
-func idiv(x, y int64) (q, r int64) {
-	// special case for minint / -1 = minint
-	if x-1 > x && y == -1 {
-		return x, 0
-	}
-	ux := uint64(x)
-	uy := uint64(y)
-	if x < 0 {
-		ux = -ux
-	}
-	if y < 0 {
-		uy = -uy
-	}
-	uq, ur := udiv(ux, uy)
-	q = int64(uq)
-	r = int64(ur)
-	if x < 0 {
-		r = -r
-	}
-	if (x < 0) != (y < 0) {
-		q = -q
-	}
-	return q, r
 }

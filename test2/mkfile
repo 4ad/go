@@ -10,14 +10,42 @@ LDFLAGS=-w
 EXTLDFLAGS='-Wl,-fuse-ld=gold'
 
 GOEXES=closure0.out\
-	convert.out\
 	convert2.out\
 	closure.out\
 	divide.out\
 	func6.out\
 	func7.out\
 	func8.out\
+	array.out\
+	complit.out\
+	convert.out\
 	divmod.out\
+	embed.out\
+	for.out\
+	interbasic.out\
+	interfun.out\
+	intervar.out\
+	label.out\
+	litfun.out\
+	mfunc.out\
+	ptrfun.out\
+	ptrvar.out\
+	range.out\
+	rob1.out\
+	robfor.out\
+	robfunc.out\
+	shift.out\
+	simparray.out\
+	simpbool.out\
+	simpconv.out\
+	simpfun.out\
+	simpswitch.out\
+	simpvar.out\
+	slicearray.out\
+	sliceslice.out\
+	string.out\
+	string.out\
+	strvar.out\
 
 GOS=${GOEXES:%.out=%.go.s}
 
