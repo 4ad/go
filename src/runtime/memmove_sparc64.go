@@ -16,15 +16,15 @@ func memmove_bytes(dst, src unsafe.Pointer, n uintptr) {
 		return
 	}
 	if uintptr(src) < uintptr(dst) {
-		for i := n - 1; i >= 0; i-- {
-			b := *(*byte)(add(src, i))
-			*(*byte)(add(dst, i)) = b
+		for i := int64(n) - 1; i >= 0; i-- {
+			b := *(*byte)(add(src, uintptr(i)))
+			*(*byte)(add(dst, uintptr(i))) = b
 		}
 		return
 	}
-	for i := uintptr(0); i <= n; i++ {
-		b := *(*byte)(add(src, i))
-		*(*byte)(add(dst, i)) = b
+	for i := int64(0); i <= int64(n); i++ {
+		b := *(*byte)(add(src, uintptr(i)))
+		*(*byte)(add(dst, uintptr(i))) = b
 	}
 	return
 }
