@@ -70,6 +70,7 @@ GNUCOBJS=conv.o\
 	atomic.o\
 	cmp1_2.o\
 	save.o\
+	cmp2.o\
 
 GNUOBJS=${GNUEXES:%.gnu.out=%.o}\
 	$GOEXTHOSTOBJS\
