@@ -463,6 +463,35 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			p.To.Reg = REG_RSP
 			p.To.Offset = int64(120 + StackBias)
 
+			if cursym.Args == obj.ArgsSizeUnknown {
+				break
+			}
+			args := int(cursym.Args) / 8
+			// At this point we have a stack frame that
+			// can be unwinded and register window spilled
+			// by native target code. However, the native
+			// target code (e.g. mdb(1)) doesn't know where
+			// to look for function arguments. Since we
+			// have argument information, we copy the
+			// arguments in the place where native tools
+			// expect them.
+
+			// For all functions copy at most 6 arguments into the
+			// %i registers.
+			if args > 6 {
+				args = 6
+			}
+			for i := 0; i < args; i++ {
+				// MOVD	argN+8N(BFP), %iN
+				p = obj.Appendp(ctxt, p)
+				p.As = AMOVD
+				p.From.Type = obj.TYPE_MEM
+				p.From.Reg = REG_RFP
+				p.From.Offset = int64(i*8 + MinStackFrameSize + StackBias)
+				p.To.Type = obj.TYPE_REG
+				p.To.Reg = int16(REG_R24 + i) // %i0+i
+			}
+
 		case obj.ARET:
 			if isNOFRAME(cursym.Text) {
 				break
