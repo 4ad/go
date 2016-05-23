@@ -15,7 +15,7 @@
 // NOTE: setg_gcc<> assume this clobbers only RT1.
 TEXT runtime·save_g(SB),NOSPLIT|NOFRAME,$0-0
 	MOVB	runtime·iscgo(SB), RT1
-	CMP	L1, ZR
+	CMP	RT1, ZR
 	BEW	nocgo
 
 	MOVD	$runtime·tls_g(SB), RT1
