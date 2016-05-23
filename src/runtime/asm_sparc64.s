@@ -681,7 +681,7 @@ TEXT runtime·setg(SB), NOSPLIT, $0-8
 
 // void setg_gcc(G*); set g called from gcc
 TEXT setg_gcc<>(SB),NOSPLIT,$16
-	MOVD	R8, g
+	MOVD	I0, g
 	MOVD	RT1, savedRT1-8(SP)
 	CALL	runtime·save_g(SB)
 	MOVD	savedRT1-8(SP), RT1

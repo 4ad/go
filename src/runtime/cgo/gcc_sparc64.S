@@ -45,7 +45,7 @@ EXT(crosscall1):
 
 	mov	%i0, %l0
 	mov	%i1, %l1
-	mov	%i2, %i0
+	mov	%i2, %o0
 
 	call %l1
 	nop
