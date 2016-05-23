@@ -124,6 +124,12 @@ func excludedregs() uint64 {
 		regbits |= RtoB(r)
 	}
 
+	// Exclude I0 - I7, for debugging.
+	// TODO(aram): revisit this.
+	for r := sparc64.REG_R24; r <= sparc64.REG_R31; r++ {
+		regbits |= RtoB(r)
+	}
+
 	// Exclude floating point registers with fixed functions
 	regbits |= RtoB(sparc64.REG_YTMP) | RtoB(sparc64.REG_YTWO)
 

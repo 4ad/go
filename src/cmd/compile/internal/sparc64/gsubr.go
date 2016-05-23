@@ -50,6 +50,12 @@ var resvd = []int{
 	sparc64.REG_RSP,
 	sparc64.REG_OLR,
 	sparc64.REG_TMP2,
+	sparc64.REG_R24, // TODO(aram): revisit this.
+	sparc64.REG_R25, // TODO(aram): revisit this.
+	sparc64.REG_R26, // TODO(aram): revisit this.
+	sparc64.REG_R27, // TODO(aram): revisit this.
+	sparc64.REG_R28, // TODO(aram): revisit this.
+	sparc64.REG_R29, // TODO(aram): revisit this.
 	sparc64.REG_RFP,
 	sparc64.REG_ILR,
 	sparc64.REG_YTMP,
