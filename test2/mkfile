@@ -46,6 +46,8 @@ GOEXES=closure0.out\
 	string.out\
 	string.out\
 	strvar.out\
+	defer.out\
+	deferprint.out\
 
 GOS=${GOEXES:%.out=%.go.s}
 
