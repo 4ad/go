@@ -9,6 +9,9 @@ import "unsafe"
 //go:linkname memmove_bytes runtime.memmove
 //go:nosplit
 func memmove_bytes(dst, src unsafe.Pointer, n uintptr) {
+	if n == 0 {
+		return
+	}
 	if uintptr(dst) == uintptr(src) {
 		return
 	}
