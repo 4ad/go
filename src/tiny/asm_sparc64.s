@@ -514,13 +514,6 @@ TEXT setg_gcc<>(SB),NOSPLIT,$16
 
 TEXT runtime·getcallerpc(SB),NOSPLIT,$16-16
 	MOVD	FIXED_FRAME+8*15(BFP), R25		// LR saved by caller
-	MOVD	runtime·stackBarrierPC(SB), R28
-	CMP	R28, R25
-	BNED	nobar
-	// Get original return PC.
-	CALL	runtime·nextBarrierPC(SB)
-	MOVD	FIXED_FRAME+0(R27), R25
-nobar:
 	MOVD	R25, ret+8(FP)
 	RET
 
