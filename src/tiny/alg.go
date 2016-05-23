@@ -132,3 +132,38 @@ func strhash(a unsafe.Pointer, h uintptr) uintptr {
 	x := (*stringStruct)(a)
 	return memhash(x.str, h, uintptr(x.len))
 }
+
+func interhash(p unsafe.Pointer, h uintptr) uintptr {
+	a := (*iface)(p)
+	tab := a.tab
+	if tab == nil {
+		return h
+	}
+	t := tab._type
+	fn := t.alg.hash
+	if fn == nil {
+		panic(errorString("hash of unhashable type " + *t._string))
+	}
+	if isDirectIface(t) {
+		return c1 * fn(unsafe.Pointer(&a.data), h^c0)
+	} else {
+		return c1 * fn(a.data, h^c0)
+	}
+}
+
+func nilinterhash(p unsafe.Pointer, h uintptr) uintptr {
+	a := (*eface)(p)
+	t := a._type
+	if t == nil {
+		return h
+	}
+	fn := t.alg.hash
+	if fn == nil {
+		panic(errorString("hash of unhashable type " + *t._string))
+	}
+	if isDirectIface(t) {
+		return c1 * fn(unsafe.Pointer(&a.data), h^c0)
+	} else {
+		return c1 * fn(a.data, h^c0)
+	}
+}

@@ -109,3 +109,37 @@ func deferreturn(arg0 uintptr) {
 	releasem(mp)
 	jmpdefer(fn, uintptr(unsafe.Pointer(&arg0)))
 }
+
+func panicdottype(have, want, iface *_type) {
+	haveString := ""
+	if have != nil {
+		haveString = *have._string
+	}
+	panic(&TypeAssertionError{*iface._string, haveString, *want._string, ""})
+}
+
+// A TypeAssertionError explains a failed type assertion.
+type TypeAssertionError struct {
+	interfaceString string
+	concreteString  string
+	assertedString  string
+	missingMethod   string // one method needed by Interface, missing from Concrete
+}
+
+func (*TypeAssertionError) RuntimeError() {}
+
+func (e *TypeAssertionError) Error() string {
+	inter := e.interfaceString
+	if inter == "" {
+		inter = "interface"
+	}
+	if e.concreteString == "" {
+		return "interface conversion: " + inter + " is nil, not " + e.assertedString
+	}
+	if e.missingMethod == "" {
+		return "interface conversion: " + inter + " is " + e.concreteString +
+			", not " + e.assertedString
+	}
+	return "interface conversion: " + e.concreteString + " is not " + e.assertedString +
+		": missing method " + e.missingMethod
+}

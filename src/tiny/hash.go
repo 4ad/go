@@ -11,7 +11,3 @@ import "unsafe"
 func memhash(p unsafe.Pointer, seed, s uintptr) uintptr {
 	return 0
 }
-
-func nilinterhash(p unsafe.Pointer, h uintptr) uintptr {
-	return 0
-}
