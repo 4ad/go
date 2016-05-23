@@ -37,7 +37,6 @@ func stringiter2(_ string, _ int)/*(retk int, retv rune)*/ { unimpl("stringiter2
 func typ2Itab(typ *byte, typ2 *byte, cache **byte)/*(ret *byte)*/ { unimpl("typ2Itab") }
 func convI2E(elem fInterface)/*(ret interface{})*/ { unimpl("convI2E") }
 func convI2I(typ *interfacetype, elem fInterface)/*(ret fInterface)*/ { unimpl("convI2I") }
-func convT2E(typ *byte, elem unsafe.Pointer)/*(ret interface{})*/ { unimpl("convT2E") }
 func convT2I(typ *byte, typ2 *byte, cache **byte, elem unsafe.Pointer) /*(ret fInterface)*/ {
 	unimpl("convT2I")
 }
