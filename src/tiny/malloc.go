@@ -37,3 +37,25 @@ func malloc(size, align uintptr) unsafe.Pointer {
 func round(n, a uintptr) uintptr {
 	return (n + a - 1) &^ (a - 1)
 }
+
+// implementation of make builtin for slices
+func newarray(typ *_type, n uintptr) unsafe.Pointer {
+	if int(n) < 0 || typ.size > 0 {
+		panic("runtime: allocation size out of range")
+	}
+	return malloc(uintptr(typ.size)*n, 8)
+}
+
+// rawmem returns a chunk of pointerless memory. It is
+// not zeroed.
+func rawmem(size uintptr) unsafe.Pointer {
+	return malloc(size, 8)
+}
+
+// base address for all 0-byte allocations
+var zerobase uintptr
+
+// Returns size of the memory block that mallocgc will allocate if you ask for the size.
+func roundupsize(size uintptr) uintptr {
+	return round(size, 8192)
+}

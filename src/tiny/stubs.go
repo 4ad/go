@@ -105,3 +105,7 @@ func callwritebarrier(typ *_type, frame unsafe.Pointer, framesize, retoffset uin
 func badreflectcall() {
 	panic("runtime: arg size to reflect.call more than 1GB")
 }
+
+func stringStructOf(sp *string) *stringStruct {
+	return (*stringStruct)(unsafe.Pointer(sp))
+}

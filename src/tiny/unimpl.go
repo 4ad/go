@@ -34,8 +34,6 @@ func stringtoslicebyte(_ string)/*(_ []byte)*/ { unimpl("stringtoslicebyte") }
 func stringtoslicerune(_ string)/*(_ []rune)*/ { unimpl("stringtoslicerune") }
 func stringiter(_ string, _ int)/*(_ int)*/ { unimpl("stringiter") }
 func stringiter2(_ string, _ int)/*(retk int, retv rune)*/ { unimpl("stringiter2") }
-func slicecopy(to sliceStruct, fr sliceStruct, wid uintptr)/*(_ int)*/ { unimpl("slicecopy") }
-func slicestringcopy(to []byte, fr string)/*(_ int)*/ { unimpl("slicestringcopy") }
 func typ2Itab(typ *byte, typ2 *byte, cache **byte)/*(ret *byte)*/ { unimpl("typ2Itab") }
 func convI2E(elem fInterface)/*(ret interface{})*/ { unimpl("convI2E") }
 func convI2I(typ *interfacetype, elem fInterface)/*(ret fInterface)*/ { unimpl("convI2I") }
@@ -120,8 +118,6 @@ func selectrecv2(sel *byte, hchan unsafe.Pointer, elem unsafe.Pointer, received 
 func selectdefault(sel *byte)/*(selected bool)*/ { unimpl("selectdefault") }
 func selectgo(sel *byte) { unimpl("selectgo") }
 func block()             { unimpl("block") }
-func makeslice(typ *byte, nel int64, cap int64)/*(ary sliceStruct)*/ { unimpl("makeslice") }
-func growslice(typ *byte, old sliceStruct, n int64)/*(ary sliceStruct)*/ { unimpl("growslice") }
 func memequal8(x unsafe.Pointer, y unsafe.Pointer)/*(_ bool)*/ { unimpl("memequal8") }
 func memequal16(x unsafe.Pointer, y unsafe.Pointer)/*(_ bool)*/ { unimpl("memequal16") }
 func memequal32(x unsafe.Pointer, y unsafe.Pointer)/*(_ bool)*/ { unimpl("memequal32") }

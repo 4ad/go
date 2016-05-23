@@ -168,12 +168,6 @@ type eface struct {
 	data  unsafe.Pointer
 }
 
-type slice struct {
-	array *byte // actual data
-	len   uint  // number of elements
-	cap   uint  // allocated number of elements
-}
-
 // A guintptr holds a goroutine pointer, but typed as a uintptr
 // to bypass write barriers. It is used in the Gobuf goroutine state.
 //
@@ -276,4 +270,13 @@ type hchan struct {
 type waitq struct {
 	first *sudog
 	last  *sudog
+}
+
+// An errorString represents a runtime error described by a single string.
+type errorString string
+
+func (e errorString) RuntimeError() {}
+
+func (e errorString) Error() string {
+	return "runtime error: " + string(e)
 }
