@@ -40,7 +40,7 @@ TEXT runtime·nanotime1(SB),NOSPLIT,$64
 	MOVD	$1000000000, R25
 	MULD	R25, R27	// multiply into nanoseconds
 	MOVD	-8(BFP), R29	// tv_nsec, offset should be stable.
-	ADD	R29, R27, O0
+	ADD	R29, R27, I0
 	RET
 
 // pipe(3c) wrapper that returns fds in AX, DX.
@@ -49,8 +49,8 @@ TEXT runtime·pipe1(SB),NOSPLIT,$16
 	MOVD	$FIXED_FRAME(BSP), O0
 	MOVD	$libc_pipe(SB), R27
 	CALL	R27
-	MOVW	(FIXED_FRAME+0)(BSP), O0
-	MOVW	(FIXED_FRAME+4)(BSP), O1
+	MOVW	(FIXED_FRAME+0)(BSP), I0
+	MOVW	(FIXED_FRAME+4)(BSP), I1
 	RET
 
 // Call a library function with SysV calling conventions.
