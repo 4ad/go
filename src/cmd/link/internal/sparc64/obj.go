@@ -58,6 +58,7 @@ func linkarchinit() {
 	ld.Thearch.Minlc = MINLC
 	ld.Thearch.Dwarfregsp = DWARFREGSP
 	ld.Thearch.Dwarfreglr = DWARFREGLR
+	ld.Thearch.StackBias = 0x7ff
 
 	ld.Thearch.Adddynrel = adddynrel
 	ld.Thearch.Archinit = archinit

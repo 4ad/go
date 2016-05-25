@@ -92,6 +92,7 @@ type Arch struct {
 	Minlc            int
 	Dwarfregsp       int
 	Dwarfreglr       int
+	StackBias        int
 	Linuxdynld       string
 	Freebsddynld     string
 	Netbsddynld      string

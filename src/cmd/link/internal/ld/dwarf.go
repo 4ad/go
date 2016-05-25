@@ -237,6 +237,7 @@ var abbrevs = [DW_NABRV]DWAbbrev{
 			{DW_AT_low_pc, DW_FORM_addr},
 			{DW_AT_high_pc, DW_FORM_addr},
 			{DW_AT_external, DW_FORM_flag},
+			{DW_AT_frame_base, DW_FORM_block1},
 		},
 	},
 
@@ -1418,6 +1419,13 @@ func newcfaoffsetattr(die *DWDie, offs int32) {
 	newattr(die, DW_AT_location, DW_CLS_BLOCK, int64(len(b)), b)
 }
 
+func newfboffsetattr(die *DWDie, offs int32) {
+	var block [20]byte
+	b := append(block[:0], DW_OP_fbreg)
+	b = appendSleb128(b, int64(offs))
+	newattr(die, DW_AT_location, DW_CLS_BLOCK, int64(len(b)), b)
+}
+
 func mkvarname(name string, da int) string {
 	buf := fmt.Sprintf("%s#%d", name, da)
 	n := buf
@@ -1546,6 +1554,7 @@ func writelines() {
 		if s.Version == 0 {
 			newattr(dwfunc, DW_AT_external, DW_CLS_FLAG, 1, 0)
 		}
+		newattr(dwfunc, DW_AT_frame_base, DW_CLS_BLOCK, 1, []byte{DW_OP_call_frame_cfa})
 
 		if s.Pcln == nil {
 			continue
@@ -1622,7 +1631,7 @@ func writelines() {
 			}
 
 			dwvar := newdie(dwfunc, dt, n)
-			newcfaoffsetattr(dwvar, int32(offs))
+			newfboffsetattr(dwvar, int32(offs))
 			newrefattr(dwvar, DW_AT_type, defgotype(a.Gotype))
 
 			// push dwvar down dwfunc->child to preserve order
@@ -1675,6 +1684,22 @@ func appendPCDeltaCFA(b []byte, deltapc, cfa int64) []byte {
 	return b
 }
 
+// appendPCDeltaCFA_SPARC appends per-PC CFA deltas to b and returns the final slice.
+func appendPCDeltaCFA_SPARC(b []byte, deltapc, cfa int64) []byte {
+	if deltapc < 176 {
+		b = append(b, DW_CFA_advance_loc4)
+		b = Thearch.Append32(b, uint32(deltapc))
+		return b
+	}
+	b = append(b, DW_CFA_GNU_window_save)
+	b = append(b, DW_CFA_register)
+	b = appendUleb128(b, uint64(15))
+	b = appendUleb128(b, uint64(31))
+	b = append(b, DW_CFA_def_cfa_register)
+	b = appendUleb128(b, uint64(30))
+	return b
+}
+
 func writeframes() {
 	if framesec == nil {
 		framesec = Linklookup(Ctxt, ".dwarfframe", 0)
@@ -1695,7 +1720,7 @@ func writeframes() {
 
 	uleb128put(int64(Thearch.Dwarfregsp)) // register SP (**ABI-dependent, defined in l.h)
 	if haslinkregister() {
-		uleb128put(int64(0)) // offset
+		uleb128put(int64(0) + int64(Thearch.StackBias)) // offset
 	} else {
 		uleb128put(int64(Thearch.Ptrsize)) // offset
 	}
@@ -1741,7 +1766,11 @@ func writeframes() {
 			}
 
 			if haslinkregister() {
-				deltaBuf = appendPCDeltaCFA(deltaBuf, int64(nextpc)-int64(pcsp.pc), int64(pcsp.value))
+				if Thearch.Thechar == 'u' {
+					deltaBuf = appendPCDeltaCFA_SPARC(deltaBuf, int64(nextpc)-int64(pcsp.pc), int64(pcsp.value))
+				} else {
+					deltaBuf = appendPCDeltaCFA(deltaBuf, int64(nextpc)-int64(pcsp.pc), int64(pcsp.value))
+				}
 			} else {
 				deltaBuf = appendPCDeltaCFA(deltaBuf, int64(nextpc)-int64(pcsp.pc), int64(Thearch.Ptrsize)+int64(pcsp.value))
 			}
