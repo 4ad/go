@@ -8,10 +8,10 @@ XREADELF=sparcv9-solaris2.12-readelf
 
 GCFLAGS=-+ -N
 LDFLAGS=-w
-XCFLAGS=-mflat -m64 -pthread -fno-omit-frame-pointer
-XCFLAGS_OPTIMIZED=-mflat -O2 -m64 -pthread -fno-omit-frame-pointer
-XCFLAGS_WINDOWS=-O2 -m64 -pthread -fno-omit-frame-pointer
-XCFLAGS_NOFP=-mflat -O2 -m64 -pthread -fomit-frame-pointer
+XCFLAGS=-g -gdwarf-3 -mflat -m64 -pthread -fno-omit-frame-pointer
+XCFLAGS_OPTIMIZED=-g -gdwarf-3 -mflat -O2 -m64 -pthread -fno-omit-frame-pointer
+XCFLAGS_WINDOWS=-g -gdwarf-3 -O2 -m64 -pthread -fno-omit-frame-pointer
+XCFLAGS_NOFP=-g -gdwarf-3 -mflat -O2 -m64 -pthread -fomit-frame-pointer
 XLDFLAGS=-pthread
 
 RUNTIMEOBJS=runtime.u data.u
@@ -100,6 +100,7 @@ DATS=${GOEXES:%.go.out=%.go.out.dat}\
 	${GNUEXES:%.gnu.out=%.gnu.out.dat}\
 	${GNUOBJS_OPTIMIZED:%.gnu.out=%.gnu.out.dat}\
 	${GNUEXES_NOFP:%.gnu.out=%.gnu.out.dat}\
+	${GNUEXES_WINDOWS:%.gnu.out=%.gnu.out.dat}\
 	${GOEXTEXES:%.go.ext=%.go.ext.dat}\
 	${GNUOBJS:%.o=%.o.dat}\
 	${GNUOBJS_OPTIMIZED:%.o=%.o.dat}\
@@ -110,6 +111,7 @@ RELS=${GOEXES:%.go.out=%.go.out.rel} \
 	${GNUEXES:%.gnu.out=%.gnu.out.rel} \
 	${GNUEXES_OPTIMIZED:%.gnu.out=%.gnu.out.rel} \
 	${GNUEXES_NOFP:%.gnu.out=%.gnu.out.rel} \
+	${GNUEXES_WINDOWS:%.gnu.out=%.gnu.out.rel} \
 	${GOEXTEXES:%.go.ext=%.go.ext.rel}\
 	${GNUOBJS:%.o=%.o.rel}\
 	${GNUOBJS_OPTIMIZED:%.o=%.o.rel}\
@@ -120,17 +122,29 @@ READELFS=${GOEXES:%.go.out=%.go.out.readelf} \
 	${GNUEXES:%.gnu.out=%.gnu.out.readelf} \
 	${GNUEXES_OPTIMIZED:%.gnu.out=%.gnu.out.readelf} \
 	${GNUEXES_NOFP:%.gnu.out=%.gnu.out.readelf} \
+	${GNUEXES_WINDOWS:%.gnu.out=%.gnu.out.readelf} \
 	${GOEXTEXES:%.go.ext=%.go.ext.readelf}\
 	${GNUOBJS:%.o=%.o.readelf}\
 	${GNUOBJS_OPTIMIZED:%.o=%.o.readelf}\
 	${GNUOBJS_NOFP:%.o=%.o.readelf}\
 	${GNUOBJS_WINDOWS:%.o=%.o.readelf}\
 
+DWARFS=${GOEXES:%.go.out=%.go.out.dwarf} \
+	${GNUEXES:%.gnu.out=%.gnu.out.dwarf} \
+	${GNUEXES_OPTIMIZED:%.gnu.out=%.gnu.out.dwarf} \
+	${GNUEXES_NOFP:%.gnu.out=%.gnu.out.dwarf} \
+	${GNUEXES_WINDOWS:%.gnu.out=%.gnu.out.dwarf} \
+	${GOEXTEXES:%.go.ext=%.go.ext.dwarf}\
+	${GNUOBJS:%.o=%.o.dwarf}\
+	${GNUOBJS_OPTIMIZED:%.o=%.o.dwarf}\
+	${GNUOBJS_NOFP:%.o=%.o.dwarf}\
+	${GNUOBJS_WINDOWS:%.o=%.o.dwarf}\
+
 all:V:	$GOEXES $GOEXTEXES\
 	$GOS\
 	$GOEXTREADELF\
 	$GNUEXES $GNUEXES_OPTIMIZED $GNUEXES_NOFP $GNUEXES_WINDOWS\
-	$GNUS $DATS $RELS $READELFS\
+	$GNUS $DATS $RELS $READELFS $DWARFS\
 	$GNUOBJS $GNUOBJS_OPTIMIZED $GNUOBJS_NOFP $GNUOBJS_WINDOWS\
 
 tools:V:
@@ -216,6 +230,15 @@ $RUNTIME: pkg/solaris_sparc64 $RUNTIMEOBJS
 
 %.o.readelf: %.o
 	$XREADELF -a $stem.o > $target 2>/dev/null
+
+%.out.dwarf: %.out
+	dwarfdump $stem.out > $target 2>/dev/null
+
+%.ext.dwarf: %.ext
+	dwarfdump $stem.ext > $target 2>/dev/null
+
+%.o.dwarf: %.o
+	dwarfdump $stem.o > $target 2>/dev/null
 
 torside:V:
 	rsync -i *.out *.ext torside:
