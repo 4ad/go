@@ -30,6 +30,7 @@ alt/*.o.s
 alt/*.dat
 alt/*.rel
 alt/*.readelf
+alt/*.dwarf
 alt/*.go.ext.tmp/
 new/*.u
 new/*.go.s
