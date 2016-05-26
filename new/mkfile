@@ -47,7 +47,7 @@ tools:V:
 	$XOBJDUMP -x $stem.out >$target
 
 %.out.readelf: %.out
-	$XOBJDUMP -a $stem.out >$target
+	$XREADELF -a $stem.out >$target
 
 %.out.rel: %.out
 	$XREADELF -r $prereq >$target 2>/dev/null
