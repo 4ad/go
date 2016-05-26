@@ -4,6 +4,11 @@
 
 package ld
 
+import (
+	"cmd/internal/obj"
+	"encoding/binary"
+)
+
 var ctfo int64
 
 var ctfsize int64
@@ -26,6 +31,33 @@ func Ctfemitdebugsections() {
 	if Debug['t'] != 0 || goos != "solaris" { // disable ctf
 		return
 	}
+
+	ctffile.Magic = 0xcff1
+	ctffile.Version = 2
+	ctffile.addString("")
+
+	var label CtfLblent
+	label.Label = ctffile.addString(obj.Getgoversion())
+	binary.Write(&ctffile.Labels, Ctxt.Arch.ByteOrder, label)
+
+	off := ctffile.Labels.Len()
+	ctffile.Objtoff = uint32(off)
+	off += ctffile.Objects.Len()
+	ctffile.Funcoff = uint32(off)
+	off += ctffile.Functions.Len()
+	ctffile.Typeoff = uint32(off)
+	off += ctffile.Types.Len()
+	ctffile.Stroff = uint32(off)
+	ctffile.Strlen = uint32(len(ctffile.Strings))
+
+	ctfo = Cpos()
+	binary.Write(&coutbuf, Ctxt.Arch.ByteOrder, ctffile.CtfHeader)
+	Cwrite(ctffile.Labels.Bytes())
+	Cwrite(ctffile.Objects.Bytes())
+	Cwrite(ctffile.Functions.Bytes())
+	Cwrite(ctffile.Types.Bytes())
+	Cwrite(ctffile.Strings)
+	ctfsize = Cpos() - ctfo
 }
 
 const (
@@ -39,7 +71,7 @@ func ctfaddshstrings(shstrtab *LSym) {
 	if Debug['t'] != 0 || goos != "solaris" { // disable ctf
 		return
 	}
-	elfstrdbg[ElfStrCtf] = Addstring(shstrtab, ".SUNW_ctf")
+	elfstrctf[ElfStrCtf] = Addstring(shstrtab, ".SUNW_ctf")
 	if Linkmode == LinkExternal {
 		// TODO(aram): why only LinkExternal?
 		ctfsym = Linklookup(Ctxt, ".SUNW_ctf", 0)

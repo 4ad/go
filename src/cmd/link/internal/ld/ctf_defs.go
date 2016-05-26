@@ -4,12 +4,16 @@
 
 package ld
 
+import (
+	"bytes"
+)
+
 // All data is in target-endian order.
 
 type CtfPreamble struct {
 	Magic   uint16 /* magic number (CTF_MAGIC) */
-	Version uint8  /* data format version number (CTF_VERSION)
-	Flags	uint8       /* flags (see below) */
+	Version uint8  /* data format version number (CTF_VERSION) */
+	Flags   uint8  /* flags (see below) */
 }
 
 const CTF_F_COMPRESS = 1
@@ -171,9 +175,9 @@ type CtfEnum struct {
 
 type CtfFile struct {
 	CtfHeader
-	Labels    []byte
-	Objects   []byte
-	Functions []byte
-	Types     []byte
+	Labels    bytes.Buffer
+	Objects   bytes.Buffer
+	Functions bytes.Buffer
+	Types     bytes.Buffer
 	Strings   []byte
 }
