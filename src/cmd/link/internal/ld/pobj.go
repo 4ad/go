@@ -114,6 +114,9 @@ func Ldmain() {
 	obj.Flagcount("u", "reject unsafe packages", &Debug['u'])
 	obj.Flagcount("v", "print link trace", &Debug['v'])
 	obj.Flagcount("w", "disable DWARF generation", &Debug['w'])
+	if obj.Getgoos() == "solaris" {
+		obj.Flagcount("t", "disable ctf generation", &Debug['t'])
+	}
 
 	obj.Flagstr("cpuprofile", "write cpu profile to `file`", &cpuprofile)
 	obj.Flagstr("memprofile", "write memory profile to `file`", &memprofile)
