@@ -1842,6 +1842,7 @@ func doelf() {
 		Addstring(shstrtab, ".symtab")
 		Addstring(shstrtab, ".strtab")
 		dwarfaddshstrings(shstrtab)
+		ctfaddshstrings(shstrtab)
 	}
 
 	Addstring(shstrtab, ".shstrtab")
@@ -2473,6 +2474,7 @@ elfobj:
 		sh.addralign = 1
 
 		dwarfaddelfheaders()
+		ctfaddelfheaders()
 	}
 
 	/* Main header */

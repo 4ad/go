@@ -253,6 +253,7 @@ func asmb() {
 					fmt.Fprintf(&ld.Bso, "%5.2f dwarf\n", obj.Cputime())
 				}
 				ld.Dwarfemitdebugsections()
+				ld.Ctfemitdebugsections()
 
 				if ld.Linkmode == ld.LinkExternal {
 					ld.Elfemitreloc()
