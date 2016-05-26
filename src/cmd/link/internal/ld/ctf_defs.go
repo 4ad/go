@@ -168,3 +168,12 @@ type CtfEnum struct {
 	Name  uint32 /* reference to name in string table */
 	Value int32  /* value associated with this name */
 }
+
+type CtfFile struct {
+	CtfHeader
+	Labels    []byte
+	Objects   []byte
+	Functions []byte
+	Types     []byte
+	Strings   []byte
+}

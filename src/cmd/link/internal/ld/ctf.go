@@ -12,6 +12,15 @@ var ctfsym *LSym
 
 var ctfsympos int64
 
+var ctffile CtfFile
+
+func (c *CtfFile) addString(s string) uint32 {
+	len := uint32(len(c.Strings))
+	c.Strings = append(c.Strings, []byte(s)...)
+	c.Strings = append(c.Strings, 0)
+	return len
+}
+
 // Ctfemitdebugsections is the main entry point for generating ctf.
 func Ctfemitdebugsections() {
 	if Debug['t'] != 0 || goos != "solaris" { // disable ctf
