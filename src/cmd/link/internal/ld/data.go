@@ -382,6 +382,12 @@ func relocsym(s *LSym) {
 				Diag("unknown reloc %d", r.Type)
 			}
 
+		case obj.R_SPARC64_TLS_LE:
+			if Iself  {
+				// XXX implement
+				return
+			}
+			Diag("unsupported reloc for R_SPARC64_TLS_LE %d", Ctxt.Headtype)
 		case obj.R_TLS_LE:
 			isAndroidX86 := goos == "android" && (Thearch.Thechar == '6' || Thearch.Thechar == '8')
 
@@ -1804,6 +1810,18 @@ func address() {
 		sectSym := Linklookup(Ctxt, ".note.go.abihash", 0)
 		s.Sect = sectSym.Sect
 		s.Value = int64(sectSym.Sect.Vaddr + 16)
+	}
+
+	if HEADTYPE == obj.Hsolaris {
+		s := Linklookup(Ctxt, "_GLOBAL_OFFSET_TABLE_", 0)
+		sectSym := Linklookup(Ctxt, ".got", 0)
+		s.Sect = sectSym.Sect
+		s.Value = int64(sectSym.Sect.Vaddr)
+
+		s = Linklookup(Ctxt, "_PROCEDURE_LINKAGE_TABLE_", 0)
+		sectSym = Linklookup(Ctxt, ".plt", 0)
+		s.Sect = sectSym.Sect
+		s.Value = int64(sectSym.Sect.Vaddr)
 	}
 
 	xdefine("runtime.text", obj.STEXT, int64(text.Vaddr))

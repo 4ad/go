@@ -37,14 +37,73 @@ import (
 	"log"
 )
 
-func gentext() {}
+func gentext() {
+	if !ld.DynlinkingGo() {
+		return
+	}
+	log.Fatalf("gentext() not implemented")
+}
 
-func adddynrela(rel *ld.LSym, s *ld.LSym, r *ld.Reloc) {
+func adddynrela(rela *ld.LSym, s *ld.LSym, r *ld.Reloc) {
 	log.Fatalf("adddynrela not implemented")
 }
 
 func adddynrel(s *ld.LSym, r *ld.Reloc) {
-	log.Fatalf("adddynrel not implemented")
+	targ := r.Sym
+	ld.Ctxt.Cursym = s
+
+	switch r.Type {
+	default:
+		if r.Type >= 256 {
+			ld.Diag("unexpected relocation type %d", r.Type)
+			return
+		}
+	}
+
+	// Handle references to ELF symbols from our own object files.
+	if targ.Type != obj.SDYNIMPORT {
+		return
+	}
+
+	switch r.Type {
+	case obj.R_CALLSPARC64, obj.R_PCREL:
+		addpltsym(targ)
+		r.Sym = ld.Linklookup(ld.Ctxt, ".plt", 0)
+		r.Add = int64(targ.Plt)
+		return
+	case obj.R_ADDRSPARC64LO:
+		if s.Type == obj.STEXT && ld.Iself {
+			addpltsym(targ)
+			r.Sym = ld.Linklookup(ld.Ctxt, ".plt", 0)
+			r.Add += int64(targ.Plt)
+			return
+		}
+
+		if s.Type != obj.SDATA {
+			break
+		}
+
+		if ld.Iself {
+			ld.Adddynsym(ld.Ctxt, targ)
+			rela := ld.Linklookup(ld.Ctxt, ".rela.plt", 0)
+			ld.Addaddrplus(ld.Ctxt, rela, s, int64(r.Off))
+			if r.Siz == 8 {
+				ld.Adduint64(ld.Ctxt, rela, ld.ELF64_R_INFO(uint32(targ.Dynid), ld.R_SPARC_64))
+			} else {
+				ld.Diag("unexpected relocation size %d for Type %s", r.Siz, r.Type)
+			}
+			ld.Adduint64(ld.Ctxt, rela, uint64(r.Add))
+			r.Type = 256 // ignore during relocsym
+			break
+			return
+		}
+	case obj.R_ADDRSPARC64HI:
+		return
+	}
+
+	ld.Ctxt.Cursym = s
+	ld.Diag("unsupported relocation for dynamic symbol %s (type=%d stype=%d)", targ.Name, r.Type, targ.Type)
+
 }
 
 func elfreloc1(r *ld.Reloc, sectoff int64) int {
@@ -96,8 +155,22 @@ func elfreloc1(r *ld.Reloc, sectoff int64) int {
 }
 
 func elfsetupplt() {
-	// TODO(aram)
-	return
+	plt := ld.Linklookup(ld.Ctxt, ".plt", 0)
+	if plt.Size == 0 {
+		// runtime linker will provide the initial plt; each entry is
+		// 32 bytes; reserve the first four entries for its use.
+		plt.Size = 4 * 32
+
+		// Create global offset table
+		got := ld.Linklookup(ld.Ctxt, ".got", 0)
+
+		// First entry reserved for address of .dynamic section
+		dyn := ld.Linklookup(ld.Ctxt, ".dynamic", 0)
+		ld.Addaddrplus(ld.Ctxt, got, dyn, 0)
+
+		// XXX pad end of plt with 10 entries for elfedit, etc.
+		// .strtab too; aslr-tagging, etc.
+	}
 }
 
 func machoreloc1(r *ld.Reloc, sectoff int64) int {
@@ -181,6 +254,53 @@ func archreloc(r *ld.Reloc, s *ld.LSym, val *int64) int {
 func archrelocvariant(r *ld.Reloc, s *ld.LSym, t int64) int64 {
 	log.Fatalf("unexpected relocation variant")
 	return -1
+}
+
+func addpltsym(s *ld.LSym) {
+	if s.Plt >= 0 {
+		return
+	}
+
+	ld.Adddynsym(ld.Ctxt, s)
+
+	if !ld.Iself {
+		ld.Diag("addpltsym: unsupported binary format")
+		return
+	}
+
+	plt := ld.Linklookup(ld.Ctxt, ".plt", 0)
+	rela := ld.Linklookup(ld.Ctxt, ".rela.plt", 0)
+	elfsetupplt()
+
+	// Each of the first 32,768 procedure linkage table entries occupies
+	// 8 words (32 bytes), and must be aligned on a 32-byte boundary.
+
+	// The first eight bytes of each entry (excluding the initially reserved
+	// ones) should transfer control to the first or second reserved plt
+	// entry.  For our use, the second reserved entry (.PLT1) should always
+	// be the target.
+	//
+	// 03 00 00 80 sethi (.-.PLT0), %g1 sethi     %hi(0x20000), %g1
+	sethi := uint32(0x03000000)
+	sethi |= uint32(plt.Size)
+	ld.Adduint32(ld.Ctxt, plt, sethi)
+
+	// 30 6f ff e7 ba,a,pt   %xcc, .PLT1
+	ba := uint32(0x30680000)
+	ba |= (((-uint32(plt.Size)) + 32) >> 2) & ((1 << (19)) - 1)
+	ld.Adduint32(ld.Ctxt, plt, ba)
+
+	// Remaining bytes are provided by the runtime linker.
+	plt.Size += 24
+
+	// rela
+	ld.Addaddrplus(ld.Ctxt, rela, plt, plt.Size - 32)
+	ld.Adduint64(ld.Ctxt, rela, ld.ELF64_R_INFO(uint32(s.Dynid), ld.R_SPARC_JMP_SLOT))
+	ld.Adduint64(ld.Ctxt, rela, 0)
+
+	s.Plt = int32(plt.Size - 32)
+
+	return
 }
 
 func asmb() {

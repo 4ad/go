@@ -366,8 +366,13 @@ func (libs byPkg) Swap(a, b int) {
 func symtab() {
 	dosymtype()
 
+	if HEADTYPE == obj.Hsolaris {
+		xdefine("_GLOBAL_OFFSET_TABLE_", obj.SELFGOT, 0)
+		xdefine("_PROCEDURE_LINKAGE_TABLE_", obj.SELFRXSECT, 0)
+	}
+
 	// Define these so that they'll get put into the symbol table.
-	// data.c:/^address will provide the actual values.
+	// data.go:/^address will provide the actual values.
 	xdefine("runtime.text", obj.STEXT, 0)
 
 	xdefine("runtime.etext", obj.STEXT, 0)

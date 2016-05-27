@@ -2280,7 +2280,7 @@ func Asmbelf(symo int64) {
 		case EM_X86_64, EM_PPC64, EM_AARCH64, EM_SPARCV9:
 			sh := elfshname(".rela.plt")
 			sh.type_ = SHT_RELA
-			sh.flags = SHF_ALLOC
+			sh.flags = SHF_ALLOC | SHF_INFO_LINK
 			sh.entsize = ELF64RELASIZE
 			sh.addralign = uint64(Thearch.Regsize)
 			sh.link = uint32(elfshname(".dynsym").shnum)
@@ -2326,6 +2326,11 @@ func Asmbelf(symo int64) {
 		sh.flags = SHF_ALLOC + SHF_EXECINSTR
 		if eh.machine == EM_X86_64 {
 			sh.entsize = 16
+		} else if eh.machine == EM_SPARCV9 {
+			// On sparcv9, the plt is rewritten by the dynamic
+			// linker based on the existing entries
+			sh.flags |= SHF_WRITE
+			sh.entsize = 32
 		} else if eh.machine == EM_PPC64 {
 			// On ppc64, this is just a table of addresses
 			// filled by the dynamic linker
@@ -2336,7 +2341,14 @@ func Asmbelf(symo int64) {
 		} else {
 			sh.entsize = 4
 		}
-		sh.addralign = sh.entsize
+
+		if eh.machine == EM_SPARCV9 {
+			// required by ABI
+			sh.addralign = 256
+		} else {
+			sh.addralign = sh.entsize
+		}
+
 		shsym(sh, Linklookup(Ctxt, ".plt", 0))
 
 		// On ppc64, .got comes from the input files, so don't
@@ -2418,6 +2430,7 @@ elfobj:
 	sh := elfshname(".shstrtab")
 	sh.type_ = SHT_STRTAB
 	sh.addralign = 1
+	sh.flags = SHF_STRINGS
 	shsym(sh, Linklookup(Ctxt, ".shstrtab", 0))
 	eh.shstrndx = uint16(sh.shnum)
 
@@ -2449,6 +2462,7 @@ elfobj:
 		}
 
 		// add a .note.GNU-stack section to mark the stack as non-executable
+		// XXX non-portable; needs fixing for Solaris
 		sh := elfshname(".note.GNU-stack")
 
 		sh.type_ = SHT_PROGBITS
@@ -2487,6 +2501,8 @@ elfobj:
 		eh.ident[EI_OSABI] = ELFOSABI_NETBSD
 	} else if HEADTYPE == obj.Hopenbsd {
 		eh.ident[EI_OSABI] = ELFOSABI_OPENBSD
+	} else if HEADTYPE == obj.Hsolaris {
+		eh.ident[EI_OSABI] = ELFOSABI_SOLARIS
 	} else if HEADTYPE == obj.Hdragonfly {
 		eh.ident[EI_OSABI] = ELFOSABI_NONE
 	}
