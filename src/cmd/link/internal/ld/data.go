@@ -1478,7 +1478,11 @@ func dodata() {
 	/* read-only executable ELF, Mach-O sections */
 	for ; s != nil && s.Type < obj.STYPE; s = s.Next {
 		sect = addsection(&Segtext, s.Name, 04)
-		sect.Align = symalign(s)
+		if s.Name == ".plt" && Thearch.Thechar == 'u' {
+			sect.Align = 256
+		} else {
+			sect.Align = symalign(s)
+		}
 		datsize = Rnd(datsize, int64(sect.Align))
 		sect.Vaddr = uint64(datsize)
 		s.Sect = sect

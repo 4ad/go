@@ -1899,6 +1899,14 @@ func doelf() {
 		default:
 			s = Linklookup(Ctxt, ".rel", 0)
 		}
+
+		switch Thearch.Thechar {
+		case '6', '7', '9', 'u':
+			s.Align = 8
+		default:
+			s.Align = 4
+		}
+
 		s.Attr |= AttrReachable
 		s.Type = obj.SELFROSECT
 
@@ -2343,7 +2351,7 @@ func Asmbelf(symo int64) {
 		}
 
 		if eh.machine == EM_SPARCV9 {
-			// required by ABI
+			// entries aligned at 32; section at 256
 			sh.addralign = 256
 		} else {
 			sh.addralign = sh.entsize

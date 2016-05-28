@@ -68,13 +68,13 @@ func adddynrel(s *ld.LSym, r *ld.Reloc) {
 	switch r.Type {
 	case obj.R_CALLSPARC64, obj.R_PCREL:
 		addpltsym(targ)
-		r.Sym = ld.Linklookup(ld.Ctxt, ".plt", 0)
+		r.Sym = ld.Linkrlookup(ld.Ctxt, ".plt", 0)
 		r.Add = int64(targ.Plt)
 		return
 	case obj.R_ADDRSPARC64LO:
 		if s.Type == obj.STEXT && ld.Iself {
 			addpltsym(targ)
-			r.Sym = ld.Linklookup(ld.Ctxt, ".plt", 0)
+			r.Sym = ld.Linkrlookup(ld.Ctxt, ".plt", 0)
 			r.Add += int64(targ.Plt)
 			return
 		}
@@ -85,7 +85,7 @@ func adddynrel(s *ld.LSym, r *ld.Reloc) {
 
 		if ld.Iself {
 			ld.Adddynsym(ld.Ctxt, targ)
-			rela := ld.Linklookup(ld.Ctxt, ".rela.plt", 0)
+			rela := ld.Linkrlookup(ld.Ctxt, ".rela.plt", 0)
 			ld.Addaddrplus(ld.Ctxt, rela, s, int64(r.Off))
 			if r.Siz == 8 {
 				ld.Adduint64(ld.Ctxt, rela, ld.ELF64_R_INFO(uint32(targ.Dynid), ld.R_SPARC_64))
@@ -157,14 +157,20 @@ func elfreloc1(r *ld.Reloc, sectoff int64) int {
 func elfsetupplt() {
 	plt := ld.Linklookup(ld.Ctxt, ".plt", 0)
 	if plt.Size == 0 {
-		// runtime linker will provide the initial plt; each entry is
+		// .plt entries aligned at 32-byte boundaries.
+		plt.Align = 32
+
+		// Runtime linker will provide the initial plt; each entry is
 		// 32 bytes; reserve the first four entries for its use.
 		plt.Size = 4 * 32
 
-		// Create global offset table
-		got := ld.Linklookup(ld.Ctxt, ".got", 0)
+		// Create relocation table for .plt
+		rela := ld.Linklookup(ld.Ctxt, ".rela.plt", 0)
+		rela.Align = int32(ld.Thearch.Regsize)
 
-		// First entry reserved for address of .dynamic section
+		// Create global offset table; first entry reserved for
+		// address of .dynamic section.
+		got := ld.Linklookup(ld.Ctxt, ".got", 0)
 		dyn := ld.Linklookup(ld.Ctxt, ".dynamic", 0)
 		ld.Addaddrplus(ld.Ctxt, got, dyn, 0)
 
@@ -268,12 +274,14 @@ func addpltsym(s *ld.LSym) {
 		return
 	}
 
-	plt := ld.Linklookup(ld.Ctxt, ".plt", 0)
-	rela := ld.Linklookup(ld.Ctxt, ".rela.plt", 0)
 	elfsetupplt()
+	plt := ld.Linkrlookup(ld.Ctxt, ".plt", 0)
+	rela := ld.Linkrlookup(ld.Ctxt, ".rela.plt", 0)
 
 	// Each of the first 32,768 procedure linkage table entries occupies
 	// 8 words (32 bytes), and must be aligned on a 32-byte boundary.
+
+	// XXX handle "far plt" case for entries beyond 32,768
 
 	// The first eight bytes of each entry (excluding the initially reserved
 	// ones) should transfer control to the first or second reserved plt
