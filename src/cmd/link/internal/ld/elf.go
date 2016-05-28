@@ -1473,15 +1473,15 @@ func elfdynhash() {
 
 	switch Thearch.Thechar {
 	case '0', '6', '7', '9', 'u':
-		sy := Linklookup(Ctxt, ".rela.plt", 0)
-		if sy.Size > 0 {
+		sy := Linkrlookup(Ctxt, ".rela.plt", 0)
+		if sy != nil && sy.Size > 0 {
 			Elfwritedynent(s, DT_PLTREL, DT_RELA)
 			elfwritedynentsymsize(s, DT_PLTRELSZ, sy)
 			elfwritedynentsym(s, DT_JMPREL, sy)
 		}
 	default:
-		sy := Linklookup(Ctxt, ".rel.plt", 0)
-		if sy.Size > 0 {
+		sy := Linkrlookup(Ctxt, ".rel.plt", 0)
+		if sy != nil && sy.Size > 0 {
 			Elfwritedynent(s, DT_PLTREL, DT_REL)
 			elfwritedynentsymsize(s, DT_PLTRELSZ, sy)
 			elfwritedynentsym(s, DT_JMPREL, sy)
@@ -2286,39 +2286,51 @@ func Asmbelf(symo int64) {
 
 		switch eh.machine {
 		case EM_X86_64, EM_PPC64, EM_AARCH64, EM_SPARCV9:
-			sh := elfshname(".rela.plt")
-			sh.type_ = SHT_RELA
-			sh.flags = SHF_ALLOC | SHF_INFO_LINK
-			sh.entsize = ELF64RELASIZE
-			sh.addralign = uint64(Thearch.Regsize)
-			sh.link = uint32(elfshname(".dynsym").shnum)
-			sh.info = uint32(elfshname(".plt").shnum)
-			shsym(sh, Linklookup(Ctxt, ".rela.plt", 0))
+			sym := Linkrlookup(Ctxt, ".rela.plt", 0)
+			if sym != nil && sym.Size > 0 {
+				sh := elfshname(".rela.plt")
+				sh.type_ = SHT_RELA
+				sh.flags = SHF_ALLOC | SHF_INFO_LINK
+				sh.entsize = ELF64RELASIZE
+				sh.addralign = uint64(Thearch.Regsize)
+				sh.link = uint32(elfshname(".dynsym").shnum)
+				sh.info = uint32(elfshname(".plt").shnum)
+				shsym(sh, sym)
+			}
 
-			sh = elfshname(".rela")
-			sh.type_ = SHT_RELA
-			sh.flags = SHF_ALLOC
-			sh.entsize = ELF64RELASIZE
-			sh.addralign = 8
-			sh.link = uint32(elfshname(".dynsym").shnum)
-			shsym(sh, Linklookup(Ctxt, ".rela", 0))
+			sym = Linkrlookup(Ctxt, ".rela", 0)
+			if sym != nil && sym.Size > 0 {
+				sh = elfshname(".rela")
+				sh.type_ = SHT_RELA
+				sh.flags = SHF_ALLOC
+				sh.entsize = ELF64RELASIZE
+				sh.addralign = 8
+				sh.link = uint32(elfshname(".dynsym").shnum)
+				shsym(sh, sym)
+			}
 
 		default:
-			sh := elfshname(".rel.plt")
-			sh.type_ = SHT_REL
-			sh.flags = SHF_ALLOC
-			sh.entsize = ELF32RELSIZE
-			sh.addralign = 4
-			sh.link = uint32(elfshname(".dynsym").shnum)
-			shsym(sh, Linklookup(Ctxt, ".rel.plt", 0))
+			sym := Linkrlookup(Ctxt, ".rel.plt", 0)
+			if sym != nil && sym.Size > 0 {
+				sh := elfshname(".rel.plt")
+				sh.type_ = SHT_REL
+				sh.flags = SHF_ALLOC
+				sh.entsize = ELF32RELSIZE
+				sh.addralign = 4
+				sh.link = uint32(elfshname(".dynsym").shnum)
+				shsym(sh, sym)
+			}
 
-			sh = elfshname(".rel")
-			sh.type_ = SHT_REL
-			sh.flags = SHF_ALLOC
-			sh.entsize = ELF32RELSIZE
-			sh.addralign = 4
-			sh.link = uint32(elfshname(".dynsym").shnum)
-			shsym(sh, Linklookup(Ctxt, ".rel", 0))
+			sym = Linkrlookup(Ctxt, ".rel", 0)
+			if sym != nil && sym.Size > 0 {
+				sh = elfshname(".rel")
+				sh.type_ = SHT_REL
+				sh.flags = SHF_ALLOC
+				sh.entsize = ELF32RELSIZE
+				sh.addralign = 4
+				sh.link = uint32(elfshname(".dynsym").shnum)
+				shsym(sh, sym)
+			}
 		}
 
 		if eh.machine == EM_PPC64 {
