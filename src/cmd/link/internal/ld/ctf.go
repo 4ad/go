@@ -9,15 +9,13 @@ import (
 	"encoding/binary"
 )
 
-var ctfo int64
-
-var ctfsize int64
-
-var ctfsym *LSym
-
-var ctfsympos int64
-
-var ctffile CtfFile
+var (
+	ctfo      int64
+	ctfsize   int64
+	ctfsym    *LSym
+	ctfsympos int64
+	ctffile   CtfFile
+)
 
 func (c *CtfFile) addString(s string) uint32 {
 	len := uint32(len(c.Strings))
