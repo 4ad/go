@@ -19,21 +19,26 @@ var (
 	ctffile   CtfFile
 )
 
+var typPending = map[string]bool{}
+
 // Define ctftype, for composite ones recurse into constituents.
-func ctftype(gotype *LSym) (typno uint16) {
+func ctftype(gotype *LSym) (typno uint16, pending bool) {
 	if gotype == nil {
-		return 0
+		return 0, false
 	}
 
 	if !strings.HasPrefix(gotype.Name, "type.") {
 		Diag("ctf: type name doesn't start with \"type.\": %s", gotype.Name)
-		return 0
+		return 0, false
 	}
 
 	name := gotype.Name[5:] // could also decode from Type.string
 	typno, ok := ctffile.Types.byName[name]
 	if ok {
-		return typno
+		return typno, false
+	}
+	if typPending[name] {
+		return 0, true
 	}
 
 	if false && Debug['v'] > 2 {
@@ -97,7 +102,7 @@ func ctftype(gotype *LSym) (typno uint16) {
 		// TODO(aram):
 
 	case obj.KindPtr:
-		vtypno := ctftype(decodetype_ptrelem(gotype))
+		vtypno, _ := ctftype(decodetype_ptrelem(gotype))
 		typno = ctffile.addType(name, CTF_TYPE_INFO(CTF_K_POINTER, true, 0), vtypno)
 
 	case obj.KindSlice:
@@ -107,7 +112,40 @@ func ctftype(gotype *LSym) (typno uint16) {
 		// TODO(aram):
 
 	case obj.KindStruct:
-		// TODO(aram):
+		if typPending[name] {
+			return 0, true
+		}
+		typPending[name] = true
+		nfields := decodetype_structfieldcount(gotype)
+		var f string
+		var s *LSym
+		var mb CtfMember
+		for i := 0; i < nfields; i++ {
+			f = decodetype_structfieldname(gotype, i)
+			s = decodetype_structfieldtype(gotype, i)
+			s = decodetype_structfieldtype(gotype, i)
+			if f == "" {
+				f = s.Name[5:] // skip "type."
+			}
+			ctftype(s)
+		}
+		typno = ctffile.addType(name, CTF_TYPE_INFO(CTF_K_STRUCT, true, uint16(nfields)), uint16(bytesize))
+		for i := 0; i < nfields; i++ {
+			f = decodetype_structfieldname(gotype, i)
+			s = decodetype_structfieldtype(gotype, i)
+			if f == "" {
+				f = s.Name[5:] // skip "type."
+			}
+			mtypno, _ := ctftype(s)
+			mb = CtfMember{
+				Name:   ctffile.addString(f),
+				Type:   mtypno,
+				Offset: uint16(decodetype_structfieldoffs(gotype, i)),
+			}
+			binary.Write(&ctffile.Types, Ctxt.Arch.ByteOrder, mb)
+			delete(typPending, name)
+		}
+		ctffile.addType(strings.Replace(name, ".", "_", -1), CTF_TYPE_INFO(CTF_K_TYPEDEF, true, 0), typno)
 
 	case obj.KindUnsafePointer:
 		typno = ctffile.addType(name, CTF_TYPE_INFO(CTF_K_POINTER, true, 0), 0)
@@ -116,7 +154,7 @@ func ctftype(gotype *LSym) (typno uint16) {
 		Diag("ctf: definition of unknown kind %d: %s", kind, gotype.Name)
 	}
 
-	return typno
+	return typno, false
 }
 
 // For use with pass.c::genasmsym
