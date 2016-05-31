@@ -7,6 +7,8 @@ package ld
 import (
 	"cmd/internal/obj"
 	"encoding/binary"
+	"fmt"
+	"strings"
 )
 
 var (
@@ -16,6 +18,128 @@ var (
 	ctfsympos int64
 	ctffile   CtfFile
 )
+
+// Define ctftype, for composite ones recurse into constituents.
+func ctftype(gotype *LSym) (typno uint16) {
+	if gotype == nil {
+		return 0
+	}
+
+	if !strings.HasPrefix(gotype.Name, "type.") {
+		Diag("ctf: type name doesn't start with \"type.\": %s", gotype.Name)
+		return 0
+	}
+
+	name := gotype.Name[5:] // could also decode from Type.string
+	typno, ok := ctffile.Types.byName[name]
+	if ok {
+		return typno
+	}
+
+	if false && Debug['v'] > 2 {
+		fmt.Printf("new type: %v\n", gotype)
+	}
+
+	kind := decodetype_kind(gotype)
+	bytesize := decodetype_size(gotype)
+
+	switch kind {
+	case obj.KindBool:
+		typno = ctffile.addType(name, CTF_TYPE_INFO(CTF_K_INTEGER, true, 0), 4)
+		ctffile.putUint32(CTF_INT_DATA(CTF_INT_BOOL, 0, 1))
+
+	case obj.KindInt,
+		obj.KindInt8,
+		obj.KindInt16,
+		obj.KindInt32,
+		obj.KindInt64:
+		typno = ctffile.addType(name, CTF_TYPE_INFO(CTF_K_INTEGER, true, 0), 4)
+		ctffile.putUint32(CTF_INT_DATA(CTF_INT_SIGNED, 0, uint32(bytesize*8)))
+
+	case obj.KindUint,
+		obj.KindUint8,
+		obj.KindUint16,
+		obj.KindUint32,
+		obj.KindUint64,
+		obj.KindUintptr:
+		typno = ctffile.addType(name, CTF_TYPE_INFO(CTF_K_INTEGER, true, 0), 4)
+		ctffile.putUint32(CTF_INT_DATA(0, 0, uint32(bytesize*8)))
+
+	case obj.KindFloat32:
+		typno = ctffile.addType(name, CTF_TYPE_INFO(CTF_K_FLOAT, true, 0), 4)
+		ctffile.putUint32(CTF_FP_DATA(CTF_FP_SINGLE, 0, 32))
+
+	case obj.KindFloat64:
+		typno = ctffile.addType(name, CTF_TYPE_INFO(CTF_K_FLOAT, true, 0), 4)
+		ctffile.putUint32(CTF_FP_DATA(CTF_FP_DOUBLE, 0, 64))
+
+	case obj.KindComplex64:
+		typno = ctffile.addType(name, CTF_TYPE_INFO(CTF_K_FLOAT, true, 0), 4)
+		ctffile.putUint32(CTF_FP_DATA(CTF_FP_CPLX, 0, 64))
+
+	case obj.KindComplex128:
+		typno = ctffile.addType(name, CTF_TYPE_INFO(CTF_K_FLOAT, true, 0), 4)
+		ctffile.putUint32(CTF_FP_DATA(CTF_FP_DCPLX, 0, 128))
+
+	case obj.KindArray:
+		// TODO(aram):
+
+	case obj.KindChan:
+		// TODO(aram):
+
+	case obj.KindFunc:
+		// TODO(aram):
+
+	case obj.KindInterface:
+		// TODO(aram):
+
+	case obj.KindMap:
+		// TODO(aram):
+
+	case obj.KindPtr:
+		vtypno := ctftype(decodetype_ptrelem(gotype))
+		typno = ctffile.addType(name, CTF_TYPE_INFO(CTF_K_POINTER, true, 0), vtypno)
+
+	case obj.KindSlice:
+		// TODO(aram):
+
+	case obj.KindString:
+		// TODO(aram):
+
+	case obj.KindStruct:
+		// TODO(aram):
+
+	case obj.KindUnsafePointer:
+		typno = ctffile.addType(name, CTF_TYPE_INFO(CTF_K_POINTER, true, 0), 0)
+
+	default:
+		Diag("ctf: definition of unknown kind %d: %s", kind, gotype.Name)
+	}
+
+	return typno
+}
+
+// For use with pass.c::genasmsym
+func defctfsymb(sym *LSym, s string, t int, v int64, size int64, ver int, gotype *LSym) {
+	if strings.HasPrefix(s, "go.string.") {
+		return
+	}
+	if strings.HasPrefix(s, "runtime.gcbits.") {
+		return
+	}
+
+	if strings.HasPrefix(s, "type.") && s != "type.*" && !strings.HasPrefix(s, "type..") {
+		ctftype(sym)
+		return
+	}
+	switch t {
+	default:
+		return
+
+	case 'a', 'p':
+		ctftype(gotype)
+	}
+}
 
 // Ctfemitdebugsections is the main entry point for generating ctf.
 func Ctfemitdebugsections() {
@@ -34,6 +158,11 @@ func Ctfemitdebugsections() {
 	ctffile.addType("unsafe.Pointer", CTF_TYPE_INFO(CTF_K_POINTER, true, 0), 0)
 	ctffile.addType("uintptr", CTF_TYPE_INFO(CTF_K_INTEGER, true, 0), 4)
 	ctffile.putUint32(CTF_INT_DATA(0, 0, 64))
+
+	genasmsym(defctfsymb)
+	if Debug['v'] != 0 {
+		fmt.Fprintf(&Bso, "%5.2f ctf\n", obj.Cputime())
+	}
 
 	off := ctffile.Labels.Len()
 	ctffile.Objtoff = uint32(off)
