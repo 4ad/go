@@ -17,13 +17,6 @@ var (
 	ctffile   CtfFile
 )
 
-func (c *CtfFile) addString(s string) uint32 {
-	len := uint32(len(c.Strings))
-	c.Strings = append(c.Strings, []byte(s)...)
-	c.Strings = append(c.Strings, 0)
-	return len
-}
-
 // Ctfemitdebugsections is the main entry point for generating ctf.
 func Ctfemitdebugsections() {
 	if Debug['t'] != 0 || goos != "solaris" { // disable ctf
@@ -37,6 +30,10 @@ func Ctfemitdebugsections() {
 	var label CtfLblent
 	label.Label = ctffile.addString(obj.Getgoversion())
 	binary.Write(&ctffile.Labels, Ctxt.Arch.ByteOrder, label)
+
+	ctffile.addType("unsafe.Pointer", CTF_TYPE_INFO(CTF_K_POINTER, true, 0), 0)
+	ctffile.addType("uintptr", CTF_TYPE_INFO(CTF_K_INTEGER, true, 0), 4)
+	ctffile.putUint32(CTF_INT_DATA(0, 0, 64))
 
 	off := ctffile.Labels.Len()
 	ctffile.Objtoff = uint32(off)

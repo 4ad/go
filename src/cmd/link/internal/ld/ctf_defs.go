@@ -6,6 +6,7 @@ package ld
 
 import (
 	"bytes"
+	"encoding/binary"
 )
 
 // All data is in target-endian order.
@@ -173,11 +174,43 @@ type CtfEnum struct {
 	Value int32  /* value associated with this name */
 }
 
+type CtfTypes struct {
+	byName map[string]uint16
+	bytes.Buffer
+}
+
+func (c *CtfFile) addType(name string, info, sot uint16) uint16 {
+	sno := c.addString(name)
+	styp := CtfStype{
+		Name:       sno,
+		Info:       info,
+		SizeOrType: sot,
+	}
+	if c.Types.byName == nil {
+		c.Types.byName = make(map[string]uint16)
+	}
+	typno := uint16(len(c.Types.byName) + 1)
+	c.Types.byName[name] = typno
+	binary.Write(&c.Types, Ctxt.Arch.ByteOrder, styp)
+	return typno
+}
+
+func (c *CtfFile) putUint32(n uint32) {
+	binary.Write(&c.Types, Ctxt.Arch.ByteOrder, n)
+}
+
 type CtfFile struct {
 	CtfHeader
 	Labels    bytes.Buffer
 	Objects   bytes.Buffer
 	Functions bytes.Buffer
-	Types     bytes.Buffer
+	Types     CtfTypes
 	Strings   []byte
+}
+
+func (c *CtfFile) addString(s string) uint32 {
+	len := uint32(len(c.Strings))
+	c.Strings = append(c.Strings, []byte(s)...)
+	c.Strings = append(c.Strings, 0)
+	return len
 }
