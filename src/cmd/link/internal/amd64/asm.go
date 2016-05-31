@@ -739,6 +739,7 @@ func asmb() {
 				}
 
 				ld.Dwarfemitdebugsections()
+				ld.Ctfemitdebugsections()
 
 				if ld.Linkmode == ld.LinkExternal {
 					ld.Elfemitreloc()
