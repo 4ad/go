@@ -145,7 +145,7 @@ func ctftype(gotype *LSym) (typno uint16, pending bool) {
 			binary.Write(&ctffile.Types, Ctxt.Arch.ByteOrder, mb)
 			delete(typPending, name)
 		}
-		ctffile.addType(strings.Replace(name, ".", "_", -1), CTF_TYPE_INFO(CTF_K_TYPEDEF, true, 0), typno)
+		ctffile.addType(name, CTF_TYPE_INFO(CTF_K_TYPEDEF, true, 0), typno)
 
 	case obj.KindUnsafePointer:
 		typno = ctffile.addType(name, CTF_TYPE_INFO(CTF_K_POINTER, true, 0), 0)
@@ -259,6 +259,7 @@ func ctfaddelfheaders() {
 	sh.off = uint64(ctfo)
 	sh.size = uint64(ctfsize)
 	sh.addralign = 4
+	sh.link = uint32(elfshname(".symtab").shnum)
 	if ctfsympos > 0 {
 		putelfsymshndx(ctfsympos, sh.shnum)
 	}

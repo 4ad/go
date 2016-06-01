@@ -8,6 +8,7 @@ XREADELF=sparcv9-solaris2.12-readelf
 GCFLAGS=
 LDFLAGS=
 EXTLDFLAGS='-Wl,-fuse-ld=gold'
+#EXTLDFLAGS=
 
 GOEXES=helloworld.out\
 	sieve.out\
