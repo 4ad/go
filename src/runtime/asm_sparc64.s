@@ -59,7 +59,7 @@ nocgo:
 
 	CALL	runtime·check(SB)
 
-	MOVD	L1, FIXED_FRAME+0(BSP)	// copy argc
+	MOVW	L1, FIXED_FRAME+0(BSP)	// copy argc
 	MOVD	L2, FIXED_FRAME+8(BSP)	// copy argv
 	CALL	runtime·args(SB)
 	CALL	runtime·osinit(SB)
