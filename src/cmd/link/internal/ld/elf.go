@@ -1364,9 +1364,7 @@ func elfdynhash() {
 	}
 
 	nsym := Nelfsym
-	s := Linklookup(Ctxt, ".hash", 0)
-	s.Type = obj.SELFROSECT
-	s.Attr |= AttrReachable
+	s := Linkrlookup(Ctxt, ".hash", 0)
 
 	i := nsym
 	nbucket := 1
@@ -1408,9 +1406,9 @@ func elfdynhash() {
 	}
 
 	// version symbols
-	dynstr := Linklookup(Ctxt, ".dynstr", 0)
+	dynstr := Linkrlookup(Ctxt, ".dynstr", 0)
 
-	s = Linklookup(Ctxt, ".gnu.version_r", 0)
+	s = Linkrlookup(Ctxt, ".gnu.version_r", 0)
 	i = 2
 	nfile := 0
 	var j int
@@ -1451,7 +1449,7 @@ func elfdynhash() {
 	}
 
 	// version references
-	s = Linklookup(Ctxt, ".gnu.version", 0)
+	s = Linkrlookup(Ctxt, ".gnu.version", 0)
 
 	for i := 0; i < nsym; i++ {
 		if i == 0 {
@@ -1463,12 +1461,12 @@ func elfdynhash() {
 		}
 	}
 
-	s = Linklookup(Ctxt, ".dynamic", 0)
+	s = Linkrlookup(Ctxt, ".dynamic", 0)
 	elfverneed = nfile
 	if elfverneed != 0 {
-		elfwritedynentsym(s, DT_VERNEED, Linklookup(Ctxt, ".gnu.version_r", 0))
+		elfwritedynentsym(s, DT_VERNEED, Linkrlookup(Ctxt, ".gnu.version_r", 0))
 		Elfwritedynent(s, DT_VERNEEDNUM, uint64(nfile))
-		elfwritedynentsym(s, DT_VERSYM, Linklookup(Ctxt, ".gnu.version", 0))
+		elfwritedynentsym(s, DT_VERSYM, Linkrlookup(Ctxt, ".gnu.version", 0))
 	}
 
 	switch Thearch.Thechar {
@@ -1853,7 +1851,9 @@ func doelf() {
 		if Thearch.Thechar == '9' {
 			Addstring(shstrtab, ".glink")
 		}
-		Addstring(shstrtab, ".got.plt")
+		if Thearch.Thechar != '9' && Thearch.Thechar != 'u' {
+			Addstring(shstrtab, ".got.plt")
+		}
 		Addstring(shstrtab, ".dynamic")
 		Addstring(shstrtab, ".dynsym")
 		Addstring(shstrtab, ".dynstr")
@@ -1929,9 +1929,11 @@ func doelf() {
 		s.Attr |= AttrReachable
 		s.Type = obj.SELFROSECT
 
-		s = Linklookup(Ctxt, ".got.plt", 0)
-		s.Attr |= AttrReachable
-		s.Type = obj.SELFSECT // writable
+		if Thearch.Thechar != '9' && Thearch.Thechar != 'u' {
+			s = Linklookup(Ctxt, ".got.plt", 0)
+			s.Attr |= AttrReachable
+			s.Type = obj.SELFSECT // writable
+		}
 
 		s = Linklookup(Ctxt, ".plt", 0)
 
@@ -1975,25 +1977,25 @@ func doelf() {
 		if Thearch.Thechar == 'u' && HEADTYPE == obj.Hsolaris {
 			Elfwritedynent(Linklookup(Ctxt, ".dynamic", 0), DT_NEEDED, uint64(Addstring(Linklookup(Ctxt, ".dynstr", 0), "libc.so.1")))
 		}
-		elfwritedynentsym(s, DT_HASH, Linklookup(Ctxt, ".hash", 0))
+		elfwritedynentsym(s, DT_HASH, Linkrlookup(Ctxt, ".hash", 0))
 
-		elfwritedynentsym(s, DT_SYMTAB, Linklookup(Ctxt, ".dynsym", 0))
+		elfwritedynentsym(s, DT_SYMTAB, Linkrlookup(Ctxt, ".dynsym", 0))
 		switch Thearch.Thechar {
 		case '0', '6', '7', '9', 'u':
 			Elfwritedynent(s, DT_SYMENT, ELF64SYMSIZE)
 		default:
 			Elfwritedynent(s, DT_SYMENT, ELF32SYMSIZE)
 		}
-		elfwritedynentsym(s, DT_STRTAB, Linklookup(Ctxt, ".dynstr", 0))
-		elfwritedynentsymsize(s, DT_STRSZ, Linklookup(Ctxt, ".dynstr", 0))
+		elfwritedynentsym(s, DT_STRTAB, Linkrlookup(Ctxt, ".dynstr", 0))
+		elfwritedynentsymsize(s, DT_STRSZ, Linkrlookup(Ctxt, ".dynstr", 0))
 		switch Thearch.Thechar {
 		case '0', '6', '7', '9', 'u':
-			elfwritedynentsym(s, DT_RELA, Linklookup(Ctxt, ".rela", 0))
-			elfwritedynentsymsize(s, DT_RELASZ, Linklookup(Ctxt, ".rela", 0))
+			elfwritedynentsym(s, DT_RELA, Linkrlookup(Ctxt, ".rela", 0))
+			elfwritedynentsymsize(s, DT_RELASZ, Linkrlookup(Ctxt, ".rela", 0))
 			Elfwritedynent(s, DT_RELAENT, ELF64RELASIZE)
 		default:
-			elfwritedynentsym(s, DT_REL, Linklookup(Ctxt, ".rel", 0))
-			elfwritedynentsymsize(s, DT_RELSZ, Linklookup(Ctxt, ".rel", 0))
+			elfwritedynentsym(s, DT_REL, Linkrlookup(Ctxt, ".rel", 0))
+			elfwritedynentsymsize(s, DT_RELSZ, Linkrlookup(Ctxt, ".rel", 0))
 			Elfwritedynent(s, DT_RELENT, ELF32RELSIZE)
 		}
 
@@ -2001,10 +2003,10 @@ func doelf() {
 			Elfwritedynent(s, DT_RUNPATH, uint64(Addstring(dynstr, rpath.val)))
 		}
 
-		if Thearch.Thechar == '9' {
-			elfwritedynentsym(s, DT_PLTGOT, Linklookup(Ctxt, ".plt", 0))
+		if Thearch.Thechar == '9' || Thearch.Thechar == 'u' {
+			elfwritedynentsym(s, DT_PLTGOT, Linkrlookup(Ctxt, ".plt", 0))
 		} else {
-			elfwritedynentsym(s, DT_PLTGOT, Linklookup(Ctxt, ".got.plt", 0))
+			elfwritedynentsym(s, DT_PLTGOT, Linkrlookup(Ctxt, ".got.plt", 0))
 		}
 
 		if Thearch.Thechar == '9' {
@@ -2266,7 +2268,8 @@ func Asmbelf(symo int64) {
 		sh.addralign = 1
 		shsym(sh, Linklookup(Ctxt, ".dynstr", 0))
 
-		if elfverneed != 0 {
+		sym := Linkrlookup(Ctxt, ".gnu.version", 0)
+		if sym != nil && sym.Size > 0 {
 			sh := elfshname(".gnu.version")
 			sh.type_ = SHT_GNU_VERSYM
 			sh.flags = SHF_ALLOC
@@ -2274,7 +2277,10 @@ func Asmbelf(symo int64) {
 			sh.link = uint32(elfshname(".dynsym").shnum)
 			sh.entsize = 2
 			shsym(sh, Linklookup(Ctxt, ".gnu.version", 0))
+		}
 
+		sym = Linkrlookup(Ctxt, ".gnu.version_r", 0)
+		if sym != nil && sym.Size > 0 {
 			sh = elfshname(".gnu.version_r")
 			sh.type_ = SHT_GNU_VERNEED
 			sh.flags = SHF_ALLOC
@@ -2372,7 +2378,7 @@ func Asmbelf(symo int64) {
 		shsym(sh, Linklookup(Ctxt, ".plt", 0))
 
 		// On ppc64, .got comes from the input files, so don't
-		// create it here, and .got.plt is not used.
+		// create it here
 		if eh.machine != EM_PPC64 {
 			sh := elfshname(".got")
 			sh.type_ = SHT_PROGBITS
@@ -2380,8 +2386,11 @@ func Asmbelf(symo int64) {
 			sh.entsize = uint64(Thearch.Regsize)
 			sh.addralign = uint64(Thearch.Regsize)
 			shsym(sh, Linklookup(Ctxt, ".got", 0))
+		}
 
-			sh = elfshname(".got.plt")
+		// Not applicable to ppc64 or sparc.
+		if eh.machine != EM_PPC64 && eh.machine != EM_SPARCV9 {
+			sh := elfshname(".got.plt")
 			sh.type_ = SHT_PROGBITS
 			sh.flags = SHF_ALLOC + SHF_WRITE
 			sh.entsize = uint64(Thearch.Regsize)

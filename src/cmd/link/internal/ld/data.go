@@ -1325,8 +1325,8 @@ func dodata() {
 	sect.Align = maxalign(s, obj.SINITARR-1)
 	datsize = Rnd(datsize, int64(sect.Align))
 	sect.Vaddr = uint64(datsize)
-	Linklookup(Ctxt, "runtime.noptrdata", 0).Sect = sect
-	Linklookup(Ctxt, "runtime.enoptrdata", 0).Sect = sect
+	Linkrlookup(Ctxt, "runtime.noptrdata", 0).Sect = sect
+	Linkrlookup(Ctxt, "runtime.enoptrdata", 0).Sect = sect
 	for ; s != nil && s.Type < obj.SINITARR; s = s.Next {
 		datsize = aligndatsize(datsize, s)
 		s.Sect = sect
@@ -1365,8 +1365,8 @@ func dodata() {
 	sect.Align = maxalign(s, obj.SBSS-1)
 	datsize = Rnd(datsize, int64(sect.Align))
 	sect.Vaddr = uint64(datsize)
-	Linklookup(Ctxt, "runtime.data", 0).Sect = sect
-	Linklookup(Ctxt, "runtime.edata", 0).Sect = sect
+	Linkrlookup(Ctxt, "runtime.data", 0).Sect = sect
+	Linkrlookup(Ctxt, "runtime.edata", 0).Sect = sect
 	var gc GCProg
 	gc.Init("runtime.gcdata")
 	for ; s != nil && s.Type < obj.SBSS; s = s.Next {
@@ -1390,8 +1390,8 @@ func dodata() {
 	sect.Align = maxalign(s, obj.SNOPTRBSS-1)
 	datsize = Rnd(datsize, int64(sect.Align))
 	sect.Vaddr = uint64(datsize)
-	Linklookup(Ctxt, "runtime.bss", 0).Sect = sect
-	Linklookup(Ctxt, "runtime.ebss", 0).Sect = sect
+	Linkrlookup(Ctxt, "runtime.bss", 0).Sect = sect
+	Linkrlookup(Ctxt, "runtime.ebss", 0).Sect = sect
 	gc = GCProg{}
 	gc.Init("runtime.gcbss")
 	for ; s != nil && s.Type < obj.SNOPTRBSS; s = s.Next {
@@ -1410,8 +1410,8 @@ func dodata() {
 	sect.Align = maxalign(s, obj.SNOPTRBSS)
 	datsize = Rnd(datsize, int64(sect.Align))
 	sect.Vaddr = uint64(datsize)
-	Linklookup(Ctxt, "runtime.noptrbss", 0).Sect = sect
-	Linklookup(Ctxt, "runtime.enoptrbss", 0).Sect = sect
+	Linkrlookup(Ctxt, "runtime.noptrbss", 0).Sect = sect
+	Linkrlookup(Ctxt, "runtime.enoptrbss", 0).Sect = sect
 	for ; s != nil && s.Type == obj.SNOPTRBSS; s = s.Next {
 		datsize = aligndatsize(datsize, s)
 		s.Sect = sect
@@ -1420,7 +1420,7 @@ func dodata() {
 	}
 
 	sect.Length = uint64(datsize) - sect.Vaddr
-	Linklookup(Ctxt, "runtime.end", 0).Sect = sect
+	Linkrlookup(Ctxt, "runtime.end", 0).Sect = sect
 
 	// 6g uses 4-byte relocation offsets, so the entire segment must fit in 32 bits.
 	if datsize != int64(uint32(datsize)) {
@@ -1498,8 +1498,8 @@ func dodata() {
 	sect.Align = maxalign(s, obj.STYPERELRO-1)
 	datsize = Rnd(datsize, int64(sect.Align))
 	sect.Vaddr = 0
-	Linklookup(Ctxt, "runtime.rodata", 0).Sect = sect
-	Linklookup(Ctxt, "runtime.erodata", 0).Sect = sect
+	Linkrlookup(Ctxt, "runtime.rodata", 0).Sect = sect
+	Linkrlookup(Ctxt, "runtime.erodata", 0).Sect = sect
 	for ; s != nil && s.Type < obj.STYPERELRO; s = s.Next {
 		datsize = aligndatsize(datsize, s)
 		s.Sect = sect
@@ -1553,8 +1553,8 @@ func dodata() {
 	sect.Align = maxalign(s, obj.STYPELINK)
 	datsize = Rnd(datsize, int64(sect.Align))
 	sect.Vaddr = uint64(datsize)
-	Linklookup(Ctxt, "runtime.typelink", 0).Sect = sect
-	Linklookup(Ctxt, "runtime.etypelink", 0).Sect = sect
+	Linkrlookup(Ctxt, "runtime.typelink", 0).Sect = sect
+	Linkrlookup(Ctxt, "runtime.etypelink", 0).Sect = sect
 	for ; s != nil && s.Type == obj.STYPELINK; s = s.Next {
 		datsize = aligndatsize(datsize, s)
 		s.Sect = sect
@@ -1571,8 +1571,8 @@ func dodata() {
 	sect.Align = maxalign(s, obj.SPCLNTAB-1)
 	datsize = Rnd(datsize, int64(sect.Align))
 	sect.Vaddr = uint64(datsize)
-	Linklookup(Ctxt, "runtime.symtab", 0).Sect = sect
-	Linklookup(Ctxt, "runtime.esymtab", 0).Sect = sect
+	Linkrlookup(Ctxt, "runtime.symtab", 0).Sect = sect
+	Linkrlookup(Ctxt, "runtime.esymtab", 0).Sect = sect
 	for ; s != nil && s.Type < obj.SPCLNTAB; s = s.Next {
 		datsize = aligndatsize(datsize, s)
 		s.Sect = sect
@@ -1589,8 +1589,8 @@ func dodata() {
 	sect.Align = maxalign(s, obj.SELFROSECT-1)
 	datsize = Rnd(datsize, int64(sect.Align))
 	sect.Vaddr = uint64(datsize)
-	Linklookup(Ctxt, "runtime.pclntab", 0).Sect = sect
-	Linklookup(Ctxt, "runtime.epclntab", 0).Sect = sect
+	Linkrlookup(Ctxt, "runtime.pclntab", 0).Sect = sect
+	Linkrlookup(Ctxt, "runtime.epclntab", 0).Sect = sect
 	for ; s != nil && s.Type < obj.SELFROSECT; s = s.Next {
 		datsize = aligndatsize(datsize, s)
 		s.Sect = sect
