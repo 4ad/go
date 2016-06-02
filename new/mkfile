@@ -31,10 +31,10 @@ DWARFS=${GOEXES:%.out=%.out.dwarf}\
 
 all:V:	$GOEXES $GOS $OBJDUMPS $RELS $READELFS $GNUS $DWARFS
 
-tools:V:
-	go install -v cmd/asm cmd/compile cmd/link cmd/pack runtime
+runtime:V:
+	go install -v runtime
 
-%.u: tools
+%.u: runtime
 
 %.u: $GOROOT/test/%.go
 	GOOS=solaris GOARCH=sparc64 go tool compile $GCFLAGS -o $target $GOROOT/test/$stem.go
