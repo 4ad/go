@@ -107,6 +107,8 @@ TEXT runtime·gosave(SB), NOSPLIT|NOFRAME, $0-8
 	MOVD	ZR, gobuf_lr(R25)
 	MOVD	ZR, gobuf_ret(R25)
 	MOVD	ZR, gobuf_ctxt(R25)
+	MOVD	BFP, R27
+	MOVD	R27, gobuf_bp(R25)
 	RET
 
 // void gogo(Gobuf*)
@@ -120,12 +122,15 @@ TEXT runtime·gogo(SB), NOSPLIT|NOFRAME, $0-8
 	MOVD	gobuf_sp(R22), R27
 	MOVD	R27, BSP
 	MOVD	gobuf_lr(R22), OLR
-	MOVD	gobuf_ret(R22), R27
+	MOVD	gobuf_ret(R22), RT1
 	MOVD	gobuf_ctxt(R22), CTXT
+	MOVD	gobuf_bp(R22), R27
+	MOVD	R27, BFP
 	MOVD	ZR, gobuf_sp(R22)
 	MOVD	ZR, gobuf_ret(R22)
 	MOVD	ZR, gobuf_lr(R22)
 	MOVD	ZR, gobuf_ctxt(R22)
+	MOVD	ZR, gobuf_bp(R22)
 	CMP	ZR, ZR // set condition codes for == test, needed by stack split
 	MOVD	gobuf_pc(R22), R8
 	JMPL	R8, ZR
