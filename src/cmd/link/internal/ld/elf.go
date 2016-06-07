@@ -1962,6 +1962,7 @@ func doelf() {
 		s.Type = obj.SELFROSECT
 
 		s = Linklookup(Ctxt, ".gnu.version_r", 0)
+		s.Align = int32(Thearch.Regsize)
 		s.Attr |= AttrReachable
 		s.Type = obj.SELFROSECT
 
@@ -2269,7 +2270,7 @@ func Asmbelf(symo int64) {
 		shsym(sh, Linklookup(Ctxt, ".dynstr", 0))
 
 		sym := Linkrlookup(Ctxt, ".gnu.version", 0)
-		if sym != nil && sym.Size > 0 {
+		if sym != nil {
 			sh := elfshname(".gnu.version")
 			sh.type_ = SHT_GNU_VERSYM
 			sh.flags = SHF_ALLOC
@@ -2280,7 +2281,7 @@ func Asmbelf(symo int64) {
 		}
 
 		sym = Linkrlookup(Ctxt, ".gnu.version_r", 0)
-		if sym != nil && sym.Size > 0 {
+		if sym != nil {
 			sh = elfshname(".gnu.version_r")
 			sh.type_ = SHT_GNU_VERNEED
 			sh.flags = SHF_ALLOC
@@ -2293,7 +2294,7 @@ func Asmbelf(symo int64) {
 		switch eh.machine {
 		case EM_X86_64, EM_PPC64, EM_AARCH64, EM_SPARCV9:
 			sym := Linkrlookup(Ctxt, ".rela.plt", 0)
-			if sym != nil && sym.Size > 0 {
+			if sym != nil {
 				sh := elfshname(".rela.plt")
 				sh.type_ = SHT_RELA
 				sh.flags = SHF_ALLOC | SHF_INFO_LINK
@@ -2305,7 +2306,7 @@ func Asmbelf(symo int64) {
 			}
 
 			sym = Linkrlookup(Ctxt, ".rela", 0)
-			if sym != nil && sym.Size > 0 {
+			if sym != nil {
 				sh = elfshname(".rela")
 				sh.type_ = SHT_RELA
 				sh.flags = SHF_ALLOC
@@ -2317,7 +2318,7 @@ func Asmbelf(symo int64) {
 
 		default:
 			sym := Linkrlookup(Ctxt, ".rel.plt", 0)
-			if sym != nil && sym.Size > 0 {
+			if sym != nil {
 				sh := elfshname(".rel.plt")
 				sh.type_ = SHT_REL
 				sh.flags = SHF_ALLOC
@@ -2328,7 +2329,7 @@ func Asmbelf(symo int64) {
 			}
 
 			sym = Linkrlookup(Ctxt, ".rel", 0)
-			if sym != nil && sym.Size > 0 {
+			if sym != nil {
 				sh = elfshname(".rel")
 				sh.type_ = SHT_REL
 				sh.flags = SHF_ALLOC
