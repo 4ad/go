@@ -102,9 +102,7 @@ TEXT runtime·gosave(SB), NOSPLIT|NOFRAME, $0-8
 	MOVD	buf+0(FP), R25
 	MOVD	BSP, R27
 	MOVD	R27, gobuf_sp(R25)
-	MOVD	OLR, R27
-	ADD	$8, R27
-	MOVD	R27, gobuf_pc(R25)
+	MOVD	OLR, gobuf_pc(R25)
 	MOVD	g, gobuf_g(R25)
 	MOVD	ZR, gobuf_lr(R25)
 	MOVD	ZR, gobuf_ret(R25)
@@ -138,7 +136,7 @@ TEXT runtime·gogo(SB), NOSPLIT|NOFRAME, $0-8
 	MOVD	ZR, gobuf_bp(R22)
 	CMP	ZR, ZR // set condition codes for == test, needed by stack split
 	MOVD	gobuf_pc(R22), R8
-	JMPL	R8, ZR
+	JMPL	$8(R8), ZR
 
 // void mcall(fn func(*g))
 // Switch to m->g0's stack, call fn(g).
@@ -148,9 +146,7 @@ TEXT runtime·mcall(SB), NOSPLIT|NOFRAME, $0-8
 	// Save caller state in g->sched
 	MOVD	BSP, TMP
 	MOVD	TMP, (g_sched+gobuf_sp)(g)
-	MOVD	OLR, R27
-	ADD	$8, R27
-	MOVD	R27, (g_sched+gobuf_pc)(g)
+	MOVD	OLR, (g_sched+gobuf_pc)(g)
 	MOVD	$0, (g_sched+gobuf_lr)(g)
 	MOVD	g, (g_sched+gobuf_g)(g)
 	MOVD	BFP, R27
@@ -280,9 +276,7 @@ TEXT runtime·morestack(SB),NOSPLIT|NOFRAME,$0-0
 	MOVD	CTXT, (g_sched+gobuf_ctxt)(g)
 	MOVD	BSP, TMP
 	MOVD	TMP, (g_sched+gobuf_sp)(g)
-	MOVD	OLR, R27
-	ADD	$8, R27
-	MOVD	R27, (g_sched+gobuf_pc)(g)
+	MOVD	OLR, (g_sched+gobuf_pc)(g)
 	MOVD	R25, (g_sched+gobuf_lr)(g)
 
 	// Called from f.
@@ -489,9 +483,7 @@ TEXT runtime·jmpdefer(SB), NOSPLIT|NOFRAME, $0-16
 
 // Save state of caller into g->sched.
 TEXT gosave<>(SB),NOSPLIT|NOFRAME,$0
-	MOVD	OLR, TMP
-	ADD	$8, TMP
-	MOVD	TMP, (g_sched+gobuf_pc)(g)
+	MOVD	OLR, (g_sched+gobuf_pc)(g)
 	MOVD	BSP, TMP
 	MOVD	TMP, (g_sched+gobuf_sp)(g)
 	MOVD	$0, (g_sched+gobuf_lr)(g)
