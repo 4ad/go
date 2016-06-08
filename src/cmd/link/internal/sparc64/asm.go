@@ -52,7 +52,8 @@ func adddynrel(s *ld.LSym, r *ld.Reloc) {
 	targ := r.Sym
 	ld.Ctxt.Cursym = s
 
-	switch r.Type {
+	rtype := r.Type + 256
+	switch rtype {
 	default:
 		if r.Type >= 256 {
 			ld.Diag("unexpected relocation type %d", r.Type)
@@ -67,25 +68,28 @@ func adddynrel(s *ld.LSym, r *ld.Reloc) {
 
 	switch r.Type {
 	case obj.R_CALLSPARC64, obj.R_PCREL:
-		addpltsym(targ)
-		r.Sym = ld.Linkrlookup(ld.Ctxt, ".plt", 0)
-		r.Add = int64(targ.Plt)
-		return
-	case obj.R_ADDRSPARC64LO:
-		if s.Type == obj.STEXT && ld.Iself {
+		if ld.Iself {
 			addpltsym(targ)
 			r.Sym = ld.Linkrlookup(ld.Ctxt, ".plt", 0)
-			r.Add += int64(targ.Plt)
+			r.Add = int64(targ.Plt)
 			return
+		}
+	case obj.R_ADDRSPARC64LO:
+		if s.Type == obj.STEXT && ld.Iself {
+			return // Handled by R_ADDRSPARC64HI.
 		}
 
 		if s.Type != obj.SDATA {
 			break
 		}
 
+		println("R_ADDRSPARC64LO Iself ", ld.Iself, s.Name)
+		println("  ", s.Type)
+		break
+
 		if ld.Iself {
 			ld.Adddynsym(ld.Ctxt, targ)
-			rela := ld.Linkrlookup(ld.Ctxt, ".rela.plt", 0)
+			rela := ld.Linkrlookup(ld.Ctxt, ".rela", 0)
 			ld.Addaddrplus(ld.Ctxt, rela, s, int64(r.Off))
 			if r.Siz == 8 {
 				ld.Adduint64(ld.Ctxt, rela, ld.ELF64_R_INFO(uint32(targ.Dynid), ld.R_SPARC_64))
@@ -98,7 +102,16 @@ func adddynrel(s *ld.LSym, r *ld.Reloc) {
 			return
 		}
 	case obj.R_ADDRSPARC64HI:
-		return
+		if s.Type == obj.STEXT && ld.Iself {
+			addpltsym(targ)
+			r.Sym = ld.Linkrlookup(ld.Ctxt, ".plt", 0)
+			r.Add += int64(targ.Plt)
+			return
+		}
+
+		if s.Type == obj.SDATA {
+			return // XXX stash first half of address
+		}
 	}
 
 	ld.Ctxt.Cursym = s

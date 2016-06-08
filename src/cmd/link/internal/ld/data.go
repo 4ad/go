@@ -382,13 +382,7 @@ func relocsym(s *LSym) {
 				Diag("unknown reloc %d", r.Type)
 			}
 
-		case obj.R_SPARC64_TLS_LE:
-			if Iself  {
-				// XXX implement
-				return
-			}
-			Diag("unsupported reloc for R_SPARC64_TLS_LE %d", Ctxt.Headtype)
-		case obj.R_TLS_LE:
+		case obj.R_SPARC64_TLS_LE, obj.R_TLS_LE:
 			isAndroidX86 := goos == "android" && (Thearch.Thechar == '6' || Thearch.Thechar == '8')
 
 			if Linkmode == LinkExternal && Iself && HEADTYPE != obj.Hopenbsd && !isAndroidX86 {
