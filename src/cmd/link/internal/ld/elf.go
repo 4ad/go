@@ -2516,6 +2516,7 @@ elfobj:
 		sh.off = uint64(symo) + uint64(Symsize)
 		sh.size = uint64(len(Elfstrdat))
 		sh.addralign = 1
+		sh.flags = SHF_STRINGS
 
 		dwarfaddelfheaders()
 	}
