@@ -120,6 +120,9 @@ TEXT runtime·gogo(SB), NOSPLIT|NOFRAME, $0-8
 	MOVD	gobuf_g(R22), g
 	CALL	runtime·save_g(SB)
 
+	MEMBAR	$64
+	FLUSHW
+
 	MOVD	0(g), R28	// make sure g is not nil
 	MOVD	gobuf_sp(R22), R27
 	MOVD	R27, BSP
