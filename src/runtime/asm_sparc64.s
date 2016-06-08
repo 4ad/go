@@ -160,7 +160,7 @@ ok:
 	MOVD	0(CTXT), R28			// code pointer
 	MOVD	(g_sched+gobuf_sp)(g), TMP
 	MOVD	TMP, BSP	// sp = m->g0->sched.sp
-	SUB	$16, BSP
+	SUB	$176, BSP
 	MOVD	R25, (176+0)(BSP)
 	MOVD	$0, (176+8)(BSP)
 	CALL	(R28)
