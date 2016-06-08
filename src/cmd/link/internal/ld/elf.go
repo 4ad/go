@@ -2258,6 +2258,7 @@ func Asmbelf(symo int64) {
 			sh.entsize = ELF32SYMSIZE
 		}
 		sh.addralign = uint64(Thearch.Regsize)
+		sh.info = 1
 		sh.link = uint32(elfshname(".dynstr").shnum)
 
 		// sh->info = index of first non-local symbol (number of local symbols)
@@ -2265,7 +2266,7 @@ func Asmbelf(symo int64) {
 
 		sh = elfshname(".dynstr")
 		sh.type_ = SHT_STRTAB
-		sh.flags = SHF_ALLOC
+		sh.flags = SHF_ALLOC | SHF_STRINGS
 		sh.addralign = 1
 		shsym(sh, Linklookup(Ctxt, ".dynstr", 0))
 
