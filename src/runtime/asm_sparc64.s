@@ -494,6 +494,8 @@ TEXT gosave<>(SB),NOSPLIT|NOFRAME,$0
 	MOVD	$0, (g_sched+gobuf_lr)(g)
 	MOVD	$0, (g_sched+gobuf_ret)(g)
 	MOVD	$0, (g_sched+gobuf_ctxt)(g)
+	MOVD	BFP, TMP
+	MOVD	TMP, (g_sched+gobuf_bp)(g)
 	RET
 
 // func asmcgocall(fn, arg unsafe.Pointer) int32
