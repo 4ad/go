@@ -26,12 +26,15 @@ RELS=${GOEXES:%.out=%.out.rel}\
 GNUS=${GOEXES:%.out=%.out.s}\
 	${GOEXES:%.out=%.out.tmp/go.o.s}
 
-all:V:	$GOEXES $GOS $OBJDUMPS $RELS $READELFS $GNUS
+DWARFS=${GOEXES:%.out=%.out.dwarf}\
+	${GOEXES:%.out=%.out.tmp/go.o.dwarf}
 
-tools:V:
-	go install -v cmd/asm cmd/compile cmd/link cmd/pack runtime
+all:V:	$GOEXES $GOS $OBJDUMPS $RELS $READELFS $GNUS $DWARFS
 
-%.u: tools
+runtime:V:
+	go install -v runtime
+
+%.u: runtime
 
 %.u: $GOROOT/test/%.go
 	GOOS=solaris GOARCH=sparc64 go tool compile $GCFLAGS -o $target $GOROOT/test/$stem.go
@@ -49,6 +52,9 @@ tools:V:
 %.out.readelf: %.out
 	$XOBJDUMP -a $stem.out >$target
 
+%.out.dwarf: %.out
+	$XOBJDUMP --dwarf $stem.out >$target
+
 %.out.rel: %.out
 	$XREADELF -r $prereq >$target 2>/dev/null
 
@@ -65,6 +71,9 @@ tools:V:
 
 %.out.tmp/go.o.readelf: %.out.tmp/go.o
 	$XREADELF -a $stem.out.tmp/go.o > $target 2>/dev/null
+
+%.out.tmp/go.o.dwarf: %.out.tmp/go.o
+	$XOBJDUMP --dwarf $stem.out.tmp/go.o > $target 2>/dev/null
 
 %.out.tmp/go.o.rel: %.out.tmp/go.o
 	$XREADELF -r $prereq >$target 2>/dev/null

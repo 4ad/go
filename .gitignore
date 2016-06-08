@@ -40,6 +40,7 @@ new/*.objdump
 new/*.rel
 new/*.readelf
 new/*.gnu.s
+new/*.dwarf
 new/*.out.tmp/
 test2/*.u
 test2/*.go.s

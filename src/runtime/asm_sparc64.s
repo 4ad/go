@@ -59,7 +59,7 @@ nocgo:
 
 	CALL	runtime·check(SB)
 
-	MOVD	L1, FIXED_FRAME+0(BSP)	// copy argc
+	MOVW	L1, FIXED_FRAME+0(BSP)	// copy argc
 	MOVD	L2, FIXED_FRAME+8(BSP)	// copy argv
 	CALL	runtime·args(SB)
 	CALL	runtime·osinit(SB)
@@ -107,6 +107,8 @@ TEXT runtime·gosave(SB), NOSPLIT|NOFRAME, $0-8
 	MOVD	ZR, gobuf_lr(R25)
 	MOVD	ZR, gobuf_ret(R25)
 	MOVD	ZR, gobuf_ctxt(R25)
+	MOVD	BFP, R27
+	MOVD	R27, gobuf_bp(R25)
 	RET
 
 // void gogo(Gobuf*)
@@ -116,19 +118,25 @@ TEXT runtime·gogo(SB), NOSPLIT|NOFRAME, $0-8
 	MOVD	gobuf_g(R22), g
 	CALL	runtime·save_g(SB)
 
+	MEMBAR	$64
+	FLUSHW
+
 	MOVD	0(g), R28	// make sure g is not nil
 	MOVD	gobuf_sp(R22), R27
 	MOVD	R27, BSP
 	MOVD	gobuf_lr(R22), OLR
-	MOVD	gobuf_ret(R22), R27
+	MOVD	gobuf_ret(R22), RT1
 	MOVD	gobuf_ctxt(R22), CTXT
+	MOVD	gobuf_bp(R22), R27
+	MOVD	R27, BFP
 	MOVD	ZR, gobuf_sp(R22)
 	MOVD	ZR, gobuf_ret(R22)
 	MOVD	ZR, gobuf_lr(R22)
 	MOVD	ZR, gobuf_ctxt(R22)
+	MOVD	ZR, gobuf_bp(R22)
 	CMP	ZR, ZR // set condition codes for == test, needed by stack split
 	MOVD	gobuf_pc(R22), R8
-	JMPL	R8, ZR
+	JMPL	$8(R8), ZR
 
 // void mcall(fn func(*g))
 // Switch to m->g0's stack, call fn(g).
@@ -141,6 +149,8 @@ TEXT runtime·mcall(SB), NOSPLIT|NOFRAME, $0-8
 	MOVD	OLR, (g_sched+gobuf_pc)(g)
 	MOVD	$0, (g_sched+gobuf_lr)(g)
 	MOVD	g, (g_sched+gobuf_g)(g)
+	MOVD	BFP, R27
+	MOVD	R27, (g_sched+gobuf_bp)(g)
 
 	// Switch to m->g0 & its stack, call fn.
 	MOVD	g, R25
@@ -155,7 +165,7 @@ ok:
 	MOVD	0(CTXT), R28			// code pointer
 	MOVD	(g_sched+gobuf_sp)(g), TMP
 	MOVD	TMP, BSP	// sp = m->g0->sched.sp
-	SUB	$16, BSP
+	SUB	$176, BSP
 	MOVD	R25, (176+0)(BSP)
 	MOVD	$0, (176+8)(BSP)
 	CALL	(R28)
@@ -479,6 +489,8 @@ TEXT gosave<>(SB),NOSPLIT|NOFRAME,$0
 	MOVD	$0, (g_sched+gobuf_lr)(g)
 	MOVD	$0, (g_sched+gobuf_ret)(g)
 	MOVD	$0, (g_sched+gobuf_ctxt)(g)
+	MOVD	BFP, TMP
+	MOVD	TMP, (g_sched+gobuf_bp)(g)
 	RET
 
 // func asmcgocall(fn, arg unsafe.Pointer) int32

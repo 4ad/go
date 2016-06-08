@@ -147,14 +147,9 @@ all:V:	$GOEXES $GOEXTEXES\
 	$GNUS $DATS $RELS $READELFS $DWARFS\
 	$GNUOBJS $GNUOBJS_OPTIMIZED $GNUOBJS_NOFP $GNUOBJS_WINDOWS\
 
-tools:V:
-	go install -v cmd/asm cmd/compile cmd/link cmd/pack
-
 pkg/solaris_sparc64:
 	rm -rf pkg
 	mkdir -p pkg/solaris_sparc64
-
-%.u: tools
 
 %.u: %.s
 	GOOS=solaris GOARCH=sparc64 go tool asm -o $target $stem.s
