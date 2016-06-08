@@ -128,6 +128,7 @@ var optab = map[Optab]Opval{
 
 	Optab{ASETHI, ClassConst32, ClassNone, ClassNone, ClassReg}: {12, 4, 0},
 	Optab{ARNOP, ClassNone, ClassNone, ClassNone, ClassNone}:    {12, 4, 0},
+	Optab{AFLUSHW, ClassNone, ClassNone, ClassNone, ClassNone}:  {12, 4, 0},
 
 	Optab{AMEMBAR, ClassConst, ClassNone, ClassNone, ClassNone}: {13, 4, 0},
 
@@ -769,6 +770,9 @@ func opcode(a int16) uint32 {
 
 	case AFLUSH:
 		return op3(2, 0x3B)
+
+	case AFLUSHW:
+		return op3(2, 0x2B)
 
 	// Floating-point move.
 	case AFMOVS:

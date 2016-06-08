@@ -64,6 +64,7 @@ var Anames = []string{
 	"FITOS",
 	"FITOD",
 	"FLUSH",
+	"FLUSHW",
 	"FMOVS",
 	"FMOVD",
 	"FMULS",

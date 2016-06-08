@@ -350,6 +350,7 @@ const (
 	AFITOS
 	AFITOD
 	AFLUSH
+	AFLUSHW
 	AFMOVS // the SPARC64 instruction, and alias for loads and stores
 	AFMOVD // the SPARC64 instruction, and alias for loads and stores
 	AFMULS
