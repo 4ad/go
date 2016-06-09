@@ -443,6 +443,9 @@ func schedinit() {
 
 	sched.lastpoll = uint64(nanotime())
 	procs := int(ncpu)
+	if sys.GoarchSparc64 == 1 {
+		procs = 1
+	}
 	if n := atoi(gogetenv("GOMAXPROCS")); n > 0 {
 		if n > _MaxGomaxprocs {
 			n = _MaxGomaxprocs
