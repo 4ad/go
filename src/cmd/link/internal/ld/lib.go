@@ -1915,6 +1915,7 @@ func genasmsym(put func(*LSym, string, int, int64, int64, int, *LSym)) {
 			obj.SINITARR,
 			obj.SDATA,
 			obj.SNOPTRDATA,
+			obj.SELFSECT,
 			obj.SELFROSECT,
 			obj.SELFRXSECT,
 			obj.SELFGOT,
