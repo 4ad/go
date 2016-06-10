@@ -1938,9 +1938,9 @@ func doelf() {
 		s = Linklookup(Ctxt, ".plt", 0)
 
 		s.Attr |= AttrReachable
-		if Thearch.Thechar == '9' {
-			// In the ppc64 ABI, .plt is a data section
-			// written by the dynamic linker.
+		if Thearch.Thechar == '9' || Thearch.Thechar == 'u' {
+			// In the ppc64 and sparc ABIs, .plt is a data
+			// section written by the dynamic linker.
 			s.Type = obj.SELFSECT
 		} else {
 			s.Type = obj.SELFRXSECT

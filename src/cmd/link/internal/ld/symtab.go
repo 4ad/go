@@ -368,7 +368,12 @@ func symtab() {
 
 	if HEADTYPE == obj.Hsolaris {
 		xdefine("_GLOBAL_OFFSET_TABLE_", obj.SELFGOT, 0)
-		xdefine("_PROCEDURE_LINKAGE_TABLE_", obj.SELFRXSECT, 0)
+		if Thearch.Thechar == 'u' {
+			// sparc ABI requires writable .plt
+			xdefine("_PROCEDURE_LINKAGE_TABLE_", obj.SELFSECT, 0)
+		} else {
+			xdefine("_PROCEDURE_LINKAGE_TABLE_", obj.SELFRXSECT, 0)
+		}
 	}
 
 	// Define these so that they'll get put into the symbol table.

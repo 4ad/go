@@ -66,6 +66,12 @@ func adddynrel(s *ld.LSym, r *ld.Reloc) {
 		return
 	}
 
+	// XXX
+	//s.Value = ld.Linkrlookup(ld.Ctxt, ".plt", 0).Size
+	//println("reloc  ", r.Sym.Name, r.Type)
+	//println("  sym ", s.Name, s.Type)
+	//println("  targ ", targ.Name, targ.Type)
+
 	switch r.Type {
 	case obj.R_CALLSPARC64, obj.R_PCREL:
 		if ld.Iself {
@@ -311,8 +317,13 @@ func addpltsym(s *ld.LSym) {
 	ba |= (((-uint32(plt.Size)) + 32) >> 2) & ((1 << (19)) - 1)
 	ld.Adduint32(ld.Ctxt, plt, ba)
 
-	// Remaining bytes are provided by the runtime linker.
-	plt.Size += 24
+	// Fill remaining 24 bytes with nop.
+	ld.Adduint32(ld.Ctxt, plt, 0x01000000)
+	ld.Adduint32(ld.Ctxt, plt, 0x01000000)
+	ld.Adduint32(ld.Ctxt, plt, 0x01000000)
+	ld.Adduint32(ld.Ctxt, plt, 0x01000000)
+	ld.Adduint32(ld.Ctxt, plt, 0x01000000)
+	ld.Adduint32(ld.Ctxt, plt, 0x01000000)
 
 	// rela
 	ld.Addaddrplus(ld.Ctxt, rela, plt, plt.Size - 32)

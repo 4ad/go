@@ -1719,7 +1719,12 @@ func address() {
 		// rodata and executable text.
 		va = uint64(Rnd(int64(va), int64(INITRND)))
 
-		Segrodata.Rwx = 04
+		if Thearch.Thechar == 'u' {
+			// sparc ABI requires executable data segment
+			Segrodata.Rwx = 05
+		} else {
+			Segrodata.Rwx = 04
+		}
 		Segrodata.Vaddr = va
 		Segrodata.Fileoff = va - Segtext.Vaddr + Segtext.Fileoff
 		Segrodata.Filelen = 0
@@ -1734,7 +1739,12 @@ func address() {
 	}
 
 	va = uint64(Rnd(int64(va), int64(INITRND)))
-	Segdata.Rwx = 06
+	if Thearch.Thechar == 'u' {
+		// sparc ABI requires executable data segment
+		Segdata.Rwx = 07
+	} else {
+		Segdata.Rwx = 06
+	}
 	Segdata.Vaddr = va
 	Segdata.Fileoff = va - Segtext.Vaddr + Segtext.Fileoff
 	Segdata.Filelen = 0
