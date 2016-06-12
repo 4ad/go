@@ -1990,7 +1990,11 @@ func doelf() {
 		elfwritedynentsym(s, DT_STRTAB, Linkrlookup(Ctxt, ".dynstr", 0))
 		elfwritedynentsymsize(s, DT_STRSZ, Linkrlookup(Ctxt, ".dynstr", 0))
 		switch Thearch.Thechar {
-		case '0', '6', '7', '9', 'u':
+		case 'u':
+			elfwritedynentsym(s, DT_RELA, Linkrlookup(Ctxt, ".rela.plt", 0))
+			elfwritedynentsymsize(s, DT_RELASZ, Linkrlookup(Ctxt, ".rela.plt", 0))
+			Elfwritedynent(s, DT_RELAENT, ELF64RELASIZE)
+		case '0', '6', '7', '9':
 			elfwritedynentsym(s, DT_RELA, Linkrlookup(Ctxt, ".rela", 0))
 			elfwritedynentsymsize(s, DT_RELASZ, Linkrlookup(Ctxt, ".rela", 0))
 			Elfwritedynent(s, DT_RELAENT, ELF64RELASIZE)
