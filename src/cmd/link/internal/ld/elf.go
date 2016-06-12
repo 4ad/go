@@ -1991,7 +1991,9 @@ func doelf() {
 		elfwritedynentsymsize(s, DT_STRSZ, Linkrlookup(Ctxt, ".dynstr", 0))
 		switch Thearch.Thechar {
 		case 'u':
-			elfwritedynentsym(s, DT_RELA, Linkrlookup(Ctxt, ".rela.plt", 0))
+			// .rela sections are contiguous, so use address of .rela,
+			// but size of all .rela sections XXX
+			elfwritedynentsym(s, DT_RELA, Linkrlookup(Ctxt, ".rela", 0))
 			elfwritedynentsymsize(s, DT_RELASZ, Linkrlookup(Ctxt, ".rela.plt", 0))
 			Elfwritedynent(s, DT_RELAENT, ELF64RELASIZE)
 		case '0', '6', '7', '9':

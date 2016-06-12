@@ -286,8 +286,6 @@ func addpltsym(s *ld.LSym) {
 		return
 	}
 
-	ld.Adddynsym(ld.Ctxt, s)
-
 	if !ld.Iself {
 		ld.Diag("addpltsym: unsupported binary format")
 		return
@@ -302,10 +300,10 @@ func addpltsym(s *ld.LSym) {
 
 	// XXX handle "far plt" case for entries beyond 32,768
 
-	// The first eight bytes of each entry (excluding the initially reserved
-	// ones) should transfer control to the first or second reserved plt
-	// entry.  For our use, the second reserved entry (.PLT1) should always
-	// be the target.
+	// The first eight bytes of each entry (excluding the initially
+	// reserved ones) should transfer control to the first or second
+	// reserved plt entry.  For our use, the second reserved entry (.PLT1)
+	// should always be the target.
 	//
 	// 03 00 00 80 sethi (.-.PLT0), %g1 sethi     %hi(0x20000), %g1
 	sethi := uint32(0x03000000)
@@ -317,7 +315,8 @@ func addpltsym(s *ld.LSym) {
 	ba |= (((-uint32(plt.Size)) + 32) >> 2) & ((1 << (19)) - 1)
 	ld.Adduint32(ld.Ctxt, plt, ba)
 
-	// Fill remaining 24 bytes with nop.
+	// Fill remaining 24 bytes with nop; these will be provided by the
+	// runtime linker.
 	ld.Adduint32(ld.Ctxt, plt, 0x01000000)
 	ld.Adduint32(ld.Ctxt, plt, 0x01000000)
 	ld.Adduint32(ld.Ctxt, plt, 0x01000000)
@@ -326,8 +325,11 @@ func addpltsym(s *ld.LSym) {
 	ld.Adduint32(ld.Ctxt, plt, 0x01000000)
 
 	// rela
+	// offset
 	ld.Addaddrplus(ld.Ctxt, rela, plt, plt.Size - 32)
+	// info
 	ld.Adduint64(ld.Ctxt, rela, ld.ELF64_R_INFO(uint32(s.Dynid), ld.R_SPARC_JMP_SLOT))
+	// addend
 	ld.Adduint64(ld.Ctxt, rela, 0)
 
 	s.Plt = int32(plt.Size - 32)
