@@ -6,11 +6,13 @@
 #include "asm_sparc64.h"
 
 TEXT _rt0_sparc64_solaris(SB),NOSPLIT|NOFRAME,$0
+	MOVD	(WINDOW_SIZE)(BSP), O0 // argc
+	MOVD	(WINDOW_SIZE+8)(BSP), O1 // argv
 	MOVD	$main(SB), R27
 	JMPL	R27, ZR
 
 TEXT main(SB),NOSPLIT,$0
-	MOVD	I0, O0 // argc
+	MOVW	I0, O0 // argc
 	MOVD	I1, O1 // argv
 	CALL	runtime·rt0_go(SB)
 	RET
