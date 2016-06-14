@@ -46,6 +46,8 @@ test2/*.u
 test2/*.go.s
 test2/*.out
 test2/*.out.s
+test2/*.in
+test2/*.in.s
 test2/*.objdump
 test2/*.rel
 test2/*.readelf
