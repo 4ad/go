@@ -12,29 +12,31 @@ EXTLDFLAGS='-Wl,-fuse-ld=gold'
 GOEXES=helloworld.out\
 	sieve.out\
 
+GOINEXES=${GOEXES:%.out=%.in}
+
 GOS=${GOEXES:%.out=%.go.s}
 
 OBJDUMPS=${GOEXES:%.out=%.out.objdump}\
-	${GOEXES:%.out=%.out.tmp/go.o.objdump}
+	${GOEXES:%.out=%.out.tmp/go.o.objdump}\
+	${GOINEXES:%.in=%.in.objdump}\
 
 READELFS=${GOEXES:%.out=%.out.readelf}\
-	${GOEXES:%.out=%.out.tmp/go.o.readelf}
+	${GOEXES:%.out=%.out.tmp/go.o.readelf}\
+	${GOINEXES:%.in=%.in.readelf}\
 
 RELS=${GOEXES:%.out=%.out.rel}\
-	${GOEXES:%.out=%.out.tmp/go.o.rel}
+	${GOEXES:%.out=%.out.tmp/go.o.rel}\
+	${GOINEXES:%.in=%.in.rel}\
 
 GNUS=${GOEXES:%.out=%.out.s}\
-	${GOEXES:%.out=%.out.tmp/go.o.s}
+	${GOEXES:%.out=%.out.tmp/go.o.s}\
+	${GOINEXES:%.in=%.in.s}\
 
 DWARFS=${GOEXES:%.out=%.out.dwarf}\
-	${GOEXES:%.out=%.out.tmp/go.o.dwarf}
+	${GOEXES:%.out=%.out.tmp/go.o.dwarf}\
+	${GOINEXES:%.in=%.in.dwarf}\
 
-all:V:	$GOEXES $GOS $OBJDUMPS $RELS $READELFS $GNUS $DWARFS
-
-runtime:V:
-	go install -v runtime
-
-%.u: runtime
+all:V:	$GOEXES $GOINEXES $GOS $OBJDUMPS $RELS $READELFS $GNUS $DWARFS
 
 %.u: $GOROOT/test/%.go
 	GOOS=solaris GOARCH=sparc64 go tool compile $GCFLAGS -o $target $GOROOT/test/$stem.go
@@ -45,6 +47,10 @@ runtime:V:
 %.out: %.u
 	mkdir -p $stem.out.tmp
 	GO_EXTLINK_ENABLED=1 GOOS=solaris GOARCH=sparc64 go tool link $LDFLAGS -extldflags="$EXTLDFLAGS" -extld $XCC -linkmode=external -tmpdir $stem.out.tmp -o $target $stem.u
+
+%.in: %.u
+	mkdir -p $stem.out.tmp
+	GOOS=solaris GOARCH=sparc64 go tool link $LDFLAGS -o $target $stem.u
 
 %.out.objdump: %.out
 	$XOBJDUMP -x $stem.out >$target
@@ -59,6 +65,21 @@ runtime:V:
 	$XREADELF -r $prereq >$target 2>/dev/null
 
 %.out.s: %.out
+	$XOBJDUMP -d $prereq >$target 2>/dev/null
+
+%.in.objdump: %.in
+	$XOBJDUMP -x $stem.in >$target
+
+%.in.readelf: %.in
+	$XOBJDUMP -a $stem.in >$target
+
+%.in.dwarf: %.in
+	$XOBJDUMP --dwarf $stem.in >$target
+
+%.in.rel: %.in
+	$XREADELF -r $prereq >$target 2>/dev/null
+
+%.in.s: %.in
 	$XOBJDUMP -d $prereq >$target 2>/dev/null
 
 %.o.s: %.o
@@ -79,7 +100,7 @@ runtime:V:
 	$XREADELF -r $prereq >$target 2>/dev/null
 
 clean:V:
-	rm -rf *.out.tmp *.u *.go.s *.out *.out.objdump *.out.rel *.out.readelf *.out.s
+	rm -rf *.out.tmp *.u *.go.s *.out *.out.objdump *.out.rel *.out.readelf *.out.s *.in *.in.objdump *.in.rel *.in.readelf *.in.s
 
-copy:V: $GOEXES
+copy:V: $GOEXES $GOINEXES
 	rsync -ai *.out daffodil:x/
