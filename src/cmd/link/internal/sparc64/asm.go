@@ -80,34 +80,7 @@ func adddynrel(s *ld.LSym, r *ld.Reloc) {
 			r.Add = int64(targ.Plt)
 			return
 		}
-	case obj.R_ADDRSPARC64LO:
-		if s.Type == obj.STEXT && ld.Iself {
-			return // Handled by R_ADDRSPARC64HI.
-		}
-
-		if s.Type != obj.SDATA {
-			break
-		}
-
-		println("R_ADDRSPARC64LO Iself ", ld.Iself, s.Name)
-		println("  ", s.Type)
-		break
-
-		if ld.Iself {
-			ld.Adddynsym(ld.Ctxt, targ)
-			rela := ld.Linkrlookup(ld.Ctxt, ".rela", 0)
-			ld.Addaddrplus(ld.Ctxt, rela, s, int64(r.Off))
-			if r.Siz == 8 {
-				ld.Adduint64(ld.Ctxt, rela, ld.ELF64_R_INFO(uint32(targ.Dynid), ld.R_SPARC_64))
-			} else {
-				ld.Diag("unexpected relocation size %d for Type %s", r.Siz, r.Type)
-			}
-			ld.Adduint64(ld.Ctxt, rela, uint64(r.Add))
-			r.Type = 256 // ignore during relocsym
-			break
-			return
-		}
-	case obj.R_ADDRSPARC64HI:
+	case obj.R_ADDRSPARC64HI, obj.R_ADDRSPARC64LO:
 		if s.Type == obj.STEXT && ld.Iself {
 			addpltsym(targ)
 			r.Sym = ld.Linkrlookup(ld.Ctxt, ".plt", 0)
@@ -115,9 +88,13 @@ func adddynrel(s *ld.LSym, r *ld.Reloc) {
 			return
 		}
 
-		if s.Type == obj.SDATA {
-			return // XXX stash first half of address
+		if r.Type == obj.R_ADDRSPARC64HI {
+			println("R_ADDRSPARC64HI Iself ", ld.Iself, s.Name)
+		} else {
+			println("R_ADDRSPARC64LO Iself ", ld.Iself, s.Name)
 		}
+		println("  ", s.Type)
+		break
 	}
 
 	ld.Ctxt.Cursym = s
@@ -285,6 +262,8 @@ func addpltsym(s *ld.LSym) {
 	if s.Plt >= 0 {
 		return
 	}
+
+	ld.Adddynsym(ld.Ctxt, s)
 
 	if !ld.Iself {
 		ld.Diag("addpltsym: unsupported binary format")

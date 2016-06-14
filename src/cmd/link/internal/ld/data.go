@@ -1834,17 +1834,6 @@ func address() {
 		sectSym = Linklookup(Ctxt, ".plt", 0)
 		s.Sect = sectSym.Sect
 		s.Value = int64(sectSym.Sect.Vaddr)
-
-		// XXX this doesn't seem like the right way to do this,
-		// even though it gives the correct result
-		if Thearch.Thechar == 'u' && Linkmode == LinkInternal {
-			pltaddr := Symaddr(s)
-			for _, sym := range Ctxt.Allsym {
-				if sym.Type == obj.SDYNIMPORT && sym.Plt != -1 {
-					sym.Value = pltaddr + int64(sym.Plt)
-				}
-			}
-		}
 	}
 
 	xdefine("runtime.text", obj.STEXT, int64(text.Vaddr))
