@@ -1272,7 +1272,11 @@ func dodata() {
 	var sect *Section
 	for ; s != nil && s.Type < obj.SELFGOT; s = s.Next {
 		sect = addsection(&Segdata, s.Name, 06)
-		sect.Align = symalign(s)
+		if s.Name == ".plt" && Thearch.Thechar == 'u' {
+			sect.Align = 256
+		} else {
+			sect.Align = symalign(s)
+		}
 		datsize = Rnd(datsize, int64(sect.Align))
 		sect.Vaddr = uint64(datsize)
 		s.Sect = sect
@@ -1472,7 +1476,11 @@ func dodata() {
 	/* read-only executable ELF, Mach-O sections */
 	for ; s != nil && s.Type < obj.STYPE; s = s.Next {
 		sect = addsection(&Segtext, s.Name, 04)
-		sect.Align = symalign(s)
+		if s.Name == ".plt" && Thearch.Thechar == 'u' {
+			sect.Align = 256
+		} else {
+			sect.Align = symalign(s)
+		}
 		datsize = Rnd(datsize, int64(sect.Align))
 		sect.Vaddr = uint64(datsize)
 		s.Sect = sect
@@ -1715,7 +1723,12 @@ func address() {
 		// rodata and executable text.
 		va = uint64(Rnd(int64(va), int64(INITRND)))
 
-		Segrodata.Rwx = 04
+		if Thearch.Thechar == 'u' {
+			// sparc ABI requires executable data segment
+			Segrodata.Rwx = 05
+		} else {
+			Segrodata.Rwx = 04
+		}
 		Segrodata.Vaddr = va
 		Segrodata.Fileoff = va - Segtext.Vaddr + Segtext.Fileoff
 		Segrodata.Filelen = 0
@@ -1730,7 +1743,12 @@ func address() {
 	}
 
 	va = uint64(Rnd(int64(va), int64(INITRND)))
-	Segdata.Rwx = 06
+	if Thearch.Thechar == 'u' {
+		// sparc ABI requires executable data segment
+		Segdata.Rwx = 07
+	} else {
+		Segdata.Rwx = 06
+	}
 	Segdata.Vaddr = va
 	Segdata.Fileoff = va - Segtext.Vaddr + Segtext.Fileoff
 	Segdata.Filelen = 0
@@ -1804,6 +1822,18 @@ func address() {
 		sectSym := Linklookup(Ctxt, ".note.go.abihash", 0)
 		s.Sect = sectSym.Sect
 		s.Value = int64(sectSym.Sect.Vaddr + 16)
+	}
+
+	if HEADTYPE == obj.Hsolaris {
+		s := Linklookup(Ctxt, "_GLOBAL_OFFSET_TABLE_", 0)
+		sectSym := Linklookup(Ctxt, ".got", 0)
+		s.Sect = sectSym.Sect
+		s.Value = int64(sectSym.Sect.Vaddr)
+
+		s = Linklookup(Ctxt, "_PROCEDURE_LINKAGE_TABLE_", 0)
+		sectSym = Linklookup(Ctxt, ".plt", 0)
+		s.Sect = sectSym.Sect
+		s.Value = int64(sectSym.Sect.Vaddr)
 	}
 
 	xdefine("runtime.text", obj.STEXT, int64(text.Vaddr))

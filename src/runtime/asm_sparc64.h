@@ -22,4 +22,6 @@
 // with arguments (the arguments should be stored at FIXED_FRAME+0(BSP),
 // FIXED_FRAME+8(BSP) etc) and some other low-level places.
 
-#define FIXED_FRAME 176
+#define ARG_PUSH_SIZE 6*8
+#define WINDOW_SIZE 16*8
+#define FIXED_FRAME WINDOW_SIZE+ARG_PUSH_SIZE

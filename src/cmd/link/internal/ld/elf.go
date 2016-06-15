@@ -1853,7 +1853,9 @@ func doelf() {
 		if Thearch.Thechar == '9' {
 			Addstring(shstrtab, ".glink")
 		}
-		Addstring(shstrtab, ".got.plt")
+		if Thearch.Thechar != '9' && Thearch.Thechar != 'u' {
+			Addstring(shstrtab, ".got.plt")
+		}
 		Addstring(shstrtab, ".dynamic")
 		Addstring(shstrtab, ".dynsym")
 		Addstring(shstrtab, ".dynstr")
@@ -1899,6 +1901,14 @@ func doelf() {
 		default:
 			s = Linklookup(Ctxt, ".rel", 0)
 		}
+
+		switch Thearch.Thechar {
+		case '6', '7', '9', 'u':
+			s.Align = 8
+		default:
+			s.Align = 4
+		}
+
 		s.Attr |= AttrReachable
 		s.Type = obj.SELFROSECT
 
@@ -1921,16 +1931,18 @@ func doelf() {
 		s.Attr |= AttrReachable
 		s.Type = obj.SELFROSECT
 
-		s = Linklookup(Ctxt, ".got.plt", 0)
-		s.Attr |= AttrReachable
-		s.Type = obj.SELFSECT // writable
+		if Thearch.Thechar != '9' && Thearch.Thechar != 'u' {
+			s = Linklookup(Ctxt, ".got.plt", 0)
+			s.Attr |= AttrReachable
+			s.Type = obj.SELFSECT // writable
+		}
 
 		s = Linklookup(Ctxt, ".plt", 0)
 
 		s.Attr |= AttrReachable
-		if Thearch.Thechar == '9' {
-			// In the ppc64 ABI, .plt is a data section
-			// written by the dynamic linker.
+		if Thearch.Thechar == '9' || Thearch.Thechar == 'u' {
+			// In the ppc64 and sparc ABIs, .plt is a data
+			// section written by the dynamic linker.
 			s.Type = obj.SELFSECT
 		} else {
 			s.Type = obj.SELFRXSECT
@@ -1993,10 +2005,10 @@ func doelf() {
 			Elfwritedynent(s, DT_RUNPATH, uint64(Addstring(dynstr, rpath.val)))
 		}
 
-		if Thearch.Thechar == '9' {
-			elfwritedynentsym(s, DT_PLTGOT, Linklookup(Ctxt, ".plt", 0))
+		if Thearch.Thechar == '9' || Thearch.Thechar == 'u' {
+			elfwritedynentsym(s, DT_PLTGOT, Linkrlookup(Ctxt, ".plt", 0))
 		} else {
-			elfwritedynentsym(s, DT_PLTGOT, Linklookup(Ctxt, ".got.plt", 0))
+			elfwritedynentsym(s, DT_PLTGOT, Linkrlookup(Ctxt, ".got.plt", 0))
 		}
 
 		if Thearch.Thechar == '9' {
@@ -2326,6 +2338,11 @@ func Asmbelf(symo int64) {
 		sh.flags = SHF_ALLOC + SHF_EXECINSTR
 		if eh.machine == EM_X86_64 {
 			sh.entsize = 16
+		} else if eh.machine == EM_SPARCV9 {
+			// On sparcv9, the plt is rewritten by the dynamic
+			// linker based on the existing entries
+			sh.flags |= SHF_WRITE
+			sh.entsize = 32
 		} else if eh.machine == EM_PPC64 {
 			// On ppc64, this is just a table of addresses
 			// filled by the dynamic linker
@@ -2336,11 +2353,18 @@ func Asmbelf(symo int64) {
 		} else {
 			sh.entsize = 4
 		}
-		sh.addralign = sh.entsize
+
+		if eh.machine == EM_SPARCV9 {
+			// entries aligned at 32; section at 256
+			sh.addralign = 256
+		} else {
+			sh.addralign = sh.entsize
+		}
+
 		shsym(sh, Linklookup(Ctxt, ".plt", 0))
 
 		// On ppc64, .got comes from the input files, so don't
-		// create it here, and .got.plt is not used.
+		// create it here
 		if eh.machine != EM_PPC64 {
 			sh := elfshname(".got")
 			sh.type_ = SHT_PROGBITS
@@ -2348,8 +2372,11 @@ func Asmbelf(symo int64) {
 			sh.entsize = uint64(Thearch.Regsize)
 			sh.addralign = uint64(Thearch.Regsize)
 			shsym(sh, Linklookup(Ctxt, ".got", 0))
+		}
 
-			sh = elfshname(".got.plt")
+		// Not applicable to ppc64 or sparc.
+		if eh.machine != EM_PPC64 && eh.machine != EM_SPARCV9 {
+			sh := elfshname(".got.plt")
 			sh.type_ = SHT_PROGBITS
 			sh.flags = SHF_ALLOC + SHF_WRITE
 			sh.entsize = uint64(Thearch.Regsize)
@@ -2487,6 +2514,8 @@ elfobj:
 		eh.ident[EI_OSABI] = ELFOSABI_NETBSD
 	} else if HEADTYPE == obj.Hopenbsd {
 		eh.ident[EI_OSABI] = ELFOSABI_OPENBSD
+	} else if HEADTYPE == obj.Hsolaris {
+		eh.ident[EI_OSABI] = ELFOSABI_SOLARIS
 	} else if HEADTYPE == obj.Hdragonfly {
 		eh.ident[EI_OSABI] = ELFOSABI_NONE
 	}
