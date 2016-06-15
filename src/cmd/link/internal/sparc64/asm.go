@@ -259,8 +259,11 @@ func addpltsym(s *ld.LSym) {
 		plt := ld.Linkrlookup(ld.Ctxt, ".plt", 0)
 		rela := ld.Linkrlookup(ld.Ctxt, ".rela.plt", 0)
 
-		// Each of the first 32,768 procedure linkage table entries occupies
+		// Each of the first 32,767 procedure linkage table entries occupies
 		// 8 words (32 bytes), and must be aligned on a 32-byte boundary.
+		//
+		// NOTE: This only supports "near" .plt; entries beyond
+		// 32,767 are considered "far" and have a different format.
 
 		// The first eight bytes of each entry (excluding the initially
 		// reserved ones) should transfer control to the first or second
