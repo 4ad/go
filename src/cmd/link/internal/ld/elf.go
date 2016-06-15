@@ -2020,6 +2020,11 @@ func doelf() {
 		// DT_PLTRELSZ, and DT_JMPREL dynamic entries until after we know the
 		// size of .rel(a).plt section.
 		Elfwritedynent(s, DT_DEBUG, 0)
+
+		// Lazy-loading causes problems with Go stacks; tell the
+		// runtime linker all relocations for this object must be
+		// processed before returning control the program.
+		Elfwritedynent(s, DT_BIND_NOW, 0)
 	}
 
 	if Buildmode == BuildmodeShared {
