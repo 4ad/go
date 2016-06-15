@@ -2374,7 +2374,7 @@ func Asmbelf(symo int64) {
 			shsym(sh, Linklookup(Ctxt, ".got", 0))
 		}
 
-		// Not applicable to ppc64 or sparc.
+		// On ppc64 and sparc64, .got.plt is not used.
 		if eh.machine != EM_PPC64 && eh.machine != EM_SPARCV9 {
 			sh := elfshname(".got.plt")
 			sh.type_ = SHT_PROGBITS
