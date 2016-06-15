@@ -2006,9 +2006,9 @@ func doelf() {
 		}
 
 		if Thearch.Thechar == '9' || Thearch.Thechar == 'u' {
-			elfwritedynentsym(s, DT_PLTGOT, Linkrlookup(Ctxt, ".plt", 0))
+			elfwritedynentsym(s, DT_PLTGOT, Linklookup(Ctxt, ".plt", 0))
 		} else {
-			elfwritedynentsym(s, DT_PLTGOT, Linkrlookup(Ctxt, ".got.plt", 0))
+			elfwritedynentsym(s, DT_PLTGOT, Linklookup(Ctxt, ".got.plt", 0))
 		}
 
 		if Thearch.Thechar == '9' {
