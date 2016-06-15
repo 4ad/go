@@ -2343,6 +2343,7 @@ func Asmbelf(symo int64) {
 			// linker based on the existing entries
 			sh.flags |= SHF_WRITE
 			sh.entsize = 32
+			sh.addralign = 256
 		} else if eh.machine == EM_PPC64 {
 			// On ppc64, this is just a table of addresses
 			// filled by the dynamic linker
@@ -2354,10 +2355,7 @@ func Asmbelf(symo int64) {
 			sh.entsize = 4
 		}
 
-		if eh.machine == EM_SPARCV9 {
-			// entries aligned at 32; section at 256
-			sh.addralign = 256
-		} else {
+		if eh.machine != EM_SPARCV9 {
 			sh.addralign = sh.entsize
 		}
 
