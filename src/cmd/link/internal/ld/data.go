@@ -1824,18 +1824,6 @@ func address() {
 		s.Value = int64(sectSym.Sect.Vaddr + 16)
 	}
 
-	if HEADTYPE == obj.Hsolaris {
-		s := Linklookup(Ctxt, "_GLOBAL_OFFSET_TABLE_", 0)
-		sectSym := Linklookup(Ctxt, ".got", 0)
-		s.Sect = sectSym.Sect
-		s.Value = int64(sectSym.Sect.Vaddr)
-
-		s = Linklookup(Ctxt, "_PROCEDURE_LINKAGE_TABLE_", 0)
-		sectSym = Linklookup(Ctxt, ".plt", 0)
-		s.Sect = sectSym.Sect
-		s.Value = int64(sectSym.Sect.Vaddr)
-	}
-
 	xdefine("runtime.text", obj.STEXT, int64(text.Vaddr))
 	xdefine("runtime.etext", obj.STEXT, int64(text.Vaddr+text.Length))
 	xdefine("runtime.rodata", obj.SRODATA, int64(rodata.Vaddr))
