@@ -2023,7 +2023,7 @@ func doelf() {
 
 		// Lazy-loading causes problems with Go stacks; tell the
 		// runtime linker all relocations for this object must be
-		// processed before returning control the program.
+		// processed before returning control to the program.
 		Elfwritedynent(s, DT_BIND_NOW, 0)
 	}
 
