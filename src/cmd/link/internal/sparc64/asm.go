@@ -248,6 +248,17 @@ func archreloc(r *ld.Reloc, s *ld.LSym, val *int64) int {
 		}
 		*val |= (t >> 2) & 0x3fffffff
 		return 0
+
+	case obj.R_SPARC64_TLS_LE:
+		// The thread pointer points to the TCB, and then the
+		// address of the first TLS block follows, giving an
+		// offset of -16 for our static TLS variables.
+		v := r.Sym.Value - 16
+		if v < -4096 || 4095 < v {
+			ld.Diag("TLS offset out of range %d", v)
+		}
+		*val = (*val &^ 0x1fff) | (v & 0x1fff)
+		return 0
 	}
 
 	return -1
