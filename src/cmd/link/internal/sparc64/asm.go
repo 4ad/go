@@ -66,12 +66,6 @@ func adddynrel(s *ld.LSym, r *ld.Reloc) {
 		return
 	}
 
-	// XXX
-	//s.Value = ld.Linkrlookup(ld.Ctxt, ".plt", 0).Size
-	//println("reloc  ", r.Sym.Name, r.Type)
-	//println("  sym ", s.Name, s.Type)
-	//println("  targ ", targ.Name, targ.Type)
-
 	switch r.Type {
 	case obj.R_CALLSPARC64, obj.R_PCREL:
 		if ld.Iself {
@@ -170,7 +164,7 @@ func elfsetupplt() {
 		dyn := ld.Linklookup(ld.Ctxt, ".dynamic", 0)
 		ld.Addaddrplus(ld.Ctxt, got, dyn, 0)
 
-		// XXX pad end of plt with 10 entries for elfedit, etc.
+		// TODO(srwalker): pad end of plt with 10 entries for elfedit, etc.
 		// .strtab too; aslr-tagging, etc.
 	}
 }
@@ -287,8 +281,6 @@ func addpltsym(s *ld.LSym) {
 
 	// Each of the first 32,768 procedure linkage table entries occupies
 	// 8 words (32 bytes), and must be aligned on a 32-byte boundary.
-
-	// XXX handle "far plt" case for entries beyond 32,768
 
 	// The first eight bytes of each entry (excluding the initially
 	// reserved ones) should transfer control to the first or second
