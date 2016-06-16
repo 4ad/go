@@ -112,16 +112,25 @@ skiperrno2:
 
 // uint32 tstart_sysvicall(M *newm);
 TEXT runtime·tstart_sysvicall(SB),NOSPLIT,$0
-	// TODO(aram):
-	MOVD	$74, R27
-	ADD	$'!', R27, R27
-	MOVB	R27, dbgbuf(SB)
-	MOVD	$2, R8
-	MOVD	$dbgbuf(SB), R9
-	MOVD	$2, R10
-	MOVD	$libc_write(SB), R27
-	CALL	R27
-	UNDEF
+	// I0 contains first arg newm
+	MOVD	m_g0(I0), g		// g
+	MOVD	I0, g_m(g)
+
+	CALL	runtime·save_g(SB)
+
+	// Layout new m scheduler stack on os stack.
+	MOVD	BSP, R27
+	MOVD	R27, (g_stack+stack_hi)(g)
+	SUB	$(0x100000), R27		// stack size
+	MOVD	R27, (g_stack+stack_lo)(g)
+	ADD	$const__StackGuard, R27
+	MOVD	R27, g_stackguard0(g)
+	MOVD	R27, g_stackguard1(g)
+
+	CALL	runtime·stackcheck(SB)
+	CALL	runtime·mstart(SB)
+
+	MOVW	ZR, ret+8(FP)
 	RET
 
 // Careful, this is called by __sighndlr, a libc function. We must preserve

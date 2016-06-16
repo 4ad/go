@@ -699,6 +699,21 @@ TEXT setg_gcc<>(SB),NOSPLIT,$16
 	MOVD	savedRT1-8(SP), RT1
 	RET
 
+// check that SP is in range [g->stack.lo, g->stack.hi)
+TEXT runtime·stackcheck(SB), NOSPLIT, $0
+	MOVD	BSP, R28
+	MOVD	(g_stack+stack_hi)(g), R27
+	CMP	R28, R27
+	BGD	2(PC);
+	UNDEF
+
+	MOVD	(g_stack+stack_lo)(g), R27
+	CMP	R27, R28
+	BGD	2(PC);
+	UNDEF
+
+	RET
+
 TEXT runtime·getcallerpc(SB),NOSPLIT,$16-16
 	MOVD	FIXED_FRAME+8*15(BFP), R25		// LR saved by caller
 	MOVD	runtime·stackBarrierPC(SB), R28
