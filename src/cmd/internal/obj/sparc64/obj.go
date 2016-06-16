@@ -649,8 +649,8 @@ func relinv(a int) int {
 	case AFBA:
 		return AFBN
 	case AFBE:
-		return AFBLG
-	case AFBLG:
+		return AFBNE
+	case AFBNE:
 		return AFBE
 	case AFBG:
 		return AFBLE
