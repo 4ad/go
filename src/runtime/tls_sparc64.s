@@ -14,9 +14,12 @@
 //
 // NOTE: setg_gcc<> assume this clobbers only RT1.
 TEXT runtime·save_g(SB),NOSPLIT|NOFRAME,$0-0
+// On Solaris we always use TLS, even without cgo.
+#ifndef GOOS_solaris
 	MOVB	runtime·iscgo(SB), RT1
 	CMP	RT1, ZR
 	BEW	nocgo
+#endif
 
 	MOVD	$runtime·tls_g(SB), RT1
 	MOVD	g, (RT1)
@@ -33,9 +36,12 @@ nocgo:
 //
 // NOTE: _cgo_topofstack assumes this only clobbers g, and RT1.
 TEXT runtime·load_g(SB),NOSPLIT|NOFRAME,$0-0
+// On Solaris we always use TLS, even without cgo.
+#ifndef GOOS_solaris
 	MOVB	runtime·iscgo(SB), RT1
 	CMP	RT1, ZR
 	BEW	nocgo
+#endif
 
 	MOVD	$runtime·tls_g(SB), RT1
 	MOVD	(RT1), g
