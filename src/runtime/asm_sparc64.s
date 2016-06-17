@@ -470,16 +470,37 @@ TEXT runtime·procyield(SB),NOSPLIT,$0-0
 // 2. sub 4 bytes to get back to BL deferreturn
 // 3. BR to fn
 TEXT runtime·jmpdefer(SB), NOSPLIT|NOFRAME, $0-16
+	// We're in the same stack frame and same register window as
+	// our caller, deferreturn, so this retrieves the return address
+	// to deferreturn's caller.
+	// 
+	// We need to subtract -8 from this value, because the deferred
+	// functions returns to $8(ILR).
 	MOVD	(8*15)(BSP), R27
-	SUB	$4, R27
-	MOVD	R27, OLR
+	SUB	$8, R27
+	// ILR will become OLR once we RESTORE, so the deferred function
+	// will return to the CALL instruction, calling deferreturn
+	// again.
+	MOVD	R27, ILR
 
+	// fv is the deferred function. I1 will become O1 once we
+	// RESTORE. This affects registers in deferreturn's caller,
+	// but that's ok, registers are caller-save in Go.
 	MOVD	fv+0(FP), CTXT
-	MOVD	argp+8(FP), TMP
-	MOVD	TMP, BSP
-	SUB	$FIXED_FRAME, BSP
-	MOVD	0(CTXT), R25
-	JMPL	R25, ZR
+	MOVD	0(CTXT), I1
+
+	// We must RESTORE here, because the deferred function expects
+	// to be called by deferreturn's caller, so deferreturn's
+	// caller and the deffered functions must be in adjacent
+	// register windows.
+	// 
+	// After the RESTORE, BSP and BFP will select deferreturn's
+	// caller activation record, but that is exactly what we want,
+	// logically deferreturn's caller calls the deferred function;
+	// deferreturn will have put the arguments to the deferred
+	// function in the correct place in the caller frame.
+	RESTORE	$0, ZR, ZR
+	JMPL	O1, ZR
 
 // Save state of caller into g->sched.
 TEXT gosave<>(SB),NOSPLIT|NOFRAME,$0
