@@ -491,7 +491,7 @@ TEXT runtime·jmpdefer(SB), NOSPLIT|NOFRAME, $0-16
 
 	// We must RESTORE here, because the deferred function expects
 	// to be called by deferreturn's caller, so deferreturn's
-	// caller and the deffered functions must be in adjacent
+	// caller and the deferred functions must be in adjacent
 	// register windows.
 	// 
 	// After the RESTORE, BSP and BFP will select deferreturn's
