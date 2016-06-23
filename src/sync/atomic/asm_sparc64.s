@@ -8,32 +8,32 @@ TEXT ·SwapInt32(SB),NOSPLIT|NOFRAME,$0-20
 	JMP	·SwapUint32(SB)
 
 TEXT ·SwapUint32(SB),NOSPLIT,$0-20
-	MOVD	addr+0(FP), R27
-	MOVUW	new+8(FP), R25
+	MOVD	addr+0(FP), I3
+	MOVUW	new+8(FP), I1
 again:
 	MEMBAR	$15
-	MOVUW	(R27), R29
-	CASW	(R27), R29, R25
-	CMP	R25, R29
+	MOVUW	(I3), I5
+	CASW	(I3), I5, I1
+	CMP	I1, I5
 	BNEW	again
 	MEMBAR	$15
-	MOVUW	R29, old+16(FP)
+	MOVUW	I5, old+16(FP)
 	RET
 
 TEXT ·SwapInt64(SB),NOSPLIT,$0-24
 	JMP	·SwapUint64(SB)
 
 TEXT ·SwapUint64(SB),NOSPLIT,$0-24
-	MOVD	addr+0(FP), R27
-	MOVD	new+8(FP), R25
+	MOVD	addr+0(FP), I3
+	MOVD	new+8(FP), I1
 again:
 	MEMBAR	$15
-	MOVD	(R27), R29
-	CASD	(R27), R29, R25
-	CMP	R25, R29
+	MOVD	(I3), I5
+	CASD	(I3), I5, I1
+	CMP	I1, I5
 	BNED	again
 	MEMBAR	$15
-	MOVD	R29, old+16(FP)
+	MOVD	I5, old+16(FP)
 	RET
 
 TEXT ·SwapUintptr(SB),NOSPLIT|NOFRAME,$0-24
@@ -43,16 +43,16 @@ TEXT ·CompareAndSwapInt32(SB),NOSPLIT|NOFRAME,$0-17
 	JMP	·CompareAndSwapUint32(SB)
 
 TEXT ·CompareAndSwapUint32(SB),NOSPLIT,$0-17
-	MOVD	addr+0(FP), R25
-	MOVUW	old+8(FP), R27
-	MOVUW	new+12(FP), R29
+	MOVD	addr+0(FP), I1
+	MOVUW	old+8(FP), I3
+	MOVUW	new+12(FP), I5
 	MEMBAR	$15
-	CASW	(R25), R27, R29
-	CMP	R29, R27
-	MOVD	$0, R27
-	MOVE	ICC, $1, R27
+	CASW	(I1), I3, I5
+	CMP	I5, I3
+	MOVD	$0, I3
+	MOVE	ICC, $1, I3
 	MEMBAR	$15
-	MOVB	R27, swapped+16(FP)
+	MOVB	I3, swapped+16(FP)
 	RET
 
 TEXT ·CompareAndSwapUintptr(SB),NOSPLIT|NOFRAME,$0-25
@@ -62,35 +62,35 @@ TEXT ·CompareAndSwapInt64(SB),NOSPLIT|NOFRAME,$0-25
 	JMP	·CompareAndSwapUint64(SB)
 
 TEXT ·CompareAndSwapUint64(SB),NOSPLIT|NOFRAME,$0-25
-	MOVD	addr+0(FP), R25
-	MOVD	old+8(FP), R27
-	MOVD	new+16(FP), R29
+	MOVD	addr+0(FP), I1
+	MOVD	old+8(FP), I3
+	MOVD	new+16(FP), I5
 	MEMBAR	$15
-	CASD	(R25), R27, R29
-	CMP	R29, R27
-	MOVD	$0, R27
-	MOVE	XCC, $1, R27
+	CASD	(I1), I3, I5
+	CMP	I5, I3
+	MOVD	$0, I3
+	MOVE	XCC, $1, I3
 	MEMBAR	$15
-	MOVB	R27, swapped+24(FP)
+	MOVB	I3, swapped+24(FP)
 	RET
 
 TEXT ·AddInt32(SB),NOSPLIT|NOFRAME,$0-20
 	JMP	·AddUint32(SB)
 
 TEXT ·AddUint32(SB),NOSPLIT,$0-20
-	MOVD	addr+0(FP), R28
-	MOVUW	delta+8(FP), R27
-	MOVUW	(R28), R25
+	MOVD	addr+0(FP), I4
+	MOVUW	delta+8(FP), I3
+	MOVUW	(I4), I1
 	MEMBAR	$15
 retry:
-	ADD	R25, R27, R29
-	CASW	(R28), R25, R29
-	CMP	R25, R29
-	MOVNE	ICC, R29, R25
+	ADD	I1, I3, I5
+	CASW	(I4), I1, I5
+	CMP	I1, I5
+	MOVNE	ICC, I5, I1
 	BNEW	retry
-	ADD	R25, R27, R29
+	ADD	I1, I3, I5
 	MEMBAR	$15
-	MOVUW	R29, new+16(FP)
+	MOVUW	I5, new+16(FP)
 	RET
 
 TEXT ·AddUintptr(SB),NOSPLIT|NOFRAME,$0-24
@@ -100,41 +100,41 @@ TEXT ·AddInt64(SB),NOSPLIT|NOFRAME,$0-24
 	JMP	·AddUint64(SB)
 
 TEXT ·AddUint64(SB),NOSPLIT,$0-24
-	MOVD	addr+0(FP), R28
-	MOVD	delta+8(FP), R27
+	MOVD	addr+0(FP), I4
+	MOVD	delta+8(FP), I3
 	MEMBAR	$15
-	MOVD	(R28), R25
+	MOVD	(I4), I1
 retry:
-	ADD	R25, R27, R29
-	CASD	(R28), R25, R29
-	CMP	R25, R29
-	MOVNE	XCC, R29, R25
+	ADD	I1, I3, I5
+	CASD	(I4), I1, I5
+	CMP	I1, I5
+	MOVNE	XCC, I5, I1
 	BNED	retry
-	ADD	R25, R27, R29
+	ADD	I1, I3, I5
 	MEMBAR	$15
-	MOVD	R29, new+16(FP)
+	MOVD	I5, new+16(FP)
 	RET
 
 TEXT ·LoadInt32(SB),NOSPLIT|NOFRAME,$0-12
 	JMP	·LoadUint32(SB)
 
 TEXT ·LoadUint32(SB),NOSPLIT,$0-12
-	MOVD	addr+0(FP), R25
+	MOVD	addr+0(FP), I1
 	MEMBAR	$3
-	LDUW	(R25), R25
+	LDUW	(I1), I1
 	MEMBAR	$5
-	MOVUW	R25, val+8(FP)
+	MOVUW	I1, val+8(FP)
 	RET
 
 TEXT ·LoadInt64(SB),NOSPLIT|NOFRAME,$0-16
 	JMP	·LoadUint64(SB)
 
 TEXT ·LoadUint64(SB),NOSPLIT,$0-16
-	MOVD	addr+0(FP), R25
+	MOVD	addr+0(FP), I1
 	MEMBAR	$3
-	LDD	(R25), R25
+	LDD	(I1), I1
 	MEMBAR	$5
-	MOVD	R25, val+8(FP)
+	MOVD	I1, val+8(FP)
 	RET
 
 TEXT ·LoadUintptr(SB),NOSPLIT|NOFRAME,$0-16
@@ -147,10 +147,10 @@ TEXT ·StoreInt32(SB),NOSPLIT|NOFRAME,$0-12
 	JMP	·StoreUint32(SB)
 
 TEXT ·StoreUint32(SB),NOSPLIT,$0-12
-	MOVD	addr+0(FP), R27
-	MOVUW	val+8(FP), R29
+	MOVD	addr+0(FP), I3
+	MOVUW	val+8(FP), I5
 	MEMBAR	$12
-	STW	R29, (R27)
+	STW	I5, (I3)
 	MEMBAR	$10
 	RET
 
@@ -158,10 +158,10 @@ TEXT ·StoreInt64(SB),NOSPLIT|NOFRAME,$0-16
 	JMP	·StoreUint64(SB)
 
 TEXT ·StoreUint64(SB),NOSPLIT,$0-16
-	MOVD	addr+0(FP), R27
-	MOVD	val+8(FP), R29
+	MOVD	addr+0(FP), I3
+	MOVD	val+8(FP), I5
 	MEMBAR	$12
-	STD	R29, (R27)
+	STD	I5, (I3)
 	MEMBAR	$10
 	RET
 

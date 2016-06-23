@@ -77,7 +77,7 @@ func zerorange(p *obj.Prog, frame int64, lo int64, hi int64) *obj.Prog {
 		for i := int64(0); i < cnt; i += int64(gc.Widthptr) {
 			p = appendpp(p, sparc64.AMOVD, obj.TYPE_REG, sparc64.REG_ZR, 0, obj.TYPE_MEM, sparc64.REG_BSP, gc.Ctxt.FixedFrameSize()+frame+lo+i)
 		}
-	} else if false && cnt <= int64(128*gc.Widthptr) && !darwin { // darwin ld64 cannot handle BR26 reloc with non-zero addend
+	} else if false && cnt <= int64(128*gc.Widthptr) && !darwin { // darwin ld64 cannot handle BR26 (I2) reloc with non-zero addend
 		// TODO(aram): enable duffzero.
 		p = appendpp(p, sparc64.AMOVD, obj.TYPE_REG, sparc64.REG_RSP, 0, obj.TYPE_REG, sparc64.REG_RT1, 0)
 		p = appendpp(p, sparc64.AADD, obj.TYPE_CONST, 0, gc.Ctxt.FixedFrameSize()+frame+lo-8, obj.TYPE_REG, sparc64.REG_RT1, 0)
@@ -450,9 +450,9 @@ func clearfat(nl *gc.Node) {
 
 		gc.Regfree(&end)
 
-		// The loop leaves R16 on the last zeroed dword
+		// The loop leaves R16 (L0) on the last zeroed dword
 		boff = 8
-	} else if false && q >= 4 && !darwin { // darwin ld64 cannot handle BR26 reloc with non-zero addend
+	} else if false && q >= 4 && !darwin { // darwin ld64 cannot handle BR26 (I2) reloc with non-zero addend
 		// TODO(aram): enable duffzero.
 		p := gins(sparc64.ASUB, nil, &dst)
 		p.From.Type = obj.TYPE_CONST
@@ -464,7 +464,7 @@ func clearfat(nl *gc.Node) {
 		// 4 and 128 = magic constants: see ../../runtime/asm_sparc64x.s
 		p.To.Offset = int64(4 * (128 - q))
 
-		// duffzero leaves R16 on the last zeroed dword
+		// duffzero leaves R16 (L0) on the last zeroed dword
 		boff = 8
 	} else {
 		var p *obj.Prog

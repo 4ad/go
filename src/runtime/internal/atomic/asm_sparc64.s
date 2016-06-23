@@ -12,16 +12,16 @@
 //	} else
 //		return 0;
 TEXT runtime∕internal∕atomic·Cas(SB), NOSPLIT, $0-17
-	MOVD	ptr+0(FP), R25
-	MOVUW	old+8(FP), R27
-	MOVUW	new+12(FP), R29
+	MOVD	ptr+0(FP), I1
+	MOVUW	old+8(FP), I3
+	MOVUW	new+12(FP), I5
 	MEMBAR	$15
-	CASW	(R25), R27, R29
-	CMP	R29, R27
-	MOVD	$0, R27
-	MOVE	ICC, $1, R27
+	CASW	(I1), I3, I5
+	CMP	I5, I3
+	MOVD	$0, I3
+	MOVE	ICC, $1, I3
 	MEMBAR	$15
-	MOVB	R27, ret+16(FP)
+	MOVB	I3, ret+16(FP)
 	RET
 
 // bool	runtime∕internal∕atomic·Cas64(uint64 *ptr, uint64 old, uint64 new)
@@ -33,16 +33,16 @@ TEXT runtime∕internal∕atomic·Cas(SB), NOSPLIT, $0-17
 //		return 0;
 //	}
 TEXT runtime∕internal∕atomic·Cas64(SB), NOSPLIT, $0-25
-	MOVD	ptr+0(FP), R25
-	MOVD	old+8(FP), R27
-	MOVD	new+16(FP), R29
+	MOVD	ptr+0(FP), I1
+	MOVD	old+8(FP), I3
+	MOVD	new+16(FP), I5
 	MEMBAR	$15
-	CASD	(R25), R27, R29
-	CMP	R29, R27
-	MOVD	$0, R27
-	MOVE	XCC, $1, R27
+	CASD	(I1), I3, I5
+	CMP	I5, I3
+	MOVD	$0, I3
+	MOVE	XCC, $1, I3
 	MEMBAR	$15
-	MOVB	R27, ret+24(FP)
+	MOVB	I3, ret+24(FP)
 	RET
 
 TEXT runtime∕internal∕atomic·Casuintptr(SB), NOSPLIT|NOFRAME, $0-25
@@ -81,61 +81,61 @@ TEXT runtime∕internal∕atomic·Casp1(SB), NOSPLIT|NOFRAME, $0-25
 //	*val += delta;
 //	return *val;
 TEXT runtime∕internal∕atomic·Xadd(SB), NOSPLIT, $0-20
-	MOVD	ptr+0(FP), R28
-	MOVUW	delta+8(FP), R27
-	MOVUW	(R28), R25
+	MOVD	ptr+0(FP), I4
+	MOVUW	delta+8(FP), I3
+	MOVUW	(I4), I1
 	MEMBAR	$15
 retry:
-	ADD	R25, R27, R29
-	CASW	(R28), R25, R29
-	CMP	R25, R29
-	MOVNE	ICC, R29, R25
+	ADD	I1, I3, I5
+	CASW	(I4), I1, I5
+	CMP	I1, I5
+	MOVNE	ICC, I5, I1
 	BNEW	retry
-	ADD	R25, R27, R29
+	ADD	I1, I3, I5
 	MEMBAR	$15
-	MOVUW	R29, ret+16(FP)
+	MOVUW	I5, ret+16(FP)
 	RET
 
 TEXT runtime∕internal∕atomic·Xadd64(SB), NOSPLIT, $0-24
-	MOVD	ptr+0(FP), R28
-	MOVD	delta+8(FP), R27
+	MOVD	ptr+0(FP), I4
+	MOVD	delta+8(FP), I3
 	MEMBAR	$15
-	MOVD	(R28), R25
+	MOVD	(I4), I1
 retry:
-	ADD	R25, R27, R29
-	CASD	(R28), R25, R29
-	CMP	R25, R29
-	MOVNE	XCC, R29, R25
+	ADD	I1, I3, I5
+	CASD	(I4), I1, I5
+	CMP	I1, I5
+	MOVNE	XCC, I5, I1
 	BNED	retry
-	ADD	R25, R27, R29
+	ADD	I1, I3, I5
 	MEMBAR	$15
-	MOVD	R29, ret+16(FP)
+	MOVD	I5, ret+16(FP)
 	RET
 
 TEXT runtime∕internal∕atomic·Xchg(SB), NOSPLIT, $0-20
-	MOVD	ptr+0(FP), R27
-	MOVUW	new+8(FP), R25
+	MOVD	ptr+0(FP), I3
+	MOVUW	new+8(FP), I1
 again:
 	MEMBAR	$15
-	MOVUW	(R27), R29
-	CASW	(R27), R29, R25
-	CMP	R25, R29
+	MOVUW	(I3), I5
+	CASW	(I3), I5, I1
+	CMP	I1, I5
 	BNEW	again
 	MEMBAR	$15
-	MOVUW	R29, ret+16(FP)
+	MOVUW	I5, ret+16(FP)
 	RET
 
 TEXT runtime∕internal∕atomic·Xchg64(SB), NOSPLIT, $0-24
-	MOVD	ptr+0(FP), R27
-	MOVD	new+8(FP), R25
+	MOVD	ptr+0(FP), I3
+	MOVD	new+8(FP), I1
 again:
 	MEMBAR	$15
-	MOVD	(R27), R29
-	CASD	(R27), R29, R25
-	CMP	R25, R29
+	MOVD	(I3), I5
+	CASD	(I3), I5, I1
+	CMP	I1, I5
 	BNED	again
 	MEMBAR	$15
-	MOVD	R29, ret+16(FP)
+	MOVD	I5, ret+16(FP)
 	RET
 
 TEXT runtime∕internal∕atomic·Xchguintptr(SB), NOSPLIT|NOFRAME, $0-24
@@ -146,17 +146,17 @@ TEXT runtime∕internal∕atomic·Storep1(SB), NOSPLIT|NOFRAME, $0-16
 	JMP	runtime∕internal∕atomic·Store64(SB)
 
 TEXT runtime∕internal∕atomic·Store(SB), NOSPLIT, $0-12
-	MOVD	ptr+0(FP), R27
-	MOVUW	val+8(FP), R29
+	MOVD	ptr+0(FP), I3
+	MOVUW	val+8(FP), I5
 	MEMBAR	$12
-	STW	R29, (R27)
+	STW	I5, (I3)
 	MEMBAR	$10
 	RET
 
 TEXT runtime∕internal∕atomic·Store64(SB), NOSPLIT, $0-16
-	MOVD	ptr+0(FP), R27
-	MOVD	val+8(FP), R29
+	MOVD	ptr+0(FP), I3
+	MOVD	val+8(FP), I5
 	MEMBAR	$12
-	STD	R29, (R27)
+	STD	I5, (I3)
 	MEMBAR	$10
 	RET
