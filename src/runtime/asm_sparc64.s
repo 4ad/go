@@ -525,53 +525,57 @@ TEXT gosave<>(SB),NOSPLIT|NOFRAME,$0
 // aligned appropriately for the gcc ABI.
 // See cgocall.go for more details.
 TEXT ·asmcgocall(SB),NOSPLIT|NOFRAME,$0-20
-	MOVD	OLR, R21	// save LR
-	MOVD	fn+0(FP), R25
+	MOVD	fn+0(FP), O1
 	MOVD	arg+8(FP), O0
-	MOVD	O0, FIXED_FRAME(BSP)
 
-	MOVD	BSP, R10		// save original stack pointer
-	MOVD	g, R22
+	MOVD	OLR, L1	// save LR
+	MOVD	BSP, L2	// save original stack pointer
+	MOVD	BFP, L3	// save original frame pointer
+	MOVD	g, L4		// save g
 
 	// Figure out if we need to switch to m->g0 stack.
 	// We get called to create new OS threads too, and those
 	// come in on the m->g0 stack already.
-	MOVD	g_m(g), R9
-	MOVD	m_g0(R9), R9
-	CMP	R9, g
+	MOVD	g_m(g), TMP
+	MOVD	m_g0(TMP), L7
+	CMP	L7, ZR
+	BNED	2(PC)
+	JMP	runtime·abort(SB)
+	CMP	L7, g
 	BED	g0
+
 	CALL	gosave<>(SB)
-	MOVD	R9, g
-	CALL	runtime·save_g(SB)
 	MEMBAR	$64
 	FLUSHW
+	MOVD	L7, g
 	MOVD	(g_sched+gobuf_sp)(g), TMP
 	MOVD	TMP, BSP
+	MOVD	(g_sched+gobuf_bp)(g), TMP
+	MOVD	TMP, BFP
 
 	// Now on a scheduling stack (a pthread-created stack).
 g0:
-	MOVD	R22, R19	// save old g
-	MOVD	(g_stack+stack_hi)(R22), R22
-	SUB	R10, R22
-	MOVD	R22, R20	// save depth in old g stack (can't just save SP, as stack might be copied during a callback)
-	CALL	(R25)
-	MOVD	R8, R9
+	MOVD	(g_stack+stack_hi)(L4), TMP
+	// save depth (can't just save BSP/BFP, as stack might be copied during a callback)
+	SUB	L2, TMP, L5	
+	SUB	L3, TMP, L6
+
+	CALL	runtime·save_g(SB)
+	CALL	(O1)
 
 	// Restore g, stack pointer.
-	// R8 is errno, so don't touch it
-	MOVD	R19, g
-	MOVD    (g_stack+stack_hi)(g), R22
-	SUB     R20, R22
-	MOVD    24(R22), R29
-	CALL	runtime·save_g(SB)
+	// R8 (O0) is errno, so don't touch it
 	MEMBAR	$64
 	FLUSHW
-	MOVD    (g_stack+stack_hi)(g), R22
-	SUB     R20, R22
-	MOVD	R22, BSP
+	MOVD	L4, g
+	MOVD    (g_stack+stack_hi)(g), TMP
+	SUB	L5, TMP, TMP2
+	MOVD	TMP2, BSP
+	SUB	L6, TMP, TMP2
+	MOVD	TMP2, BFP
 
-	MOVD	R21, OLR
-	MOVW	R8, ret+16(FP)
+	MOVD	L1, OLR
+	MOVW	O0, ret+16(FP)
 	RET
 
 // cgocallback(void (*fn)(void*), void *frame, uintptr framesize)
