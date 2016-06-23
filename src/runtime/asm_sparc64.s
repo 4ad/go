@@ -216,6 +216,8 @@ switch:
 	MOVD	g, (g_sched+gobuf_g)(g)
 
 	// switch to g0
+	MEMBAR	$64
+	FLUSHW
 	MOVD	R22, g
 	CALL	runtime·save_g(SB)
 	MOVD	(g_sched+gobuf_sp)(g), R25
@@ -231,6 +233,8 @@ switch:
 	CALL	(R25)
 
 	// switch back to g
+	MEMBAR	$64
+	FLUSHW
 	MOVD	g_m(g), R25
 	MOVD	m_curg(R25), g
 	CALL	runtime·save_g(SB)
@@ -287,6 +291,8 @@ TEXT runtime·morestack(SB),NOSPLIT|NOFRAME,$0-0
 	MOVD	g, (m_morebuf+gobuf_g)(R8)
 
 	// Call newstack on m->g0's stack.
+	MEMBAR	$64
+	FLUSHW
 	MOVD	m_g0(R8), g
 	CALL	runtime·save_g(SB)
 	MOVD	(g_sched+gobuf_sp)(g), TMP
@@ -537,6 +543,8 @@ TEXT ·asmcgocall(SB),NOSPLIT|NOFRAME,$0-20
 	CALL	gosave<>(SB)
 	MOVD	R9, g
 	CALL	runtime·save_g(SB)
+	MEMBAR	$64
+	FLUSHW
 	MOVD	(g_sched+gobuf_sp)(g), TMP
 	MOVD	TMP, BSP
 
@@ -556,6 +564,8 @@ g0:
 	SUB     R20, R22
 	MOVD    24(R22), R29
 	CALL	runtime·save_g(SB)
+	MEMBAR	$64
+	FLUSHW
 	MOVD    (g_stack+stack_hi)(g), R22
 	SUB     R20, R22
 	MOVD	R22, BSP
@@ -652,6 +662,8 @@ havem:
 	// In the new goroutine, -16(SP) and -8(SP) are unused.
 	MOVD	m_curg(R8), g
 	CALL	runtime·save_g(SB)
+	MEMBAR	$64
+	FLUSHW
 	MOVD	(g_sched+gobuf_sp)(g), R28 // prepare stack as R28
 	MOVD	(g_sched+gobuf_pc)(g), R22
 	MOVD	R22, -(FIXED_FRAME+16)(R28)
@@ -671,6 +683,8 @@ havem:
 	MOVD	g_m(g), R8
 	MOVD	m_g0(R8), g
 	CALL	runtime·save_g(SB)
+	MEMBAR	$64
+	FLUSHW
 	MOVD	(g_sched+gobuf_sp)(g), TMP
 	MOVD	TMP, BSP
 	MOVD	savedsp-16(SP), R28
