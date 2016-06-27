@@ -89,10 +89,10 @@ skiperrno1:
 	MOVD	40(L1), O5
 skipargs:
 
-	MOVD	g, L0
+	MOVD	g, L1
 	// Call SysV function
 	CALL	I3
-	MOVD	L0, g
+	MOVD	L1, g
 
 	// Return result
 	MOVD	O0, libcall_r1(L7)
