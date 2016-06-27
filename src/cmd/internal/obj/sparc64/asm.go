@@ -931,7 +931,7 @@ func rclass(r int16) int8 {
 	switch {
 	case r == REG_ZR:
 		return ClassZero
-	case REG_R1 <= r && r <= REG_R31:
+	case REG_G1 <= r && r <= REG_I7:
 		return ClassReg
 	case REG_F0 <= r && r <= REG_F31:
 		return ClassFReg

@@ -9,38 +9,38 @@ import "cmd/internal/obj"
 // General purpose registers, kept in the low bits of Prog.Reg.
 const (
 	// integer
-	REG_R0 = obj.RBaseSPARC64 + iota
-	REG_R1
-	REG_R2
-	REG_R3
-	REG_R4
-	REG_R5
-	REG_R6
-	REG_R7
-	REG_R8
-	REG_R9
-	REG_R10
-	REG_R11
-	REG_R12
-	REG_R13
-	REG_R14
-	REG_R15
-	REG_R16
-	REG_R17
-	REG_R18
-	REG_R19
-	REG_R20
-	REG_R21
-	REG_R22
-	REG_R23
-	REG_R24
-	REG_R25
-	REG_R26
-	REG_R27
-	REG_R28
-	REG_R29
-	REG_R30
-	REG_R31
+	REG_G0 = obj.RBaseSPARC64 + iota
+	REG_G1
+	REG_G2
+	REG_G3
+	REG_G4
+	REG_G5
+	REG_G6
+	REG_G7
+	REG_O0
+	REG_O1
+	REG_O2
+	REG_O3
+	REG_O4
+	REG_O5
+	REG_O6
+	REG_O7
+	REG_L0
+	REG_L1
+	REG_L2
+	REG_L3
+	REG_L4
+	REG_L5
+	REG_L6
+	REG_L7
+	REG_I0
+	REG_I1
+	REG_I2
+	REG_I3
+	REG_I4
+	REG_I5
+	REG_I6
+	REG_I7
 
 	// single-precision floating point
 	REG_F0
@@ -134,7 +134,7 @@ const (
 
 const (
 	// floating-point condition-code registers
-	REG_FCC0 = REG_R0 + 256 + iota
+	REG_FCC0 = REG_G0 + 256 + iota
 	REG_FCC1
 	REG_FCC2
 	REG_FCC3
@@ -142,12 +142,12 @@ const (
 
 const (
 	// integer condition-code flags
-	REG_ICC = REG_R0 + 384
-	REG_XCC = REG_R0 + 384 + 2
+	REG_ICC = REG_G0 + 384
+	REG_XCC = REG_G0 + 384 + 2
 )
 
 const (
-	REG_SPECIAL = REG_R0 + 512
+	REG_SPECIAL = REG_G0 + 512
 
 	REG_CCR  = REG_SPECIAL + 2
 	REG_TICK = REG_SPECIAL + 4
@@ -156,23 +156,23 @@ const (
 	REG_BSP = REG_RSP + 256
 	REG_BFP = REG_RFP + 256
 
-	REG_LAST = REG_R0 + 1024
+	REG_LAST = REG_G0 + 1024
 )
 
 // Register assignments:
 const (
-	REG_ZR   = REG_R0
-	REG_RT1  = REG_R1
-	REG_CTXT = REG_R2
-	REG_G    = REG_R3
-	REG_RT2  = REG_R4
-	REG_TMP  = REG_R5
-	REG_TLS  = REG_R7
-	REG_RSP  = REG_R14
-	REG_OLR  = REG_R15
-	REG_TMP2 = REG_R16
-	REG_RFP  = REG_R30
-	REG_ILR  = REG_R31
+	REG_ZR   = REG_G0
+	REG_RT1  = REG_G1
+	REG_CTXT = REG_G2
+	REG_G    = REG_G3
+	REG_RT2  = REG_G4
+	REG_TMP  = REG_G5
+	REG_TLS  = REG_G7
+	REG_RSP  = REG_O6
+	REG_OLR  = REG_O7
+	REG_TMP2 = REG_L0
+	REG_RFP  = REG_I6
+	REG_ILR  = REG_I7
 	REG_FTMP = REG_F30
 	REG_DTMP = REG_D30
 	REG_YTMP = REG_Y15
@@ -180,8 +180,8 @@ const (
 )
 
 const (
-	REG_MIN = REG_R0
-	REG_MAX = REG_R29
+	REG_MIN = REG_G0
+	REG_MAX = REG_I5
 )
 
 const (

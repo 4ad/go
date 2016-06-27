@@ -54,7 +54,7 @@ func excise(r *gc.Flow) {
 
 func regtyp(a *obj.Addr) bool {
 	// TODO(rsc): Floating point register exclusions?
-	return a.Type == obj.TYPE_REG && sparc64.REG_R0 <= a.Reg && a.Reg <= sparc64.REG_Y15 && a.Reg != sparc64.REG_ZR
+	return a.Type == obj.TYPE_REG && sparc64.REG_G0 <= a.Reg && a.Reg <= sparc64.REG_Y15 && a.Reg != sparc64.REG_ZR
 }
 
 func sameaddr(a *obj.Addr, v *obj.Addr) bool {

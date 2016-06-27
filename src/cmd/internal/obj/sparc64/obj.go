@@ -489,7 +489,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				p.From.Reg = REG_RFP
 				p.From.Offset = int64(i*8 + MinStackFrameSize + StackBias)
 				p.To.Type = obj.TYPE_REG
-				p.To.Reg = int16(REG_R24 + i) // %i0+i
+				p.To.Reg = int16(REG_I0 + i)
 			}
 
 		case obj.ARET:

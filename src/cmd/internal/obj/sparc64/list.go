@@ -60,8 +60,14 @@ func Rconv(r int) string {
 		return "RPC"
 	}
 	switch {
-	case REG_R0 <= r && r <= REG_R31:
-		return fmt.Sprintf("R%d", r-REG_R0)
+	case REG_G0 <= r && r <= REG_G7:
+		return fmt.Sprintf("G%d", r-REG_G0)
+	case REG_O0 <= r && r <= REG_O7:
+		return fmt.Sprintf("O%d", r-REG_O0)
+	case REG_L0 <= r && r <= REG_L7:
+		return fmt.Sprintf("L%d", r-REG_L0)
+	case REG_I0 <= r && r <= REG_I7:
+		return fmt.Sprintf("I%d", r-REG_I0)
 	case REG_F0 <= r && r <= REG_F31:
 		return fmt.Sprintf("F%d", r-REG_F0)
 	case REG_D0 <= r && r <= REG_D30 && r%2 == 0:
@@ -73,7 +79,7 @@ func Rconv(r int) string {
 	case REG_FCC0 <= r && r <= REG_FCC3:
 		return fmt.Sprintf("FCC%d", r-REG_FCC0)
 	}
-	return fmt.Sprintf("badreg(%d+%d)", REG_R0, r-REG_R0)
+	return fmt.Sprintf("badreg(%d+%d)", REG_G0, r-REG_G0)
 }
 
 func DRconv(a int8) (cname string) {

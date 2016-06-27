@@ -147,21 +147,21 @@ func sparc64RegisterNumber(name string, n int16) (int16, bool) {
 		if 0 <= n && n <= 31 {
 			return sparc64.REG_F0 + n, true
 		}
-	case "R":
-		if 1 <= n && n <= 30 { // not 1, not 31
-			return sparc64.REG_R0 + n, true
-		}
-	case "I":
+	case "G":
 		if 0 <= n && n <= 5 { // not 6, 7
-			return sparc64.REG_R24 + n, true
+			return sparc64.REG_G0 + n, true
 		}
 	case "O":
 		if 0 <= n && n <= 5 { // not 6, 7
-			return sparc64.REG_R8 + n, true
+			return sparc64.REG_O0 + n, true
 		}
 	case "L":
 		if 0 <= n && n <= 7 {
-			return sparc64.REG_R16 + n, true
+			return sparc64.REG_L0 + n, true
+		}
+	case "I":
+		if 0 <= n && n <= 5 { // not 6, 7
+			return sparc64.REG_I0 + n, true
 		}
 	}
 	return 0, false

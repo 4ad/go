@@ -431,17 +431,8 @@ func archSparc64() *Arch {
 	register := make(map[string]int16)
 	// Create maps for easy lookup of instruction names etc.
 	// Note that there is no list of names as there is for 386 and amd64.
-	for i := sparc64.REG_R0; i <= sparc64.REG_R31; i++ {
+	for i := sparc64.REG_G0; i <= sparc64.REG_I7; i++ {
 		register[sparc64.Rconv(i)] = int16(i)
-	}
-	for i := 0; i <= 5; i++ { // not 7
-		register[fmt.Sprintf("O%d", i)] = int16(sparc64.REG_R8 + i)
-	}
-	for i := 0; i <= 7; i++ {
-		register[fmt.Sprintf("L%d", i)] = int16(sparc64.REG_R16 + i)
-	}
-	for i := 0; i <= 5; i++ { // not 7
-		register[fmt.Sprintf("I%d", i)] = int16(sparc64.REG_R24 + i)
 	}
 	for i := sparc64.REG_F0; i <= sparc64.REG_F31; i++ {
 		register[sparc64.Rconv(i)] = int16(i)
@@ -454,7 +445,7 @@ func archSparc64() *Arch {
 	// Avoid accidental confusion between RSP and BSP, always use BSP.
 	delete(register, "RSP")
 	delete(register, "RFP")
-	delete(register, "R6")
+	delete(register, "G6")
 	register["ICC"] = sparc64.REG_ICC
 	register["XCC"] = sparc64.REG_XCC
 	register["FCC0"] = sparc64.REG_FCC0

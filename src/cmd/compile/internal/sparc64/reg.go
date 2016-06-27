@@ -115,18 +115,18 @@ func excludedregs() uint64 {
 	// Exclude registers with fixed functions in [R8, REG_MAX] range.
 	regbits := RtoB(sparc64.REG_RSP) | RtoB(sparc64.REG_OLR) | RtoB(sparc64.REG_TMP2)
 
-	// Exclude R0 - R7 (G0 - G7).
-	for r := sparc64.REG_R0; r <= sparc64.REG_R7; r++ {
+	// Exclude G0 - G7.
+	for r := sparc64.REG_G0; r <= sparc64.REG_G7; r++ {
 		regbits |= RtoB(r)
 	}
-	// Exclude R30 - R31 (I6 - I7).
-	for r := sparc64.REG_MAX + 1; r <= sparc64.REG_R31; r++ {
+	// Exclude I6 - I7.
+	for r := sparc64.REG_MAX + 1; r <= sparc64.REG_I7; r++ {
 		regbits |= RtoB(r)
 	}
 
-	// Exclude R24 - R31 (I0 - I7), for debugging.
+	// Exclude I0 - I7, for debugging.
 	// TODO(aram): revisit this.
-	for r := sparc64.REG_R24; r <= sparc64.REG_R31; r++ {
+	for r := sparc64.REG_I0; r <= sparc64.REG_I7; r++ {
 		regbits |= RtoB(r)
 	}
 
@@ -159,8 +159,8 @@ func doregbits(r int) uint64 {
  *	...	unused
  */
 func RtoB(r int) uint64 {
-	if r >= sparc64.REG_R0 && r <= sparc64.REG_R31 {
-		return 1 << uint(r-sparc64.REG_R0)
+	if r >= sparc64.REG_G0 && r <= sparc64.REG_I7 {
+		return 1 << uint(r-sparc64.REG_G0)
 	}
 	if r >= sparc64.REG_Y0 && r <= sparc64.REG_Y0+31 {
 		return 1 << uint(32+r-sparc64.REG_Y0)
@@ -173,7 +173,7 @@ func BtoR(b uint64) int {
 	if b == 0 {
 		return 0
 	}
-	return gc.Bitno(b) + sparc64.REG_R0
+	return gc.Bitno(b) + sparc64.REG_G0
 }
 
 func BtoF(b uint64) int {
