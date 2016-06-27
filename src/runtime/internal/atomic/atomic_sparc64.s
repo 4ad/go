@@ -5,7 +5,7 @@
 #include "textflag.h"
 
 // uint32 runtime∕internal∕atomic·Load(uint32 volatile* addr)
-TEXT ·Load(SB),NOSPLIT|NOFRAME,$0-12
+TEXT ·Load(SB),NOSPLIT,$0-12
 	MOVD	ptr+0(FP), I1
 	MEMBAR	$3
 	LDUW	(I1), I1
@@ -14,7 +14,7 @@ TEXT ·Load(SB),NOSPLIT|NOFRAME,$0-12
 	RET
 
 // uint64 runtime∕internal∕atomic·Load64(uint64 volatile* addr)
-TEXT ·Load64(SB),NOSPLIT|NOFRAME,$0-16
+TEXT ·Load64(SB),NOSPLIT,$0-16
 	MOVD	ptr+0(FP), I1
 	MEMBAR	$3
 	LDD	(I1), I1
