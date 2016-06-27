@@ -991,19 +991,19 @@ TEXT runtime·goexit(SB),NOSPLIT|NOFRAME,$0-0
 	CALL	runtime·goexit1(SB)	// does not return
 
 // TODO(aram):
-TEXT runtime·prefetcht0(SB),NOSPLIT,$0-8
+TEXT runtime·prefetcht0(SB),NOSPLIT|NOFRAME,$0-8
 	RET
 
-TEXT runtime·prefetcht1(SB),NOSPLIT,$0-8
+TEXT runtime·prefetcht1(SB),NOSPLIT|NOFRAME,$0-8
 	RET
 
-TEXT runtime·prefetcht2(SB),NOSPLIT,$0-8
+TEXT runtime·prefetcht2(SB),NOSPLIT|NOFRAME,$0-8
 	RET
 
-TEXT runtime·prefetchnta(SB),NOSPLIT,$0-8
+TEXT runtime·prefetchnta(SB),NOSPLIT|NOFRAME,$0-8
 	RET
 
-TEXT runtime·sigreturn(SB),NOSPLIT,$0-8
+TEXT runtime·sigreturn(SB),NOSPLIT|NOFRAME,$0-8
         RET
 
 // This is called from .init_array and follows the platform, not Go, ABI.

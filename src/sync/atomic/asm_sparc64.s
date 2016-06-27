@@ -20,7 +20,7 @@ again:
 	MOVUW	I5, old+16(FP)
 	RET
 
-TEXT ·SwapInt64(SB),NOSPLIT,$0-24
+TEXT ·SwapInt64(SB),NOSPLIT|NOFRAME,$0-24
 	JMP	·SwapUint64(SB)
 
 TEXT ·SwapUint64(SB),NOSPLIT,$0-24
