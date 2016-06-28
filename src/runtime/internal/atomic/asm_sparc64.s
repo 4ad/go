@@ -48,7 +48,7 @@ TEXT runtime∕internal∕atomic·Cas64(SB), NOSPLIT, $0-25
 TEXT runtime∕internal∕atomic·Casuintptr(SB), NOSPLIT|NOFRAME, $0-25
 	JMP	runtime∕internal∕atomic·Cas64(SB)
 
-TEXT runtime∕internal∕atomic·Loaduintptr(SB),  NOSPLIT|NOFRAME, $0-16
+TEXT runtime∕internal∕atomic·Loaduintptr(SB), NOSPLIT|NOFRAME, $0-16
 	JMP	runtime∕internal∕atomic·Load64(SB)
 
 TEXT runtime∕internal∕atomic·Loaduint(SB), NOSPLIT|NOFRAME, $0-16

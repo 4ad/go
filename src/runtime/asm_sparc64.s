@@ -394,7 +394,7 @@ TEXT NAME(SB), WRAPPER, $MAXSIZE-24;		\
 	/* call function */			\
 	MOVD	f+8(FP), CTXT;			\
 	MOVD	(CTXT), I3;			\
-	PCDATA  $PCDATA_StackMapIndex, $0;	\
+	PCDATA	$PCDATA_StackMapIndex, $0;	\
 	CALL	(I3);				\
 	/* copy return values back */		\
 	MOVD	arg+16(FP), I1;			\
@@ -828,7 +828,7 @@ loop:
 	MOVUB	(I3), I4
 	ADD	$1, I3
 	MOVUB	(I5), L6
-	ADD $1, I5
+	ADD	$1, I5
 	CMP	I4, L6
 	BED	loop
 
