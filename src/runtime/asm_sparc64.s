@@ -22,7 +22,7 @@ TEXT runtime·rt0_go(SB),NOSPLIT,$16-0
 	// create istack out of the given (operating system) stack.
 	// _cgo_init may update stackguard.
 	MOVD	$runtime·g0(SB), g
-	MOVD BSP, RT1
+	MOVD	BSP, RT1
 	MOVD	$(-64*1024)(BSP), RT2
 	MOVD	RT2, g_stackguard0(g)
 	MOVD	RT2, g_stackguard1(g)
@@ -184,7 +184,7 @@ TEXT runtime·systemstack_switch(SB), NOSPLIT, $0-0
 // func systemstack(fn func())
 TEXT runtime·systemstack(SB), NOSPLIT, $0-8
 	MOVD	fn+0(FP), I1	// I1 = fn
-	MOVD	I1, CTXT		// context
+	MOVD	I1, CTXT	// context
 	MOVD	g_m(g), I4	// I4 = m
 
 	MOVD	m_gsignal(I4), L6	// L6 = gsignal
@@ -568,7 +568,7 @@ g0:
 	MEMBAR	$64
 	FLUSHW
 	MOVD	L4, g
-	MOVD    (g_stack+stack_hi)(g), TMP
+	MOVD	(g_stack+stack_hi)(g), TMP
 	SUB	L5, TMP, TMP2
 	MOVD	TMP2, BSP
 	SUB	L6, TMP, TMP2
@@ -1004,7 +1004,7 @@ TEXT runtime·prefetchnta(SB),NOSPLIT|NOFRAME,$0-8
 	RET
 
 TEXT runtime·sigreturn(SB),NOSPLIT|NOFRAME,$0-8
-        RET
+	RET
 
 // This is called from .init_array and follows the platform, not Go, ABI.
 TEXT runtime·addmoduledata(SB),NOSPLIT,$0-0
