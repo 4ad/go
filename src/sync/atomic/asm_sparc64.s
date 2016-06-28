@@ -61,7 +61,7 @@ TEXT ·CompareAndSwapUintptr(SB),NOSPLIT|NOFRAME,$0-25
 TEXT ·CompareAndSwapInt64(SB),NOSPLIT|NOFRAME,$0-25
 	JMP	·CompareAndSwapUint64(SB)
 
-TEXT ·CompareAndSwapUint64(SB),NOSPLIT|NOFRAME,$0-25
+TEXT ·CompareAndSwapUint64(SB),NOSPLIT,$0-25
 	MOVD	addr+0(FP), I1
 	MOVD	old+8(FP), I3
 	MOVD	new+16(FP), I5
