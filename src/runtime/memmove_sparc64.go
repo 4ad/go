@@ -22,7 +22,7 @@ func memmove_bytes(dst, src unsafe.Pointer, n uintptr) {
 		}
 		return
 	}
-	for i := int64(0); i <= int64(n); i++ {
+	for i := int64(0); i < int64(n); i++ {
 		b := *(*byte)(add(src, uintptr(i)))
 		*(*byte)(add(dst, uintptr(i))) = b
 	}
