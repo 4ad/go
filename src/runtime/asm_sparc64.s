@@ -754,28 +754,28 @@ TEXT runtime·stackcheck(SB), NOSPLIT, $0
 	RET
 
 TEXT runtime·getcallerpc(SB),NOSPLIT,$16-16
-	MOVD	FIXED_FRAME+8*15(BFP), I1		// LR saved by caller
+	MOVD	8*15(BFP), I1		// LR saved by caller
 	MOVD	runtime·stackBarrierPC(SB), I4
 	CMP	I4, I1
 	BNED	nobar
 	// Get original return PC.
 	CALL	runtime·nextBarrierPC(SB)
-	MOVD	FIXED_FRAME+0(I3), I1
+	MOVD	FIXED_FRAME+16(BSP), I1
 nobar:
 	MOVD	I1, ret+8(FP)
 	RET
 
 TEXT runtime·setcallerpc(SB),NOSPLIT,$16-16
 	MOVD	pc+8(FP), I1
-	MOVD	FIXED_FRAME+8(BSP), I4
+	MOVD	8*15(BFP), I4
 	MOVD	runtime·stackBarrierPC(SB), L6
 	CMP	I4, L6
 	BED	setbar
-	MOVD	I1, FIXED_FRAME+8*15(BFP)		// set LR in caller
+	MOVD	I1, 8*15(BFP)		// set LR in caller
 	RET
 setbar:
 	// Set the stack barrier return PC.
-	MOVD	I1, FIXED_FRAME+0(I3)
+	MOVD	I1, FIXED_FRAME+16(BSP)
 	CALL	runtime·setNextBarrierPC(SB)
 	RET
 
