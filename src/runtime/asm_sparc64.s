@@ -760,7 +760,7 @@ TEXT runtime·getcallerpc(SB),NOSPLIT,$16-16
 	BNED	nobar
 	// Get original return PC.
 	CALL	runtime·nextBarrierPC(SB)
-	MOVD	FIXED_FRAME+16(BSP), I1
+	MOVD	FIXED_FRAME+0(BSP), I1
 nobar:
 	MOVD	I1, ret+8(FP)
 	RET
@@ -775,7 +775,7 @@ TEXT runtime·setcallerpc(SB),NOSPLIT,$16-16
 	RET
 setbar:
 	// Set the stack barrier return PC.
-	MOVD	I1, FIXED_FRAME+16(BSP)
+	MOVD	I1, FIXED_FRAME+0(BSP)
 	CALL	runtime·setNextBarrierPC(SB)
 	RET
 
