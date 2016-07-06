@@ -307,7 +307,7 @@ TEXT runtime·morestack_noctxt(SB),NOSPLIT|NOFRAME,$0-0
 	MOVD	ZR, CTXT
 	JMP	runtime·morestack(SB)
 
-TEXT runtime·stackBarrier(SB),NOSPLIT,$0
+TEXT runtime·stackBarrier(SB),NOSPLIT|NOFRAME,$0
 	// We came here via a RET to an overwritten LR.
 	// O0 may be live (see return0). Other registers are available.
 
