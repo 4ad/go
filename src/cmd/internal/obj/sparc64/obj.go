@@ -492,6 +492,90 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				p.To.Reg = int16(REG_I0 + i)
 			}
 
+			if cursym.Text.From3.Offset&obj.WRAPPER != 0 {
+				// if(g->panic != nil && g->panic->argp == FP) g->panic->argp = bottom-of-frame
+				//
+				//	MOVD	g_panic(g), L1
+				//	CMP	ZR, L1
+				//	BED	end
+				//	MOVD	panic_argp(R1), L2
+				//	ADD	$(STACK_BIAS+autosize+8), RSP, L3
+				//	CMP	L2, L3
+				//	BNED	end
+				//	ADD	$(STACK_BIAS+8), RSP, L4
+				//	MOVD	L4, panic_argp(L1)
+				// end:
+				//	RNOP
+				//
+				// The RNOP is needed to give the jumps somewhere to land.
+				q = obj.Appendp(ctxt, p)
+				q.As = AMOVD
+				q.From.Type = obj.TYPE_MEM
+				q.From.Reg = REG_G
+				q.From.Offset = 4 * int64(ctxt.Arch.Ptrsize) // G.panic
+				q.To.Type = obj.TYPE_REG
+				q.To.Reg = REG_L1
+
+				q = obj.Appendp(ctxt, q)
+				q.As = ACMP
+				q.From.Type = obj.TYPE_REG
+				q.From.Reg = REG_ZR
+				q.Reg = REG_L1
+
+				q = obj.Appendp(ctxt, q)
+				q.As = ABED
+				q.To.Type = obj.TYPE_BRANCH
+				q1 := q
+
+				q = obj.Appendp(ctxt, q)
+				q.As = AMOVD
+				q.From.Type = obj.TYPE_MEM
+				q.From.Reg = REG_L1
+				q.From.Offset = 0 // Panic.argp
+				q.To.Type = obj.TYPE_REG
+				q.To.Reg = REG_L2
+
+				q = obj.Appendp(ctxt, q)
+				q.As = AADD
+				q.From.Type = obj.TYPE_CONST
+				q.From.Offset = StackBias + int64(ctxt.Autosize) + 8
+				q.Reg = REG_RSP
+				q.To.Type = obj.TYPE_REG
+				q.To.Reg = REG_L3
+
+				q = obj.Appendp(ctxt, q)
+				q.As = ACMP
+				q.From.Type = obj.TYPE_REG
+				q.From.Reg = REG_L2
+				q.Reg = REG_L3
+
+				q = obj.Appendp(ctxt, q)
+				q.As = ABNED
+				q.To.Type = obj.TYPE_BRANCH
+				q2 := q
+
+				q = obj.Appendp(ctxt, q)
+				q.As = AADD
+				q.From.Type = obj.TYPE_CONST
+				q.From.Offset = StackBias + 8
+				q.Reg = REG_RSP
+				q.To.Type = obj.TYPE_REG
+				q.To.Reg = REG_L4
+
+				q = obj.Appendp(ctxt, q)
+				q.As = AMOVD
+				q.From.Type = obj.TYPE_REG
+				q.From.Reg = REG_L4
+				q.To.Type = obj.TYPE_MEM
+				q.To.Reg = REG_L1
+				q.To.Offset = 0 // Panic.argp
+
+				q = obj.Appendp(ctxt, q)
+				q.As = ARNOP
+				q1.Pcond = q
+				q2.Pcond = q
+			}
+
 		case obj.ARET:
 			if isNOFRAME(cursym.Text) {
 				break
