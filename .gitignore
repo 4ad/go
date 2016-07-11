@@ -34,6 +34,8 @@ alt/*.dwarf
 alt/*.go.ext.tmp/
 new/*.u
 new/*.go.s
+new/*.in
+new/*.in.s
 new/*.out
 new/*.out.s
 new/*.objdump
