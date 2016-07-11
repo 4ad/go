@@ -1,13 +1,13 @@
 GOROOT=`go env GOROOT`
 
-XCC=sparcv9-solaris2.12-gcc
-XLD=sparcv9-solaris2.12-gcc
-XOBJDUMP=sparcv9-solaris2.12-objdump
-XREADELF=sparcv9-solaris2.12-readelf
+XCC=sparc64-sun-solaris2.11-gcc
+XLD=sparc64-sun-solaris2.11-gcc
+XOBJDUMP=sparc64-sun-solaris2.11-objdump
+XREADELF=sparc64-sun-solaris2.11-readelf
 
 GCFLAGS=
 LDFLAGS=
-EXTLDFLAGS='-Wl,-fuse-ld=gold'
+EXTLDFLAGS=''
 
 GOEXES=helloworld.out\
 	sieve.out\
