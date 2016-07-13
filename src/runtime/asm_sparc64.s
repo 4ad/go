@@ -161,11 +161,14 @@ TEXT runtime·mcall(SB), NOSPLIT|NOFRAME, $0-8
 	BNED	ok
 	JMP	runtime·badmcall(SB)
 ok:
+	MEMBAR	$64
+	FLUSHW
 	MOVD	fn+0(FP), CTXT			// context
 	MOVD	0(CTXT), I4			// code pointer
 	MOVD	(g_sched+gobuf_sp)(g), TMP
 	MOVD	TMP, BSP	// sp = m->g0->sched.sp
-	SUB	$176, BSP
+	MOVD	TMP, BFP
+	SUB	$176+16, BSP
 	MOVD	I1, (176+0)(BSP)
 	MOVD	$0, (176+8)(BSP)
 	CALL	(I4)
@@ -177,6 +180,10 @@ ok:
 // at the top of the system stack because the one at the top of
 // the system stack terminates the stack walk (see topofstack()).
 TEXT runtime·systemstack_switch(SB), NOSPLIT, $0-0
+	UNDEF
+	UNDEF
+	UNDEF
+	UNDEF
 	UNDEF
 	CALL	(ILR)	// make sure this function is not leaf
 	RET
@@ -208,11 +215,15 @@ switch:
 	// save our state in g->sched. Pretend to
 	// be systemstack_switch if the G stack is scanned.
 	MOVD	$runtime·systemstack_switch(SB), O0
-	ADD	$8, O0	// get past prologue
+	ADD	$20, O0	// get past prologue
 	MOVD	O0, (g_sched+gobuf_pc)(g)
 	MOVD	BSP, TMP
 	MOVD	TMP, (g_sched+gobuf_sp)(g)
+	MOVD	BFP, TMP
+	MOVD	TMP, (g_sched+gobuf_bp)(g)
 	MOVD	$0, (g_sched+gobuf_lr)(g)
+	MOVD	$0, (g_sched+gobuf_ret)(g)
+	MOVD	$0, (g_sched+gobuf_ctxt)(g)
 	MOVD	g, (g_sched+gobuf_g)(g)
 
 	// switch to g0
@@ -221,11 +232,12 @@ switch:
 	MOVD	L6, g
 	CALL	runtime·save_g(SB)
 	MOVD	(g_sched+gobuf_sp)(g), I1
-	// make it look like mstart called systemstack on g0, to stop traceback
-	SUB	$16, I1
-	AND	$~15, I1
+	MOVD	I1, BFP	// subtle
+	// make it look like mstart called systemstack on g0, to stop traceback.
+	SUB	$FIXED_FRAME, I1
 	MOVD	$runtime·mstart(SB), I4
-	MOVD	I4, 0(I1)
+	MOVD	I4, 120(I1)
+	MOVD	I4, ILR
 	MOVD	I1, BSP
 
 	// call target function
@@ -240,7 +252,10 @@ switch:
 	CALL	runtime·save_g(SB)
 	MOVD	(g_sched+gobuf_sp)(g), TMP
 	MOVD	TMP, BSP
-	MOVD	$0, (g_sched+gobuf_sp)(g)
+	MOVD	(g_sched+gobuf_bp)(g), TMP
+	MOVD	TMP, BFP
+	MOVD	ZR, (g_sched+gobuf_sp)(g)
+	MOVD	ZR, (g_sched+gobuf_bp)(g)
 	RET
 
 noswitch:
