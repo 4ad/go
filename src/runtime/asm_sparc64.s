@@ -324,7 +324,7 @@ TEXT runtime·morestack_noctxt(SB),NOSPLIT|NOFRAME,$0-0
 
 TEXT runtime·stackBarrier(SB),NOSPLIT|NOFRAME,$0
 	// We came here via a RET to an overwritten LR.
-	// O0 may be live (see return0). Other registers are available.
+	// RT1 may be live (see return0). Other registers are available.
 
 	// Get the original return PC, g.stkbar[g.stkbarPos].savedLRVal.
 	MOVD	(g_stkbar+slice_array)(g), I4
@@ -996,7 +996,7 @@ TEXT runtime·fastrand1(SB),NOSPLIT|NOFRAME,$0-4
 	RET
 
 TEXT runtime·return0(SB), NOSPLIT, $0
-	MOVW	ZR, O0
+	MOVW	ZR, RT1
 	RET
 
 // The top-most function running on a goroutine
