@@ -414,7 +414,8 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			if frameSize%16 != 0 {
 				ctxt.Diag("%v: unaligned frame size %d - must be 0 mod 16", p, frameSize)
 			}
-			if frameSize != 0 && isNOFRAME(p) {
+			noFrame := isNOFRAME(p)
+			if frameSize != 0 && noFrame {
 				ctxt.Diag("%v: non-zero framesize for NOFRAME function", p)
 			}
 
@@ -425,8 +426,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			p.As = ARNOP
 			p = obj.Appendp(ctxt, p)
 			p.As = ARNOP
-
-			if isNOFRAME(p) {
+			if noFrame {
 				break
 			}
 
