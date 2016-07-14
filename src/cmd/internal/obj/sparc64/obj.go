@@ -492,11 +492,11 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				//	MOVD	g_panic(g), L1
 				//	CMP	ZR, L1
 				//	BED	end
-				//	MOVD	panic_argp(R1), L2
-				//	ADD	$(STACK_BIAS+autosize+8), RSP, L3
+				//	MOVD	panic_argp(L1), L2
+				//	ADD	$(STACK_BIAS+MinStackFrameSize), RFP, L3
 				//	CMP	L2, L3
 				//	BNED	end
-				//	ADD	$(STACK_BIAS+8), RSP, L4
+				//	ADD	$(STACK_BIAS+MinStackFrameSize), RSP, L4
 				//	MOVD	L4, panic_argp(L1)
 				// end:
 				//	RNOP
@@ -532,8 +532,8 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				q = obj.Appendp(ctxt, q)
 				q.As = AADD
 				q.From.Type = obj.TYPE_CONST
-				q.From.Offset = StackBias + int64(ctxt.Autosize) + 8
-				q.Reg = REG_RSP
+				q.From.Offset = StackBias + MinStackFrameSize
+				q.Reg = REG_RFP
 				q.To.Type = obj.TYPE_REG
 				q.To.Reg = REG_L3
 
@@ -551,7 +551,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				q = obj.Appendp(ctxt, q)
 				q.As = AADD
 				q.From.Type = obj.TYPE_CONST
-				q.From.Offset = StackBias + 8
+				q.From.Offset = StackBias + MinStackFrameSize
 				q.Reg = REG_RSP
 				q.To.Type = obj.TYPE_REG
 				q.To.Reg = REG_L4
