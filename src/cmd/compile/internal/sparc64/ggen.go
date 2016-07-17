@@ -424,8 +424,7 @@ func clearfat(nl *gc.Node) {
 	gc.Agen(nl, &dst)
 
 	var boff uint64
-	if false && q > 128 {
-		// TODO(srwalker): fix; this is off-by-8 somehow
+	if q > 128 {
 		p := gins(sparc64.ASUB, nil, &dst)
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = 8
@@ -439,12 +438,11 @@ func clearfat(nl *gc.Node) {
 		p = gins(sparc64.AMOVD, &r0, &dst)
 		p.To.Type = obj.TYPE_MEM
 		p.To.Offset = 8
+		pl := p
 
 		p = gins(sparc64.AADD, nil, &dst)
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = 8
-
-		pl := p
 
 		p = gcmp(sparc64.ACMP, &dst, &end)
 		gc.Patch(gc.Gbranch(sparc64.ABNED, nil, 0), pl)
@@ -453,11 +451,10 @@ func clearfat(nl *gc.Node) {
 
 		// The loop leaves G1 (RT1) on the last zeroed dword
 		boff = 8
-	} else if q >= 8 && q <= 128 && !darwin { // darwin ld64 cannot handle BR26 (I2) reloc with non-zero addend
+	} else if q >= 4 && !darwin { // darwin ld64 cannot handle BR26 (I2) reloc with non-zero addend
 		p := gins(sparc64.ASUB, nil, &dst)
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = 8
-
 		f := gc.Sysfunc("duffzero")
 		p = gins(obj.ADUFFZERO, nil, f)
 		gc.Afunclit(&p.To, f)
