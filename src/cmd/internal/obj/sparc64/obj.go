@@ -457,6 +457,15 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			p.To.Reg = REG_RSP
 			p.To.Offset = int64(120 + StackBias)
 
+			// MOVD RFP, (112+bias)(RSP)
+			p = obj.Appendp(ctxt, p)
+			p.As = AMOVD
+			p.From.Type = obj.TYPE_REG
+			p.From.Reg = REG_RFP
+			p.To.Type = obj.TYPE_MEM
+			p.To.Reg = REG_RSP
+			p.To.Offset = int64(112 + StackBias)
+
 			if cursym.Args == obj.ArgsSizeUnknown {
 				break
 			}
@@ -575,12 +584,21 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				break
 			}
 
-			p.As = ARETRESTORE
-			p.From.Type = obj.TYPE_NONE
-			p.From.Offset = 0
-			p.Reg = 0
-			p.To.Type = obj.TYPE_NONE
-			p.To.Reg = 0
+			// MOVD (112+bias)(RSP), RFP
+			q = obj.Appendp(ctxt, p)
+			p.As = AMOVD
+			p.From.Type = obj.TYPE_MEM
+			p.From.Reg = REG_RSP
+			p.From.Offset = int64(112 + StackBias)
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = REG_RFP
+
+			q.As = ARETRESTORE
+			q.From.Type = obj.TYPE_NONE
+			q.From.Offset = 0
+			q.Reg = 0
+			q.To.Type = obj.TYPE_NONE
+			q.To.Reg = 0
 			// The SP restore operation needs a Spadj of
 			// -(cursym.Locals + MinStackFrameSize),
 			// and the JMP operation needs a Spadj of
