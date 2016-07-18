@@ -8,28 +8,6 @@ import "unsafe"
 
 var _ = unsafe.Pointer(uintptr(42))
 
-//go:linkname indexByte_bytes bytes.IndexByte
-//go:nosplit
-func indexByte_bytes(s []byte, c byte) int {
-	for i, b := range s {
-		if b == c {
-			return i
-		}
-	}
-	return -1
-}
-
-//go:linkname indexByte_strings strings.IndexByte
-//go:nosplit
-func indexByte_strings(s string, c byte) int {
-	for i, b := range []byte(s) {
-		if b == c {
-			return i
-		}
-	}
-	return -1
-}
-
 //go:linkname eqstring_go runtime.eqstring
 //go:nosplit
 func eqstring_go(s1, s2 string) bool {

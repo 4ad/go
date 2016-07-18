@@ -871,6 +871,59 @@ eq:
 	MOVB	I1, ret+16(FP)
 	RET
 
+//
+// functions for other packages
+//
+TEXT bytes·IndexByte(SB),NOSPLIT,$0-40
+	MOVD	s+0(FP), I1
+	MOVD	s_len+8(FP), I4
+	MOVUB	c+24(FP), L6	// byte to find
+	MOVD	I1, O1		// store base for later
+	SUB	$1, I1
+	ADD	I1, I4		// end-1
+
+loop:
+	CMP	I1, I4
+	BED	notfound
+	MOVUB	(I1), O0
+	ADD	$1, I1
+	CMP	L6, O0
+	BNEW	loop
+
+	SUB	O1, I1		// remove base
+	MOVD	I1, ret+32(FP)
+	RET
+
+notfound:
+	MOVD	$-1, I1
+	MOVD	I1, ret+32(FP)
+	RET
+
+TEXT strings·IndexByte(SB),NOSPLIT,$0-32
+	MOVD	p+0(FP), I1
+	MOVD	b_len+8(FP), I4
+	MOVUB	c+16(FP), L6	// byte to find
+	MOVD	I1, O1		// store base for later
+	SUB	$1, I1
+	ADD	I1, I4		// end-1
+
+loop:
+	CMP	I1, I4
+	BED	notfound
+	MOVUB	(I1), O0
+	ADD	$1, I1
+	CMP	L6, O0
+	BNEW	loop
+
+	SUB	O1, I1		// remove base
+	MOVD	I1, ret+24(FP)
+	RET
+
+notfound:
+	MOVD	$-1, I1
+	MOVD	I1, ret+24(FP)
+	RET
+
 TEXT runtime·fastrand1(SB),NOSPLIT|NOFRAME,$0-4
 	MOVD	g_m(g), I4
 	MOVUW	m_fastrand(I4), I1
