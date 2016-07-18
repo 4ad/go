@@ -871,66 +871,6 @@ eq:
 	MOVB	I1, ret+16(FP)
 	RET
 
-// eqstring tests whether two strings are equal.
-// The compiler guarantees that strings passed
-// to eqstring have equal length.
-// See runtime_test.go:eqstring_generic for
-// equivalent Go code.
-TEXT runtime·eqstring(SB),NOSPLIT,$0-33
-	MOVD	s1str+0(FP), I3
-	MOVD	s1len+8(FP), I5
-	MOVD	s2str+16(FP), I1
-	ADD	I3, I5		// end
-loop:
-	CMP	I3, I5
-	BED	equal		// reaches the end
-	MOVUB	(I3), I4
-	ADD	$1, I3
-	MOVUB	(I1), L6
-	ADD	$1, I1
-	CMP	I4, L6
-	BED	loop
-notequal:
-	MOVB	ZR, ret+32(FP)
-	RET
-equal:
-	MOVD	$1, I3
-	MOVB	I3, ret+32(FP)
-	RET
-
-// TODO: share code with memequal?
-TEXT bytes·Equal(SB),NOSPLIT,$0-49
-	MOVD	a_len+8(FP), I1
-	MOVD	b_len+32(FP), I4
-
-	CMP	I1, I4		// unequal lengths are not equal
-	BNED	noteq
-
-	MOVD	a+0(FP), L6
-	MOVD	b+24(FP), O1
-	SUB	$1, L6
-	SUB	$1, O1
-	ADD	L6, I1		// end-1
-
-loop:
-	CMP	L6, I1
-	BED	equal		// reached the end
-	MOVUB	(L6), I4
-	ADD	$1, L6
-	MOVUB	(O1), O0
-	ADD	$1, O1
-	CMP	I4, O0
-	BEW	loop
-
-noteq:
-	MOVB	ZR, ret+48(FP)
-	RET
-
-equal:
-	MOVD	$1, I1
-	MOVB	I1, ret+48(FP)
-	RET
-
 TEXT runtime·fastrand1(SB),NOSPLIT|NOFRAME,$0-4
 	MOVD	g_m(g), I4
 	MOVUW	m_fastrand(I4), I1

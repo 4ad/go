@@ -29,3 +29,33 @@ func indexByte_strings(s string, c byte) int {
 	}
 	return -1
 }
+
+//go:linkname eqstring_go runtime.eqstring
+//go:nosplit
+func eqstring_go(s1, s2 string) bool {
+	if len(s1) != len(s2) {
+		return false
+	}
+	// optimization in assembly versions:
+	// if s1.str == s2.str { return true }
+	for i := 0; i < len(s1); i++ {
+		if s1[i] != s2[i] {
+			return false
+		}
+	}
+	return true
+}
+
+//go:linkname equal_bytes bytes.Equal
+//go:nosplit
+func equal_bytes(a, b []byte) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, c := range a {
+		if c != b[i] {
+			return false
+		}
+	}
+	return true
+}
