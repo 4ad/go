@@ -1,4 +1,4 @@
-// +build darwin linux
+// +build darwin linux solaris
 // run
 
 // Copyright 2014 The Go Authors. All rights reserved.

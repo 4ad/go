@@ -885,8 +885,8 @@ TEXT bytes·IndexByte(SB),NOSPLIT,$0-40
 loop:
 	CMP	I1, I4
 	BED	notfound
-	MOVUB	(I1), O0
 	ADD	$1, I1
+	MOVUB	(I1), O0
 	CMP	L6, O0
 	BNEW	loop
 
@@ -910,8 +910,8 @@ TEXT strings·IndexByte(SB),NOSPLIT,$0-32
 loop:
 	CMP	I1, I4
 	BED	notfound
-	MOVUB	(I1), O0
 	ADD	$1, I1
+	MOVUB	(I1), O0
 	CMP	L6, O0
 	BNEW	loop
 

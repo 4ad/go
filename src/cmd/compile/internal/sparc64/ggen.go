@@ -438,22 +438,20 @@ func clearfat(nl *gc.Node) {
 		p = gins(sparc64.AMOVD, &r0, &dst)
 		p.To.Type = obj.TYPE_MEM
 		p.To.Offset = 8
+		pl := p
 
 		p = gins(sparc64.AADD, nil, &dst)
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = 8
-
-		pl := p
 
 		p = gcmp(sparc64.ACMP, &dst, &end)
 		gc.Patch(gc.Gbranch(sparc64.ABNED, nil, 0), pl)
 
 		gc.Regfree(&end)
 
-		// The loop leaves R16 (L0) on the last zeroed dword
+		// The loop leaves G1 (RT1) on the last zeroed dword
 		boff = 8
-	} else if false && q >= 4 && !darwin { // darwin ld64 cannot handle BR26 (I2) reloc with non-zero addend
-		// TODO(aram): enable duffzero.
+	} else if q >= 4 && !darwin { // darwin ld64 cannot handle BR26 (I2) reloc with non-zero addend
 		p := gins(sparc64.ASUB, nil, &dst)
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = 8
@@ -461,10 +459,12 @@ func clearfat(nl *gc.Node) {
 		p = gins(obj.ADUFFZERO, nil, f)
 		gc.Afunclit(&p.To, f)
 
-		// 4 and 128 = magic constants: see ../../runtime/asm_sparc64x.s
-		p.To.Offset = int64(4 * (128 - q))
+		// 8 and 128 = magic constants: see ../../../../runtime/mkduff.go
+		// the extra +8 is to account for the prologue padding
+		// added by preprocess()
+		p.To.Offset = int64(8 * (128 - q)) + 8
 
-		// duffzero leaves R16 (L0) on the last zeroed dword
+		// duffzero leaves G1 (RT1) on the last zeroed dword
 		boff = 8
 	} else {
 		var p *obj.Prog
