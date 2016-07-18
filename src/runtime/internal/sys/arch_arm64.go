@@ -5,15 +5,15 @@
 package sys
 
 const (
-	ArchFamily    = ARM64
-	BigEndian     = 0
-	CacheLineSize = 32
-	PhysPageSize  = 65536
-	PCQuantum     = 4
-	Int64Align    = 8
-	HugePageSize  = 0
-	MinFrameSize  = 8
-	SpAlign       = 16
+	ArchFamily          = ARM64
+	BigEndian           = 0
+	CacheLineSize       = 32
+	DefaultPhysPageSize = 65536
+	PCQuantum           = 4
+	Int64Align          = 8
+	HugePageSize        = 0
+	MinFrameSize        = 8
+	SpAlign             = 1
 )
 
 type Uintreg uint64

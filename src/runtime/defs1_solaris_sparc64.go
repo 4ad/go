@@ -78,6 +78,7 @@ const (
 	_ITIMER_VIRTUAL = 0x1
 	_ITIMER_PROF    = 0x2
 
+	__SC_PAGESIZE         = 0xb
 	__SC_NPROCESSORS_ONLN = 0xf
 
 	_PTHREAD_CREATE_DETACHED = 0x40
@@ -115,9 +116,11 @@ type sigaltstackt struct {
 	ss_flags  int32
 	pad_cgo_0 [4]byte
 }
+
 type sigset struct {
 	__sigbits [4]uint32
 }
+
 type stackt struct {
 	ss_sp     *byte
 	ss_size   uint64
@@ -132,6 +135,7 @@ type siginfo struct {
 	si_pad   int32
 	__data   [240]byte
 }
+
 type sigactiont struct {
 	sa_flags  int32
 	pad_cgo_0 [4]byte
@@ -142,12 +146,14 @@ type sigactiont struct {
 type fpregset struct {
 	fp_reg_set [288]byte // lots of stuff here, but we treat it as opaque.
 }
+
 type mcontext struct {
 	gregs  [21]int64
 	gwins  *gwindows
 	fpregs fpregset
 	// additional stuff follows, but for our purpose, this struct is opaque.
 }
+
 type ucontext struct {
 	uc_flags    uint32
 	pad_cgo_0   [4]byte
@@ -174,6 +180,7 @@ type timespec struct {
 	tv_sec  int64
 	tv_nsec int64
 }
+
 type timeval struct {
 	tv_sec  int64
 	tv_usec int64
@@ -195,6 +202,7 @@ type portevent struct {
 	portev_object uint64
 	portev_user   *byte
 }
+
 type pthread uint32
 type pthreadattr struct {
 	__pthread_attrp *byte
