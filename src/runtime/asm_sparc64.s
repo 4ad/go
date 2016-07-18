@@ -401,10 +401,10 @@ TEXT NAME(SB), WRAPPER, $MAXSIZE-24;		\
 	ADD	L6, I4;				\
 	CMP	L6, I4;				\
 	BED	6(PC);				\
-	MOVUB	(I1), O1;			\
 	ADD	$1, I1;				\
-	MOVUB	O1, (L6);			\
+	MOVUB	(I1), O1;			\
 	ADD	$1, L6;				\
+	MOVUB	O1, (L6);			\
 	JMP	-6(PC);				\
 	/* call function */			\
 	MOVD	f+8(FP), CTXT;			\
@@ -425,10 +425,10 @@ TEXT NAME(SB), WRAPPER, $MAXSIZE-24;		\
 loop:						\
 	CMP	L6, I4;				\
 	BED	end;				\
-	MOVUB	(L6), O1;			\
 	ADD	$1, L6;				\
-	MOVUB	O1, (I1);			\
+	MOVUB	(L6), O1;			\
 	ADD	$1, I1;				\
+	MOVUB	O1, (I1);			\
 	JMP	loop;				\
 end:						\
 	/* execute write barrier updates */	\
