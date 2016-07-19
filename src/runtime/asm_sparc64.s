@@ -123,13 +123,16 @@ TEXT runtime·gogo(SB), NOSPLIT|NOFRAME, $0-8
 	MEMBAR	$111
 
 	MOVD	0(g), I4	// make sure g is not nil
-	MOVD	gobuf_sp(L6), I3
-	MOVD	I3, BSP
 	MOVD	gobuf_lr(L6), OLR
 	MOVD	gobuf_ret(L6), RT1
 	MOVD	gobuf_ctxt(L6), CTXT
 	MOVD	gobuf_bp(L6), I3
 	MOVD	I3, BFP
+	MOVD	gobuf_sp(L6), I3
+	// restore continuation's ILR before resetting the stack pointer
+	// otherwise a spill will overwrite the saved link register.
+	MOVD	120(I3), ILR
+	MOVD	I3, BSP
 	MOVD	ZR, gobuf_sp(L6)
 	MOVD	ZR, gobuf_ret(L6)
 	MOVD	ZR, gobuf_lr(L6)
