@@ -192,7 +192,7 @@ allgood:
 	// TODO: If current SP is not in gsignal.stack, then adjust.
 
 	// prepare call
-	MOVD	I0, (FIXED_FRAME+8*0)(BSP)
+	MOVW	I0, (FIXED_FRAME+8*0)(BSP)
 	MOVD	I1, (FIXED_FRAME+8*1)(BSP)
 	MOVD	I2, (FIXED_FRAME+8*2)(BSP)
 	MOVD	I3, (FIXED_FRAME+8*3)(BSP)
