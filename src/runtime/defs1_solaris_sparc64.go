@@ -221,6 +221,7 @@ type stat struct {
 const (
 	_REG_CCR = 0x0
 	_REG_PC  = 0x1
+	_REG_nPC = 0x2
 	_REG_G1  = 0x4
 	_REG_G2  = 0x5
 	_REG_G3  = 0x6

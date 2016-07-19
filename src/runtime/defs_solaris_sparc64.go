@@ -21,6 +21,7 @@ import "C"
 const (
 	REG_CCR = C.REG_CCR
 	REG_PC  = C.REG_PC
+	REG_nPC = C.REG_nPC
 	REG_G1  = C.REG_G1
 	REG_G2  = C.REG_G2
 	REG_G3  = C.REG_G3
