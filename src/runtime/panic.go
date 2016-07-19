@@ -575,11 +575,11 @@ func recovery(gp *g) {
 	gp.sched.sp = sp
 	gp.sched.pc = pc
 	if sys.GoarchSparc64 == 1 {
-		// function prolog saves the FP here, sp already has bias applied.
-		gp.sched.bp = *((*uintptr)(unsafe.Pointer(sp+112)))
-		// on SPARC64, pc holds the address of the CALL instruction, 
-		// we need to return past that,
-		gp.sched.pc += 8
+		// Function prolog saves the FP here; sp already has
+		// bias applied, so we use it directly. The recovered
+		// fp doesn't have the bias applied. Since gogo expects
+		// biased input, we add the stack bias to the loaded fp.
+		gp.sched.bp = *((*uintptr)(unsafe.Pointer(sp+112))) + sys.StackBias
 	}
 	gp.sched.lr = 0
 	gp.sched.ret = 1
