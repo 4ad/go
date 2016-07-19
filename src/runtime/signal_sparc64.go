@@ -42,6 +42,7 @@ func dumpregs(c *sigctxt) {
 	print("sp      ", hex(c.sp()), "\n")
 	print("fp      ", hex(c.fp()), "\n")
 	print("pc      ", hex(c.pc()), "\n")
+	print("npc     ", hex(c.npc()), "\n")
 	print("fault   ", hex(c.fault()), "\n")
 }
 
@@ -80,11 +81,10 @@ func sighandler(sig uint32, info *siginfo, ctxt unsafe.Pointer, gp *g) {
 		// the stack frame but we're not going back there
 		// anyway.
 		fp := c.sp()
-		sp := c.sp() - sys.SpAlign // needs only sizeof uint64, but must align the stack
+		sp := c.sp() - (sys.SpAlign + sys.MinFrameSize) // needs only sizeof uint64, but must align the stack
 		c.set_sp(sp)
 		c.set_fp(fp)
 		*(*uint64)(unsafe.Pointer(uintptr(sp + 120))) = c.lr()
-		*(*uint64)(unsafe.Pointer(uintptr(sp + 112))) = fp - sys.StackBias
 
 		pc := uintptr(gp.sigpc)
 
@@ -105,6 +105,7 @@ func sighandler(sig uint32, info *siginfo, ctxt unsafe.Pointer, gp *g) {
 
 		// In case we are panicking from external C code
 		c.set_r3(uint64(uintptr(unsafe.Pointer(gp))))
+		c.set_npc(uint64(funcPC(sigpanic)))
 		c.set_pc(uint64(funcPC(sigpanic)))
 		return
 	}
