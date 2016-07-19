@@ -134,19 +134,109 @@ TEXT runtime·tstart_sysvicall(SB),NOSPLIT,$0
 	RET
 
 // Careful, this is called by __sighndlr, a libc function. We must preserve
-// registers as per AMD 64 ABI.
-TEXT runtime·sigtramp(SB),NOSPLIT,$0
-	// TODO(aram):
-	MOVD	$75, I3
-	ADD	$'!', I3, I3
-	MOVB	I3, dbgbuf(SB)
-	MOVD	$2, O0
-	MOVD	$dbgbuf(SB), O1
-	MOVD	$2, O2
-	MOVD	$libc_write(SB), I3
-	CALL	I3
-	UNDEF
+// registers as per SPARC64 ABI.
+TEXT runtime·sigtramp(SB),NOSPLIT,$144
+	// check that g exists
+	CMP	g, ZR
+	BNED	allgood
+	MOVD	I0, (FIXED_FRAME+0)(BSP)
+	CALL	runtime·badsignal(SB)
+	JMP	exit
+
+allgood:
+	// save g
+	MOVD	g, (-8+0)(BFP)
+
+	// Save m->libcall and m->scratch. We need to do this because we
+	// might get interrupted by a signal in runtime·asmcgocall.
+
+	// save m->libcall 
+	MOVD	g_m(g), L1
+	MOVD	$m_libcall(L1), L2
+	MOVD	libcall_fn(L2), L3
+	MOVD	L3, -(8+0*8)(BFP)
+	MOVD	libcall_args(L2), L3
+	MOVD	L3, -(8+2*8)(BFP)
+	MOVD	libcall_n(L2), L3
+	MOVD	L3, -(8+3*8)(BFP)
+	MOVD	libcall_r1(L2), L3
+	MOVD	L3, -(8+4*8)(BFP)
+	MOVD	libcall_r2(L2), L3
+	MOVD	L3, -(8+5*8)(BFP)
+
+	// save m->scratch
+	MOVD	$(m_mOS+mOS_scratch)(L1), L2
+	MOVD	0(L2), L3
+	MOVD	L3, -(8+6*8)(BFP)
+	MOVD	8(L2), L3
+	MOVD	L3, -(8+7*8)(BFP)
+	MOVD	16(L2), L3
+	MOVD	L3, -(8+8*8)(BFP)
+	MOVD	24(L2), L3
+	MOVD	L3, -(8+9*8)(BFP)
+	MOVD	32(L2), L3
+	MOVD	L3, -(8+10*8)(BFP)
+	MOVD	40(L2), L3
+	MOVD	L3, -(8+10*8)(BFP)
+
+	// save errno, it might be EINTR; stuff we do here might reset it.
+	MOVD	(m_mOS+mOS_perrno)(L1), L2
+	MOVW	0(L2), L3
+	MOVD	L3, -(8+11*8)(BFP)
+
+	MOVD	g, I3
+	// g = m->gsignal
+	MOVD	m_gsignal(L1), L4
+	MOVD	L4, g
+
+	// TODO: If current SP is not in gsignal.stack, then adjust.
+
+	// prepare call
+	MOVD	I0, (FIXED_FRAME+8*0)(BSP)
+	MOVD	I1, (FIXED_FRAME+8*1)(BSP)
+	MOVD	I2, (FIXED_FRAME+8*2)(BSP)
+	MOVD	I3, (FIXED_FRAME+8*3)(BSP)
+	CALL	runtime·sighandler(SB)
+
+	// restore libcall
+	MOVD	$m_libcall(L1), L2
+	MOVD	 -(8+0*8)(BFP), L3
+	MOVD	L3, libcall_fn(L2)
+	MOVD	-(8+2*8)(BFP), L3
+	MOVD	L3, libcall_args(L2)
+	MOVD	-(8+3*8)(BFP), L3	
+	MOVD	L3, libcall_n(L2)
+	MOVD	-(8+4*8)(BFP), L3
+	MOVD	L3, libcall_r1(L2)
+	MOVD	-(8+5*8)(BFP), L3
+	MOVD	L3, libcall_r2(L2)
+
+	// restore scratch
+	MOVD	$(m_mOS+mOS_scratch)(L1), L2
+	MOVD	-(8+6*8)(BFP), L3
+	MOVD	L3, 0(L2)
+	MOVD	-(8+7*8)(BFP), L3
+	MOVD	L3, 8(L2)
+	MOVD	-(8+8*8)(BFP), L3
+	MOVD	L3, 16(L2)
+	MOVD	-(8+9*8)(BFP), L3
+	MOVD	L3, 24(L2)
+	MOVD	-(8+10*8)(BFP), L3
+	MOVD	L3, 32(L2)
+	MOVD	-(8+10*8)(BFP), L3
+	MOVD	L3, 40(L2)
+
+	// restore errno
+	MOVD	(m_mOS+mOS_perrno)(L1), L2
+	MOVD	-(8+11*8)(BFP), L3
+	MOVW	L3, 0(L2)
+
+	// restore g
+	MOVD	(-8+0)(BFP), g
+
+exit:
 	RET
+
 
 // Runs on OS stack, called from runtime·usleep1_go.
 TEXT runtime·usleep2(SB),NOSPLIT,$0
