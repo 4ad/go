@@ -118,8 +118,9 @@ TEXT runtime·gogo(SB), NOSPLIT|NOFRAME, $0-8
 	MOVD	gobuf_g(L6), g
 	CALL	runtime·save_g(SB)
 
-	MEMBAR	$64
+	MEMBAR	$111
 	FLUSHW
+	MEMBAR	$111
 
 	MOVD	0(g), I4	// make sure g is not nil
 	MOVD	gobuf_sp(L6), I3
@@ -161,8 +162,9 @@ TEXT runtime·mcall(SB), NOSPLIT|NOFRAME, $0-8
 	BNED	ok
 	JMP	runtime·badmcall(SB)
 ok:
-	MEMBAR	$64
+	MEMBAR	$111
 	FLUSHW
+	MEMBAR	$111
 	MOVD	fn+0(FP), CTXT			// context
 	MOVD	0(CTXT), I4			// code pointer
 	MOVD	(g_sched+gobuf_sp)(g), TMP
@@ -227,8 +229,9 @@ switch:
 	MOVD	g, (g_sched+gobuf_g)(g)
 
 	// switch to g0
-	MEMBAR	$64
+	MEMBAR	$111
 	FLUSHW
+	MEMBAR	$111
 	MOVD	L6, g
 	CALL	runtime·save_g(SB)
 	MOVD	(g_sched+gobuf_sp)(g), I1
@@ -245,15 +248,16 @@ switch:
 	CALL	(I1)
 
 	// switch back to g
-	MEMBAR	$64
+	MEMBAR	$111
 	FLUSHW
+	MEMBAR	$111
 	MOVD	g_m(g), I1
 	MOVD	m_curg(I1), g
 	CALL	runtime·save_g(SB)
-	MOVD	(g_sched+gobuf_sp)(g), TMP
-	MOVD	TMP, BSP
 	MOVD	(g_sched+gobuf_bp)(g), TMP
 	MOVD	TMP, BFP
+	MOVD	(g_sched+gobuf_sp)(g), TMP
+	MOVD	TMP, BSP
 	MOVD	ZR, (g_sched+gobuf_sp)(g)
 	MOVD	ZR, (g_sched+gobuf_bp)(g)
 	RET
@@ -306,8 +310,9 @@ TEXT runtime·morestack(SB),NOSPLIT|NOFRAME,$0-0
 	MOVD	g, (m_morebuf+gobuf_g)(O0)
 
 	// Call newstack on m->g0's stack.
-	MEMBAR	$64
+	MEMBAR	$111
 	FLUSHW
+	MEMBAR	$111
 	MOVD	m_g0(O0), g
 	CALL	runtime·save_g(SB)
 	MOVD	(g_sched+gobuf_sp)(g), TMP
@@ -560,13 +565,14 @@ TEXT ·asmcgocall(SB),NOSPLIT|NOFRAME,$0-20
 	BED	g0
 
 	CALL	gosave<>(SB)
-	MEMBAR	$64
+	MEMBAR	$111
 	FLUSHW
+	MEMBAR	$111
 	MOVD	L7, g
-	MOVD	(g_sched+gobuf_sp)(g), TMP
-	MOVD	TMP, BSP
 	MOVD	(g_sched+gobuf_bp)(g), TMP
 	MOVD	TMP, BFP
+	MOVD	(g_sched+gobuf_sp)(g), TMP
+	MOVD	TMP, BSP
 
 	// Now on a scheduling stack (a pthread-created stack).
 g0:
@@ -580,8 +586,9 @@ g0:
 
 	// Restore g, stack pointer.
 	// R8 (O0) is errno, so don't touch it
-	MEMBAR	$64
+	MEMBAR	$111
 	FLUSHW
+	MEMBAR	$111
 	MOVD	L4, g
 	MOVD	(g_stack+stack_hi)(g), TMP
 	SUB	L5, TMP, TMP2
@@ -681,8 +688,9 @@ havem:
 	// In the new goroutine, -16(SP) and -8(SP) are unused.
 	MOVD	m_curg(O0), g
 	CALL	runtime·save_g(SB)
-	MEMBAR	$64
+	MEMBAR	$111
 	FLUSHW
+	MEMBAR	$111
 	MOVD	(g_sched+gobuf_sp)(g), I4 // prepare stack as I4
 	MOVD	(g_sched+gobuf_pc)(g), L6
 	MOVD	L6, -(FIXED_FRAME+16)(I4)
@@ -702,8 +710,9 @@ havem:
 	MOVD	g_m(g), O0
 	MOVD	m_g0(O0), g
 	CALL	runtime·save_g(SB)
-	MEMBAR	$64
+	MEMBAR	$111
 	FLUSHW
+	MEMBAR	$111
 	MOVD	(g_sched+gobuf_sp)(g), TMP
 	MOVD	TMP, BSP
 	MOVD	savedsp-16(SP), I4
