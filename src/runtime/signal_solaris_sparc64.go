@@ -32,7 +32,7 @@ func (c *sigctxt) r11() uint64 { return uint64(c.regs().gregs[_REG_O3]) }
 func (c *sigctxt) r12() uint64 { return uint64(c.regs().gregs[_REG_O4]) }
 func (c *sigctxt) r13() uint64 { return uint64(c.regs().gregs[_REG_O5]) }
 
-func (c *sigctxt) sp() uint64 { return uint64(c.regs().gregs[_REG_O6]) }
+func (c *sigctxt) sp() uint64 { return uint64(c.regs().gregs[_REG_O6]) + sys.StackBias }
 func (c *sigctxt) lr() uint64 { return uint64(c.regs().gregs[_REG_O7]) }
 
 func (c *sigctxt) r16() uint64 {
@@ -147,12 +147,12 @@ func (c *sigctxt) r29() uint64 {
 	return *(*uint64)(unsafe.Pointer((uintptr)(c.regs().gregs[_REG_O6] + sys.StackBias + 13*8)))
 }
 
-func (c *sigctxt) r30() uint64 {
+func (c *sigctxt) fp() uint64 {
 	if c.regs().gwins != nil {
 		cwp := int(c.regs().gregs[_REG_CCR] & 0x1f)
-		return uint64(c.regs().gwins.wbuf[cwp].in[6])
+		return uint64(c.regs().gwins.wbuf[cwp].in[6] + sys.StackBias)
 	}
-	return *(*uint64)(unsafe.Pointer((uintptr)(c.regs().gregs[_REG_O6] + sys.StackBias + 14*8)))
+	return *(*uint64)(unsafe.Pointer((uintptr)(c.regs().gregs[_REG_O6] + sys.StackBias + 14*8))) + sys.StackBias
 }
 
 func (c *sigctxt) r31() uint64 {
@@ -169,9 +169,19 @@ func (c *sigctxt) tstate() uint64 { return uint64(c.regs().gregs[_REG_CCR]) }
 func (c *sigctxt) sigcode() uint64 { return uint64(c.info.si_code) }
 func (c *sigctxt) fault() uint64   { return *(*uint64)(unsafe.Pointer(&c.info.__data[0])) }
 
+func (c *sigctxt) set_r3(x uint64) { c.regs().gregs[_REG_G3] = int64(x) }
+
 func (c *sigctxt) set_pc(x uint64) { c.regs().gregs[_REG_PC] = int64(x) }
-func (c *sigctxt) set_sp(x uint64) { c.regs().gregs[_REG_O6] = int64(x) }
+func (c *sigctxt) set_sp(x uint64) { c.regs().gregs[_REG_O6] = int64(x - sys.StackBias) }
 func (c *sigctxt) set_lr(x uint64) { c.regs().gregs[_REG_O7] = int64(x) }
+
+func (c *sigctxt) set_fp(x uint64) {
+	if c.regs().gwins != nil {
+		cwp := int(c.regs().gregs[_REG_CCR] & 0x1f)
+		c.regs().gwins.wbuf[cwp].in[6] = int64(x-sys.StackBias)
+	}
+	*(*uint64)(unsafe.Pointer((uintptr)(c.regs().gregs[_REG_O6] + sys.StackBias + 14*8))) = x - sys.StackBias
+}
 
 func (c *sigctxt) set_r31(x uint64) {
 	if c.regs().gwins != nil {
