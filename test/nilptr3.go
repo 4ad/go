@@ -2,7 +2,8 @@
 // Fails on ppc64x because of incomplete optimization.
 // See issues 9058.
 // Same reason for mips64x.
-// +build !ppc64,!ppc64le,!mips64,!mips64le,!amd64
+// Same reason for sparc64.
+// +build !ppc64,!ppc64le,!mips64,!mips64le,!amd64,!sparc64
 
 // Copyright 2013 The Go Authors.  All rights reserved.
 // Use of this source code is governed by a BSD-style
