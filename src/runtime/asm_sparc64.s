@@ -173,9 +173,9 @@ ok:
 	MOVD	(g_sched+gobuf_sp)(g), TMP
 	MOVD	TMP, BSP	// sp = m->g0->sched.sp
 	MOVD	TMP, BFP
-	SUB	$176+16, BSP
-	MOVD	I1, (176+0)(BSP)
-	MOVD	$0, (176+8)(BSP)
+	SUB	$FIXED_FRAME+16, BSP
+	MOVD	I1, (FIXED_FRAME+0)(BSP)
+	MOVD	$0, (FIXED_FRAME+8)(BSP)
 	CALL	(I4)
 	JMP	runtime·badmcall2(SB)
 
