@@ -367,6 +367,9 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			p.Mark |= LEAF
 
 		case p.As == obj.ARET:
+			if cursym.Text.Mark&LEAF != 0 && p.To.Sym != nil { // RETJMP
+				cursym.Text.From3.Offset |= obj.NOFRAME
+			}
 			break
 
 		case p.As == obj.ANOP:
@@ -581,6 +584,9 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 
 		case obj.ARET:
 			if isNOFRAME(cursym.Text) {
+				if p.To.Sym != nil { // RETJMP
+					p.As = obj.AJMP
+				}
 				break
 			}
 
