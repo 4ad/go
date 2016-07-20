@@ -3025,6 +3025,8 @@ func (b *builder) gccArchArgs() []string {
 		return []string{"-m64"}
 	case "arm":
 		return []string{"-marm"} // not thumb
+	case "sparc64":
+		return []string{"-m64"}
 	}
 	return nil
 }
