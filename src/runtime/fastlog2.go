@@ -24,10 +24,8 @@ func fastlog2(x float64) float64 {
 	xManIndex := (xBits >> (52 - fastlogNumBits)) % (1 << fastlogNumBits)
 	xManScale := (xBits >> (52 - fastlogNumBits - fastlogScaleBits)) % (1 << fastlogScaleBits)
 
-	// TODO(aram): revert.
-	var xManScale1 = int64(xManScale)
 	low, high := fastlog2Table[xManIndex], fastlog2Table[xManIndex+1]
-	return float64(xExp) + low + (high-low)*float64(xManScale1)*fastlogScaleRatio
+	return float64(xExp) + low + (high-low)*float64(xManScale)*fastlogScaleRatio
 }
 
 // float64bits returns the IEEE 754 binary representation of f.

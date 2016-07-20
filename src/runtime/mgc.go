@@ -413,8 +413,7 @@ func (c *gcControllerState) startCycle() {
 	// first cycle) or may be much smaller (resulting in a large
 	// error response).
 	if memstats.next_gc <= heapminimum {
-		// TODO(aram): revert.
-		memstats.heap_marked = uint64(int64(float64(int64(memstats.next_gc)) / (1 + c.triggerRatio)))
+		memstats.heap_marked = uint64(float64(memstats.next_gc) / (1 + c.triggerRatio))
 		memstats.heap_reachable = memstats.heap_marked
 	}
 
@@ -544,8 +543,7 @@ func (c *gcControllerState) endCycle() {
 	// heap_marked, which means the actual growth ratio
 	// technically isn't comparable to the trigger ratio.
 	goalGrowthRatio := float64(gcpercent) / 100
-	// TODO(aram): revert.
-	actualGrowthRatio := float64(int64(memstats.heap_live))/float64(int64(memstats.heap_marked)) - 1
+	actualGrowthRatio := float64(memstats.heap_live)/float64(memstats.heap_marked) - 1
 	assistDuration := nanotime() - c.assistStartTime
 
 	// Assume background mark hit its utilization goal.
@@ -578,8 +576,7 @@ func (c *gcControllerState) endCycle() {
 		h_a := actualGrowthRatio
 		H_a := memstats.heap_live
 		h_g := goalGrowthRatio
-		// TODO(aram): revert.
-		H_g := int64(float64(int64(H_m_prev)) * (1 + h_g))
+		H_g := int64(float64(H_m_prev) * (1 + h_g))
 		u_a := utilization
 		u_g := gcGoalUtilization
 		W_a := c.scanWork
@@ -1616,8 +1613,7 @@ func gcMark(start_time int64) {
 	// by triggerRatio over the reachable heap size. Assume that
 	// we're in steady state, so the reachable heap size is the
 	// same now as it was at the beginning of the GC cycle.
-	// TODO(aram): revert.
-	memstats.next_gc = uint64(int64(float64(int64(memstats.heap_reachable)) * (1 + gcController.triggerRatio)))
+	memstats.next_gc = uint64(float64(memstats.heap_reachable) * (1 + gcController.triggerRatio))
 	if memstats.next_gc < heapminimum {
 		memstats.next_gc = heapminimum
 	}
@@ -1695,8 +1691,7 @@ func gcSweep(mode gcMode) {
 		heapDistance = _PageSize
 	}
 	lock(&mheap_.lock)
-	// TODO(aram): revert.
-	mheap_.sweepPagesPerByte = float64(int64(mheap_.pagesInUse)) / float64(int64(heapDistance))
+	mheap_.sweepPagesPerByte = float64(mheap_.pagesInUse) / float64(heapDistance)
 	mheap_.pagesSwept = 0
 	mheap_.spanBytesAlloc = 0
 	unlock(&mheap_.lock)

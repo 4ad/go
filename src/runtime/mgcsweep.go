@@ -378,8 +378,7 @@ func deductSweepCredit(spanBytes uintptr, callerSweepPages uintptr) {
 	spanBytesAlloc := atomic.Xadd64(&mheap_.spanBytesAlloc, int64(spanBytes))
 
 	// Fix debt if necessary.
-	// TODO(aram): revert.
-	pagesOwed := int64(mheap_.sweepPagesPerByte * float64(int64(spanBytesAlloc)))
+	pagesOwed := int64(mheap_.sweepPagesPerByte * float64(spanBytesAlloc))
 	for pagesOwed-int64(atomic.Load64(&mheap_.pagesSwept)) > int64(callerSweepPages) {
 		if gosweepone() == ^uintptr(0) {
 			mheap_.sweepPagesPerByte = 0
