@@ -1,21 +1,13 @@
 Edit ,d
-git diff origin/master..HEAD |wc
 git push -f 4ad sparc64
-go install -v cmd/asm cmd/link
-go install -v cmd/compile
-go install -v debug... cmd/cgo
-go install -v cmd/vet
+go install -v cmd/asm cmd/link cmd/compile
+GOOS=solaris GOARCH=sparc64 go install -a std cmd
 GOOS=solaris GOARCH=sparc64 go install -a -gcflags="-e" -v runtime
-CC=sparcv9-solaris2.12-gcc GO_EXTLINK_ENABLED=1 CGO_ENABLED=1 GOOS=solaris GOARCH=sparc64 go install -v runtime/cgo
 GOOS=solaris GOARCH=sparc64 go build -a -gcflags="-S" -asmflags="-S" runtime 2>/tmp/runtime.s
-cd cmd/link/internal/sparc64
-cd cmd/link/internal/ld
 cd cmd/compile/internal/sparc64
-cd cmd/compile/internal/gc
-GOARCH=sparc64 GOOS=solaris go vet runtime
-cd alt && mk clean && mk bigmov.go.ext
 cd new && mk clean && mk helloworld.out.s
 scp helloworld.out daffodil:
+cd go/test && GOARCH=sparc64 GOOS=solaris run -v -summary -- . | tee /tmp/run.out
 
 reserve R6
 
