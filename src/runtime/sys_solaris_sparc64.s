@@ -200,7 +200,7 @@ allgood:
 
 	// restore libcall
 	MOVD	$m_libcall(L1), L2
-	MOVD	 -(8+0*8)(BFP), L3
+	MOVD	-(8+0*8)(BFP), L3
 	MOVD	L3, libcall_fn(L2)
 	MOVD	-(8+2*8)(BFP), L3
 	MOVD	L3, libcall_args(L2)
