@@ -12,5 +12,5 @@ var _ = unsafe.Sizeof(0)
 //go:linkname time_now_sparc64 time.now
 func time_now_sparc64() (sec int64, nsec int32) {
 	ns := nanotime()
-	return ns / 1000000000, int32(ns % 100000000)
+	return ns / 1000000000, int32(ns % 1000000000)
 }
