@@ -135,7 +135,7 @@ TEXT runtime·tstart_sysvicall(SB),NOSPLIT,$0
 
 // Careful, this is called by __sighndlr, a libc function. We must preserve
 // registers as per SPARC64 ABI.
-TEXT runtime·sigtramp(SB),NOSPLIT,$144
+TEXT runtime·sigtramp(SB),NOSPLIT,$128
 	// check that g exists
 	CMP	g, ZR
 	BNED	allgood
@@ -154,7 +154,7 @@ allgood:
 	MOVD	g_m(g), L1
 	MOVD	$m_libcall(L1), L2
 	MOVD	libcall_fn(L2), L3
-	MOVD	L3, -(8+0*8)(BFP)
+	MOVD	L3, -(8+1*8)(BFP)
 	MOVD	libcall_args(L2), L3
 	MOVD	L3, -(8+2*8)(BFP)
 	MOVD	libcall_n(L2), L3
@@ -177,12 +177,12 @@ allgood:
 	MOVD	32(L2), L3
 	MOVD	L3, -(8+10*8)(BFP)
 	MOVD	40(L2), L3
-	MOVD	L3, -(8+10*8)(BFP)
+	MOVD	L3, -(8+11*8)(BFP)
 
 	// save errno, it might be EINTR; stuff we do here might reset it.
 	MOVD	(m_mOS+mOS_perrno)(L1), L2
 	MOVW	0(L2), L3
-	MOVD	L3, -(8+11*8)(BFP)
+	MOVD	L3, -(8+12*8)(BFP)
 
 	MOVD	g, I3
 	// g = m->gsignal
@@ -200,7 +200,7 @@ allgood:
 
 	// restore libcall
 	MOVD	$m_libcall(L1), L2
-	MOVD	-(8+0*8)(BFP), L3
+	MOVD	-(8+1*8)(BFP), L3
 	MOVD	L3, libcall_fn(L2)
 	MOVD	-(8+2*8)(BFP), L3
 	MOVD	L3, libcall_args(L2)
@@ -223,12 +223,12 @@ allgood:
 	MOVD	L3, 24(L2)
 	MOVD	-(8+10*8)(BFP), L3
 	MOVD	L3, 32(L2)
-	MOVD	-(8+10*8)(BFP), L3
+	MOVD	-(8+11*8)(BFP), L3
 	MOVD	L3, 40(L2)
 
 	// restore errno
 	MOVD	(m_mOS+mOS_perrno)(L1), L2
-	MOVD	-(8+11*8)(BFP), L3
+	MOVD	-(8+12*8)(BFP), L3
 	MOVW	L3, 0(L2)
 
 	// restore g
