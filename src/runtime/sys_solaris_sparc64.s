@@ -240,7 +240,7 @@ exit:
 
 // Runs on OS stack, called from runtime·usleep1_go.
 TEXT runtime·usleep2(SB),NOSPLIT,$0
-	MOVW	usec+0(FP), O0
+	MOVW	us+0(FP), O0
 	MOVD	$libc_usleep(SB), I3
 	CALL	I3
 	RET
