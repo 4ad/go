@@ -118,8 +118,10 @@ TEXT runtime·gogo(SB), NOSPLIT|NOFRAME, $0-8
 	MOVD	gobuf_g(L6), g
 	CALL	runtime·save_g(SB)
 
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
 	MEMBAR	$111
 	FLUSHW
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
 	MEMBAR	$111
 
 	MOVD	0(g), I4	// make sure g is not nil
@@ -165,8 +167,10 @@ TEXT runtime·mcall(SB), NOSPLIT|NOFRAME, $0-8
 	BNED	ok
 	JMP	runtime·badmcall(SB)
 ok:
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
 	MEMBAR	$111
 	FLUSHW
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
 	MEMBAR	$111
 	MOVD	fn+0(FP), CTXT			// context
 	MOVD	0(CTXT), I4			// code pointer
@@ -232,8 +236,10 @@ switch:
 	MOVD	g, (g_sched+gobuf_g)(g)
 
 	// switch to g0
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
 	MEMBAR	$111
 	FLUSHW
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
 	MEMBAR	$111
 	MOVD	L6, g
 	CALL	runtime·save_g(SB)
@@ -251,8 +257,10 @@ switch:
 	CALL	(I1)
 
 	// switch back to g
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
 	MEMBAR	$111
 	FLUSHW
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
 	MEMBAR	$111
 	MOVD	g_m(g), I1
 	MOVD	m_curg(I1), g
@@ -313,8 +321,10 @@ TEXT runtime·morestack(SB),NOSPLIT|NOFRAME,$0-0
 	MOVD	g, (m_morebuf+gobuf_g)(O0)
 
 	// Call newstack on m->g0's stack.
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
 	MEMBAR	$111
 	FLUSHW
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
 	MEMBAR	$111
 	MOVD	m_g0(O0), g
 	CALL	runtime·save_g(SB)
@@ -568,8 +578,10 @@ TEXT ·asmcgocall(SB),NOSPLIT|NOFRAME,$0-20
 	BED	g0
 
 	CALL	gosave<>(SB)
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
 	MEMBAR	$111
 	FLUSHW
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
 	MEMBAR	$111
 	MOVD	L7, g
 	MOVD	(g_sched+gobuf_bp)(g), TMP
@@ -589,8 +601,10 @@ g0:
 
 	// Restore g, stack pointer.
 	// R8 (O0) is errno, so don't touch it
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
 	MEMBAR	$111
 	FLUSHW
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
 	MEMBAR	$111
 	MOVD	L4, g
 	MOVD	(g_stack+stack_hi)(g), TMP
@@ -691,8 +705,10 @@ havem:
 	// In the new goroutine, -16(SP) and -8(SP) are unused.
 	MOVD	m_curg(O0), g
 	CALL	runtime·save_g(SB)
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
 	MEMBAR	$111
 	FLUSHW
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
 	MEMBAR	$111
 	MOVD	(g_sched+gobuf_sp)(g), I4 // prepare stack as I4
 	MOVD	(g_sched+gobuf_pc)(g), L6
@@ -713,8 +729,10 @@ havem:
 	MOVD	g_m(g), O0
 	MOVD	m_g0(O0), g
 	CALL	runtime·save_g(SB)
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
 	MEMBAR	$111
 	FLUSHW
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
 	MEMBAR	$111
 	MOVD	(g_sched+gobuf_sp)(g), TMP
 	MOVD	TMP, BSP

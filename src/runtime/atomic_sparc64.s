@@ -5,5 +5,6 @@
 #include "textflag.h"
 
 TEXT ·publicationBarrier(SB),NOSPLIT|NOFRAME,$0-0
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
 	MEMBAR	$0x6f
 	RET
