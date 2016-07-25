@@ -99,6 +99,8 @@ func (f *elfFile) goarch() string {
 		return "arm"
 	case elf.EM_PPC64:
 		return "ppc64"
+	case elf.EM_SPARCV9:
+		return "sparc64"
 	}
 	return ""
 }
