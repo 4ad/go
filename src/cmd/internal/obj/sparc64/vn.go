@@ -26,7 +26,7 @@
 // THE SOFTWARE.
 
 // Unlike all existing ports (386, amd64, amd64p32, arm, arm64, ppc64,
-// ppc64le), the sparc64 back-end is trully new code, not derived from
+// ppc64le), the sparc64 back-end is truly new code, not derived from
 // Plan9/Inferno code from Vita Nuova. However, the sparc64 back-end
 // has to fit into the Inferno-derived middle-end (cmd/internal/obj),
 // and inherits certain idiosyncrasies. To deal with them, a small
