@@ -61,7 +61,7 @@ var okgoarch = []string{
 	"ppc64",
 	"ppc64le",
 	"s390x",
-	sparc64",
+	"sparc64",
 }
 
 // The known operating systems.
