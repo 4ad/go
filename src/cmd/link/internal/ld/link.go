@@ -202,7 +202,7 @@ func (ctxt *Link) FixedFrameSize() int64 {
 		return int64(4 * ctxt.Arch.Ptrsize)
 	case 'u':
 		// SPARC64 always requires 176 bytes of stack.
-		return 176
+		return int64(16*8 + 6*8)
 	default:
 		return int64(ctxt.Arch.Ptrsize)
 	}
