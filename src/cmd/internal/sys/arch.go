@@ -19,6 +19,7 @@ const (
 	MIPS64
 	PPC64
 	S390X
+	SPARC64
 )
 
 // Arch represents an individual architecture.

@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"cmd/internal/sys"
 )
 
 const REG_NONE = 0
@@ -109,8 +110,8 @@ func CConv(ctxt *Link, s uint8) (sc string) {
 	if s == 0 {
 		return ""
 	}
-	switch ctxt.Arch.Thechar {
-	case '5', '7':
+	switch ctxt.Arch.Family {
+	case sys.ARM, sys.ARM64:
 		sc = armCondCode[(s&C_SCOND)^C_SCOND_XOR]
 		if s&C_SBIT != 0 {
 			sc += ".S"
@@ -124,7 +125,7 @@ func CConv(ctxt *Link, s uint8) (sc string) {
 		if s&C_UBIT != 0 { /* ambiguous with FBIT */
 			sc += ".U"
 		}
-	case 'u':
+	case sys.SPARC64:
 		if s == 1 {
 			sc = ".PN"
 		}
