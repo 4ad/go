@@ -147,3 +147,13 @@ var ArchS390X = &Arch{
 	RegSize:   8,
 	MinLC:     2,
 }
+
+var ArchSPARC64 = &Arch{
+	Name:      "sparc64",
+	Family:    SPARC64,
+	ByteOrder: binary.BigEndian,
+	IntSize:   8,
+	PtrSize:   8,
+	RegSize:   8,
+	MinLC:     4,
+}
