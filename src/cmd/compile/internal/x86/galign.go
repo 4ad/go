@@ -12,27 +12,11 @@ import (
 	"os"
 )
 
-var thechar int = '8'
-
-var thestring string = "386"
-
-var thelinkarch *obj.LinkArch = &x86.Link386
-
-func linkarchinit() {
-}
-
-var MAXWIDTH int64 = (1 << 32) - 1
-
 func betypeinit() {
-	gc.Widthptr = 4
-	gc.Widthint = 4
-	gc.Widthreg = 4
 }
 
 func Main() {
-	gc.Thearch.Thechar = thechar
-	gc.Thearch.Thestring = thestring
-	gc.Thearch.Thelinkarch = thelinkarch
+	gc.Thearch.LinkArch = &x86.Link386
 	gc.Thearch.REGSP = x86.REGSP
 	gc.Thearch.REGCTXT = x86.REGCTXT
 	gc.Thearch.REGCALLX = x86.REG_BX
@@ -52,7 +36,7 @@ func Main() {
 		fmt.Fprintf(os.Stderr, "unsupported setting GO386=%s\n", v)
 		gc.Exit(1)
 	}
-	gc.Thearch.MAXWIDTH = MAXWIDTH
+	gc.Thearch.MAXWIDTH = (1 << 32) - 1
 	gc.Thearch.ReservedRegs = resvd
 
 	gc.Thearch.Betypeinit = betypeinit
@@ -75,7 +59,6 @@ func Main() {
 	gc.Thearch.Ginsnop = ginsnop
 	gc.Thearch.Gmove = gmove
 	gc.Thearch.Igenindex = igenindex
-	gc.Thearch.Linkarchinit = linkarchinit
 	gc.Thearch.Peep = peep
 	gc.Thearch.Proginfo = proginfo
 	gc.Thearch.Regtyp = regtyp

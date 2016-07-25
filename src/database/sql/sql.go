@@ -718,6 +718,9 @@ func (db *DB) maybeOpenNewConnections() {
 	for numRequests > 0 {
 		db.numOpen++ // optimistically
 		numRequests--
+		if db.closed {
+			return
+		}
 		db.openerCh <- struct{}{}
 	}
 }
@@ -838,11 +841,6 @@ func (db *DB) conn(strategy connReuseStrategy) (*driverConn, error) {
 	return dc, nil
 }
 
-var (
-	errConnClosed = errors.New("database/sql: internal sentinel error: conn is closed")
-	errConnBusy   = errors.New("database/sql: internal sentinel error: conn is busy")
-)
-
 // putConnHook is a hook for testing.
 var putConnHook func(*DB, *driverConn)
 
@@ -920,6 +918,9 @@ func (db *DB) putConn(dc *driverConn, err error) {
 // If a connRequest was fulfilled or the *driverConn was placed in the
 // freeConn list, then true is returned, otherwise false is returned.
 func (db *DB) putConnDBLocked(dc *driverConn, err error) bool {
+	if db.closed {
+		return false
+	}
 	if db.maxOpen > 0 && db.numOpen > db.maxOpen {
 		return false
 	}
