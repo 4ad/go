@@ -5,7 +5,6 @@
 package sys
 
 const (
-	TheChar       = 'u'
 	BigEndian     = 1
 	CacheLineSize = 32
 	PhysPageSize  = 8192

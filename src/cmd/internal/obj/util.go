@@ -11,6 +11,8 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"cmd/internal/sys"
 )
 
 const REG_NONE = 0
@@ -104,23 +106,30 @@ const (
 	C_SCOND_XOR = 14
 )
 
-// CConv formats ARM condition codes.
-func CConv(s uint8) string {
+// CConv formats ARM condition codes and SPARC64 instruction suffixes.
+func CConv(ctxt *Link, s uint8) (sc string) {
 	if s == 0 {
 		return ""
 	}
-	sc := armCondCode[(s&C_SCOND)^C_SCOND_XOR]
-	if s&C_SBIT != 0 {
-		sc += ".S"
-	}
-	if s&C_PBIT != 0 {
-		sc += ".P"
-	}
-	if s&C_WBIT != 0 {
-		sc += ".W"
-	}
-	if s&C_UBIT != 0 { /* ambiguous with FBIT */
-		sc += ".U"
+	switch ctxt.Arch.Family {
+	case sys.ARM, sys.ARM64:
+		sc = armCondCode[(s&C_SCOND)^C_SCOND_XOR]
+		if s&C_SBIT != 0 {
+			sc += ".S"
+		}
+		if s&C_PBIT != 0 {
+			sc += ".P"
+		}
+		if s&C_WBIT != 0 {
+			sc += ".W"
+		}
+		if s&C_UBIT != 0 { /* ambiguous with FBIT */
+			sc += ".U"
+		}
+	case sys.SPARC64:
+		if s == 1 {
+			sc = ".PN"
+		}
 	}
 	return sc
 }
@@ -134,7 +143,7 @@ func (p *Prog) String() string {
 		return "<Prog without ctxt>"
 	}
 
-	sc := CConv(p.Scond)
+	sc := CConv(p.Ctxt, p.Scond)
 
 	var buf bytes.Buffer
 
@@ -283,6 +292,9 @@ func Dconv(p *Prog, a *Addr) string {
 
 	case TYPE_ADDR:
 		str = fmt.Sprintf("$%s", Mconv(a))
+		if a.Index != REG_NONE {
+			str += fmt.Sprintf("(%v*%d)", Rconv(int(a.Index)), int(a.Scale))
+		}
 
 	case TYPE_SHIFT:
 		v := int(a.Offset)
@@ -323,7 +335,12 @@ func Mconv(a *Addr) string {
 		case a.Offset == 0:
 			str = fmt.Sprintf("(%v)", Rconv(int(a.Reg)))
 		case a.Offset != 0:
-			str = fmt.Sprintf("%d(%v)", a.Offset, Rconv(int(a.Reg)))
+			// TODO(aram): remove hack
+			reg := Rconv(int(a.Reg))
+			if (reg == "RSP" || reg == "RFP") && a.Offset > 0x7ff {
+				return fmt.Sprintf("%d+176+2047(%v)", a.Offset-0x7ff-176, reg)
+			}
+			str = fmt.Sprintf("%d(%v)", a.Offset, reg)
 		}
 
 	case NAME_EXTERN:
@@ -390,13 +407,14 @@ var regSpace []regSet
 const (
 	// Because of masking operations in the encodings, each register
 	// space should start at 0 modulo some power of 2.
-	RBase386    = 1 * 1024
-	RBaseAMD64  = 2 * 1024
-	RBaseARM    = 3 * 1024
-	RBasePPC64  = 4 * 1024  // range [4k, 8k)
-	RBaseARM64  = 8 * 1024  // range [8k, 13k)
-	RBaseMIPS64 = 13 * 1024 // range [13k, 14k)
-	RBaseS390X  = 14 * 1024 // range [14k, 15k)
+	RBase386     = 1 * 1024
+	RBaseAMD64   = 2 * 1024
+	RBaseARM     = 3 * 1024
+	RBasePPC64   = 4 * 1024  // range [4k, 8k)
+	RBaseARM64   = 8 * 1024  // range [8k, 13k)
+	RBaseMIPS64  = 13 * 1024 // range [13k, 14k)
+	RBaseS390X   = 14 * 1024 // range [14k, 15k)
+	RBaseSPARC64 = 15 * 1024 // range [15k, 16k)
 )
 
 // RegisterRegister binds a pretty-printer (Rconv) for register

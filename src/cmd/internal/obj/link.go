@@ -262,7 +262,7 @@ type ProgInfo struct {
 // that are common to all architectures.
 // However, the majority of opcodes are arch-specific
 // and are declared in their respective architecture's subpackage.
-type As int16
+type As int32
 
 // These are the portable opcodes.
 const (
@@ -303,6 +303,7 @@ const (
 	ABaseARM64
 	ABaseMIPS64
 	ABaseS390X
+	ABaseSPARC64
 
 	AMask = 1<<12 - 1 // AND with this to use the opcode as an array index.
 )
@@ -460,6 +461,12 @@ const (
 	// R_ADDROFF resolves to a 32-bit offset from the beginning of the section
 	// holding the data being relocated to the referenced symbol.
 	R_ADDROFF
+	// R_ADDRSPARC64LO (only used on sparc64) resolves to low 32bits of a
+	// 64-bit address, by loading the address into a register with two instructions.
+	R_ADDRSPARC64LO
+	// R_ADDRSPARC64HI (only used on sparc64) resolves to high 32bits of a
+	// 64-bit address, by loading the address into a register with two instructions.
+	R_ADDRSPARC64HI
 	R_SIZE
 	R_CALL
 	R_CALLARM
@@ -469,6 +476,7 @@ const (
 	// R_CALLMIPS (only used on mips64) resolves to non-PC-relative target address
 	// of a CALL (JAL) instruction, by encoding the address into the instruction.
 	R_CALLMIPS
+	R_CALLSPARC64
 	R_CONST
 	R_PCREL
 	// R_TLS_LE, used on 386, amd64, and ARM, resolves to the offset of the
@@ -482,6 +490,10 @@ const (
 	// is not set on intel platforms but is set to a TLS symbol -- runtime.tlsg -- in
 	// the linker when externally linking).
 	R_TLS_IE
+	// R_SPARC64_TLS_LE is used to implement the "local exec" model for tls
+	// access. It resolves to the offset of the thread-local symbol from the
+	// thread pointer (R7) and inserts this value into a pair of instruction words.
+	R_SPARC64_TLS_LE
 	R_GOTOFF
 	R_PLT0
 	R_PLT1
@@ -692,6 +704,9 @@ func (ctxt *Link) FixedFrameSize() int64 {
 		// PIC code on ppc64le requires 32 bytes of stack, and it's easier to
 		// just use that much stack always on ppc64x.
 		return int64(4 * ctxt.Arch.PtrSize)
+	case sys.SPARC64:
+		// requires a minimum of 176 bytes of stack.
+		return int64(16*8 + 6*8)
 	default:
 		return int64(ctxt.Arch.PtrSize)
 	}

@@ -1187,6 +1187,8 @@ func (p *Package) gccMachine() []string {
 		return []string{"-m64"}
 	case "mips64", "mips64le":
 		return []string{"-mabi=64"}
+	case "sparc64":
+		return []string{"-m64"}
 	}
 	return nil
 }

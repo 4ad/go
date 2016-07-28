@@ -6,6 +6,7 @@ package runtime
 
 import (
 	"runtime/internal/atomic"
+	"runtime/internal/sys"
 	"unsafe"
 )
 
@@ -590,6 +591,13 @@ func recovery(gp *g) {
 	gcUnwindBarriers(gp, sp)
 	gp.sched.sp = sp
 	gp.sched.pc = pc
+	if sys.GoarchSparc64 == 1 {
+		// Function prolog saves the FP here; sp already has
+		// bias applied, so we use it directly. The recovered
+		// fp doesn't have the bias applied. Since gogo expects
+		// biased input, we add the stack bias to the loaded fp.
+		gp.sched.bp = *((*uintptr)(unsafe.Pointer(sp+112))) + sys.StackBias
+	}
 	gp.sched.lr = 0
 	gp.sched.ret = 1
 	gogo(&gp.sched)

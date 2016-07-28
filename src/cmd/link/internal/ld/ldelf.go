@@ -594,6 +594,12 @@ func ldelf(f *bio.Reader, pkg string, length int64, pn string) {
 			Diag("%s: elf object but not s390x", pn)
 			return
 		}
+
+	case sys.SPARC64:
+		if elfobj.machine != ElfMachSparc9 || hdr.Ident[4] != ElfClass64 {
+			Diag("%s: elf object but not sparc64", pn)
+			return
+		}
 	}
 
 	// load section list into memory.

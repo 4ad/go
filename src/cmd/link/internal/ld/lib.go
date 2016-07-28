@@ -89,6 +89,7 @@ type Arch struct {
 	Minalign         int
 	Dwarfregsp       int
 	Dwarfreglr       int
+	StackBias        int
 	Linuxdynld       string
 	Freebsddynld     string
 	Netbsddynld      string
@@ -1122,7 +1123,7 @@ func hostlink() {
 		argv = append(argv, "-shared")
 	}
 
-	if Iself && DynlinkingGo() {
+	if Iself && (DynlinkingGo() || goos == "solaris") {
 		// We force all symbol resolution to be done at program startup
 		// because lazy PLT resolution can use large amounts of stack at
 		// times we cannot allow it to do so.
@@ -1976,7 +1977,10 @@ func genasmsym(put func(*LSym, string, int, int64, int64, int, *LSym)) {
 			obj.SINITARR,
 			obj.SDATA,
 			obj.SNOPTRDATA,
+			obj.SELFSECT,
 			obj.SELFROSECT,
+			obj.SELFRXSECT,
+			obj.SELFGOT,
 			obj.SMACHOGOT,
 			obj.STYPE,
 			obj.SSTRING,

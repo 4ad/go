@@ -19,6 +19,7 @@ const (
 	MIPS64
 	PPC64
 	S390X
+	SPARC64
 )
 
 // Arch represents an individual architecture.
@@ -145,4 +146,14 @@ var ArchS390X = &Arch{
 	PtrSize:   8,
 	RegSize:   8,
 	MinLC:     2,
+}
+
+var ArchSPARC64 = &Arch{
+	Name:      "sparc64",
+	Family:    SPARC64,
+	ByteOrder: binary.BigEndian,
+	IntSize:   8,
+	PtrSize:   8,
+	RegSize:   8,
+	MinLC:     4,
 }

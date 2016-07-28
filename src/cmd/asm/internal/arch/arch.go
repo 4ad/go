@@ -10,6 +10,7 @@ import (
 	"cmd/internal/obj/arm64"
 	"cmd/internal/obj/mips"
 	"cmd/internal/obj/ppc64"
+	"cmd/internal/obj/sparc64"
 	"cmd/internal/obj/s390x"
 	"cmd/internal/obj/x86"
 	"fmt"
@@ -79,6 +80,8 @@ func Set(GOARCH string) *Arch {
 		a := archS390x()
 		a.LinkArch = &s390x.Links390x
 		return a
+	case "sparc64":
+		return archSparc64()
 	}
 	return nil
 }
@@ -475,5 +478,69 @@ func archS390x() *Arch {
 		RegisterPrefix: registerPrefix,
 		RegisterNumber: s390xRegisterNumber,
 		IsJump:         jumpS390x,
+	}
+}
+
+func archSparc64() *Arch {
+	register := make(map[string]int16)
+	// Create maps for easy lookup of instruction names etc.
+	// Note that there is no list of names as there is for 386 and amd64.
+	for i := sparc64.REG_G0; i <= sparc64.REG_I7; i++ {
+		register[sparc64.Rconv(i)] = int16(i)
+	}
+	for i := sparc64.REG_F0; i <= sparc64.REG_F31; i++ {
+		register[sparc64.Rconv(i)] = int16(i)
+	}
+	for i := sparc64.REG_D0; i <= sparc64.REG_D62; i++ {
+		register[sparc64.Rconv(i)] = int16(i)
+	}
+	register["BSP"] = sparc64.REG_BSP
+	register["BFP"] = sparc64.REG_BFP
+	// Avoid accidental confusion between RSP and BSP, always use BSP.
+	delete(register, "RSP")
+	delete(register, "RFP")
+	delete(register, "G6")
+	register["ICC"] = sparc64.REG_ICC
+	register["XCC"] = sparc64.REG_XCC
+	register["FCC0"] = sparc64.REG_FCC0
+	register["FCC1"] = sparc64.REG_FCC1
+	register["FCC2"] = sparc64.REG_FCC2
+	register["FCC3"] = sparc64.REG_FCC3
+	register["CCR"] = sparc64.REG_CCR
+	register["TICK"] = sparc64.REG_TICK
+	register["RPC"] = sparc64.REG_RPC
+	// Pseudo-registers.
+	register["SB"] = RSB
+	register["FP"] = RFP
+	register["PC"] = RPC
+	register["SP"] = RSP
+	registerPrefix := map[string]bool{
+		"D": true,
+		"F": true,
+		"R": true,
+		"O": true,
+		"I": true,
+		"L": true,
+	}
+
+	instructions := make(map[string]obj.As)
+	for i, s := range obj.Anames {
+		instructions[s] = obj.As(i)
+	}
+	for i, s := range sparc64.Anames {
+		if obj.As(i) >= obj.A_ARCHSPECIFIC {
+			instructions[s] = obj.As(i) + obj.ABaseSPARC64
+		}
+	}
+	// Annoying aliases.
+	instructions["BL"] = sparc64.ABL
+
+	return &Arch{
+		LinkArch:       &sparc64.Linksparc64,
+		Instructions:   instructions,
+		Register:       register,
+		RegisterPrefix: registerPrefix,
+		RegisterNumber: sparc64RegisterNumber,
+		IsJump:         jumpSparc64,
 	}
 }

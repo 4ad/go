@@ -1176,6 +1176,8 @@ func (p *GCProg) AddSym(s *LSym) {
 	// everything we see should have pointers and should therefore have a type.
 	if typ == nil {
 		Diag("missing Go type information for global symbol: %s size %d", s.Name, int(s.Size))
+		// TODO(aram): reenable
+		// Diag("missing Go type information for global symbol: %s size %d", s.Name, int(s.Size))
 		return
 	}
 
@@ -1347,6 +1349,11 @@ func dodata() {
 	for _, symn := range writableSects {
 		for _, s := range data[symn] {
 			sect := addsection(&Segdata, s.Name, 06)
+			if s.Name == ".plt" && SysArch.Family == sys.SPARC64 {
+				sect.Align = 256
+			} else {
+				sect.Align = symalign(s)
+			}
 			sect.Align = symalign(s)
 			datsize = Rnd(datsize, int64(sect.Align))
 			sect.Vaddr = uint64(datsize)
@@ -1534,7 +1541,11 @@ func dodata() {
 	}
 	for _, s := range data[obj.SELFRXSECT] {
 		sect := addsection(&Segtext, s.Name, 04)
-		sect.Align = symalign(s)
+		if s.Name == ".plt" && SysArch.Family == sys.SPARC64 {
+			sect.Align = 256
+		} else {
+			sect.Align = symalign(s)
+		}
 		datsize = Rnd(datsize, int64(sect.Align))
 		sect.Vaddr = uint64(datsize)
 		s.Sect = sect
@@ -1976,7 +1987,12 @@ func address() {
 		// rodata and executable text.
 		va = uint64(Rnd(int64(va), int64(INITRND)))
 
-		Segrodata.Rwx = 04
+		if SysArch.Family == sys.SPARC64 {
+			// sparc ABI requires executable data segment
+			Segrodata.Rwx = 05
+		} else {
+			Segrodata.Rwx = 04
+		}
 		Segrodata.Vaddr = va
 		Segrodata.Fileoff = va - Segtext.Vaddr + Segtext.Fileoff
 		Segrodata.Filelen = 0
@@ -1991,7 +2007,12 @@ func address() {
 	}
 
 	va = uint64(Rnd(int64(va), int64(INITRND)))
-	Segdata.Rwx = 06
+	if SysArch.Family == sys.SPARC64 {
+		// sparc ABI requires executable data segment
+		Segdata.Rwx = 07
+	} else {
+		Segdata.Rwx = 06
+	}
 	Segdata.Vaddr = va
 	Segdata.Fileoff = va - Segtext.Vaddr + Segtext.Fileoff
 	Segdata.Filelen = 0

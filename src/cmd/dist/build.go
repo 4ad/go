@@ -61,6 +61,7 @@ var okgoarch = []string{
 	"ppc64",
 	"ppc64le",
 	"s390x",
+	"sparc64",
 }
 
 // The known operating systems.
@@ -637,6 +638,8 @@ func install(dir string) {
 			pathf("%s/src/runtime/funcdata.h", goroot), 0)
 		copyfile(pathf("%s/pkg/include/asm_ppc64x.h", goroot),
 			pathf("%s/src/runtime/asm_ppc64x.h", goroot), 0)
+		copyfile(pathf("%s/pkg/include/asm_sparc64.h", goroot),
+			pathf("%s/src/runtime/asm_sparc64.h", goroot), 0)
 	}
 
 	// Generate any missing files; regenerate existing ones.
@@ -1118,6 +1121,7 @@ var cgoEnabled = map[string]bool{
 	"plan9/amd64":     false,
 	"plan9/arm":       false,
 	"solaris/amd64":   true,
+	"solaris/sparc64": false,
 	"windows/386":     true,
 	"windows/amd64":   true,
 }

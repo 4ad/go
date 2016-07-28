@@ -89,7 +89,7 @@ var sparc64Jump = map[string]bool{
 
 // IsSPARC64CMP reports whether the op (as defined by an arm.A* constant) is
 // one of the comparison instructions that require special handling.
-func IsSPARC64CMP(op int) bool {
+func IsSPARC64CMP(op obj.As) bool {
 	switch op {
 	case sparc64.ACMP, sparc64.AFCMPD, sparc64.AFCMPS:
 		return true

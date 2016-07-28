@@ -691,7 +691,7 @@ opswitch:
 		walkexprlist(n.List.Slice(), init)
 
 		if n.Left.Op == ONAME && n.Left.Sym.Name == "Sqrt" && n.Left.Sym.Pkg.Path == "math" {
-			if Thearch.LinkArch.InFamily(sys.AMD64, sys.ARM, sys.ARM64, sys.PPC64, sys.S390X) {
+			if Thearch.LinkArch.InFamily(sys.AMD64, sys.ARM, sys.ARM64, sys.PPC64, sys.S390X, sys.SPARC64) {
 				n.Op = OSQRT
 				n.Left = n.List.First()
 				n.List.Set(nil)
@@ -3303,7 +3303,7 @@ func samecheap(a *Node, b *Node) bool {
 // The result of walkrotate MUST be assigned back to n, e.g.
 // 	n.Left = walkrotate(n.Left)
 func walkrotate(n *Node) *Node {
-	if Thearch.LinkArch.InFamily(sys.MIPS64, sys.ARM64, sys.PPC64) {
+	if Thearch.LinkArch.InFamily(sys.MIPS64, sys.ARM64, sys.PPC64, sys.SPARC64) {
 		return n
 	}
 
@@ -3435,7 +3435,7 @@ func walkdiv(n *Node, init *Nodes) *Node {
 	// if >= 0, nr is 1<<pow // 1 if nr is negative.
 
 	// TODO(minux)
-	if Thearch.LinkArch.InFamily(sys.MIPS64, sys.PPC64) {
+	if Thearch.LinkArch.InFamily(sys.MIPS64, sys.PPC64, sys.SPARC64) {
 		return n
 	}
 

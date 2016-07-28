@@ -246,4 +246,5 @@ var byteOrders = map[string]binary.ByteOrder{
 	"ppc64":   binary.BigEndian,
 	"ppc64le": binary.LittleEndian,
 	"s390x":   binary.BigEndian,
+	"sparc64": binary.BigEndian,
 }

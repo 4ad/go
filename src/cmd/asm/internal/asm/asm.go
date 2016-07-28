@@ -37,6 +37,12 @@ func (p *Parser) append(prog *obj.Prog, cond string, doLabel bool) {
 				return
 			}
 
+		case sys.SPARC64:
+			if !arch.SPARC64Suffix(prog, cond) {
+				p.errorf("unrecognized suffix .%q", cond)
+				return
+			}
+
 		default:
 			p.errorf("unrecognized suffix .%q", cond)
 			return
@@ -543,6 +549,10 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 				prog.Reg = p.getRegister(prog, op, &a[1])
 				break
 			}
+		} else if p.arch.Family == sys.SPARC64 && arch.IsSPARC64CMP(op) {
+			prog.From = a[0]
+			prog.Reg = p.getRegister(prog, op, &a[1])
+			break
 		}
 		prog.From = a[0]
 		prog.To = a[1]
@@ -631,6 +641,22 @@ func (p *Parser) asmInstruction(op obj.As, cond string, a []obj.Addr) {
 				prog.From = a[0]
 			}
 			prog.To = a[2]
+		case sys.SPARC64:
+			// Choices are:
+			// reg reg reg
+			// reg something reg
+			// If the second argument is a register, use Reg,
+			// otherwise use From3.
+			switch a[1].Type {
+			case obj.TYPE_REG:
+				prog.From = a[0]
+				prog.Reg = p.getRegister(prog, op, &a[1])
+				prog.To = a[2]
+			default:
+				prog.From = a[0]
+				prog.From3 = newAddr(a[1])
+				prog.To = a[2]
+			}
 		default:
 			p.errorf("TODO: implement three-operand instructions for this architecture")
 			return

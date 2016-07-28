@@ -274,6 +274,12 @@ solaris_amd64)
 	mksysnum=
 	mktypes="GOARCH=$GOARCH go tool cgo -godefs"
 	;;
+solaris_sparc64)
+	mksyscall="./mksyscall_solaris.pl"
+	mkerrors="$mkerrors -m64"
+	mksysnum=
+	mktypes="GOARCH=$GOARCH go tool cgo -godefs"
+	;;
 windows_*)
 	echo 'run "go generate syscall_windows.go" instead' 1>&2
 	exit 1

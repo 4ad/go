@@ -181,7 +181,7 @@ TEXT time·now(SB),NOSPLIT,$0-12
 	CALL	nanotime<>(SB)
 
 	// generated code for
-	//	func f(x uint64) (uint64, uint64) { return x/1000000000, x%100000000 }
+	//	func f(x uint64) (uint64, uint64) { return x/1000000000, x%1000000000 }
 	// adapted to reduce duplication
 	MOVQ	AX, CX
 	MOVQ	$1360296554856532783, AX

@@ -131,12 +131,12 @@ func (p *Parser) line() bool {
 		for {
 			tok = p.lex.Next()
 			if len(operands) == 0 && len(items) == 0 {
-				if p.arch.InFamily(sys.ARM, sys.ARM64) && tok == '.' {
-					// ARM conditionals.
+				if p.arch.InFamily(sys.ARM, sys.ARM64, sys.SPARC64) && tok == '.' {
+					// ARM and SPARC64 conditionals.
 					tok = p.lex.Next()
 					str := p.lex.Text()
 					if tok != scanner.Ident {
-						p.errorf("ARM condition expected identifier, found %s", str)
+						p.errorf("ARM/SPARC64 condition expected identifier, found %s", str)
 					}
 					cond = cond + "." + str
 					continue
@@ -484,7 +484,7 @@ func (p *Parser) register(name string, prefix rune) (r1, r2 int16, scale int8, o
 				return
 			}
 		case '+':
-			if p.arch.Family != sys.PPC64 {
+			if !p.arch.InFamily(sys.PPC64, sys.SPARC64) {
 				p.errorf("(register+register) not supported on this architecture")
 				return
 			}
@@ -662,13 +662,20 @@ func (p *Parser) registerIndirect(a *obj.Addr, prefix rune) {
 			// Nothing may follow
 			return
 		}
-		if p.arch.Family == sys.PPC64 {
-			// Special form for PPC64: (R1+R2); alias for (R1)(R2*1).
-			if prefix != 0 || scale != 0 {
+		if p.arch.InFamily(sys.PPC64, sys.SPARC64) {
+			// Special form for PPC64, SPARC64: (R1+R2); alias for (R1)(R2*1).
+			if scale != 0 {
+				p.errorf("illegal address mode for register+register")
+				return
+			}
+			if prefix != 0 && prefix != '$' {
 				p.errorf("illegal address mode for register+register")
 				return
 			}
 			a.Type = obj.TYPE_MEM
+			if prefix == '$' {
+				a.Type = obj.TYPE_ADDR
+			}
 			a.Scale = 1
 			a.Index = r2
 			// Nothing may follow.

@@ -35,6 +35,8 @@ import (
 
 const usesLR = sys.MinFrameSize > 0
 
+const ReturnAddrOffset = sys.GoarchSparc64 * 120
+
 var (
 	// initialized in tracebackinit
 	goexitPC             uintptr
@@ -184,7 +186,7 @@ func gentraceback(pc0, sp0, lr0 uintptr, gp *g, skip int, pcbuf *uintptr, max in
 	// Start in the caller's frame.
 	if frame.pc == 0 {
 		if usesLR {
-			frame.pc = *(*uintptr)(unsafe.Pointer(frame.sp))
+			frame.pc = *(*uintptr)(unsafe.Pointer(frame.sp + ReturnAddrOffset))
 			frame.lr = 0
 		} else {
 			frame.pc = uintptr(*(*sys.Uintreg)(unsafe.Pointer(frame.sp)))
@@ -286,7 +288,7 @@ func gentraceback(pc0, sp0, lr0 uintptr, gp *g, skip int, pcbuf *uintptr, max in
 			var lrPtr uintptr
 			if usesLR {
 				if n == 0 && frame.sp < frame.fp || frame.lr == 0 {
-					lrPtr = frame.sp
+					lrPtr = frame.sp + ReturnAddrOffset
 					frame.lr = *(*uintptr)(unsafe.Pointer(lrPtr))
 				}
 			} else {
@@ -451,7 +453,7 @@ func gentraceback(pc0, sp0, lr0 uintptr, gp *g, skip int, pcbuf *uintptr, max in
 		// On link register architectures, sighandler saves the LR on stack
 		// before faking a call to sigpanic.
 		if usesLR && waspanic {
-			x := *(*uintptr)(unsafe.Pointer(frame.sp))
+			x := *(*uintptr)(unsafe.Pointer(frame.sp + ReturnAddrOffset))
 			frame.sp += sys.MinFrameSize
 			if GOARCH == "arm64" {
 				// arm64 needs 16-byte aligned SP, always

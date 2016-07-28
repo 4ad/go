@@ -85,7 +85,7 @@ func Gbranch(as obj.As, t *Type, likely int) *obj.Prog {
 	p := Prog(as)
 	p.To.Type = obj.TYPE_BRANCH
 	p.To.Val = nil
-	if as != obj.AJMP && likely != 0 && !Thearch.LinkArch.InFamily(sys.PPC64, sys.ARM64, sys.MIPS64, sys.S390X) {
+	if as != obj.AJMP && likely != 0 && !Thearch.LinkArch.InFamily(sys.PPC64, sys.ARM64, sys.MIPS64, sys.S390X, sys.SPARC64) {
 		p.From.Type = obj.TYPE_CONST
 		if likely > 0 {
 			p.From.Offset = 1
@@ -447,7 +447,7 @@ func Naddr(a *obj.Addr, n *Node) {
 	case OADDR:
 		Naddr(a, n.Left)
 		a.Etype = uint8(Tptr)
-		if !Thearch.LinkArch.InFamily(sys.MIPS64, sys.ARM, sys.ARM64, sys.PPC64, sys.S390X) { // TODO(rsc): Do this even for these architectures.
+		if !Thearch.LinkArch.InFamily(sys.MIPS64, sys.ARM, sys.ARM64, sys.PPC64, sys.S390X, sys.SPARC64) { // TODO(rsc): Do this even for these architectures.
 			a.Width = int64(Widthptr)
 		}
 		if a.Type != obj.TYPE_MEM {
@@ -651,8 +651,8 @@ func unpatch(p *obj.Prog) *obj.Prog {
 	return q
 }
 
-var reg [100]int       // count of references to reg
-var regstk [100][]byte // allocation sites, when -v is given
+var reg [128]int       // count of references to reg
+var regstk [128][]byte // allocation sites, when -v is given
 
 func GetReg(r int) int {
 	return reg[r-Thearch.REGMIN]

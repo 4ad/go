@@ -513,4 +513,6 @@ const (
 	DW_CFA_advance_loc = 0x1 << 6 // +delta
 	DW_CFA_offset      = 0x2 << 6 // +register (ULEB128 offset)
 	DW_CFA_restore     = 0x3 << 6 // +register
+
+	DW_CFA_GNU_window_save = 0x2d
 )

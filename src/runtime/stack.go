@@ -65,7 +65,8 @@ const (
 	// to each stack below the usual guard area for OS-specific
 	// purposes like signal handling. Used on Windows, Plan 9,
 	// and Darwin/ARM because they do not use a separate stack.
-	_StackSystem = sys.GoosWindows*512*sys.PtrSize + sys.GoosPlan9*512 + sys.GoosDarwin*sys.GoarchArm*1024
+	// TODO(aram): explain why for sparc64
+	_StackSystem = sys.GoosWindows*512*sys.PtrSize + sys.GoosPlan9*512 + sys.GoosDarwin*sys.GoarchArm*1024 + sys.GoarchSparc64*65535
 
 	// The minimum size of stack used by Go code
 	_StackMin = 2048
@@ -523,6 +524,29 @@ var ptrnames = []string{
 // +------------------+
 // |  return address  |
 // +------------------+ <- frame->sp
+//
+// (sparc64)
+//                 +------------------+
+//                 | args from caller |
+// RFP+BIAS+176 -> +------------------+ <- frame->argp
+//                 |    save area     |
+//                 +------------------+
+//                 | caller's retaddr |
+// RFP+BIAS+120 -> +------------------+
+//                 |   caller's RFP   |
+// RFP+BIAS+112 -> +------------------+
+//                 |     save area    |                 CALLER
+// --- RFP+BIAS -> +------------------+ <- frame->varp -------
+//                 |      locals      |                 CALLEE
+//                 +------------------+
+//                 |  args to callee  |
+// RSP+BIAS+176 -> +------------------+
+//                 |     save area    |
+//                 +------------------+
+//                 |  return address  |
+// RSP+BIAS+120 -> +------------------+
+//                 |     save area    |
+//     RSP+BIAS -> +------------------+ <- frame->sp
 
 type adjustinfo struct {
 	old   stack

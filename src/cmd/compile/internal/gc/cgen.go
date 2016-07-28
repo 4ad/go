@@ -252,7 +252,7 @@ func cgen_wb(n, res *Node, wb bool) {
 		return
 	}
 
-	if Ctxt.Arch.InFamily(sys.ARM64, sys.MIPS64, sys.PPC64) {
+	if Ctxt.Arch.InFamily(sys.ARM64, sys.MIPS64, sys.PPC64, sys.SPARC64) {
 		// if both are addressable, move
 		if n.Addable {
 			if n.Op == OREGISTER || res.Op == OREGISTER {
@@ -402,7 +402,7 @@ func cgen_wb(n, res *Node, wb bool) {
 		Regalloc(&n1, nl.Type, res)
 
 		Cgen(nl, &n1)
-		if Ctxt.Arch.Family == sys.ARM {
+		if Ctxt.Arch.InFamily(sys.ARM, sys.SPARC64) {
 			var n2 Node
 			Nodconst(&n2, nl.Type, 0)
 			Thearch.Gins(a, &n2, &n1)
@@ -751,14 +751,14 @@ abop: // asymmetric binary
 		Regalloc(&n1, nl.Type, res)
 		Cgen(nl, &n1)
 
-		if Smallintconst(nr) && Ctxt.Arch.Family != sys.MIPS64 && Ctxt.Arch.Family != sys.ARM && Ctxt.Arch.Family != sys.ARM64 && Ctxt.Arch.Family != sys.PPC64 { // TODO(rsc): Check opcode for arm
+		if Smallintconst(nr) && !Ctxt.Arch.InFamily(sys.MIPS64, sys.ARM, sys.ARM64, sys.PPC64, sys.SPARC64) { // TODO(rsc): Check opcode for arm
 			n2 = *nr
 		} else {
 			Regalloc(&n2, nr.Type, nil)
 			Cgen(nr, &n2)
 		}
 	} else {
-		if Smallintconst(nr) && Ctxt.Arch.Family != sys.MIPS64 && Ctxt.Arch.Family != sys.ARM && Ctxt.Arch.Family != sys.ARM64 && Ctxt.Arch.Family != sys.PPC64 { // TODO(rsc): Check opcode for arm
+		if Smallintconst(nr) && !Ctxt.Arch.InFamily(sys.MIPS64, sys.ARM, sys.ARM64, sys.PPC64, sys.SPARC64) { // TODO(rsc): Check opcode for arm
 			n2 = *nr
 		} else {
 			Regalloc(&n2, nr.Type, res)
@@ -1828,7 +1828,7 @@ func bgenx(n, res *Node, wantTrue bool, likely int, to *obj.Prog) {
 		// Some architectures might need a temporary or other help here,
 		// but they don't support direct generation of a bool value yet.
 		// We can fix that as we go.
-		mayNeedTemp := Ctxt.Arch.InFamily(sys.ARM, sys.ARM64, sys.MIPS64, sys.PPC64, sys.S390X)
+		mayNeedTemp := Ctxt.Arch.InFamily(sys.ARM, sys.ARM64, sys.MIPS64, sys.PPC64, sys.S390X, sys.SPARC64)
 
 		if genval {
 			if mayNeedTemp {
@@ -2112,9 +2112,9 @@ func bgenx(n, res *Node, wantTrue bool, likely int, to *obj.Prog) {
 				}
 				return
 			}
-		case sys.ARM64, sys.PPC64:
+		case sys.ARM64, sys.PPC64, sys.SPARC64:
 			if genval {
-				Fatalf("genval 7g, 9g Isfloat special cases not implemented")
+				Fatalf("genval 7g, 9g, ug Isfloat special cases not implemented")
 			}
 			switch n.Op {
 			// On arm64 and ppc64, <= and >= mishandle NaN. Must decompose into < or > and =.
@@ -2627,7 +2627,7 @@ func hasHMUL64() bool {
 	switch Ctxt.Arch.Family {
 	case sys.AMD64, sys.S390X, sys.ARM64:
 		return true
-	case sys.ARM, sys.I386, sys.MIPS64, sys.PPC64:
+	case sys.ARM, sys.I386, sys.MIPS64, sys.PPC64, sys.SPARC64:
 		return false
 	}
 	Fatalf("unknown architecture")
@@ -2640,7 +2640,7 @@ func hasRROTC64() bool {
 	switch Ctxt.Arch.Family {
 	case sys.AMD64:
 		return true
-	case sys.ARM, sys.ARM64, sys.I386, sys.MIPS64, sys.PPC64, sys.S390X:
+	case sys.ARM, sys.ARM64, sys.I386, sys.MIPS64, sys.PPC64, sys.S390X, sys.SPARC64:
 		return false
 	}
 	Fatalf("unknown architecture")
@@ -2651,7 +2651,7 @@ func hasRightShiftWithCarry() bool {
 	switch Ctxt.Arch.Family {
 	case sys.ARM64:
 		return true
-	case sys.AMD64, sys.ARM, sys.I386, sys.MIPS64, sys.PPC64, sys.S390X:
+	case sys.AMD64, sys.ARM, sys.I386, sys.MIPS64, sys.PPC64, sys.S390X, sys.SPARC64:
 		return false
 	}
 	Fatalf("unknown architecture")
@@ -2662,7 +2662,7 @@ func hasAddSetCarry() bool {
 	switch Ctxt.Arch.Family {
 	case sys.ARM64:
 		return true
-	case sys.AMD64, sys.ARM, sys.I386, sys.MIPS64, sys.PPC64, sys.S390X:
+	case sys.AMD64, sys.ARM, sys.I386, sys.MIPS64, sys.PPC64, sys.S390X, sys.SPARC64:
 		return false
 	}
 	Fatalf("unknown architecture")

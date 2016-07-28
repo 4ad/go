@@ -452,6 +452,10 @@ func schedinit() {
 
 	sched.lastpoll = uint64(nanotime())
 	procs := int(ncpu)
+	// TODO(shawn): temporary while runtime is being debugged
+	if sys.GoarchSparc64 == 1 {
+		procs = 1
+	}
 	if procs > _MaxGomaxprocs {
 		procs = _MaxGomaxprocs
 	}
@@ -2757,7 +2761,7 @@ func newproc1(fn *funcval, argp *uint8, narg int32, nret int32, callerpc uintptr
 	spArg := sp
 	if usesLR {
 		// caller's LR
-		*(*unsafe.Pointer)(unsafe.Pointer(sp)) = nil
+		*(*unsafe.Pointer)(unsafe.Pointer(sp + ReturnAddrOffset)) = nil
 		prepGoExitFrame(sp)
 		spArg += sys.MinFrameSize
 	}

@@ -42,7 +42,7 @@ const (
 
 	// Do not insert instructions to allocate a stack frame for this function.
 	// Only valid on functions that declare a frame size of 0.
-	// TODO(mwhudson): only implemented for ppc64x at present.
+	// TODO(mwhudson): only implemented for ppc64x and sparc64 at present.
 	NOFRAME = 512
 
 	// Function can call reflect.Type.Method or reflect.Type.MethodByName.

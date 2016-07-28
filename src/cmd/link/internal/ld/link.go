@@ -196,6 +196,9 @@ func (ctxt *Link) FixedFrameSize() int64 {
 		// PIC code on ppc64le requires 32 bytes of stack, and it's easier to
 		// just use that much stack always on ppc64x.
 		return int64(4 * ctxt.Arch.PtrSize)
+	case sys.SPARC64:
+		// SPARC64 always requires 176 bytes of stack.
+		return int64(16*8 + 6*8)
 	default:
 		return int64(ctxt.Arch.PtrSize)
 	}

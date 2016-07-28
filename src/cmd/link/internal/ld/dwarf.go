@@ -16,6 +16,7 @@ package ld
 
 import (
 	"cmd/internal/obj"
+	"cmd/internal/sys"
 	"fmt"
 	"log"
 	"os"
@@ -174,6 +175,7 @@ var abbrevs = [DW_NABRV]DWAbbrev{
 			{DW_AT_low_pc, DW_FORM_addr},
 			{DW_AT_high_pc, DW_FORM_addr},
 			{DW_AT_external, DW_FORM_flag},
+			{DW_AT_frame_base, DW_FORM_block1},
 		},
 	},
 
@@ -1383,6 +1385,7 @@ func putpclcdelta(s *LSym, delta_pc int64, delta_lc int64) {
 	Adduint8(Ctxt, s, DW_LNS_copy)
 }
 
+// TODO(shawn): replaced by newfboffsetattr?
 func newcfaoffsetattr(die *DWDie, offs int32) {
 	var block [20]byte
 	b := append(block[:0], DW_OP_call_frame_cfa)
@@ -1393,6 +1396,13 @@ func newcfaoffsetattr(die *DWDie, offs int32) {
 		b = append(b, DW_OP_plus)
 	}
 
+	newattr(die, DW_AT_location, DW_CLS_BLOCK, int64(len(b)), b)
+}
+
+func newfboffsetattr(die *DWDie, offs int32) {
+	var block [20]byte
+	b := append(block[:0], DW_OP_fbreg)
+	b = appendSleb128(b, int64(offs))
 	newattr(die, DW_AT_location, DW_CLS_BLOCK, int64(len(b)), b)
 }
 
@@ -1507,6 +1517,7 @@ func writelines(prev *LSym) *LSym {
 		if s.Version == 0 {
 			newattr(dwfunc, DW_AT_external, DW_CLS_FLAG, 1, 0)
 		}
+		newattr(dwfunc, DW_AT_frame_base, DW_CLS_BLOCK, 1, []byte{DW_OP_call_frame_cfa})
 
 		if s.FuncInfo == nil {
 			continue
@@ -1589,7 +1600,7 @@ func writelines(prev *LSym) *LSym {
 			}
 
 			dwvar := newdie(dwfunc, dt, n, 0)
-			newcfaoffsetattr(dwvar, int32(offs))
+			newfboffsetattr(dwvar, int32(offs))
 			newrefattr(dwvar, DW_AT_type, defgotype(a.Gotype))
 
 			// push dwvar down dwfunc->child to preserve order
@@ -1649,6 +1660,22 @@ func appendPCDeltaCFA(b []byte, deltapc, cfa int64) []byte {
 	return b
 }
 
+// appendPCDeltaCFA_SPARC appends per-PC CFA deltas to b and returns the final slice.
+func appendPCDeltaCFA_SPARC(b []byte, deltapc, cfa int64) []byte {
+	if deltapc < 176 {
+		b = append(b, DW_CFA_advance_loc4)
+		b = Thearch.Append32(b, uint32(deltapc))
+		return b
+	}
+	b = append(b, DW_CFA_GNU_window_save)
+	b = append(b, DW_CFA_register)
+	b = appendUleb128(b, uint64(15))
+	b = appendUleb128(b, uint64(31))
+	b = append(b, DW_CFA_def_cfa_register)
+	b = appendUleb128(b, uint64(30))
+	return b
+}
+
 func writeframes(prev *LSym) *LSym {
 	if framesec == nil {
 		framesec = Linklookup(Ctxt, ".debug_frame", 0)
@@ -1674,7 +1701,7 @@ func writeframes(prev *LSym) *LSym {
 	Adduint8(Ctxt, fs, DW_CFA_def_cfa)        // Set the current frame address..
 	uleb128put(fs, int64(Thearch.Dwarfregsp)) // ...to use the value in the platform's SP register (defined in l.go)...
 	if haslinkregister() {
-		uleb128put(fs, int64(0)) // ...plus a 0 offset.
+		uleb128put(fs, int64(0) + int64(Thearch.StackBias)) // ...plus a 0 offset.
 
 		Adduint8(Ctxt, fs, DW_CFA_same_value) // The platform's link register is unchanged during the prologue.
 		uleb128put(fs, int64(Thearch.Dwarfreglr))
@@ -1738,7 +1765,10 @@ func writeframes(prev *LSym) *LSym {
 					deltaBuf = append(deltaBuf, DW_CFA_same_value)
 					deltaBuf = appendUleb128(deltaBuf, uint64(Thearch.Dwarfreglr))
 				}
-				deltaBuf = appendPCDeltaCFA(deltaBuf, int64(nextpc)-int64(pcsp.pc), int64(pcsp.value))
+				if SysArch.Family == sys.SPARC64 {
+					deltaBuf = appendPCDeltaCFA_SPARC(deltaBuf, int64(nextpc)-int64(pcsp.pc), int64(pcsp.value)) } else {
+					deltaBuf = appendPCDeltaCFA(deltaBuf, int64(nextpc)-int64(pcsp.pc), int64(pcsp.value))
+				}
 			} else {
 				deltaBuf = appendPCDeltaCFA(deltaBuf, int64(nextpc)-int64(pcsp.pc), int64(SysArch.PtrSize)+int64(pcsp.value))
 			}

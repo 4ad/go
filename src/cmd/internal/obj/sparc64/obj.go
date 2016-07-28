@@ -6,13 +6,13 @@ package sparc64
 
 import (
 	"cmd/internal/obj"
-	"encoding/binary"
+	"cmd/internal/sys"
 	"fmt"
 	"log"
 	"math"
 )
 
-var isUncondJump = map[int16]bool{
+var isUncondJump = map[obj.As]bool{
 	obj.ACALL:     true,
 	obj.ADUFFZERO: true,
 	obj.ADUFFCOPY: true,
@@ -23,7 +23,7 @@ var isUncondJump = map[int16]bool{
 	ARETRESTORE:   true,
 }
 
-var isCondJump = map[int16]bool{
+var isCondJump = map[obj.As]bool{
 	ABN:    true,
 	ABNE:   true,
 	ABE:    true,
@@ -92,7 +92,7 @@ var isCondJump = map[int16]bool{
 	AFBO:   true,
 }
 
-var isJump = make(map[int16]bool)
+var isJump = make(map[obj.As]bool)
 
 func init() {
 	for k := range isUncondJump {
@@ -132,13 +132,13 @@ func autoeditaddr(ctxt *obj.Link, a *obj.Addr) *obj.Addr {
 			r.Reg = REG_RSP
 		}
 		r.Offset += MinStackFrameSize + StackBias
-		r.Name = obj.TYPE_NONE
+		r.Name = obj.NAME_NONE
 		return r
 	}
 	if r.Name == obj.NAME_AUTO {
 		r.Reg = REG_RFP
 		r.Offset += StackBias
-		r.Name = obj.TYPE_NONE
+		r.Name = obj.NAME_NONE
 	}
 	return r
 }
@@ -402,7 +402,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 		switch p.As {
 		case obj.ATEXT:
 			if cursym.Text.Mark&LEAF != 0 {
-				cursym.Leaf = 1
+				cursym.Leaf = true
 			}
 		}
 	}
@@ -518,7 +518,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				q.As = AMOVD
 				q.From.Type = obj.TYPE_MEM
 				q.From.Reg = REG_G
-				q.From.Offset = 4 * int64(ctxt.Arch.Ptrsize) // G.panic
+				q.From.Offset = 4 * int64(ctxt.Arch.PtrSize) // G.panic
 				q.To.Type = obj.TYPE_REG
 				q.To.Reg = REG_L1
 
@@ -652,7 +652,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 	}
 }
 
-func relinv(a int) int {
+func relinv(a obj.As) obj.As {
 	switch a {
 	case obj.AJMP:
 		return ABN
@@ -768,7 +768,7 @@ func relinv(a int) int {
 	return 0
 }
 
-var unaryDst = map[int]bool{
+var unaryDst = map[obj.As]bool{
 	obj.ACALL: true,
 	obj.AJMP:  true,
 	AWORD:     true,
@@ -806,15 +806,10 @@ var unaryDst = map[int]bool{
 }
 
 var Linksparc64 = obj.LinkArch{
-	ByteOrder:  binary.BigEndian,
-	Name:       "sparc64",
-	Thechar:    'u',
+	Arch:       sys.ArchSPARC64,
 	Preprocess: preprocess,
 	Assemble:   span,
 	Follow:     follow,
 	Progedit:   progedit,
 	UnaryDst:   unaryDst,
-	Minlc:      4,
-	Ptrsize:    8,
-	Regsize:    8,
 }

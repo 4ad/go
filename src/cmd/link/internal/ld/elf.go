@@ -639,62 +639,86 @@ const (
 	R_PPC64_REL16_HI          = 251
 	R_PPC64_REL16_HA          = 252
 
-	R_SPARC_NONE     = 0
-	R_SPARC_8        = 1
-	R_SPARC_16       = 2
-	R_SPARC_32       = 3
-	R_SPARC_DISP8    = 4
-	R_SPARC_DISP16   = 5
-	R_SPARC_DISP32   = 6
-	R_SPARC_WDISP30  = 7
-	R_SPARC_WDISP22  = 8
-	R_SPARC_HI22     = 9
-	R_SPARC_22       = 10
-	R_SPARC_13       = 11
-	R_SPARC_LO10     = 12
-	R_SPARC_GOT10    = 13
-	R_SPARC_GOT13    = 14
-	R_SPARC_GOT22    = 15
-	R_SPARC_PC10     = 16
-	R_SPARC_PC22     = 17
-	R_SPARC_WPLT30   = 18
-	R_SPARC_COPY     = 19
-	R_SPARC_GLOB_DAT = 20
-	R_SPARC_JMP_SLOT = 21
-	R_SPARC_RELATIVE = 22
-	R_SPARC_UA32     = 23
-	R_SPARC_PLT32    = 24
-	R_SPARC_HIPLT22  = 25
-	R_SPARC_LOPLT10  = 26
-	R_SPARC_PCPLT32  = 27
-	R_SPARC_PCPLT22  = 28
-	R_SPARC_PCPLT10  = 29
-	R_SPARC_10       = 30
-	R_SPARC_11       = 31
-	R_SPARC_64       = 32
-	R_SPARC_OLO10    = 33
-	R_SPARC_HH22     = 34
-	R_SPARC_HM10     = 35
-	R_SPARC_LM22     = 36
-	R_SPARC_PC_HH22  = 37
-	R_SPARC_PC_HM10  = 38
-	R_SPARC_PC_LM22  = 39
-	R_SPARC_WDISP16  = 40
-	R_SPARC_WDISP19  = 41
-	R_SPARC_GLOB_JMP = 42
-	R_SPARC_7        = 43
-	R_SPARC_5        = 44
-	R_SPARC_6        = 45
-	R_SPARC_DISP64   = 46
-	R_SPARC_PLT64    = 47
-	R_SPARC_HIX22    = 48
-	R_SPARC_LOX10    = 49
-	R_SPARC_H44      = 50
-	R_SPARC_M44      = 51
-	R_SPARC_L44      = 52
-	R_SPARC_REGISTER = 53
-	R_SPARC_UA64     = 54
-	R_SPARC_UA16     = 55
+	R_SPARC_NONE          = 0
+	R_SPARC_8             = 1
+	R_SPARC_16            = 2
+	R_SPARC_32            = 3
+	R_SPARC_DISP8         = 4
+	R_SPARC_DISP16        = 5
+	R_SPARC_DISP32        = 6
+	R_SPARC_WDISP30       = 7
+	R_SPARC_WDISP22       = 8
+	R_SPARC_HI22          = 9
+	R_SPARC_22            = 10
+	R_SPARC_13            = 11
+	R_SPARC_LO10          = 12
+	R_SPARC_GOT10         = 13
+	R_SPARC_GOT13         = 14
+	R_SPARC_GOT22         = 15
+	R_SPARC_PC10          = 16
+	R_SPARC_PC22          = 17
+	R_SPARC_WPLT30        = 18
+	R_SPARC_COPY          = 19
+	R_SPARC_GLOB_DAT      = 20
+	R_SPARC_JMP_SLOT      = 21
+	R_SPARC_RELATIVE      = 22
+	R_SPARC_UA32          = 23
+	R_SPARC_PLT32         = 24
+	R_SPARC_HIPLT22       = 25
+	R_SPARC_LOPLT10       = 26
+	R_SPARC_PCPLT32       = 27
+	R_SPARC_PCPLT22       = 28
+	R_SPARC_PCPLT10       = 29
+	R_SPARC_10            = 30
+	R_SPARC_11            = 31
+	R_SPARC_64            = 32
+	R_SPARC_OLO10         = 33
+	R_SPARC_HH22          = 34
+	R_SPARC_HM10          = 35
+	R_SPARC_LM22          = 36
+	R_SPARC_PC_HH22       = 37
+	R_SPARC_PC_HM10       = 38
+	R_SPARC_PC_LM22       = 39
+	R_SPARC_WDISP16       = 40
+	R_SPARC_WDISP19       = 41
+	R_SPARC_GLOB_JMP      = 42
+	R_SPARC_7             = 43
+	R_SPARC_5             = 44
+	R_SPARC_6             = 45
+	R_SPARC_DISP64        = 46
+	R_SPARC_PLT64         = 47
+	R_SPARC_HIX22         = 48
+	R_SPARC_LOX10         = 49
+	R_SPARC_H44           = 50
+	R_SPARC_M44           = 51
+	R_SPARC_L44           = 52
+	R_SPARC_REGISTER      = 53
+	R_SPARC_UA64          = 54
+	R_SPARC_UA16          = 55
+	R_SPARC_TLS_GD_HI22   = 56
+	R_SPARC_TLS_GD_LO10   = 57
+	R_SPARC_TLS_GD_ADD    = 58
+	R_SPARC_TLS_GD_CALL   = 59
+	R_SPARC_TLS_LDM_HI22  = 60
+	R_SPARC_TLS_LDM_LO10  = 61
+	R_SPARC_TLS_LDM_ADD   = 62
+	R_SPARC_TLS_LDM_CALL  = 63
+	R_SPARC_TLS_LDO_HIX22 = 64
+	R_SPARC_TLS_LDO_LOX10 = 65
+	R_SPARC_TLS_LDO_ADD   = 66
+	R_SPARC_TLS_IE_HI22   = 67
+	R_SPARC_TLS_IE_LO10   = 68
+	R_SPARC_TLS_IE_LD     = 69
+	R_SPARC_TLS_IE_LDX    = 70
+	R_SPARC_TLS_IE_ADD    = 71
+	R_SPARC_TLS_LE_HIX22  = 72
+	R_SPARC_TLS_LE_LOX10  = 73
+	R_SPARC_TLS_DTPMOD32  = 74
+	R_SPARC_TLS_DTPMOD64  = 75
+	R_SPARC_TLS_DTPOFF32  = 76
+	R_SPARC_TLS_DTPOFF64  = 77
+	R_SPARC_TLS_TPOFF32   = 78
+	R_SPARC_TLS_TPOFF64   = 79
 
 	R_390_NONE        = 0
 	R_390_8           = 1
@@ -916,7 +940,7 @@ var buildinfo []byte
 func Elfinit() {
 	Iself = true
 
-	if SysArch.InFamily(sys.AMD64, sys.ARM64, sys.MIPS64, sys.PPC64, sys.S390X) {
+	if SysArch.InFamily(sys.AMD64, sys.ARM64, sys.MIPS64, sys.PPC64, sys.S390X, sys.SPARC64) {
 		elfRelType = ".rela"
 	} else {
 		elfRelType = ".rel"
@@ -931,7 +955,7 @@ func Elfinit() {
 			ehdr.flags = 2 /* Version 2 ABI */
 		}
 		fallthrough
-	case sys.AMD64, sys.ARM64, sys.MIPS64:
+	case sys.AMD64, sys.ARM64, sys.MIPS64, sys.SPARC64:
 		if SysArch.Family == sys.MIPS64 {
 			ehdr.flags = 0x20000000 /* MIPS 3 */
 		}
@@ -1919,7 +1943,9 @@ func doelf() {
 		if SysArch.Family == sys.PPC64 {
 			Addstring(shstrtab, ".glink")
 		}
-		Addstring(shstrtab, ".got.plt")
+		if !SysArch.InFamily(sys.PPC64, sys.SPARC64) {
+			Addstring(shstrtab, ".got.plt")
+		}
 		Addstring(shstrtab, ".dynamic")
 		Addstring(shstrtab, ".dynsym")
 		Addstring(shstrtab, ".dynstr")
@@ -1955,6 +1981,13 @@ func doelf() {
 		s = Linklookup(Ctxt, elfRelType, 0)
 		s.Attr |= AttrReachable
 		s.Type = obj.SELFROSECT
+		// TODO(shawn): should this simply assign SysArch.PtrSize or
+		// differentiate based on elf64?
+		if SysArch.InFamily (sys.AMD64, sys.ARM64, sys.MIPS64, sys.PPC64, sys.S390X) {
+			s.Align = 8
+		} else {
+			s.Align = 4;
+		}
 
 		/* global offset table */
 		s = Linklookup(Ctxt, ".got", 0)
@@ -1975,15 +2008,17 @@ func doelf() {
 		s.Attr |= AttrReachable
 		s.Type = obj.SELFROSECT
 
-		s = Linklookup(Ctxt, ".got.plt", 0)
-		s.Attr |= AttrReachable
-		s.Type = obj.SELFSECT // writable
+		if !SysArch.InFamily(sys.PPC64, sys.SPARC64) {
+			s = Linklookup(Ctxt, ".got.plt", 0)
+			s.Attr |= AttrReachable
+			s.Type = obj.SELFSECT // writable
+		}
 
 		s = Linklookup(Ctxt, ".plt", 0)
 
 		s.Attr |= AttrReachable
-		if SysArch.Family == sys.PPC64 {
-			// In the ppc64 ABI, .plt is a data section
+		if SysArch.InFamily(sys.PPC64, sys.SPARC64) {
+			// In the ppc64/sparc64 ABI, .plt is a data section
 			// written by the dynamic linker.
 			s.Type = obj.SELFSECT
 		} else {
@@ -2013,6 +2048,9 @@ func doelf() {
 		/*
 		 * .dynamic table
 		 */
+		if SysArch.Family == sys.SPARC64 && HEADTYPE == obj.Hsolaris {
+			Elfwritedynent(Linklookup(Ctxt, ".dynamic", 0), DT_NEEDED, uint64(Addstring(Linklookup(Ctxt, ".dynstr", 0), "libc.so.1")))
+		}
 		elfwritedynentsym(s, DT_HASH, Linklookup(Ctxt, ".hash", 0))
 
 		elfwritedynentsym(s, DT_SYMTAB, Linklookup(Ctxt, ".dynsym", 0))
@@ -2037,7 +2075,7 @@ func doelf() {
 			Elfwritedynent(s, DT_RUNPATH, uint64(Addstring(dynstr, rpath.val)))
 		}
 
-		if SysArch.Family == sys.PPC64 {
+		if SysArch.InFamily(sys.PPC64, sys.SPARC64) {
 			elfwritedynentsym(s, DT_PLTGOT, Linklookup(Ctxt, ".plt", 0))
 		} else if SysArch.Family == sys.S390X {
 			elfwritedynentsym(s, DT_PLTGOT, Linklookup(Ctxt, ".got", 0))
@@ -2054,6 +2092,11 @@ func doelf() {
 		// DT_PLTRELSZ, and DT_JMPREL dynamic entries until after we know the
 		// size of .rel(a).plt section.
 		Elfwritedynent(s, DT_DEBUG, 0)
+
+		// Lazy-loading causes problems with Go stacks; tell the
+		// runtime linker all relocations for this object must be
+		// processed before returning control to the program.
+		Elfwritedynent(s, DT_BIND_NOW, 0)
 	}
 
 	if Buildmode == BuildmodeShared {
@@ -2141,6 +2184,8 @@ func Asmbelf(symo int64) {
 		eh.machine = EM_PPC64
 	case sys.S390X:
 		eh.machine = EM_S390
+	case sys.SPARC64:
+		eh.machine = EM_SPARCV9
 	}
 
 	elfreserve := int64(ELFRESERVE)
@@ -2375,6 +2420,12 @@ func Asmbelf(symo int64) {
 			sh.entsize = 16
 		} else if eh.machine == EM_S390 {
 			sh.entsize = 32
+		} else if eh.machine == EM_SPARCV9 {
+			// On sparc64, the plt is rewritten by the dynamic
+			// linker based on the existing entries
+			sh.flags |= SHF_WRITE
+			sh.entsize = 32
+			sh.addralign = 256
 		} else if eh.machine == EM_PPC64 {
 			// On ppc64, this is just a table of addresses
 			// filled by the dynamic linker
@@ -2385,11 +2436,15 @@ func Asmbelf(symo int64) {
 		} else {
 			sh.entsize = 4
 		}
-		sh.addralign = sh.entsize
+
+		if eh.machine != EM_SPARCV9 {
+			sh.addralign = sh.entsize
+		}
+
 		shsym(sh, Linklookup(Ctxt, ".plt", 0))
 
 		// On ppc64, .got comes from the input files, so don't
-		// create it here, and .got.plt is not used.
+		// create it here
 		if eh.machine != EM_PPC64 {
 			sh := elfshname(".got")
 			sh.type_ = SHT_PROGBITS
@@ -2397,8 +2452,11 @@ func Asmbelf(symo int64) {
 			sh.entsize = uint64(SysArch.RegSize)
 			sh.addralign = uint64(SysArch.RegSize)
 			shsym(sh, Linklookup(Ctxt, ".got", 0))
+		}
 
-			sh = elfshname(".got.plt")
+		// On ppc64 and sparc64, .got.plt is not used.
+		if eh.machine != EM_PPC64 && eh.machine != EM_SPARCV9 {
+			sh := elfshname(".got.plt")
 			sh.type_ = SHT_PROGBITS
 			sh.flags = SHF_ALLOC + SHF_WRITE
 			sh.entsize = uint64(SysArch.RegSize)
@@ -2544,6 +2602,8 @@ elfobj:
 		eh.ident[EI_OSABI] = ELFOSABI_NETBSD
 	} else if HEADTYPE == obj.Hopenbsd {
 		eh.ident[EI_OSABI] = ELFOSABI_OPENBSD
+	} else if HEADTYPE == obj.Hsolaris {
+		eh.ident[EI_OSABI] = ELFOSABI_SOLARIS
 	} else if HEADTYPE == obj.Hdragonfly {
 		eh.ident[EI_OSABI] = ELFOSABI_NONE
 	}
