@@ -14,4 +14,5 @@ const (
 	MIPS64
 	PPC64
 	S390X
+	SPARC64
 )
