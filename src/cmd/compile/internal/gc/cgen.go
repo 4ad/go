@@ -402,11 +402,11 @@ func cgen_wb(n, res *Node, wb bool) {
 		Regalloc(&n1, nl.Type, res)
 
 		Cgen(nl, &n1)
-		if Ctxt.Arch.InFamily(sys.ARM, sys.SPARC64) {
+		if Ctxt.Arch.InFamily(sys.ARM) {
 			var n2 Node
 			Nodconst(&n2, nl.Type, 0)
 			Thearch.Gins(a, &n2, &n1)
-		} else if Ctxt.Arch.Family == sys.ARM64 {
+		} else if Ctxt.Arch.InFamily(sys.ARM64, sys.SPARC64) {
 			Thearch.Gins(a, &n1, &n1)
 		} else {
 			Thearch.Gins(a, nil, &n1)
