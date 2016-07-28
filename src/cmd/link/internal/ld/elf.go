@@ -1983,10 +1983,10 @@ func doelf() {
 		s.Type = obj.SELFROSECT
 		// TODO(shawn): should this simply assign SysArch.PtrSize or
 		// differentiate based on elf64?
-		if SysArch.InFamily (sys.AMD64, sys.ARM64, sys.MIPS64, sys.PPC64, sys.S390X) {
+		if SysArch.InFamily (sys.AMD64, sys.ARM64, sys.MIPS64, sys.PPC64, sys.S390X, sys.SPARC64) {
 			s.Align = 8
 		} else {
-			s.Align = 4;
+			s.Align = 4
 		}
 
 		/* global offset table */
