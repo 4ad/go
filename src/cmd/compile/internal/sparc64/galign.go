@@ -6,31 +6,17 @@ package sparc64
 
 import (
 	"cmd/compile/internal/gc"
-	"cmd/internal/obj"
 	"cmd/internal/obj/sparc64"
 )
-
-var thechar int = 'u'
-
-var thestring string = "sparc64"
-
-var thelinkarch *obj.LinkArch = &sparc64.Linksparc64
-
-func linkarchinit() {
-}
 
 var MAXWIDTH int64 = 1 << 50
 
 func betypeinit() {
-	gc.Widthptr = 8
-	gc.Widthint = 8
-	gc.Widthreg = 8
 }
 
 func Main() {
-	gc.Thearch.Thechar = thechar
-	gc.Thearch.Thestring = thestring
-	gc.Thearch.Thelinkarch = thelinkarch
+	gc.Thearch.LinkArch = &sparc64.Linksparc64
+
 	gc.Thearch.REGSP = sparc64.REG_BSP
 	gc.Thearch.REGCTXT = sparc64.REG_CTXT
 	gc.Thearch.REGCALLX = sparc64.REG_RT1
@@ -58,7 +44,6 @@ func Main() {
 	gc.Thearch.Ginscon = ginscon
 	gc.Thearch.Ginsnop = ginsnop
 	gc.Thearch.Gmove = gmove
-	gc.Thearch.Linkarchinit = linkarchinit
 	gc.Thearch.Peep = peep
 	gc.Thearch.Proginfo = proginfo
 	gc.Thearch.Regtyp = regtyp

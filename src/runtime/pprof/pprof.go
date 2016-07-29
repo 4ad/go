@@ -4,8 +4,69 @@
 
 // Package pprof writes runtime profiling data in the format expected
 // by the pprof visualization tool.
+//
+// Profiling a Go program
+//
+// The first step to profiling a Go program is to enable profiling.
+// Support for profiling benchmarks built with the standard testing
+// package is built into go test. For example, the following command
+// runs benchmarks in the current directory and writes the CPU and
+// memory profiles to cpu.prof and mem.prof:
+//
+//     go test -cpuprofile cpu.prof -memprofile mem.prof -bench .
+//
+// To add equivalent profiling support to a standalone program, add
+// code like the following to your main function:
+//
+//    var cpuprofile = flag.String("cpuprofile", "", "write cpu profile `file`")
+//    var memprofile = flag.String("memprofile", "", "write memory profile to `file`")
+//
+//    func main() {
+//        flag.Parse()
+//        if *cpuprofile != "" {
+//            f, err := os.Create(*cpuprofile)
+//            if err != nil {
+//                log.Fatal("could not create CPU profile: ", err)
+//            }
+//            if err := pprof.StartCPUProfile(f); err != nil {
+//                log.Fatal("could not start CPU profile: ", err)
+//            }
+//            defer pprof.StopCPUProfile()
+//        }
+//        ...
+//        if *memprofile != "" {
+//            f, err := os.Create(*memprofile)
+//            if err != nil {
+//                log.Fatal("could not create memory profile: ", err)
+//            }
+//            runtime.GC() // get up-to-date statistics
+//            if err := pprof.WriteHeapProfile(f); err != nil {
+//                log.Fatal("could not write memory profile: ", err)
+//            }
+//            f.Close()
+//        }
+//    }
+//
+// There is also a standard HTTP interface to profiling data. Adding
+// the following line will install handlers under the /debug/pprof/
+// URL to download live profiles:
+//
+//    import _ "net/http/pprof"
+//
+// See the net/http/pprof package for more details.
+//
+// Profiles can then be visualized with the pprof tool:
+//
+//    go tool pprof cpu.prof
+//
+// There are many commands available from the pprof command line.
+// Commonly used commands include "top", which prints a summary of the
+// top program hot-spots, and "web", which opens an interactive graph
+// of hot-spots and their call graphs. Use "help" for information on
+// all pprof commands.
+//
 // For more information about pprof, see
-// http://code.google.com/p/google-perftools/.
+// https://github.com/google/pprof/blob/master/doc/pprof.md.
 package pprof
 
 import (
@@ -13,6 +74,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"os"
 	"runtime"
 	"sort"
 	"strings"
@@ -352,12 +414,9 @@ func printStackRecord(w io.Writer, stk []uintptr, allFrames bool) {
 		if name == "" {
 			show = true
 			fmt.Fprintf(w, "#\t%#x\n", frame.PC)
-		} else {
+		} else if name != "runtime.goexit" && (show || !strings.HasPrefix(name, "runtime.")) {
 			// Hide runtime.goexit and any runtime functions at the beginning.
 			// This is useful mainly for allocation traces.
-			if name == "runtime.goexit" || !show && strings.HasPrefix(name, "runtime.") {
-				continue
-			}
 			show = true
 			fmt.Fprintf(w, "#\t%#x\t%s+%#x\t%s:%d\n", frame.PC, name, frame.PC-frame.Entry, frame.File, frame.Line)
 		}
@@ -485,7 +544,6 @@ func writeHeap(w io.Writer, debug int) error {
 	fmt.Fprintf(w, "# NextGC = %d\n", s.NextGC)
 	fmt.Fprintf(w, "# PauseNs = %d\n", s.PauseNs)
 	fmt.Fprintf(w, "# NumGC = %d\n", s.NumGC)
-	fmt.Fprintf(w, "# EnableGC = %v\n", s.EnableGC)
 	fmt.Fprintf(w, "# DebugGC = %v\n", s.DebugGC)
 
 	if tw != nil {
@@ -621,6 +679,42 @@ func profileWriter(w io.Writer) {
 		}
 		w.Write(data)
 	}
+
+	// We are emitting the legacy profiling format, which permits
+	// a memory map following the CPU samples. The memory map is
+	// simply a copy of the GNU/Linux /proc/self/maps file. The
+	// profiler uses the memory map to map PC values in shared
+	// libraries to a shared library in the filesystem, in order
+	// to report the correct function and, if the shared library
+	// has debug info, file/line. This is particularly useful for
+	// PIE (position independent executables) as on ELF systems a
+	// PIE is simply an executable shared library.
+	//
+	// Because the profiling format expects the memory map in
+	// GNU/Linux format, we only do this on GNU/Linux for now. To
+	// add support for profiling PIE on other ELF-based systems,
+	// it may be necessary to map the system-specific mapping
+	// information to the GNU/Linux format. For a reasonably
+	// portable C++ version, see the FillProcSelfMaps function in
+	// https://github.com/gperftools/gperftools/blob/master/src/base/sysinfo.cc
+	//
+	// The code that parses this mapping for the pprof tool is
+	// ParseMemoryMap in cmd/internal/pprof/legacy_profile.go, but
+	// don't change that code, as similar code exists in other
+	// (non-Go) pprof readers. Change this code so that that code works.
+	//
+	// We ignore errors reading or copying the memory map; the
+	// profile is likely usable without it, and we have no good way
+	// to report errors.
+	if runtime.GOOS == "linux" {
+		f, err := os.Open("/proc/self/maps")
+		if err == nil {
+			io.WriteString(w, "\nMAPPED_LIBRARIES:\n")
+			io.Copy(w, f)
+			f.Close()
+		}
+	}
+
 	cpu.done <- true
 }
 

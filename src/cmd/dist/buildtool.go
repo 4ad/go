@@ -39,14 +39,18 @@ var bootstrapDirs = []string{
 	"compile/internal/sparc64",
 	"compile/internal/ssa",
 	"compile/internal/x86",
+	"compile/internal/s390x",
+	"internal/bio",
 	"internal/gcprog",
 	"internal/obj",
 	"internal/obj/arm",
 	"internal/obj/arm64",
 	"internal/obj/mips",
 	"internal/obj/ppc64",
+	"internal/obj/s390x",
 	"internal/obj/sparc64",
 	"internal/obj/x86",
+	"internal/sys",
 	"link",
 	"link/internal/amd64",
 	"link/internal/arm",
@@ -54,6 +58,7 @@ var bootstrapDirs = []string{
 	"link/internal/ld",
 	"link/internal/mips64",
 	"link/internal/ppc64",
+	"link/internal/s390x",
 	"link/internal/sparc64",
 	"link/internal/x86",
 }
@@ -114,8 +119,10 @@ func bootstrapBuildTools() {
 	os.Setenv("GOARCH", "")
 	os.Setenv("GOHOSTARCH", "")
 
-	// Run Go 1.4 to build binaries.
-	run(workspace, ShowOutput|CheckExit, pathf("%s/bin/go", goroot_bootstrap), "install", "-v", "bootstrap/...")
+	// Run Go 1.4 to build binaries. Use -gcflags=-l to disable inlining to
+	// workaround bugs in Go 1.4's compiler. See discussion thread:
+	// https://groups.google.com/d/msg/golang-dev/Ss7mCKsvk8w/Gsq7VYI0AwAJ
+	run(workspace, ShowOutput|CheckExit, pathf("%s/bin/go", goroot_bootstrap), "install", "-gcflags=-l", "-v", "bootstrap/...")
 
 	// Copy binaries into tool binary directory.
 	for _, name := range bootstrapDirs {

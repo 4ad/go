@@ -32,6 +32,7 @@ package sparc64
 
 import (
 	"cmd/internal/obj"
+	"cmd/internal/sys"
 	"cmd/link/internal/ld"
 	"fmt"
 	"log"
@@ -45,17 +46,11 @@ func Main() {
 }
 
 func linkarchinit() {
-	ld.Thestring = obj.Getgoarch()
-	ld.Thelinkarch = &ld.Linksparc64
+	ld.SysArch = sys.ArchSPARC64
 
-	ld.Thearch.Thechar = thechar
-	ld.Thearch.Ptrsize = ld.Thelinkarch.Ptrsize
-	ld.Thearch.Intsize = ld.Thelinkarch.Ptrsize
-	ld.Thearch.Regsize = ld.Thelinkarch.Regsize
 	ld.Thearch.Funcalign = FuncAlign
 	ld.Thearch.Maxalign = MaxAlign
 	ld.Thearch.Minalign = MinAlign
-	ld.Thearch.Minlc = MINLC
 	ld.Thearch.Dwarfregsp = DWARFREGSP
 	ld.Thearch.Dwarfreglr = DWARFREGLR
 	ld.Thearch.StackBias = 0x7ff

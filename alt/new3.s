@@ -1,9 +1,0 @@
-TEXT	main(SB),512|7,$0
-	ADD	L1, L2, L3
-	ADD $42, L1, L3
-	SLLD	L1, L2, L3
-	SLLD	$2, L1, L3
-	FCMPD	D2, D4
-	FCMPS	F1, F2
-	CMP	L1, L2
-	RET

@@ -5,9 +5,9 @@
 package sys
 
 const (
-	TheChar       = 'u'
+	ArchFamily    = SPARC64
 	BigEndian     = 1
-	CacheLineSize = 32
+	CacheLineSize = 64
 	PhysPageSize  = 8192
 	PCQuantum     = 4
 	Int64Align    = 8

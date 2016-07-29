@@ -34,7 +34,10 @@ type Func struct {
 	Names []LocalSlot
 
 	freeValues *Value // free Values linked by argstorage[0].  All other fields except ID are 0/nil.
-	freeBlocks *Block // free Blocks linked by succstorage[0].  All other fields except ID are 0/nil.
+	freeBlocks *Block // free Blocks linked by succstorage[0].b.  All other fields except ID are 0/nil.
+
+	idom []*Block   // precomputed immediate dominators
+	sdom SparseTree // precomputed dominator tree
 
 	constants map[int64][]*Value // constants cache, keyed by constant value; users must check value's Op and Type
 }
@@ -101,12 +104,16 @@ func (f *Func) newValue(op Op, t Type, b *Block, line int32) *Value {
 // context to allow item-by-item comparisons across runs.
 // For example:
 // awk 'BEGIN {FS="\t"} $3~/TIME/{sum+=$4} END{print "t(ns)=",sum}' t.log
-func (f *Func) logStat(key string, args ...interface{}) {
+func (f *Func) LogStat(key string, args ...interface{}) {
 	value := ""
 	for _, a := range args {
 		value += fmt.Sprintf("\t%v", a)
 	}
-	f.Config.Warnl(int(f.Entry.Line), "\t%s\t%s%s\t%s", f.pass.name, key, value, f.Name)
+	n := "missing_pass"
+	if f.pass != nil {
+		n = f.pass.name
+	}
+	f.Config.Warnl(f.Entry.Line, "\t%s\t%s%s\t%s", n, key, value, f.Name)
 }
 
 // freeValue frees a value. It must no longer be referenced.
@@ -114,8 +121,24 @@ func (f *Func) freeValue(v *Value) {
 	if v.Block == nil {
 		f.Fatalf("trying to free an already freed value")
 	}
+	if v.Uses != 0 {
+		f.Fatalf("value %s still has %d uses", v, v.Uses)
+	}
 	// Clear everything but ID (which we reuse).
 	id := v.ID
+
+	// Zero argument values might be cached, so remove them there.
+	nArgs := opcodeTable[v.Op].argLen
+	if nArgs == 0 {
+		vv := f.constants[v.AuxInt]
+		for i, cv := range vv {
+			if v == cv {
+				vv[i] = vv[len(vv)-1]
+				f.constants[v.AuxInt] = vv[0 : len(vv)-1]
+				break
+			}
+		}
+	}
 	*v = Value{}
 	v.ID = id
 	v.argstorage[0] = f.freeValues
@@ -127,8 +150,8 @@ func (f *Func) NewBlock(kind BlockKind) *Block {
 	var b *Block
 	if f.freeBlocks != nil {
 		b = f.freeBlocks
-		f.freeBlocks = b.succstorage[0]
-		b.succstorage[0] = nil
+		f.freeBlocks = b.succstorage[0].b
+		b.succstorage[0].b = nil
 	} else {
 		ID := f.bid.get()
 		if int(ID) < len(f.Config.blocks) {
@@ -154,7 +177,7 @@ func (f *Func) freeBlock(b *Block) {
 	id := b.ID
 	*b = Block{}
 	b.ID = id
-	b.succstorage[0] = f.freeBlocks
+	b.succstorage[0].b = f.freeBlocks
 	f.freeBlocks = b
 }
 
@@ -204,6 +227,7 @@ func (b *Block) NewValue1(line int32, op Op, t Type, arg *Value) *Value {
 	v.AuxInt = 0
 	v.Args = v.argstorage[:1]
 	v.argstorage[0] = arg
+	arg.Uses++
 	return v
 }
 
@@ -213,6 +237,7 @@ func (b *Block) NewValue1I(line int32, op Op, t Type, auxint int64, arg *Value) 
 	v.AuxInt = auxint
 	v.Args = v.argstorage[:1]
 	v.argstorage[0] = arg
+	arg.Uses++
 	return v
 }
 
@@ -223,6 +248,7 @@ func (b *Block) NewValue1A(line int32, op Op, t Type, aux interface{}, arg *Valu
 	v.Aux = aux
 	v.Args = v.argstorage[:1]
 	v.argstorage[0] = arg
+	arg.Uses++
 	return v
 }
 
@@ -233,6 +259,7 @@ func (b *Block) NewValue1IA(line int32, op Op, t Type, auxint int64, aux interfa
 	v.Aux = aux
 	v.Args = v.argstorage[:1]
 	v.argstorage[0] = arg
+	arg.Uses++
 	return v
 }
 
@@ -243,6 +270,8 @@ func (b *Block) NewValue2(line int32, op Op, t Type, arg0, arg1 *Value) *Value {
 	v.Args = v.argstorage[:2]
 	v.argstorage[0] = arg0
 	v.argstorage[1] = arg1
+	arg0.Uses++
+	arg1.Uses++
 	return v
 }
 
@@ -253,6 +282,8 @@ func (b *Block) NewValue2I(line int32, op Op, t Type, auxint int64, arg0, arg1 *
 	v.Args = v.argstorage[:2]
 	v.argstorage[0] = arg0
 	v.argstorage[1] = arg1
+	arg0.Uses++
+	arg1.Uses++
 	return v
 }
 
@@ -260,7 +291,13 @@ func (b *Block) NewValue2I(line int32, op Op, t Type, auxint int64, arg0, arg1 *
 func (b *Block) NewValue3(line int32, op Op, t Type, arg0, arg1, arg2 *Value) *Value {
 	v := b.Func.newValue(op, t, b, line)
 	v.AuxInt = 0
-	v.Args = []*Value{arg0, arg1, arg2}
+	v.Args = v.argstorage[:3]
+	v.argstorage[0] = arg0
+	v.argstorage[1] = arg1
+	v.argstorage[2] = arg2
+	arg0.Uses++
+	arg1.Uses++
+	arg2.Uses++
 	return v
 }
 
@@ -268,25 +305,50 @@ func (b *Block) NewValue3(line int32, op Op, t Type, arg0, arg1, arg2 *Value) *V
 func (b *Block) NewValue3I(line int32, op Op, t Type, auxint int64, arg0, arg1, arg2 *Value) *Value {
 	v := b.Func.newValue(op, t, b, line)
 	v.AuxInt = auxint
-	v.Args = []*Value{arg0, arg1, arg2}
+	v.Args = v.argstorage[:3]
+	v.argstorage[0] = arg0
+	v.argstorage[1] = arg1
+	v.argstorage[2] = arg2
+	arg0.Uses++
+	arg1.Uses++
+	arg2.Uses++
 	return v
 }
 
 // constVal returns a constant value for c.
-func (f *Func) constVal(line int32, op Op, t Type, c int64) *Value {
+func (f *Func) constVal(line int32, op Op, t Type, c int64, setAux bool) *Value {
 	if f.constants == nil {
 		f.constants = make(map[int64][]*Value)
 	}
 	vv := f.constants[c]
 	for _, v := range vv {
-		if v.Op == op && v.Type.Equal(t) {
+		if v.Op == op && v.Type.Compare(t) == CMPeq {
+			if setAux && v.AuxInt != c {
+				panic(fmt.Sprintf("cached const %s should have AuxInt of %d", v.LongString(), c))
+			}
 			return v
 		}
 	}
-	v := f.Entry.NewValue0I(line, op, t, c)
+	var v *Value
+	if setAux {
+		v = f.Entry.NewValue0I(line, op, t, c)
+	} else {
+		v = f.Entry.NewValue0(line, op, t)
+	}
 	f.constants[c] = append(vv, v)
 	return v
 }
+
+// These magic auxint values let us easily cache non-numeric constants
+// using the same constants map while making collisions unlikely.
+// These values are unlikely to occur in regular code and
+// are easy to grep for in case of bugs.
+const (
+	constSliceMagic       = 1122334455
+	constInterfaceMagic   = 2233445566
+	constNilMagic         = 3344556677
+	constEmptyStringMagic = 4455667788
+)
 
 // ConstInt returns an int constant representing its argument.
 func (f *Func) ConstBool(line int32, t Type, c bool) *Value {
@@ -294,25 +356,40 @@ func (f *Func) ConstBool(line int32, t Type, c bool) *Value {
 	if c {
 		i = 1
 	}
-	return f.constVal(line, OpConstBool, t, i)
+	return f.constVal(line, OpConstBool, t, i, true)
 }
 func (f *Func) ConstInt8(line int32, t Type, c int8) *Value {
-	return f.constVal(line, OpConst8, t, int64(c))
+	return f.constVal(line, OpConst8, t, int64(c), true)
 }
 func (f *Func) ConstInt16(line int32, t Type, c int16) *Value {
-	return f.constVal(line, OpConst16, t, int64(c))
+	return f.constVal(line, OpConst16, t, int64(c), true)
 }
 func (f *Func) ConstInt32(line int32, t Type, c int32) *Value {
-	return f.constVal(line, OpConst32, t, int64(c))
+	return f.constVal(line, OpConst32, t, int64(c), true)
 }
 func (f *Func) ConstInt64(line int32, t Type, c int64) *Value {
-	return f.constVal(line, OpConst64, t, c)
+	return f.constVal(line, OpConst64, t, c, true)
 }
 func (f *Func) ConstFloat32(line int32, t Type, c float64) *Value {
-	return f.constVal(line, OpConst32F, t, int64(math.Float64bits(c)))
+	return f.constVal(line, OpConst32F, t, int64(math.Float64bits(float64(float32(c)))), true)
 }
 func (f *Func) ConstFloat64(line int32, t Type, c float64) *Value {
-	return f.constVal(line, OpConst64F, t, int64(math.Float64bits(c)))
+	return f.constVal(line, OpConst64F, t, int64(math.Float64bits(c)), true)
+}
+
+func (f *Func) ConstSlice(line int32, t Type) *Value {
+	return f.constVal(line, OpConstSlice, t, constSliceMagic, false)
+}
+func (f *Func) ConstInterface(line int32, t Type) *Value {
+	return f.constVal(line, OpConstInterface, t, constInterfaceMagic, false)
+}
+func (f *Func) ConstNil(line int32, t Type) *Value {
+	return f.constVal(line, OpConstNil, t, constNilMagic, false)
+}
+func (f *Func) ConstEmptyString(line int32, t Type) *Value {
+	v := f.constVal(line, OpConstString, t, constEmptyStringMagic, false)
+	v.Aux = ""
+	return v
 }
 
 func (f *Func) Logf(msg string, args ...interface{})   { f.Config.Logf(msg, args...) }

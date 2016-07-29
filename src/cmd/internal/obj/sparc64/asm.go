@@ -12,11 +12,11 @@ import (
 )
 
 type Optab struct {
-	as int16 // instruction
-	a1 int8  // from
-	a2 int8  // reg
-	a3 int8  // from3
-	a4 int8  // to
+	as obj.As	// instruction
+	a1 int8		// from
+	a2 int8		// reg
+	a3 int8		// from3
+	a4 int8		// to
 }
 
 type OptabSlice []Optab
@@ -243,7 +243,7 @@ func isAddrCompatible(ctxt *obj.Link, a *obj.Addr, class int8) bool {
 	return false
 }
 
-var isInstDouble = map[int16]bool{
+var isInstDouble = map[obj.As]bool{
 	AFADDD:  true,
 	AFSUBD:  true,
 	AFABSD:  true,
@@ -257,7 +257,7 @@ var isInstDouble = map[int16]bool{
 	ASTDF:   true,
 }
 
-var isInstFloat = map[int16]bool{
+var isInstFloat = map[obj.As]bool{
 	AFADDS:  true,
 	AFSUBS:  true,
 	AFABSS:  true,
@@ -271,7 +271,7 @@ var isInstFloat = map[int16]bool{
 	ASTSF:   true,
 }
 
-var isSrcDouble = map[int16]bool{
+var isSrcDouble = map[obj.As]bool{
 	AFXTOD: true,
 	AFXTOS: true,
 	AFDTOX: true,
@@ -279,7 +279,7 @@ var isSrcDouble = map[int16]bool{
 	AFDTOS: true,
 }
 
-var isSrcFloat = map[int16]bool{
+var isSrcFloat = map[obj.As]bool{
 	AFITOD: true,
 	AFITOS: true,
 	AFSTOX: true,
@@ -287,7 +287,7 @@ var isSrcFloat = map[int16]bool{
 	AFSTOD: true,
 }
 
-var isDstDouble = map[int16]bool{
+var isDstDouble = map[obj.As]bool{
 	AFXTOD: true,
 	AFITOD: true,
 	AFSTOX: true,
@@ -295,7 +295,7 @@ var isDstDouble = map[int16]bool{
 	AFSTOD: true,
 }
 
-var isDstFloat = map[int16]bool{
+var isDstFloat = map[obj.As]bool{
 	AFXTOS: true,
 	AFITOS: true,
 	AFDTOI: true,
@@ -305,7 +305,7 @@ var isDstFloat = map[int16]bool{
 
 // Compatible instructions, if an asm* function accepts AADD,
 // it accepts ASUBCCC too.
-var ci = map[int16][]int16{
+var ci = map[obj.As][]obj.As{
 	AADD:   {AADDCC, AADDC, AADDCCC, ASUB, ASUBCC, ASUBC, ASUBCCC},
 	AAND:   {AANDCC, AANDN, AANDNCC, AOR, AORCC, AORN, AORNCC, AXOR, AXORCC, AXNOR, AXNORCC},
 	ABN:    {ABNE, ABE, ABG, ABLE, ABGE, ABL, ABGU, ABLEU, ABCC, ABCS, ABPOS, ABNEG, ABVC, ABVS},
@@ -424,7 +424,7 @@ func oplook(p *obj.Prog) (Opval, error) {
 	if p.Reg != 0 {
 		a2 = rclass(p.Reg)
 	}
-	var type3 int16
+	var type3 obj.AddrType
 	if p.From3 != nil {
 		a3 = p.From3.Class
 		type3 = p.From3.Type
@@ -485,7 +485,7 @@ func opf(opf int) uint32 {
 	return uint32(opf << 5)
 }
 
-func opload(a int16) uint32 {
+func opload(a obj.As) uint32 {
 	switch a {
 	// Load integer.
 	case ALDSB, AMOVB:
@@ -510,11 +510,11 @@ func opload(a int16) uint32 {
 		return op3(3, 0x23)
 
 	default:
-		panic("unknown instruction: " + obj.Aconv(int(a)))
+		panic("unknown instruction: " + obj.Aconv(a))
 	}
 }
 
-func opstore(a int16) uint32 {
+func opstore(a obj.As) uint32 {
 	switch a {
 	// Store Integer.
 	case ASTB, AMOVB, AMOVUB:
@@ -533,22 +533,22 @@ func opstore(a int16) uint32 {
 		return op3(3, 0x27)
 
 	default:
-		panic("unknown instruction: " + obj.Aconv(int(a)))
+		panic("unknown instruction: " + obj.Aconv(a))
 	}
 }
 
-func oprd(a int16) uint32 {
+func oprd(a obj.As) uint32 {
 	switch a {
 	// Read ancillary state register.
 	case ARD, AMOVD:
 		return op3(2, 0x28)
 
 	default:
-		panic("unknown instruction: " + obj.Aconv(int(a)))
+		panic("unknown instruction: " + obj.Aconv(a))
 	}
 }
 
-func opalu(a int16) uint32 {
+func opalu(a obj.As) uint32 {
 	switch a {
 	// Add.
 	case AADD:
@@ -654,11 +654,11 @@ func opalu(a int16) uint32 {
 		return op3(2, 0x3D)
 
 	default:
-		panic("unknown instruction: " + obj.Aconv(int(a)))
+		panic("unknown instruction: " + obj.Aconv(a))
 	}
 }
 
-func opcode(a int16) uint32 {
+func opcode(a obj.As) uint32 {
 	switch a {
 	// Branch on integer condition codes with prediction (BPcc).
 	case obj.AJMP:
@@ -878,7 +878,7 @@ func opcode(a int16) uint32 {
 		return op3(2, 0x3A)
 
 	default:
-		panic("unknown instruction: " + obj.Aconv(int(a)))
+		panic("unknown instruction: " + obj.Aconv(a))
 	}
 }
 
@@ -971,7 +971,7 @@ func aclass(ctxt *obj.Link, a *obj.Addr) int8 {
 		case obj.NAME_AUTO, obj.NAME_PARAM:
 			return aclass(ctxt, autoeditaddr(ctxt, a))
 
-		case obj.TYPE_NONE:
+		case obj.NAME_NONE:
 			if a.Scale == 1 {
 				return ClassIndirRegReg
 			}
@@ -986,7 +986,7 @@ func aclass(ctxt *obj.Link, a *obj.Addr) int8 {
 
 	case obj.TYPE_CONST, obj.TYPE_ADDR:
 		switch a.Name {
-		case obj.TYPE_NONE:
+		case obj.NAME_NONE:
 			if a.Reg != 0 {
 				if a.Reg == REG_ZR && a.Offset == 0 {
 					return ClassZero
@@ -1032,7 +1032,7 @@ func span(ctxt *obj.Link, cursym *obj.LSym) {
 	}
 	pc += -pc & (16 - 1)
 	cursym.Size = pc
-	obj.Symgrow(ctxt, cursym, pc)
+	cursym.Grow(cursym.Size)
 
 	var text []uint32 // actual assembled bytes
 	for p := cursym.Text.Link; p != nil; p = p.Link {

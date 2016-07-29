@@ -19,8 +19,8 @@ var cmdGet = &Command{
 	UsageLine: "get [-d] [-f] [-fix] [-insecure] [-t] [-u] [build flags] [packages]",
 	Short:     "download and install packages and dependencies",
 	Long: `
-Get downloads and installs the packages named by the import paths,
-along with their dependencies.
+Get downloads the packages named by the import paths, along with their
+dependencies. It then installs the named packages, like 'go install'.
 
 The -d flag instructs get to stop after downloading the packages; that is,
 it instructs get not to install the packages.
@@ -45,7 +45,7 @@ missing packages but does not use it to look for updates to existing packages.
 
 Get also accepts build flags to control the installation. See 'go help build'.
 
-When checking out a new package, get creates the target directory 
+When checking out a new package, get creates the target directory
 GOPATH/src/<import-path>. If the GOPATH contains multiple entries,
 get uses the first one. See 'go help gopath'.
 
@@ -55,8 +55,7 @@ rule is that if the local installation is running version "go1", get
 searches for a branch or tag named "go1". If no such version exists it
 retrieves the most recent version of the package.
 
-Unless vendoring support is disabled (see 'go help gopath'),
-when go get checks out or updates a Git repository,
+When go get checks out or updates a Git repository,
 it also updates any git submodules referenced by the repository.
 
 Get never checks out or updates code stored in vendor directories.
@@ -236,16 +235,6 @@ func download(arg string, parent *Package, stk *importStack, mode int) {
 			stk.pop()
 			return
 		}
-
-		// Warn that code.google.com is shutting down. We
-		// issue the warning here because this is where we
-		// have the import stack.
-		if strings.HasPrefix(p.ImportPath, "code.google.com") {
-			fmt.Fprintf(os.Stderr, "warning: code.google.com is shutting down; import path %v will stop working\n", p.ImportPath)
-			if len(*stk) > 1 {
-				fmt.Fprintf(os.Stderr, "warning: package %v\n", strings.Join(*stk, "\n\timports "))
-			}
-		}
 		stk.pop()
 
 		args := []string{arg}
@@ -356,7 +345,7 @@ func downloadPackage(p *Package) error {
 
 	if p.build.SrcRoot != "" {
 		// Directory exists. Look for checkout along path to src.
-		vcs, rootPath, err = vcsForDir(p)
+		vcs, rootPath, err = vcsFromDir(p.Dir, p.build.SrcRoot)
 		if err != nil {
 			return err
 		}
@@ -364,7 +353,7 @@ func downloadPackage(p *Package) error {
 
 		// Double-check where it came from.
 		if *getU && vcs.remoteRepo != nil {
-			dir := filepath.Join(p.build.SrcRoot, rootPath)
+			dir := filepath.Join(p.build.SrcRoot, filepath.FromSlash(rootPath))
 			remote, err := vcs.remoteRepo(vcs, dir)
 			if err != nil {
 				return err
@@ -411,7 +400,7 @@ func downloadPackage(p *Package) error {
 		p.build.SrcRoot = filepath.Join(list[0], "src")
 		p.build.PkgRoot = filepath.Join(list[0], "pkg")
 	}
-	root := filepath.Join(p.build.SrcRoot, rootPath)
+	root := filepath.Join(p.build.SrcRoot, filepath.FromSlash(rootPath))
 	// If we've considered this repository already, don't do it again.
 	if downloadRootCache[root] {
 		return nil

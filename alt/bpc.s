@@ -1,6 +1,0 @@
-TEXT	main(SB),512|7,$0
-	CMP	L1, L2
-	BED	2(PC)
-	MOVD	L3, L4
-	MOVD	L5, O5
-	RET

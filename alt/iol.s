@@ -1,8 +1,0 @@
-TEXT	main(SB),512|7,$0
-	MOVD	O(1), L1
-	MOVD	L(1), L1
-	MOVD	I(1), L1
-	MOVD	O1, L1
-	MOVD	L1, L1
-	MOVD	I1, L1
-	RET

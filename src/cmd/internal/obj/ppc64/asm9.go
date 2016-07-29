@@ -7,7 +7,7 @@
 //	Portions Copyright © 2004,2006 Bruce Ellis
 //	Portions Copyright © 2005-2007 C H Forsyth (forsyth@terzarima.net)
 //	Revisions Copyright © 2000-2008 Lucent Technologies Inc. and others
-//	Portions Copyright © 2009 The Go Authors.  All rights reserved.
+//	Portions Copyright © 2009 The Go Authors. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -48,7 +48,7 @@ const (
 )
 
 type Optab struct {
-	as    int16
+	as    obj.As
 	a1    uint8
 	a2    uint8
 	a3    uint8
@@ -403,14 +403,9 @@ var optab = []Optab{
 	{obj.AXXX, C_NONE, C_NONE, C_NONE, C_NONE, 0, 4, 0},
 }
 
-type Oprang struct {
-	start []Optab
-	stop  []Optab
-}
+var oprange [ALAST & obj.AMask][]Optab
 
-var oprange [ALAST & obj.AMask]Oprang
-
-var xcmp [C_NCLASS][C_NCLASS]uint8
+var xcmp [C_NCLASS][C_NCLASS]bool
 
 func span9(ctxt *obj.Link, cursym *obj.LSym) {
 	p := cursym.Text
@@ -420,7 +415,7 @@ func span9(ctxt *obj.Link, cursym *obj.LSym) {
 	ctxt.Cursym = cursym
 	ctxt.Autosize = int32(p.To.Offset)
 
-	if oprange[AANDN&obj.AMask].start == nil {
+	if oprange[AANDN&obj.AMask] == nil {
 		buildop(ctxt)
 	}
 
@@ -511,7 +506,7 @@ func span9(ctxt *obj.Link, cursym *obj.LSym) {
 	 * lay out the code, emitting code and data relocations.
 	 */
 
-	obj.Symgrow(ctxt, cursym, cursym.Size)
+	cursym.Grow(cursym.Size)
 
 	bp := cursym.P
 	var i int32
@@ -590,7 +585,7 @@ func aclass(ctxt *obj.Link, a *obj.Addr) int {
 			ctxt.Instoffset = a.Offset
 			if a.Sym != nil { // use relocation
 				if a.Sym.Type == obj.STLSBSS {
-					if ctxt.Flag_shared != 0 {
+					if ctxt.Flag_shared {
 						return C_TLS_IE
 					} else {
 						return C_TLS_LE
@@ -636,7 +631,7 @@ func aclass(ctxt *obj.Link, a *obj.Addr) int {
 	case obj.TYPE_CONST,
 		obj.TYPE_ADDR:
 		switch a.Name {
-		case obj.TYPE_NONE:
+		case obj.NAME_NONE:
 			ctxt.Instoffset = a.Offset
 			if a.Reg != 0 {
 				if -BIG <= ctxt.Instoffset && ctxt.Instoffset <= BIG {
@@ -657,11 +652,11 @@ func aclass(ctxt *obj.Link, a *obj.Addr) int {
 				break
 			}
 			if s.Type == obj.SCONST {
-				ctxt.Instoffset = s.Value + a.Offset
+				ctxt.Instoffset = a.Offset
 				goto consize
 			}
 
-			ctxt.Instoffset = s.Value + a.Offset
+			ctxt.Instoffset = a.Offset
 
 			/* not sure why this barfs */
 			return C_LCON
@@ -731,7 +726,7 @@ func prasm(p *obj.Prog) {
 func oplook(ctxt *obj.Link, p *obj.Prog) *Optab {
 	a1 := int(p.Optab)
 	if a1 != 0 {
-		return &optab[a1-1:][0]
+		return &optab[a1-1]
 	}
 	a1 = int(p.From.Class)
 	if a1 == 0 {
@@ -763,35 +758,24 @@ func oplook(ctxt *obj.Link, p *obj.Prog) *Optab {
 	}
 
 	//print("oplook %v %d %d %d %d\n", p, a1, a2, a3, a4);
-	r0 := p.As & obj.AMask
-
-	o := oprange[r0].start
-	if o == nil {
-		o = oprange[r0].stop /* just generate an error */
-	}
-	e := oprange[r0].stop
-	c1 := xcmp[a1][:]
-	c3 := xcmp[a3][:]
-	c4 := xcmp[a4][:]
-	for ; -cap(o) < -cap(e); o = o[1:] {
-		if int(o[0].a2) == a2 {
-			if c1[o[0].a1] != 0 {
-				if c3[o[0].a3] != 0 {
-					if c4[o[0].a4] != 0 {
-						p.Optab = uint16((-cap(o) + cap(optab)) + 1)
-						return &o[0]
-					}
-				}
-			}
+	ops := oprange[p.As&obj.AMask]
+	c1 := &xcmp[a1]
+	c3 := &xcmp[a3]
+	c4 := &xcmp[a4]
+	for i := range ops {
+		op := &ops[i]
+		if int(op.a2) == a2 && c1[op.a1] && c3[op.a3] && c4[op.a4] {
+			p.Optab = uint16(cap(optab) - cap(ops) + i + 1)
+			return op
 		}
 	}
 
-	ctxt.Diag("illegal combination %v %v %v %v %v", obj.Aconv(int(p.As)), DRconv(a1), DRconv(a2), DRconv(a3), DRconv(a4))
+	ctxt.Diag("illegal combination %v %v %v %v %v", obj.Aconv(p.As), DRconv(a1), DRconv(a2), DRconv(a3), DRconv(a4))
 	prasm(p)
-	if o == nil {
-		o = optab
+	if ops == nil {
+		ops = optab
 	}
-	return &o[0]
+	return &ops[0]
 }
 
 func cmp(a int, b int) bool {
@@ -906,7 +890,7 @@ func (x ocmp) Less(i, j int) bool {
 	}
 	return false
 }
-func opset(a, b0 int16) {
+func opset(a, b0 obj.As) {
 	oprange[a&obj.AMask] = oprange[b0]
 }
 
@@ -916,7 +900,7 @@ func buildop(ctxt *obj.Link) {
 	for i := 0; i < C_NCLASS; i++ {
 		for n = 0; n < C_NCLASS; n++ {
 			if cmp(n, i) {
-				xcmp[i][n] = 1
+				xcmp[i][n] = true
 			}
 		}
 	}
@@ -926,16 +910,16 @@ func buildop(ctxt *obj.Link) {
 	for i := 0; i < n; i++ {
 		r := optab[i].as
 		r0 := r & obj.AMask
-		oprange[r0].start = optab[i:]
+		start := i
 		for optab[i].as == r {
 			i++
 		}
-		oprange[r0].stop = optab[i:]
+		oprange[r0] = optab[start:i]
 		i--
 
 		switch r {
 		default:
-			ctxt.Diag("unknown op in build: %v", obj.Aconv(int(r)))
+			ctxt.Diag("unknown op in build: %v", obj.Aconv(r))
 			log.Fatalf("bad code")
 
 		case ADCBF: /* unary indexed: op (b+a); op (b) */
@@ -949,6 +933,7 @@ func buildop(ctxt *obj.Link) {
 
 		case AECOWX: /* indexed store: op s,(b+a); op s,(b) */
 			opset(ASTWCCC, r0)
+			opset(ASTBCCC, r0)
 
 			opset(ASTDCCC, r0)
 
@@ -1121,6 +1106,8 @@ func buildop(ctxt *obj.Link) {
 			opset(AFCTIDZCC, r0)
 			opset(AFCFID, r0)
 			opset(AFCFIDCC, r0)
+			opset(AFCFIDU, r0)
+			opset(AFCFIDUCC, r0)
 			opset(AFRES, r0)
 			opset(AFRESCC, r0)
 			opset(AFRSQRTE, r0)
@@ -1216,6 +1203,7 @@ func buildop(ctxt *obj.Link) {
 
 		case ASYNC:
 			opset(AISYNC, r0)
+			opset(ALWSYNC, r0)
 			opset(APTESYNC, r0)
 			opset(ATLBSYNC, r0)
 
@@ -1242,6 +1230,7 @@ func buildop(ctxt *obj.Link) {
 			opset(AFMOVSU, r0)
 
 		case AECIWX:
+			opset(ALBAR, r0)
 			opset(ALWAR, r0)
 			opset(ALDAR, r0)
 
@@ -1400,7 +1389,7 @@ const (
 // which relocation to use with a load or store and only supports the needed
 // instructions.
 func opform(ctxt *obj.Link, insn uint32) int {
-	switch uint32(insn) {
+	switch insn {
 	default:
 		ctxt.Diag("bad insn in loadform: %x", insn)
 	case OPVCC(58, 0, 0, 0), // ld
@@ -1429,7 +1418,7 @@ func opform(ctxt *obj.Link, insn uint32) int {
 func symbolAccess(ctxt *obj.Link, s *obj.LSym, d int64, reg int16, op uint32) (o1, o2 uint32) {
 	var base uint32
 	form := opform(ctxt, op)
-	if ctxt.Flag_shared != 0 {
+	if ctxt.Flag_shared {
 		base = REG_R2
 	} else {
 		base = REG_R0
@@ -1441,7 +1430,7 @@ func symbolAccess(ctxt *obj.Link, s *obj.LSym, d int64, reg int16, op uint32) (o
 	rel.Siz = 8
 	rel.Sym = s
 	rel.Add = d
-	if ctxt.Flag_shared != 0 {
+	if ctxt.Flag_shared {
 		switch form {
 		case D_FORM:
 			rel.Type = obj.R_ADDRPOWER_TOCREL
@@ -1662,7 +1651,7 @@ func asmout(ctxt *obj.Link, p *obj.Prog, o *Optab, out []uint32) {
 			if v != 0 {
 				ctxt.Diag("illegal indexed instruction\n%v", p)
 			}
-			if ctxt.Flag_shared != 0 && r == REG_R13 {
+			if ctxt.Flag_shared && r == REG_R13 {
 				rel := obj.Addrel(ctxt.Cursym)
 				rel.Off = int32(ctxt.Pc)
 				rel.Siz = 4
@@ -1693,7 +1682,7 @@ func asmout(ctxt *obj.Link, p *obj.Prog, o *Optab, out []uint32) {
 			if v != 0 {
 				ctxt.Diag("illegal indexed instruction\n%v", p)
 			}
-			if ctxt.Flag_shared != 0 && r == REG_R13 {
+			if ctxt.Flag_shared && r == REG_R13 {
 				rel := obj.Addrel(ctxt.Cursym)
 				rel.Off = int32(ctxt.Pc)
 				rel.Siz = 4
@@ -1922,7 +1911,7 @@ func asmout(ctxt *obj.Link, p *obj.Prog, o *Optab, out []uint32) {
 
 	case 22: /* add $lcon,r1,r2 ==> cau+or+add */ /* could do add/sub more efficiently */
 		if p.To.Reg == REGTMP || p.Reg == REGTMP {
-			ctxt.Diag("cant synthesize large constant\n%v", p)
+			ctxt.Diag("can't synthesize large constant\n%v", p)
 		}
 		d := vregoff(ctxt, &p.From)
 		o1 = loadu32(REGTMP, d)
@@ -1940,7 +1929,7 @@ func asmout(ctxt *obj.Link, p *obj.Prog, o *Optab, out []uint32) {
 
 	case 23: /* and $lcon,r1,r2 ==> cau+or+and */ /* masks could be done using rlnm etc. */
 		if p.To.Reg == REGTMP || p.Reg == REGTMP {
-			ctxt.Diag("cant synthesize large constant\n%v", p)
+			ctxt.Diag("can't synthesize large constant\n%v", p)
 		}
 		d := vregoff(ctxt, &p.From)
 		o1 = loadu32(REGTMP, d)
@@ -2214,9 +2203,9 @@ func asmout(ctxt *obj.Link, p *obj.Prog, o *Optab, out []uint32) {
 		}
 		v := oprrr(ctxt, p.As)
 		t := v & (1<<10 | 1) /* OE|Rc */
-		o1 = AOP_RRR(uint32(v)&^uint32(t), REGTMP, uint32(r), uint32(p.From.Reg))
+		o1 = AOP_RRR(v&^t, REGTMP, uint32(r), uint32(p.From.Reg))
 		o2 = AOP_RRR(OP_MULLW, REGTMP, REGTMP, uint32(p.From.Reg))
-		o3 = AOP_RRR(OP_SUBF|uint32(t), uint32(p.To.Reg), REGTMP, uint32(r))
+		o3 = AOP_RRR(OP_SUBF|t, uint32(p.To.Reg), REGTMP, uint32(r))
 		if p.As == AREMU {
 			o4 = o3
 
@@ -2232,9 +2221,9 @@ func asmout(ctxt *obj.Link, p *obj.Prog, o *Optab, out []uint32) {
 		}
 		v := oprrr(ctxt, p.As)
 		t := v & (1<<10 | 1) /* OE|Rc */
-		o1 = AOP_RRR(uint32(v)&^uint32(t), REGTMP, uint32(r), uint32(p.From.Reg))
+		o1 = AOP_RRR(v&^t, REGTMP, uint32(r), uint32(p.From.Reg))
 		o2 = AOP_RRR(OP_MULLD, REGTMP, REGTMP, uint32(p.From.Reg))
-		o3 = AOP_RRR(OP_SUBF|uint32(t), uint32(p.To.Reg), REGTMP, uint32(r))
+		o3 = AOP_RRR(OP_SUBF|t, uint32(p.To.Reg), REGTMP, uint32(r))
 
 	case 52: /* mtfsbNx cr(n) */
 		v := regoff(ctxt, &p.From) & 31
@@ -2501,7 +2490,7 @@ func asmout(ctxt *obj.Link, p *obj.Prog, o *Optab, out []uint32) {
 			ctxt.Diag("invalid offset against tls var %v", p)
 		}
 		o1 = AOP_IRR(OP_ADDIS, uint32(p.To.Reg), REG_R2, 0)
-		o2 = AOP_IRR(uint32(opload(ctxt, AMOVD)), uint32(p.To.Reg), uint32(p.To.Reg), 0)
+		o2 = AOP_IRR(opload(ctxt, AMOVD), uint32(p.To.Reg), uint32(p.To.Reg), 0)
 		rel := obj.Addrel(ctxt.Cursym)
 		rel.Off = int32(ctxt.Pc)
 		rel.Siz = 8
@@ -2515,7 +2504,7 @@ func asmout(ctxt *obj.Link, p *obj.Prog, o *Optab, out []uint32) {
 		}
 
 		o1 = AOP_IRR(OP_ADDIS, uint32(p.To.Reg), REG_R2, 0)
-		o2 = AOP_IRR(uint32(opload(ctxt, AMOVD)), uint32(p.To.Reg), uint32(p.To.Reg), 0)
+		o2 = AOP_IRR(opload(ctxt, AMOVD), uint32(p.To.Reg), uint32(p.To.Reg), 0)
 		rel := obj.Addrel(ctxt.Cursym)
 		rel.Off = int32(ctxt.Pc)
 		rel.Siz = 8
@@ -2543,7 +2532,7 @@ func regoff(ctxt *obj.Link, a *obj.Addr) int32 {
 	return int32(vregoff(ctxt, a))
 }
 
-func oprrr(ctxt *obj.Link, a int16) uint32 {
+func oprrr(ctxt *obj.Link, a obj.As) uint32 {
 	switch a {
 	case AADD:
 		return OPVCC(31, 266, 0, 0)
@@ -2732,6 +2721,10 @@ func oprrr(ctxt *obj.Link, a int16) uint32 {
 		return OPVCC(63, 846, 0, 0)
 	case AFCFIDCC:
 		return OPVCC(63, 846, 0, 1)
+	case AFCFIDU:
+		return OPVCC(63, 974, 0, 0)
+	case AFCFIDUCC:
+		return OPVCC(63, 974, 0, 1)
 	case AFCTIW:
 		return OPVCC(63, 14, 0, 0)
 	case AFCTIWCC:
@@ -3011,6 +3004,9 @@ func oprrr(ctxt *obj.Link, a int16) uint32 {
 
 	case ASYNC:
 		return OPVCC(31, 598, 0, 0)
+	case ALWSYNC:
+		return OPVCC(31, 598, 0, 0) | 1<<21
+
 	case APTESYNC:
 		return OPVCC(31, 598, 0, 0) | 2<<21
 
@@ -3042,11 +3038,11 @@ func oprrr(ctxt *obj.Link, a int16) uint32 {
 		return OPVCC(31, 316, 0, 1)
 	}
 
-	ctxt.Diag("bad r/r opcode %v", obj.Aconv(int(a)))
+	ctxt.Diag("bad r/r opcode %v", obj.Aconv(a))
 	return 0
 }
 
-func opirr(ctxt *obj.Link, a int16) uint32 {
+func opirr(ctxt *obj.Link, a obj.As) uint32 {
 	switch a {
 	case AADD:
 		return OPVCC(14, 0, 0, 0)
@@ -3164,14 +3160,14 @@ func opirr(ctxt *obj.Link, a int16) uint32 {
 		return OPVCC(27, 0, 0, 0) /* XORIU */
 	}
 
-	ctxt.Diag("bad opcode i/r %v", obj.Aconv(int(a)))
+	ctxt.Diag("bad opcode i/r %v", obj.Aconv(a))
 	return 0
 }
 
 /*
  * load o(a),d
  */
-func opload(ctxt *obj.Link, a int16) uint32 {
+func opload(ctxt *obj.Link, a obj.As) uint32 {
 	switch a {
 	case AMOVD:
 		return OPVCC(58, 0, 0, 0) /* ld */
@@ -3211,14 +3207,14 @@ func opload(ctxt *obj.Link, a int16) uint32 {
 		return OPVCC(46, 0, 0, 0) /* lmw */
 	}
 
-	ctxt.Diag("bad load opcode %v", obj.Aconv(int(a)))
+	ctxt.Diag("bad load opcode %v", obj.Aconv(a))
 	return 0
 }
 
 /*
  * indexed load a(b),d
  */
-func oploadx(ctxt *obj.Link, a int16) uint32 {
+func oploadx(ctxt *obj.Link, a obj.As) uint32 {
 	switch a {
 	case AMOVWZ:
 		return OPVCC(31, 23, 0, 0) /* lwzx */
@@ -3256,6 +3252,8 @@ func oploadx(ctxt *obj.Link, a int16) uint32 {
 		return OPVCC(31, 311, 0, 0) /* lhzux */
 	case AECIWX:
 		return OPVCC(31, 310, 0, 0) /* eciwx */
+	case ALBAR:
+		return OPVCC(31, 52, 0, 0) /* lbarx */
 	case ALWAR:
 		return OPVCC(31, 20, 0, 0) /* lwarx */
 	case ALDAR:
@@ -3268,14 +3266,14 @@ func oploadx(ctxt *obj.Link, a int16) uint32 {
 		return OPVCC(31, 53, 0, 0) /* ldux */
 	}
 
-	ctxt.Diag("bad loadx opcode %v", obj.Aconv(int(a)))
+	ctxt.Diag("bad loadx opcode %v", obj.Aconv(a))
 	return 0
 }
 
 /*
  * store s,o(d)
  */
-func opstore(ctxt *obj.Link, a int16) uint32 {
+func opstore(ctxt *obj.Link, a obj.As) uint32 {
 	switch a {
 	case AMOVB, AMOVBZ:
 		return OPVCC(38, 0, 0, 0) /* stb */
@@ -3312,14 +3310,14 @@ func opstore(ctxt *obj.Link, a int16) uint32 {
 		return OPVCC(62, 0, 0, 1) /* stdu */
 	}
 
-	ctxt.Diag("unknown store opcode %v", obj.Aconv(int(a)))
+	ctxt.Diag("unknown store opcode %v", obj.Aconv(a))
 	return 0
 }
 
 /*
  * indexed store s,a(b)
  */
-func opstorex(ctxt *obj.Link, a int16) uint32 {
+func opstorex(ctxt *obj.Link, a obj.As) uint32 {
 	switch a {
 	case AMOVB, AMOVBZ:
 		return OPVCC(31, 215, 0, 0) /* stbx */
@@ -3352,6 +3350,8 @@ func opstorex(ctxt *obj.Link, a int16) uint32 {
 		return OPVCC(31, 661, 0, 0) /* stswx */
 	case AMOVWBR:
 		return OPVCC(31, 662, 0, 0) /* stwbrx */
+	case ASTBCCC:
+		return OPVCC(31, 694, 0, 1) /* stbcx. */
 	case ASTWCCC:
 		return OPVCC(31, 150, 0, 1) /* stwcx. */
 	case ASTDCCC:
@@ -3364,6 +3364,6 @@ func opstorex(ctxt *obj.Link, a int16) uint32 {
 		return OPVCC(31, 181, 0, 0) /* stdux */
 	}
 
-	ctxt.Diag("unknown storex opcode %v", obj.Aconv(int(a)))
+	ctxt.Diag("unknown storex opcode %v", obj.Aconv(a))
 	return 0
 }

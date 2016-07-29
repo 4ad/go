@@ -55,14 +55,14 @@ func follow(ctxt *obj.Link, s *obj.LSym) {
 func xfol(ctxt *obj.Link, p *obj.Prog, last **obj.Prog) {
 	var q *obj.Prog
 	var r *obj.Prog
-	var a int
+	var a obj.As
 	var i int
 
 loop:
 	if p == nil {
 		return
 	}
-	a = int(p.As)
+	a = p.As
 	if a == obj.AJMP {
 		q = p.Pcond
 		if q != nil {
@@ -81,7 +81,7 @@ loop:
 			if q == *last || q == nil {
 				break
 			}
-			a = int(q.As)
+			a = q.As
 			if a == obj.ANOP {
 				i--
 				continue
@@ -136,7 +136,7 @@ loop:
 
 		a = obj.AJMP
 		q = ctxt.NewProg()
-		q.As = int16(a)
+		q.As = a
 		q.Lineno = p.Lineno
 		q.To.Type = obj.TYPE_BRANCH
 		q.To.Offset = p.Pc
@@ -155,7 +155,7 @@ loop:
 			q = obj.Brchain(ctxt, p.Link)
 			if a != obj.ATEXT {
 				if q != nil && (q.Mark&FOLL != 0) {
-					p.As = int16(relinv(a))
+					p.As = relinv(a)
 					p.Link = p.Pcond
 					p.Pcond = q
 				}

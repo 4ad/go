@@ -2,7 +2,7 @@
 
 package sys
 
-const TheGoarch = `sparc64`
+const GOARCH = `sparc64`
 
 const Goarch386 = 0
 const GoarchAmd64 = 0

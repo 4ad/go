@@ -325,9 +325,9 @@ func (r *readRune) readByte() (b byte, err error) {
 		r.pending--
 		return
 	}
-	_, err = r.reader.Read(r.pendBuf[:1])
-	if err != nil {
-		return
+	n, err := io.ReadFull(r.reader, r.pendBuf[:1])
+	if n != 1 {
+		return 0, err
 	}
 	return r.pendBuf[0], err
 }
@@ -915,9 +915,14 @@ func (s *ss) hexString() string {
 	return string(s.buf)
 }
 
-const floatVerbs = "beEfFgGv"
+const (
+	floatVerbs = "beEfFgGv"
 
-const hugeWid = 1 << 30
+	hugeWid = 1 << 30
+
+	intBits     = 32 << (^uint(0) >> 63)
+	uintptrBits = 32 << (^uintptr(0) >> 63)
+)
 
 // scanOne scans a single value, deriving the scanner from the type of the argument.
 func (s *ss) scanOne(verb rune, arg interface{}) {

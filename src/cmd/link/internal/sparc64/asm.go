@@ -140,7 +140,7 @@ func elfsetupplt() {
 
 		// Create relocation table for .plt
 		rela := ld.Linklookup(ld.Ctxt, ".rela.plt", 0)
-		rela.Align = int32(ld.Thearch.Regsize)
+		rela.Align = int32(ld.SysArch.RegSize)
 
 		// Create global offset table; first entry reserved for
 		// address of .dynamic section.
@@ -307,7 +307,7 @@ func addpltsym(s *ld.LSym) {
 
 func asmb() {
 	if ld.Debug['v'] != 0 {
-		fmt.Fprintf(&ld.Bso, "%5.2f asmb\n", obj.Cputime())
+		fmt.Fprintf(ld.Bso, "%5.2f asmb\n", obj.Cputime())
 	}
 	ld.Bso.Flush()
 
@@ -325,7 +325,7 @@ func asmb() {
 
 	if ld.Segrodata.Filelen > 0 {
 		if ld.Debug['v'] != 0 {
-			fmt.Fprintf(&ld.Bso, "%5.2f rodatblk\n", obj.Cputime())
+			fmt.Fprintf(ld.Bso, "%5.2f rodatblk\n", obj.Cputime())
 		}
 		ld.Bso.Flush()
 
@@ -334,7 +334,7 @@ func asmb() {
 	}
 
 	if ld.Debug['v'] != 0 {
-		fmt.Fprintf(&ld.Bso, "%5.2f datblk\n", obj.Cputime())
+		fmt.Fprintf(ld.Bso, "%5.2f datblk\n", obj.Cputime())
 	}
 	ld.Bso.Flush()
 
@@ -349,7 +349,7 @@ func asmb() {
 	if ld.Debug['s'] == 0 {
 		// TODO: rationalize
 		if ld.Debug['v'] != 0 {
-			fmt.Fprintf(&ld.Bso, "%5.2f sym\n", obj.Cputime())
+			fmt.Fprintf(ld.Bso, "%5.2f sym\n", obj.Cputime())
 		}
 		ld.Bso.Flush()
 		switch ld.HEADTYPE {
@@ -365,16 +365,15 @@ func asmb() {
 		default:
 			if ld.Iself {
 				if ld.Debug['v'] != 0 {
-					fmt.Fprintf(&ld.Bso, "%5.2f elfsym\n", obj.Cputime())
+					fmt.Fprintf(ld.Bso, "%5.2f elfsym\n", obj.Cputime())
 				}
 				ld.Asmelfsym()
 				ld.Cflush()
 				ld.Cwrite(ld.Elfstrdat)
 
 				if ld.Debug['v'] != 0 {
-					fmt.Fprintf(&ld.Bso, "%5.2f dwarf\n", obj.Cputime())
+					fmt.Fprintf(ld.Bso, "%5.2f dwarf\n", obj.Cputime())
 				}
-				ld.Dwarfemitdebugsections()
 
 				if ld.Linkmode == ld.LinkExternal {
 					ld.Elfemitreloc()
@@ -385,7 +384,7 @@ func asmb() {
 
 	ld.Ctxt.Cursym = nil
 	if ld.Debug['v'] != 0 {
-		fmt.Fprintf(&ld.Bso, "%5.2f header\n", obj.Cputime())
+		fmt.Fprintf(ld.Bso, "%5.2f header\n", obj.Cputime())
 	}
 	ld.Bso.Flush()
 	ld.Cseek(0)

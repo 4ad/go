@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build sparc64
+
 package runtime
 
 import "unsafe"
@@ -17,8 +19,6 @@ func lfstackPack(node *lfnode, cnt uintptr) uint64 {
 	return uint64(uintptr(unsafe.Pointer(node)))<<16 | uint64(cnt&(1<<19-1))
 }
 
-func lfstackUnpack(val uint64) (node *lfnode, cnt uintptr) {
-	node = (*lfnode)(unsafe.Pointer(uintptr(int64(val) >> 19 << 3)))
-	cnt = uintptr(val & (1<<19 - 1))
-	return
+func lfstackUnpack(val uint64) *lfnode {
+	return (*lfnode)(unsafe.Pointer(uintptr(int64(val) >> 19 << 3)))
 }

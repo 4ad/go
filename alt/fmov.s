@@ -1,4 +1,0 @@
-TEXT	main(SB),512|7,$0
-	FMOVD	$0.123, D0
-	FMOVS	$0.456, F0
-	RET

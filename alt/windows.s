@@ -1,6 +1,0 @@
-TEXT	main(SB),512|7,$0
-	SAVE	L1, L2, L3
-	SAVE	$8, L2, L3
-	RESTORE	L1, L2, L3
-	RESTORE	$8, L2, L3
-	RET

@@ -1,7 +1,0 @@
-TEXT	main(SB),512|7,$0
-	MOVD	$42, L5
-	MOVD	$0xabcdabcd, L1
-	MOVD	$0xabcd0000, L2
-	MOVD	$-20984, L3
-	MOVD	$0x8123000, L4
-	RET

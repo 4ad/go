@@ -7,6 +7,7 @@
 package objfile
 
 import (
+	"debug/dwarf"
 	"debug/elf"
 	"fmt"
 	"os"
@@ -99,8 +100,23 @@ func (f *elfFile) goarch() string {
 		return "arm"
 	case elf.EM_PPC64:
 		return "ppc64"
+	case elf.EM_S390:
+		return "s390x"
 	case elf.EM_SPARCV9:
 		return "sparc64"
 	}
 	return ""
+}
+
+func (f *elfFile) loadAddress() (uint64, error) {
+	for _, p := range f.elf.Progs {
+		if p.Type == elf.PT_LOAD {
+			return p.Vaddr, nil
+		}
+	}
+	return 0, fmt.Errorf("unknown load address")
+}
+
+func (f *elfFile) dwarf() (*dwarf.Data, error) {
+	return f.elf.DWARF()
 }

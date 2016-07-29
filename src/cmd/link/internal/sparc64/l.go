@@ -62,11 +62,9 @@ package sparc64
 // THE SOFTWARE.
 
 const (
-	thechar   = 'u'
 	MaxAlign  = 32 // max data alignment
 	MinAlign  = 1  // min data alignment
 	FuncAlign = 16
-	MINLC     = 4
 )
 
 /* Used by ../internal/ld/dwarf.go */
