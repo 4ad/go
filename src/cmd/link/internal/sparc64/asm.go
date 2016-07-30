@@ -131,8 +131,9 @@ func elfreloc1(r *ld.Reloc, sectoff int64) int {
 func elfsetupplt() {
 	plt := ld.Linklookup(ld.Ctxt, ".plt", 0)
 	if plt.Size == 0 {
-		// .plt entries aligned at 32-byte boundaries.
-		plt.Align = 32
+		// .plt entries are aligned at 32-byte boundaries, but the
+		// entire section at 256-byte boundaries.
+		plt.Align = 256
 
 		// Runtime linker will provide the initial plt; each entry is
 		// 32 bytes; reserve the first four entries for its use.

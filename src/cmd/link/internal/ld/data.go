@@ -1349,11 +1349,6 @@ func dodata() {
 	for _, symn := range writableSects {
 		for _, s := range data[symn] {
 			sect := addsection(&Segdata, s.Name, 06)
-			if s.Name == ".plt" && SysArch.Family == sys.SPARC64 {
-				sect.Align = 256
-			} else {
-				sect.Align = symalign(s)
-			}
 			sect.Align = symalign(s)
 			datsize = Rnd(datsize, int64(sect.Align))
 			sect.Vaddr = uint64(datsize)
@@ -1541,11 +1536,7 @@ func dodata() {
 	}
 	for _, s := range data[obj.SELFRXSECT] {
 		sect := addsection(&Segtext, s.Name, 04)
-		if s.Name == ".plt" && SysArch.Family == sys.SPARC64 {
-			sect.Align = 256
-		} else {
-			sect.Align = symalign(s)
-		}
+		sect.Align = symalign(s)
 		datsize = Rnd(datsize, int64(sect.Align))
 		sect.Vaddr = uint64(datsize)
 		s.Sect = sect
