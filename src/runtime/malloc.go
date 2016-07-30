@@ -921,8 +921,17 @@ func persistentalloc1(size, align uintptr, sysStat *uint64) unsafe.Pointer {
 		lock(&globalAlloc.mutex)
 		persistent = &globalAlloc.persistentAlloc
 	}
-	persistent.off = round(persistent.off, align)
-	if persistent.off+size > chunk || persistent.base == nil {
+
+	alignSize := size
+	if persistent.base != nil {
+		p := add(persistent.base, persistent.off)
+		np := add(p, (-uintptr(p) & (sys.PtrSize - 1)))
+		diff := uintptr(np) - uintptr(p)
+		alignSize += diff
+		persistent.off += diff
+	}
+
+	if persistent.base == nil || persistent.off+size > chunk {
 		persistent.base = sysAlloc(chunk, &memstats.other_sys)
 		if persistent.base == nil {
 			if persistent == &globalAlloc.persistentAlloc {
@@ -931,6 +940,7 @@ func persistentalloc1(size, align uintptr, sysStat *uint64) unsafe.Pointer {
 			throw("runtime: cannot allocate memory")
 		}
 		persistent.off = 0
+		alignSize = size
 	}
 	p := add(persistent.base, persistent.off)
 	persistent.off += size
@@ -940,8 +950,8 @@ func persistentalloc1(size, align uintptr, sysStat *uint64) unsafe.Pointer {
 	}
 
 	if sysStat != &memstats.other_sys {
-		mSysStatInc(sysStat, size)
-		mSysStatDec(&memstats.other_sys, size)
+		mSysStatInc(sysStat, alignSize)
+		mSysStatDec(&memstats.other_sys, alignSize)
 	}
 	return p
 }
