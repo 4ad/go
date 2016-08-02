@@ -612,11 +612,11 @@ func mallocgc(size uintptr, typ *_type, needzero bool) unsafe.Pointer {
 			// reduces heap size by ~20%.
 			off := c.tinyoffset
 			// Align tiny pointer for required (conservative) alignment.
-			if size&7 == 0 {
+			if size >= 8 {
 				off = round(off, 8)
-			} else if size&3 == 0 {
+			} else if size >= 4 {
 				off = round(off, 4)
-			} else if size&1 == 0 {
+			} else if size >= 2 {
 				off = round(off, 2)
 			}
 			if off+size <= maxTinySize && c.tiny != 0 {
@@ -922,13 +922,16 @@ func persistentalloc1(size, align uintptr, sysStat *uint64) unsafe.Pointer {
 		persistent = &globalAlloc.persistentAlloc
 	}
 
-	alignSize := size
-	if persistent.base != nil {
-		p := add(persistent.base, persistent.off)
-		np := add(p, (-uintptr(p) & (sys.PtrSize - 1)))
-		diff := uintptr(np) - uintptr(p)
-		alignSize += diff
-		persistent.off += diff
+	if persistent.base != nil && size > 1 {
+		off := persistent.off
+		if size >= 8 {
+			off = round(off, 8)
+		} else if size >= 4 {
+			off = round(off, 4)
+		} else if size >= 2 {
+			off = round(off, 2)
+		}
+		persistent.off = off
 	}
 
 	if persistent.base == nil || persistent.off+size > chunk {
@@ -940,7 +943,6 @@ func persistentalloc1(size, align uintptr, sysStat *uint64) unsafe.Pointer {
 			throw("runtime: cannot allocate memory")
 		}
 		persistent.off = 0
-		alignSize = size
 	}
 	p := add(persistent.base, persistent.off)
 	persistent.off += size
@@ -950,8 +952,8 @@ func persistentalloc1(size, align uintptr, sysStat *uint64) unsafe.Pointer {
 	}
 
 	if sysStat != &memstats.other_sys {
-		mSysStatInc(sysStat, alignSize)
-		mSysStatDec(&memstats.other_sys, alignSize)
+		mSysStatInc(sysStat, size)
+		mSysStatDec(&memstats.other_sys, size)
 	}
 	return p
 }
