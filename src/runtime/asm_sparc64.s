@@ -801,7 +801,7 @@ TEXT runtime·stackcheck(SB), NOSPLIT, $0
 TEXT runtime·getcallerpc(SB),NOSPLIT,$16-16
 	MOVD	8*15(BFP), I1		// LR saved by caller
 	MOVD	runtime·stackBarrierPC(SB), I4
-	CMP	I4, I1
+	CMP	I1, I4
 	BNED	nobar
 	// Get original return PC.
 	CALL	runtime·nextBarrierPC(SB)
