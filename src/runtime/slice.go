@@ -130,7 +130,9 @@ func growslice(et *_type, old slice, cap int) slice {
 		// Note: can't use rawmem (which avoids zeroing of memory), because then GC can scan uninitialized memory.
 		p = mallocgc(capmem, et, true)
 		if !writeBarrier.enabled {
-			memmove(p, old.array, lenmem)
+			if lenmem > 0 {
+				memmove(p, old.array, lenmem)
+			}
 		} else {
 			for i := uintptr(0); i < lenmem; i += et.size {
 				typedmemmove(et, add(p, i), add(old.array, i))
