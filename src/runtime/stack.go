@@ -66,7 +66,10 @@ const (
 	// purposes like signal handling. Used on Windows, Plan 9,
 	// and Darwin/ARM because they do not use a separate stack.
 	// TODO(aram): explain why for sparc64
-	_StackSystem = sys.GoosWindows*512*sys.PtrSize + sys.GoosPlan9*512 + sys.GoosDarwin*sys.GoarchArm*1024 + sys.GoarchSparc64*65535
+	// (shawn): I suspect this is because we don't have stack splitting
+	// support yet (?) on SPARC64, so this affects the maximum bytes that a
+	// chain of NOSPLIT functions can use?
+	_StackSystem = sys.GoosWindows*512*sys.PtrSize + sys.GoosPlan9*512 + sys.GoosDarwin*sys.GoarchArm*1024 + sys.GoarchSparc64*1048576*2
 
 	// The minimum size of stack used by Go code
 	_StackMin = 2048
