@@ -23,7 +23,8 @@ TEXT runtime·rt0_go(SB),NOSPLIT,$16-0
 	// _cgo_init may update stackguard.
 	MOVD	$runtime·g0(SB), g
 	MOVD	BSP, RT1
-	MOVD	$(-64*1024)(BSP), RT2
+	// must be larger than _StackSystem
+	MOVD	$(-64*1024-const__StackSystem)(BSP), RT2
 	MOVD	RT2, g_stackguard0(g)
 	MOVD	RT2, g_stackguard1(g)
 	MOVD	RT2, (g_stack+stack_lo)(g)
