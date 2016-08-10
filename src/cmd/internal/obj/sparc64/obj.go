@@ -103,6 +103,166 @@ func init() {
 	}
 }
 
+func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
+	//TODO(shawn): re-enable stacksplit once scanstack is supported
+	if true {
+		return p
+	}
+
+	// MOV	g_stackguard(g), L1
+	p = obj.Appendp(ctxt, p)
+	start := p
+
+	p.As = AMOVD
+	p.From.Type = obj.TYPE_MEM
+	p.From.Reg = REG_G
+	p.From.Offset = 2 * int64(ctxt.Arch.PtrSize) // G.stackguard0
+	if ctxt.Cursym.Cfunc {
+		p.From.Offset = 3 * int64(ctxt.Arch.PtrSize) // G.stackguard1
+	}
+	p.To.Type = obj.TYPE_REG
+	p.To.Reg = REG_L1
+
+	q := (*obj.Prog)(nil)
+	if framesize <= obj.StackSmall {
+		// small stack: SP-StackBias < stackguard
+		//	CMP	stackguard, SP
+		p = obj.Appendp(ctxt, p)
+
+		p.As = ACMP
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = REG_L1
+		p.Reg = REG_RSP
+	} else if framesize <= obj.StackBig {
+		// large stack: SP-framesize < stackguard-StackSmall
+		//	SUB	$framesize, RSP, L2
+		//	CMP	stackguard, L2
+		p = obj.Appendp(ctxt, p)
+
+		p.As = ASUB
+		p.From.Type = obj.TYPE_CONST
+		p.From.Offset = int64(framesize)
+		p.Reg = REG_RSP
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = REG_L2
+
+		p = obj.Appendp(ctxt, p)
+		p.As = ACMP
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = REG_L1
+		p.Reg = REG_L2
+	} else {
+		// Such a large stack we need to protect against wraparound
+		// if SP is close to zero.
+		//	SP-stackguard+StackGuard < framesize + (StackGuard-StackSmall)
+		// The +StackGuard on both sides is required to keep the left side positive:
+		// SP is allowed to be slightly below stackguard. See stack.h.
+		//	CMP	$StackPreempt, L1
+		//	BED	label_of_call_to_morestack
+		//	ADD	$StackGuard, RSP, L2
+		//	SUB	L1, L2
+		//	MOV	$(framesize+(StackGuard-StackSmall)), L3
+		//	CMP	L3, L2
+		p = obj.Appendp(ctxt, p)
+
+		p.As = ACMP
+		p.From.Type = obj.TYPE_CONST
+		p.From.Offset = obj.StackPreempt
+		p.Reg = REG_L1
+
+		p = obj.Appendp(ctxt, p)
+		q = p
+		p.As = ABED
+		p.To.Type = obj.TYPE_BRANCH
+
+		p = obj.Appendp(ctxt, p)
+		p.As = AADD
+		p.From.Type = obj.TYPE_CONST
+		p.From.Offset = obj.StackGuard
+		p.Reg = REG_RSP
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = REG_L2
+
+		p = obj.Appendp(ctxt, p)
+		p.As = ASUB
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = REG_L1
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = REG_L2
+
+		p = obj.Appendp(ctxt, p)
+		p.As = AMOVD
+		p.From.Type = obj.TYPE_CONST
+		p.From.Offset = int64(framesize) + (obj.StackGuard - obj.StackSmall)
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = REG_L3
+
+		p = obj.Appendp(ctxt, p)
+		p.As = ACMP
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = REG_L3
+		p.Reg = REG_L2
+	}
+
+	// BLE	do-morestack
+	ble := obj.Appendp(ctxt, p)
+	ble.As = ABLED
+	ble.To.Type = obj.TYPE_BRANCH
+
+	var last *obj.Prog
+	for last = ctxt.Cursym.Text; last.Link != nil; last = last.Link {
+	}
+
+	spfix := obj.Appendp(ctxt, last)
+	spfix.As = ARNOP
+	spfix.Spadj = -framesize
+
+	// MOV	LR, L3
+	movlr := obj.Appendp(ctxt, spfix)
+	movlr.As = AMOVD
+	movlr.From.Type = obj.TYPE_REG
+	movlr.From.Reg = REG_ILR
+	movlr.To.Type = obj.TYPE_REG
+	movlr.To.Reg = REG_L3
+	if q != nil {
+		q.Pcond = movlr
+	}
+	ble.Pcond = movlr
+
+	debug := movlr
+	if true {
+		debug = obj.Appendp(ctxt, debug)
+		debug.As = AMOVD
+		debug.From.Type = obj.TYPE_CONST
+		debug.From.Offset = int64(framesize)
+		debug.To.Type = obj.TYPE_REG
+		debug.To.Reg = REG_TMP
+	}
+
+	// CALL runtime.morestack(SB)
+	call := obj.Appendp(ctxt, debug)
+	call.As = obj.ACALL
+	call.To.Type = obj.TYPE_MEM
+	call.To.Name = obj.NAME_EXTERN
+	morestack := "runtime.morestack"
+	switch {
+	case ctxt.Cursym.Cfunc:
+		morestack = "runtime.morestackc"
+	case ctxt.Cursym.Text.From3.Offset&obj.NEEDCTXT == 0:
+		morestack = "runtime.morestack_noctxt"
+	}
+	call.To.Sym = obj.Linklookup(ctxt, morestack, 0)
+
+	// JMP start
+	jmp := obj.Appendp(ctxt, call)
+	jmp.As = obj.AJMP
+	jmp.To.Type = obj.TYPE_BRANCH
+	jmp.Pcond = start
+	jmp.Spadj = +framesize
+
+	return ble
+}
+
 // AutoeditProg returns a new obj.Prog, with off(SP), off(FP), $off(SP),
 // and $off(FP) replaced with new(RFP).
 func autoeditprog(ctxt *obj.Link, p *obj.Prog) *obj.Prog {
@@ -496,6 +656,10 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				p.From.Offset = int64(i*8 + MinStackFrameSize + StackBias)
 				p.To.Type = obj.TYPE_REG
 				p.To.Reg = int16(REG_I0 + i)
+			}
+
+			if !(cursym.Text.From3.Offset&obj.NOSPLIT != 0) {
+				p = stacksplit(ctxt, p, frameSize) // emit split check
 			}
 
 			if cursym.Text.From3.Offset&obj.WRAPPER != 0 {

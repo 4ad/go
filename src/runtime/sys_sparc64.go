@@ -18,10 +18,32 @@ func gostartcall(buf *gobuf, fn, ctxt unsafe.Pointer) {
 }
 
 // Called to rewind context saved during morestack back to beginning of function.
-// To help us, the linker emits a jmp back to the beginning right after the
+// To help us, the linker emits a jmp back to the beginning 8 bytes after the
 // call to morestack. We just have to decode and apply that jump.
 func rewindmorestack(buf *gobuf) {
-	throw("not implemented")
+	var inst uint32
+	if buf.pc&3 == 0 && buf.pc != 0 {
+		inst = *(*uint32)(unsafe.Pointer(buf.pc + 8))
+		// Extract annul, condition, and opcode.
+		iacond_op2 := inst >> 22
+		// branch always
+		mcond := 8 << 25
+		// branch on integer condition with prediction
+		mop2 := 1 << 22
+		// ba,pt
+		bapt := uint32((mcond | mop2) >> 22)
+
+		if iacond_op2 == bapt {
+			// Extract pc-relative address (4*sign_ext(disp19))
+			idisp19 := 4 * (int32(inst<<13) >> 13)
+			//ipc := uintptr(unsafe.Pointer(buf.pc))
+			buf.pc += 8 + uintptr(idisp19)
+			//print("runtime: rewind pc=", hex(ipc), " to pc=", hex(buf.pc), "\n");
+			return
+		}
+	}
+	print("runtime: pc=", hex(buf.pc), " ", hex(inst), "\n")
+	throw("runtime: misuse of rewindmorestack")
 }
 
 func usleep2(us uint32)
