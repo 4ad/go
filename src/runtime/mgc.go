@@ -179,9 +179,7 @@ func gcinit() {
 func readgogc() int32 {
 	p := gogetenv("GOGC")
 	if p == "" {
-		// return 100
-		// TODO(aram):
-		return -1
+		return 100
 	}
 	if p == "off" {
 		return -1
