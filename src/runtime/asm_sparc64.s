@@ -311,6 +311,8 @@ TEXT runtime·morestack(SB),NOSPLIT|NOFRAME,$0-0
 	MOVD	CTXT, (g_sched+gobuf_ctxt)(g)
 	MOVD	BSP, TMP
 	MOVD	TMP, (g_sched+gobuf_sp)(g)
+	MOVD	BFP, TMP
+	MOVD	TMP, (g_sched+gobuf_bp)(g)
 	MOVD	OLR, (g_sched+gobuf_pc)(g)
 	MOVD	I1, (g_sched+gobuf_lr)(g)
 
