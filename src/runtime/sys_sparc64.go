@@ -37,7 +37,12 @@ func rewindmorestack(buf *gobuf) {
 			// Extract pc-relative address (4*sign_ext(disp19))
 			idisp19 := 4 * (int32(inst<<13) >> 13)
 			//ipc := uintptr(unsafe.Pointer(buf.pc))
-			buf.pc += 8 + uintptr(idisp19)
+			// TODO(shawn): this should include the 8 bytes
+			// after the call to morestack, but due to the
+			// prologue we pad functions with currently,
+			// runtime.gogo assumes all jump points are offset
+			// by 8, so we do not add it here.
+			buf.pc += uintptr(idisp19)
 			//print("runtime: rewind pc=", hex(ipc), " to pc=", hex(buf.pc), "\n");
 			return
 		}
