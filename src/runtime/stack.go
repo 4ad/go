@@ -629,7 +629,7 @@ func adjustpointers(scanp unsafe.Pointer, cbv *bitvector, adjinfo *adjustinfo, f
 			}
 			if minp <= p && p < maxp {
 				if stackDebug >= 3 {
-					print("adjust ptr ", p, " ", funcname(f), "\n")
+					print("adjust ptr ", hex(p), " ", funcname(f), "\n")
 				}
 				if useCAS {
 					ppu := (*unsafe.Pointer)(unsafe.Pointer(pp))
@@ -700,7 +700,16 @@ func adjustframe(frame *stkframe, arg unsafe.Pointer) bool {
 		adjustpointers(unsafe.Pointer(frame.varp-size), &bv, adjinfo, f)
 	}
 
-	// Adjust saved base pointer if there is one.
+	// Adjust saved bfp/rfp pointer if there is one.
+	if sys.ArchFamily == sys.SPARC64 && frame.sp > 0 {
+		// framepointer is always enabled for sparc64
+		if stackDebug >= 3 {
+			print("      saved bp\n")
+		}
+		adjustpointer(adjinfo, unsafe.Pointer(frame.sp+uintptr(112)))
+		adjustpointer(adjinfo, unsafe.Pointer(frame.varp+uintptr(112)))
+	}
+
 	if sys.ArchFamily == sys.AMD64 && frame.argp-frame.varp == 2*sys.RegSize {
 		if !framepointer_enabled {
 			print("runtime: found space for saved base pointer, but no framepointer experiment\n")
@@ -920,6 +929,9 @@ func copystack(gp *g, newsize uintptr, sync bool) {
 	gp.stack = new
 	gp.stackguard0 = new.lo + _StackGuard // NOTE: might clobber a preempt request
 	gp.sched.sp = new.hi - used
+	if sys.ArchFamily == sys.SPARC64 {
+		adjustpointer(&adjinfo, unsafe.Pointer(&gp.sched.bp))
+	}
 	oldsize := gp.stackAlloc
 	gp.stackAlloc = newsize
 	gp.stkbar = newstkbar
@@ -982,6 +994,7 @@ func newstack() {
 	morebuf := thisg.m.morebuf
 	thisg.m.morebuf.pc = 0
 	thisg.m.morebuf.lr = 0
+	thisg.m.morebuf.bp = 0
 	thisg.m.morebuf.sp = 0
 	thisg.m.morebuf.g = 0
 	rewindmorestack(&gp.sched)
