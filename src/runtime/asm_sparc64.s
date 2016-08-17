@@ -136,6 +136,13 @@ TEXT runtime·gogo(SB), NOSPLIT|NOFRAME, $0-8
 	// otherwise a spill will overwrite the saved link register.
 	MOVD	120(I3), ILR
 	MOVD	I3, BSP
+
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
+	MEMBAR	$111
+	FLUSHW
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
+	MEMBAR	$111
+
 	MOVD	ZR, gobuf_sp(L6)
 	MOVD	ZR, gobuf_ret(L6)
 	MOVD	ZR, gobuf_lr(L6)
@@ -333,6 +340,11 @@ TEXT runtime·morestack(SB),NOSPLIT|NOFRAME,$0-0
 	CALL	runtime·save_g(SB)
 	MOVD	(g_sched+gobuf_sp)(g), TMP
 	MOVD	TMP, BSP
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
+	MEMBAR	$111
+	FLUSHW
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
+	MEMBAR	$111
 	CALL	runtime·newstack(SB)
 
 	// Not reached, but make sure the return PC from the call to newstack
@@ -342,6 +354,14 @@ TEXT runtime·morestack(SB),NOSPLIT|NOFRAME,$0-0
 TEXT runtime·morestack_noctxt(SB),NOSPLIT|NOFRAME,$0-0
 	MOVD	ZR, CTXT
 	JMP	runtime·morestack(SB)
+
+TEXT runtime·regflush(SB),NOSPLIT|NOFRAME,$0-0
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
+	MEMBAR	$111
+	FLUSHW
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
+	MEMBAR	$111
+	RET
 
 TEXT runtime·stackBarrier(SB),NOSPLIT|NOFRAME,$0
 	// We came here via a RET to an overwritten LR.
