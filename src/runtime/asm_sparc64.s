@@ -313,6 +313,12 @@ TEXT runtime·morestack(SB),NOSPLIT|NOFRAME,$0-0
 	BNED	2(PC)
 	JMP	runtime·abort(SB)
 
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
+	MEMBAR	$111
+	FLUSHW
+	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
+	MEMBAR	$111
+
 	// Called from f.
 	// Set g->sched to context in f
 	MOVD	CTXT, (g_sched+gobuf_ctxt)(g)
@@ -328,23 +334,22 @@ TEXT runtime·morestack(SB),NOSPLIT|NOFRAME,$0-0
 	MOVD	I1, (m_morebuf+gobuf_pc)(O0)	// f's caller's PC
 	MOVD	BSP, TMP
 	MOVD	TMP, (m_morebuf+gobuf_sp)(O0)	// f's caller's BSP
+	MOVD	BFP, TMP
+	MOVD	TMP, (m_morebuf+gobuf_bp)(O0)	// f's caller's BFP
 	MOVD	g, (m_morebuf+gobuf_g)(O0)
 
 	// Call newstack on m->g0's stack.
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
-	FLUSHW
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
 	MOVD	m_g0(O0), g
 	CALL	runtime·save_g(SB)
 	MOVD	(g_sched+gobuf_sp)(g), TMP
 	MOVD	TMP, BSP
+
 	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
 	MEMBAR	$111
 	FLUSHW
 	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
 	MEMBAR	$111
+
 	CALL	runtime·newstack(SB)
 
 	// Not reached, but make sure the return PC from the call to newstack
