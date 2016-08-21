@@ -313,12 +313,6 @@ TEXT runtime·morestack(SB),NOSPLIT|NOFRAME,$0-0
 	BNED	2(PC)
 	JMP	runtime·abort(SB)
 
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
-	FLUSHW
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
-
 	// Called from f.
 	// Set g->sched to context in f
 	MOVD	CTXT, (g_sched+gobuf_ctxt)(g)
