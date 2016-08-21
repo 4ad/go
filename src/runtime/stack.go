@@ -700,14 +700,26 @@ func adjustframe(frame *stkframe, arg unsafe.Pointer) bool {
 		adjustpointers(unsafe.Pointer(frame.varp-size), &bv, adjinfo, f)
 	}
 
-	// Adjust saved bfp/rfp pointer if there is one.
+	// Adjust saved register values if present (including bsp/bfp).
 	if sys.ArchFamily == sys.SPARC64 && frame.sp > 0 {
 		// framepointer is always enabled for sparc64
 		if stackDebug >= 3 {
-			print("      saved bp\n")
+			print("      saved registers\n")
 		}
-		adjustpointer(adjinfo, unsafe.Pointer(frame.sp+uintptr(112)))
-		adjustpointer(adjinfo, unsafe.Pointer(frame.varp+uintptr(112)))
+
+		for i := frame.sp; i < frame.sp+uintptr(128); i += 8 {
+			if stackDebug >= 3 {
+				print("        frame.sp+", i - frame.sp)
+			}
+			adjustpointer(adjinfo, unsafe.Pointer(i))
+		}
+
+		for i := frame.varp; i < frame.varp+uintptr(128); i += 8 {
+			if stackDebug >= 3 {
+				print("        frame.varp+", i - frame.varp)
+			}
+			adjustpointer(adjinfo, unsafe.Pointer(i))
+		}
 	}
 
 	if sys.ArchFamily == sys.AMD64 && frame.argp-frame.varp == 2*sys.RegSize {
@@ -983,8 +995,8 @@ func newstack() {
 		gp.syscallsp = morebuf.sp
 		gp.syscallpc = morebuf.pc
 		print("runtime: newstack sp=", hex(gp.sched.sp), " stack=[", hex(gp.stack.lo), ", ", hex(gp.stack.hi), "]\n",
-			"\tmorebuf={pc:", hex(morebuf.pc), " sp:", hex(morebuf.sp), " lr:", hex(morebuf.lr), "}\n",
-			"\tsched={pc:", hex(gp.sched.pc), " sp:", hex(gp.sched.sp), " lr:", hex(gp.sched.lr), " ctxt:", gp.sched.ctxt, "}\n")
+			"\tmorebuf={pc:", hex(morebuf.pc), " sp:", hex(morebuf.sp), " bp=", hex(morebuf.bp), " lr:", hex(morebuf.lr), "}\n",
+			"\tsched={pc:", hex(gp.sched.pc), " sp:", hex(gp.sched.sp), " bp=", hex(gp.sched.bp), " lr:", hex(gp.sched.lr), " ctxt:", gp.sched.ctxt, "}\n")
 
 		traceback(morebuf.pc, morebuf.sp, morebuf.lr, gp)
 		throw("runtime: stack split at bad time")
@@ -1035,8 +1047,8 @@ func newstack() {
 	}
 	if stackDebug >= 1 || sp < gp.stack.lo {
 		print("runtime: newstack sp=", hex(sp), " stack=[", hex(gp.stack.lo), ", ", hex(gp.stack.hi), "]\n",
-			"\tmorebuf={pc:", hex(morebuf.pc), " sp:", hex(morebuf.sp), " lr:", hex(morebuf.lr), "}\n",
-			"\tsched={pc:", hex(gp.sched.pc), " sp:", hex(gp.sched.sp), " lr:", hex(gp.sched.lr), " ctxt:", gp.sched.ctxt, "}\n")
+			"\tmorebuf={pc:", hex(morebuf.pc), " sp:", hex(morebuf.sp), " bp:", hex(morebuf.bp), " lr:", hex(morebuf.lr), "}\n",
+			"\tsched={pc:", hex(gp.sched.pc), " sp:", hex(gp.sched.sp), " bp:", hex(gp.sched.bp), " lr:", hex(gp.sched.lr), " ctxt:", gp.sched.ctxt, "}\n")
 	}
 	if sp < gp.stack.lo {
 		print("runtime: gp=", gp, ", gp->status=", hex(readgstatus(gp)), "\n ")
