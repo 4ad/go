@@ -119,11 +119,8 @@ TEXT runtime·gogo(SB), NOSPLIT|NOFRAME, $0-8
 	MOVD	gobuf_g(L6), g
 	CALL	runtime·save_g(SB)
 
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
-	FLUSHW
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
+	// Before every stack switch, registers must be flushed.
+	CALL	runtime·regflush(SB)
 
 	MOVD	0(g), I4	// make sure g is not nil
 	MOVD	gobuf_lr(L6), OLR
@@ -136,12 +133,6 @@ TEXT runtime·gogo(SB), NOSPLIT|NOFRAME, $0-8
 	MOVD	120(I3), ILR
 	MOVD	I3, BSP
 	MOVD	I4, BFP
-
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
-	FLUSHW
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
 
 	MOVD	ZR, gobuf_sp(L6)
 	MOVD	ZR, gobuf_ret(L6)
@@ -175,11 +166,9 @@ TEXT runtime·mcall(SB), NOSPLIT|NOFRAME, $0-8
 	BNED	ok
 	JMP	runtime·badmcall(SB)
 ok:
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
-	FLUSHW
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
+	// Before every stack switch, registers must be flushed.
+	CALL	runtime·regflush(SB)
+
 	MOVD	fn+0(FP), CTXT			// context
 	MOVD	0(CTXT), I4			// code pointer
 	MOVD	(g_sched+gobuf_sp)(g), TMP
@@ -244,11 +233,10 @@ switch:
 	MOVD	g, (g_sched+gobuf_g)(g)
 
 	// switch to g0
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
-	FLUSHW
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
+
+	// Before every stack switch, registers must be flushed.
+	CALL	runtime·regflush(SB)
+
 	MOVD	L6, g
 	CALL	runtime·save_g(SB)
 	MOVD	(g_sched+gobuf_sp)(g), I1
@@ -264,12 +252,10 @@ switch:
 	MOVD	0(CTXT), I1	// code pointer
 	CALL	(I1)
 
+	// Before every stack switch, registers must be flushed.
+	CALL	runtime·regflush(SB)
+
 	// switch back to g
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
-	FLUSHW
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
 	MOVD	g_m(g), I1
 	MOVD	m_curg(I1), g
 	CALL	runtime·save_g(SB)
@@ -332,17 +318,14 @@ TEXT runtime·morestack(SB),NOSPLIT|NOFRAME,$0-0
 	MOVD	TMP, (m_morebuf+gobuf_bp)(O0)	// f's caller's BFP
 	MOVD	g, (m_morebuf+gobuf_g)(O0)
 
+	// Before every stack switch, registers must be flushed.
+	CALL	runtime·regflush(SB)
+
 	// Call newstack on m->g0's stack.
 	MOVD	m_g0(O0), g
 	CALL	runtime·save_g(SB)
 	MOVD	(g_sched+gobuf_sp)(g), TMP
 	MOVD	TMP, BSP
-
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
-	FLUSHW
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
 
 	CALL	runtime·newstack(SB)
 
@@ -600,11 +583,10 @@ TEXT ·asmcgocall(SB),NOSPLIT|NOFRAME,$0-20
 	BED	g0
 
 	CALL	gosave<>(SB)
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
-	FLUSHW
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
+
+	// Before every stack switch, registers must be flushed.
+	CALL	runtime·regflush(SB)
+
 	MOVD	L7, g
 	MOVD	(g_sched+gobuf_bp)(g), TMP
 	MOVD	TMP, BFP
@@ -621,13 +603,11 @@ g0:
 	CALL	runtime·save_g(SB)
 	CALL	(O1)
 
+	// Before every stack switch, registers must be flushed.
+	CALL	runtime·regflush(SB)
+
 	// Restore g, stack pointer.
 	// R8 (O0) is errno, so don't touch it
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
-	FLUSHW
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
 	MOVD	L4, g
 	MOVD	(g_stack+stack_hi)(g), TMP
 	SUB	L5, TMP, TMP2
@@ -727,11 +707,10 @@ havem:
 	// In the new goroutine, -16(SP) and -8(SP) are unused.
 	MOVD	m_curg(O0), g
 	CALL	runtime·save_g(SB)
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
-	FLUSHW
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
+
+	// Before every stack switch, registers must be flushed.
+	CALL	runtime·regflush(SB)
+
 	MOVD	(g_sched+gobuf_sp)(g), I4 // prepare stack as I4
 	MOVD	(g_sched+gobuf_pc)(g), L6
 	MOVD	L6, -(FIXED_FRAME+16)(I4)
@@ -751,11 +730,10 @@ havem:
 	MOVD	g_m(g), O0
 	MOVD	m_g0(O0), g
 	CALL	runtime·save_g(SB)
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
-	FLUSHW
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
+
+	// Before every stack switch, registers must be flushed.
+	CALL	runtime·regflush(SB)
+
 	MOVD	(g_sched+gobuf_sp)(g), TMP
 	MOVD	TMP, BSP
 	MOVD	savedsp-16(SP), I4
