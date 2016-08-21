@@ -41,12 +41,11 @@ func rewindmorestack(buf *gobuf) {
 
 			// For sparc, the pc register holds the address of the
 			// *current* instruction, rather than the next
-			// instruction to execute and CTIs are padded with
-			// a nop to avoid DCTI coupling.  Although the jump
-			// that was decoded is offset 8 bytes later, we can
-			// ignore it so that we jump to the first
-			// instruction after 'save' in the function
-			// prologue.
+			// instruction to execute, and CTIs are padded with
+			// a nop to avoid DCTI coupling.  This should place
+			// the jump right at the first instruction used to
+			// load and compare the stackguard to the current
+			// stack pointer.
 			buf.pc += uintptr(idisp19)
 
 			//print("runtime: rewind pc=", hex(ipc), " to pc=", hex(buf.pc), "\n");
