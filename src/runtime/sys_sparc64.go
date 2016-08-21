@@ -36,13 +36,19 @@ func rewindmorestack(buf *gobuf) {
 		if iacond_op2 == bapt {
 			// Extract pc-relative address (4*sign_ext(disp19))
 			idisp19 := 4 * (int32(inst<<13) >> 13)
+
 			//ipc := uintptr(unsafe.Pointer(buf.pc))
-			// TODO(shawn): this should include the 8 bytes
-			// after the call to morestack, but due to the
-			// prologue we pad functions with currently,
-			// runtime.gogo assumes all jump points are offset
-			// by 8, so we do not add it here.
+
+			// For sparc, the pc register holds the address of the
+			// *current* instruction, rather than the next
+			// instruction to execute and CTIs are padded with
+			// a nop to avoid DCTI coupling.  Although the jump
+			// that was decoded is offset 8 bytes later, we can
+			// ignore it so that we jump to the first
+			// instruction after 'save' in the function
+			// prologue.
 			buf.pc += uintptr(idisp19)
+
 			//print("runtime: rewind pc=", hex(ipc), " to pc=", hex(buf.pc), "\n");
 			return
 		}
