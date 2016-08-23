@@ -104,11 +104,6 @@ func init() {
 }
 
 func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
-	//TODO(shawn): re-enable stacksplit once scanstack is supported
-	if true {
-		return p
-	}
-
 	// MOV	g_stackguard(g), L1
 	p = obj.Appendp(ctxt, p)
 	start := p
