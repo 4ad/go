@@ -10,12 +10,17 @@
 DATA dbgbuf(SB)/8, $"\n\n"
 GLOBL dbgbuf(SB), $8
 
+// Note: define used in this file to avoid affecting registers.
 // #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
 #define REGFLUSH()	\
 	MEMBAR	$111;	\
 	FLUSHW;		\
 	MEMBAR	$111
-// Note: can't just "B REGFLUSH()" - affects registers
+
+// Note: should only be called from Go code.
+TEXT runtime·regflush(SB),NOSPLIT|NOFRAME,$0-0
+	REGFLUSH()
+	RET
 
 TEXT runtime·rt0_go(SB),NOSPLIT,$16-0
 	// BSP = stack; I0 = argc; I1 = argv
