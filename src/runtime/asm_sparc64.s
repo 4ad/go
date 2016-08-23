@@ -10,6 +10,13 @@
 DATA dbgbuf(SB)/8, $"\n\n"
 GLOBL dbgbuf(SB), $8
 
+// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
+#define REGFLUSH()	\
+	MEMBAR	$111;	\
+	FLUSHW;		\
+	MEMBAR	$111
+// Note: can't just "B REGFLUSH()" - affects registers
+
 TEXT runtime·rt0_go(SB),NOSPLIT,$16-0
 	// BSP = stack; I0 = argc; I1 = argv
 
@@ -120,7 +127,7 @@ TEXT runtime·gogo(SB), NOSPLIT|NOFRAME, $0-8
 	CALL	runtime·save_g(SB)
 
 	// Before every stack switch, registers must be flushed.
-	CALL	runtime·regflush(SB)
+	REGFLUSH()
 
 	MOVD	0(g), I4	// make sure g is not nil
 	MOVD	gobuf_lr(L6), OLR
@@ -167,7 +174,7 @@ TEXT runtime·mcall(SB), NOSPLIT|NOFRAME, $0-8
 	JMP	runtime·badmcall(SB)
 ok:
 	// Before every stack switch, registers must be flushed.
-	CALL	runtime·regflush(SB)
+	REGFLUSH()
 
 	MOVD	fn+0(FP), CTXT			// context
 	MOVD	0(CTXT), I4			// code pointer
@@ -235,7 +242,7 @@ switch:
 	// switch to g0
 
 	// Before every stack switch, registers must be flushed.
-	CALL	runtime·regflush(SB)
+	REGFLUSH()
 
 	MOVD	L6, g
 	CALL	runtime·save_g(SB)
@@ -253,7 +260,7 @@ switch:
 	CALL	(I1)
 
 	// Before every stack switch, registers must be flushed.
-	CALL	runtime·regflush(SB)
+	REGFLUSH()
 
 	// switch back to g
 	MOVD	g_m(g), I1
@@ -299,6 +306,9 @@ TEXT runtime·morestack(SB),NOSPLIT|NOFRAME,$0-0
 	BNED	2(PC)
 	JMP	runtime·abort(SB)
 
+	// Before every stack switch, registers must be flushed.
+	REGFLUSH()
+
 	// Called from f.
 	// Set g->sched to context in f
 	MOVD	CTXT, (g_sched+gobuf_ctxt)(g)
@@ -318,9 +328,6 @@ TEXT runtime·morestack(SB),NOSPLIT|NOFRAME,$0-0
 	MOVD	TMP, (m_morebuf+gobuf_bp)(O0)	// f's caller's BFP
 	MOVD	g, (m_morebuf+gobuf_g)(O0)
 
-	// Before every stack switch, registers must be flushed.
-	CALL	runtime·regflush(SB)
-
 	// Call newstack on m->g0's stack.
 	MOVD	m_g0(O0), g
 	CALL	runtime·save_g(SB)
@@ -336,14 +343,6 @@ TEXT runtime·morestack(SB),NOSPLIT|NOFRAME,$0-0
 TEXT runtime·morestack_noctxt(SB),NOSPLIT|NOFRAME,$0-0
 	MOVD	ZR, CTXT
 	JMP	runtime·morestack(SB)
-
-TEXT runtime·regflush(SB),NOSPLIT|NOFRAME,$0-0
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
-	FLUSHW
-	// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-	MEMBAR	$111
-	RET
 
 TEXT runtime·stackBarrier(SB),NOSPLIT|NOFRAME,$0
 	// We came here via a RET to an overwritten LR.
@@ -585,7 +584,7 @@ TEXT ·asmcgocall(SB),NOSPLIT|NOFRAME,$0-20
 	CALL	gosave<>(SB)
 
 	// Before every stack switch, registers must be flushed.
-	CALL	runtime·regflush(SB)
+	REGFLUSH()
 
 	MOVD	L7, g
 	MOVD	(g_sched+gobuf_bp)(g), TMP
@@ -604,7 +603,7 @@ g0:
 	CALL	(O1)
 
 	// Before every stack switch, registers must be flushed.
-	CALL	runtime·regflush(SB)
+	REGFLUSH()
 
 	// Restore g, stack pointer.
 	// R8 (O0) is errno, so don't touch it
@@ -709,7 +708,7 @@ havem:
 	CALL	runtime·save_g(SB)
 
 	// Before every stack switch, registers must be flushed.
-	CALL	runtime·regflush(SB)
+	REGFLUSH()
 
 	MOVD	(g_sched+gobuf_sp)(g), I4 // prepare stack as I4
 	MOVD	(g_sched+gobuf_pc)(g), L6
@@ -732,7 +731,7 @@ havem:
 	CALL	runtime·save_g(SB)
 
 	// Before every stack switch, registers must be flushed.
-	CALL	runtime·regflush(SB)
+	REGFLUSH()
 
 	MOVD	(g_sched+gobuf_sp)(g), TMP
 	MOVD	TMP, BSP
