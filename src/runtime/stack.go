@@ -697,27 +697,12 @@ func adjustframe(frame *stkframe, arg unsafe.Pointer) bool {
 		adjustpointers(unsafe.Pointer(frame.varp-size), &bv, adjinfo, f)
 	}
 
-	// Adjust saved register and extended argument values if present
-	// (including bsp/bfp).
 	if sys.ArchFamily == sys.SPARC64 && frame.sp > 0 {
 		// framepointer is always enabled for sparc64
 		if stackDebug >= 3 {
-			print("      saved registers/arguments\n")
+			print("      saved bp\n")
 		}
-
-		for i := frame.sp; i < frame.sp+uintptr(176); i += 8 {
-			if stackDebug >= 3 {
-				print("        frame.sp+", i - frame.sp)
-			}
-			adjustpointer(adjinfo, unsafe.Pointer(i))
-		}
-
-		for i := frame.varp; i < frame.varp+uintptr(176); i += 8 {
-			if stackDebug >= 3 {
-				print("        frame.varp+", i - frame.varp)
-			}
-			adjustpointer(adjinfo, unsafe.Pointer(i))
-		}
+		adjustpointer(adjinfo, unsafe.Pointer(frame.sp+uintptr(112)))
 	}
 
 	if sys.ArchFamily == sys.AMD64 && frame.argp-frame.varp == 2*sys.RegSize {
