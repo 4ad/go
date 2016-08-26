@@ -543,8 +543,10 @@ var ptrnames = []string{
 // RSP+BIAS+176 -> +------------------+
 //                 |     save area    |
 //                 +------------------+
-//                 |  return address  |
+//                 |  return address  | (not used in epilog, used by Go)
 // RSP+BIAS+120 -> +------------------+
+//                 |      our RFP     | (caller's RSP)
+// RFP+BIAS+112 -> +------------------+
 //                 |     save area    |
 //     RSP+BIAS -> +------------------+ <- frame->sp
 
