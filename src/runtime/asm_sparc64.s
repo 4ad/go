@@ -36,7 +36,7 @@ TEXT runtime·rt0_go(SB),NOSPLIT,$16-0
 	MOVD	$runtime·g0(SB), g
 	MOVD	BSP, RT1
 	// must be larger than _StackSystem
-	MOVD	$(-64*1024-const__StackSystem)(BSP), RT2
+	MOVD	$(-64*1024)(BSP), RT2
 	MOVD	RT2, g_stackguard0(g)
 	MOVD	RT2, g_stackguard1(g)
 	MOVD	RT2, (g_stack+stack_lo)(g)
