@@ -23,7 +23,12 @@ func gostartcall(buf *gobuf, fn, ctxt unsafe.Pointer) {
 func rewindmorestack(buf *gobuf) {
 	var inst uint32
 	if buf.pc&3 == 0 && buf.pc != 0 {
-		inst = *(*uint32)(unsafe.Pointer(buf.pc + 8))
+		// For sparc, the pc register holds the address of the
+		// *current* instruction, rather than the next instruction
+		// to execute, and CTIs are padded with a nop to avoid DCTI
+		// coupling, so we need to skip ahead to get the jump.
+		buf.pc += 8
+		inst = *(*uint32)(unsafe.Pointer(buf.pc))
 		// Extract annul, condition, and opcode.
 		iacond_op2 := inst >> 22
 		// branch always
@@ -39,13 +44,6 @@ func rewindmorestack(buf *gobuf) {
 
 			//ipc := uintptr(unsafe.Pointer(buf.pc))
 
-			// For sparc, the pc register holds the address of the
-			// *current* instruction, rather than the next
-			// instruction to execute, and CTIs are padded with
-			// a nop to avoid DCTI coupling.  This should place
-			// the jump right at the first instruction used to
-			// load and compare the stackguard to the current
-			// stack pointer.
 			buf.pc += uintptr(idisp19)
 
 			//print("runtime: rewind pc=", hex(ipc), " to pc=", hex(buf.pc), "\n");
