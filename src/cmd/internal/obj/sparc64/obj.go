@@ -209,7 +209,7 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 
 	spfix := obj.Appendp(ctxt, last)
 	spfix.As = ARNOP
-	spfix.Spadj = -framesize
+	spfix.Spadj = -(framesize + MinStackFrameSize)
 
 	// MOV	LR, I1
 	movlr := obj.Appendp(ctxt, spfix)
@@ -228,7 +228,7 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 		debug = obj.Appendp(ctxt, debug)
 		debug.As = AMOVD
 		debug.From.Type = obj.TYPE_CONST
-		debug.From.Offset = int64(framesize)
+		debug.From.Offset = int64(framesize + MinStackFrameSize)
 		debug.To.Type = obj.TYPE_REG
 		debug.To.Reg = REG_TMP
 	}
@@ -252,7 +252,7 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 	jmp.As = obj.AJMP
 	jmp.To.Type = obj.TYPE_BRANCH
 	jmp.Pcond = ctxt.Cursym.Text.Link
-	jmp.Spadj = +framesize
+	jmp.Spadj = framesize + MinStackFrameSize
 
 	return ble
 }
