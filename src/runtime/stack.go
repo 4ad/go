@@ -68,8 +68,9 @@ const (
 	// TODO(aram): explain why for sparc64
 	_StackSystem = sys.GoosWindows*512*sys.PtrSize + sys.GoosPlan9*512 + sys.GoosDarwin*sys.GoarchArm*1024
 
-	// The minimum size of stack used by Go code
-	_StackMin = 2048
+	// The minimum size of stack used by Go code.
+	// SPARC64 needs more, as each frame has an 176-byte overhead.
+	_StackMin = 2048*(1+sys.GoarchSparc64)
 
 	// The minimum stack size to allocate.
 	// The hackery here rounds FixedStack0 up to a power of 2.
