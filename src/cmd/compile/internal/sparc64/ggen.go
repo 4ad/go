@@ -75,29 +75,34 @@ func zerorange(p *obj.Prog, frame int64, lo int64, hi int64) *obj.Prog {
 	}
 	if cnt < int64(4*gc.Widthptr) {
 		for i := int64(0); i < cnt; i += int64(gc.Widthptr) {
-			p = appendpp(p, sparc64.AMOVD, obj.TYPE_REG, sparc64.REG_ZR, 0, obj.TYPE_MEM, sparc64.REG_BSP, gc.Ctxt.FixedFrameSize()+frame+lo+i)
+			p = appendpp(p, sparc64.AMOVD, obj.TYPE_REG, sparc64.REG_ZR, 0, obj.TYPE_MEM, sparc64.REG_BFP, lo+i)
 		}
 	} else if false && cnt <= int64(128*gc.Widthptr) && !darwin { // darwin ld64 cannot handle BR26 (I2) reloc with non-zero addend
-		// TODO(aram): enable duffzero.
-		p = appendpp(p, sparc64.AMOVD, obj.TYPE_REG, sparc64.REG_RSP, 0, obj.TYPE_REG, sparc64.REG_RT1, 0)
-		p = appendpp(p, sparc64.AADD, obj.TYPE_CONST, 0, gc.Ctxt.FixedFrameSize()+frame+lo-8, obj.TYPE_REG, sparc64.REG_RT1, 0)
+		p = appendpp(p, sparc64.AMOVD, obj.TYPE_REG, sparc64.REG_BFP, 0, obj.TYPE_REG, sparc64.REG_RT1, 0)
+		p = appendpp(p, sparc64.AADD, obj.TYPE_CONST, 0, lo-8, obj.TYPE_REG, sparc64.REG_RT1, 0)
 		p.Reg = sparc64.REG_RT1
 		p = appendpp(p, obj.ADUFFZERO, obj.TYPE_NONE, 0, 0, obj.TYPE_MEM, 0, 0)
 		f := gc.Sysfunc("duffzero")
 		gc.Naddr(&p.To, f)
 		gc.Afunclit(&p.To, f)
-		p.To.Offset = 4 * (128 - cnt/int64(gc.Widthptr))
+		// the extra +8 is to account for the prologue padding
+		// added by preprocess()
+		p.To.Offset = 4 * (128 - cnt/int64(gc.Widthptr)) + 8
 	} else {
-		p = appendpp(p, sparc64.AMOVD, obj.TYPE_CONST, 0, gc.Ctxt.FixedFrameSize()+frame+lo-8, obj.TYPE_REG, sparc64.REG_TMP, 0)
-		p = appendpp(p, sparc64.AMOVD, obj.TYPE_REG, sparc64.REG_BSP, 0, obj.TYPE_REG, sparc64.REG_RT1, 0)
-		p = appendpp(p, sparc64.AADD, obj.TYPE_REG, sparc64.REG_TMP, 0, obj.TYPE_REG, sparc64.REG_RT1, 0)
+		//	ADD	$lo, BFP, RT1
+		//	ADD	$(cnt-8), RT1, RT2
+		// loop:
+		//	MOVD	ZR, (RT1)
+		//	ADD	$8, RT1
+		//	CMP	RT1, RT2
+		//	BNED	loop
+		p = appendpp(p, sparc64.AADD, obj.TYPE_CONST, 0, int64(lo+sparc64.StackBias), obj.TYPE_REG, sparc64.REG_RT1, 0)
+		p.Reg = sparc64.REG_RFP
+		p = appendpp(p, sparc64.AADD, obj.TYPE_CONST, 0, cnt-8, obj.TYPE_REG, sparc64.REG_RT2, 0)
 		p.Reg = sparc64.REG_RT1
-		p = appendpp(p, sparc64.AMOVD, obj.TYPE_CONST, 0, cnt, obj.TYPE_REG, sparc64.REG_TMP, 0)
-		p = appendpp(p, sparc64.AADD, obj.TYPE_REG, sparc64.REG_TMP, 0, obj.TYPE_REG, sparc64.REG_RT2, 0)
-		p.Reg = sparc64.REG_RT1
-		p = appendpp(p, sparc64.AMOVD, obj.TYPE_REG, sparc64.REG_ZR, 0, obj.TYPE_MEM, sparc64.REG_RT1, int64(gc.Widthptr))
+		p = appendpp(p, sparc64.AMOVD, obj.TYPE_REG, sparc64.REG_ZR, 0, obj.TYPE_MEM, sparc64.REG_RT1, 0)
 		p1 := p
-		p = appendpp(p, sparc64.AADD, obj.TYPE_CONST, 0, int64(gc.Widthptr), obj.TYPE_REG, sparc64.REG_RT1, 0)
+		p = appendpp(p, sparc64.AADD, obj.TYPE_CONST, 0, 8, obj.TYPE_REG, sparc64.REG_RT1, 0)
 		p = appendpp(p, sparc64.ACMP, obj.TYPE_REG, sparc64.REG_RT1, 0, obj.TYPE_NONE, 0, 0)
 		p.Reg = sparc64.REG_RT2
 		p = appendpp(p, sparc64.ABNED, obj.TYPE_NONE, 0, 0, obj.TYPE_BRANCH, 0, 0)
