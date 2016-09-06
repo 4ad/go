@@ -23,13 +23,13 @@ TEXT runtime·regflush(SB),NOSPLIT|NOFRAME,$0-0
 	RET
 
 TEXT runtime·rt0_go(SB),NOSPLIT,$16-0
-	// BSP = stack; I0 = argc; I1 = argv
+	// BSP = stack; O0 = argc; O1 = argv
 
 	// initialize essential registers
 	CALL	runtime·reginit(SB)
 
-	MOVW	I0, L1	// argc
-	MOVD	I1, L2	// argv
+	MOVW	O0, FIXED_FRAME+0(BSP)	// copy argc
+	MOVD	O1, FIXED_FRAME+8(BSP)	// copy argv
 
 	// create istack out of the given (operating system) stack.
 	// _cgo_init may update stackguard.
@@ -72,8 +72,7 @@ nocgo:
 
 	CALL	runtime·check(SB)
 
-	MOVW	L1, FIXED_FRAME+0(BSP)	// copy argc
-	MOVD	L2, FIXED_FRAME+8(BSP)	// copy argv
+	// argc, argv already copied.
 	CALL	runtime·args(SB)
 	CALL	runtime·osinit(SB)
 	CALL	runtime·schedinit(SB)
@@ -803,7 +802,7 @@ TEXT runtime·stackcheck(SB), NOSPLIT, $0
 	RET
 
 TEXT runtime·getcallerpc(SB),NOSPLIT,$16-16
-	MOVD	8*15(BFP), I1		// LR saved by caller
+	MOVD	(8*15+FIXED_FRAME+16)(BSP), I1		// LR saved by caller
 	MOVD	runtime·stackBarrierPC(SB), I4
 	CMP	I1, I4
 	BNED	nobar
@@ -816,11 +815,11 @@ nobar:
 
 TEXT runtime·setcallerpc(SB),NOSPLIT,$16-16
 	MOVD	pc+8(FP), I1
-	MOVD	8*15(BFP), I4
+	MOVD	(8*15+FIXED_FRAME+16)(BSP), I4
 	MOVD	runtime·stackBarrierPC(SB), L6
 	CMP	I4, L6
 	BED	setbar
-	MOVD	I1, 8*15(BFP)		// set LR in caller
+	MOVD	I1, (8*15+FIXED_FRAME+16)(BSP)		// set LR in caller
 	RET
 setbar:
 	// Set the stack barrier return PC.

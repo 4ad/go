@@ -33,13 +33,13 @@ TEXT runtime·miniterrno(SB),NOSPLIT,$0
 // NOT USING GO CALLING CONVENTION.
 TEXT runtime·nanotime1(SB),NOSPLIT,$64
 	MOVW	$3, O0	// CLOCK_REALTIME from <sys/time_impl.h>
-	MOVD	$-16(BFP), O1
+	MOVD	$tv-16(SP), O1
 	MOVD	$libc_clock_gettime(SB), I3
 	CALL	I3
-	MOVD	-16(BFP), I3	// tv_sec from struct timespec
+	MOVD	tv_sec-16(SP), I3	// tv_sec from struct timespec
 	MOVD	$1000000000, I1
 	MULD	I1, I3	// multiply into nanoseconds
-	MOVD	-8(BFP), I5	// tv_nsec, offset should be stable.
+	MOVD	tv_nsec-8(SP), I5	// tv_nsec, offset should be stable.
 	ADD	I5, I3, I0
 	RET
 
@@ -145,7 +145,7 @@ TEXT runtime·sigtramp(SB),NOSPLIT,$128
 
 allgood:
 	// save g
-	MOVD	g, (-8+0)(BFP)
+	MOVD	g, (-8+0+128+FIXED_FRAME)(BSP)
 
 	// Save m->libcall and m->scratch. We need to do this because we
 	// might get interrupted by a signal in runtime·asmcgocall.
@@ -154,35 +154,35 @@ allgood:
 	MOVD	g_m(g), L1
 	MOVD	$m_libcall(L1), L2
 	MOVD	libcall_fn(L2), L3
-	MOVD	L3, -(8+1*8)(BFP)
+	MOVD	L3, -(8+1*8+128+FIXED_FRAME)(BSP)
 	MOVD	libcall_args(L2), L3
-	MOVD	L3, -(8+2*8)(BFP)
+	MOVD	L3, -(8+2*8+128+FIXED_FRAME)(BSP)
 	MOVD	libcall_n(L2), L3
-	MOVD	L3, -(8+3*8)(BFP)
+	MOVD	L3, -(8+3*8+128+FIXED_FRAME)(BSP)
 	MOVD	libcall_r1(L2), L3
-	MOVD	L3, -(8+4*8)(BFP)
+	MOVD	L3, -(8+4*8+128+FIXED_FRAME)(BSP)
 	MOVD	libcall_r2(L2), L3
-	MOVD	L3, -(8+5*8)(BFP)
+	MOVD	L3, -(8+5*8+128+FIXED_FRAME)(BSP)
 
 	// save m->scratch
 	MOVD	$(m_mOS+mOS_scratch)(L1), L2
 	MOVD	0(L2), L3
-	MOVD	L3, -(8+6*8)(BFP)
+	MOVD	L3, -(8+6*8+128+FIXED_FRAME)(BSP)
 	MOVD	8(L2), L3
-	MOVD	L3, -(8+7*8)(BFP)
+	MOVD	L3, -(8+7*8+128+FIXED_FRAME)(BSP)
 	MOVD	16(L2), L3
-	MOVD	L3, -(8+8*8)(BFP)
+	MOVD	L3, -(8+8*8+128+FIXED_FRAME)(BSP)
 	MOVD	24(L2), L3
-	MOVD	L3, -(8+9*8)(BFP)
+	MOVD	L3, -(8+9*8+128+FIXED_FRAME)(BSP)
 	MOVD	32(L2), L3
-	MOVD	L3, -(8+10*8)(BFP)
+	MOVD	L3, -(8+10*8+128+FIXED_FRAME)(BSP)
 	MOVD	40(L2), L3
-	MOVD	L3, -(8+11*8)(BFP)
+	MOVD	L3, -(8+11*8+128+FIXED_FRAME)(BSP)
 
 	// save errno, it might be EINTR; stuff we do here might reset it.
 	MOVD	(m_mOS+mOS_perrno)(L1), L2
 	MOVW	0(L2), L3
-	MOVD	L3, -(8+12*8)(BFP)
+	MOVD	L3, -(8+12*8+128+FIXED_FRAME)(BSP)
 
 	MOVD	g, I3
 	// g = m->gsignal
@@ -192,47 +192,47 @@ allgood:
 	// TODO: If current SP is not in gsignal.stack, then adjust.
 
 	// prepare call
-	MOVW	I0, (FIXED_FRAME+8*0)(BSP)
-	MOVD	I1, (FIXED_FRAME+8*1)(BSP)
-	MOVD	I2, (FIXED_FRAME+8*2)(BSP)
-	MOVD	I3, (FIXED_FRAME+8*3)(BSP)
+	MOVW	I0, (FIXED_FRAME+8*0+128+FIXED_FRAME)(BSP)
+	MOVD	I1, (FIXED_FRAME+8*1+128+FIXED_FRAME)(BSP)
+	MOVD	I2, (FIXED_FRAME+8*2+128+FIXED_FRAME)(BSP)
+	MOVD	I3, (FIXED_FRAME+8*3+128+FIXED_FRAME)(BSP)
 	CALL	runtime·sighandler(SB)
 
 	// restore libcall
 	MOVD	$m_libcall(L1), L2
-	MOVD	-(8+1*8)(BFP), L3
+	MOVD	-(8+1*8+128+FIXED_FRAME)(BSP), L3
 	MOVD	L3, libcall_fn(L2)
-	MOVD	-(8+2*8)(BFP), L3
+	MOVD	-(8+2*8+128+FIXED_FRAME)(BSP), L3
 	MOVD	L3, libcall_args(L2)
-	MOVD	-(8+3*8)(BFP), L3	
+	MOVD	-(8+3*8+128+FIXED_FRAME)(BSP), L3	
 	MOVD	L3, libcall_n(L2)
-	MOVD	-(8+4*8)(BFP), L3
+	MOVD	-(8+4*8+128+FIXED_FRAME)(BSP), L3
 	MOVD	L3, libcall_r1(L2)
-	MOVD	-(8+5*8)(BFP), L3
+	MOVD	-(8+5*8+128+FIXED_FRAME)(BSP), L3
 	MOVD	L3, libcall_r2(L2)
 
 	// restore scratch
 	MOVD	$(m_mOS+mOS_scratch)(L1), L2
-	MOVD	-(8+6*8)(BFP), L3
+	MOVD	-(8+6*8+128+FIXED_FRAME)(BSP), L3
 	MOVD	L3, 0(L2)
-	MOVD	-(8+7*8)(BFP), L3
+	MOVD	-(8+7*8+128+FIXED_FRAME)(BSP), L3
 	MOVD	L3, 8(L2)
-	MOVD	-(8+8*8)(BFP), L3
+	MOVD	-(8+8*8+128+FIXED_FRAME)(BSP), L3
 	MOVD	L3, 16(L2)
-	MOVD	-(8+9*8)(BFP), L3
+	MOVD	-(8+9*8+128+FIXED_FRAME)(BSP), L3
 	MOVD	L3, 24(L2)
-	MOVD	-(8+10*8)(BFP), L3
+	MOVD	-(8+10*8+128+FIXED_FRAME)(BSP), L3
 	MOVD	L3, 32(L2)
-	MOVD	-(8+11*8)(BFP), L3
+	MOVD	-(8+11*8+128+FIXED_FRAME)(BSP), L3
 	MOVD	L3, 40(L2)
 
 	// restore errno
 	MOVD	(m_mOS+mOS_perrno)(L1), L2
-	MOVD	-(8+12*8)(BFP), L3
+	MOVD	-(8+12*8+128+FIXED_FRAME)(BSP), L3
 	MOVW	L3, 0(L2)
 
 	// restore g
-	MOVD	(-8+0)(BFP), g
+	MOVD	(-8+0+128+FIXED_FRAME)(BSP), g
 
 exit:
 	RET
