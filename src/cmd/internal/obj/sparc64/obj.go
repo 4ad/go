@@ -579,10 +579,6 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			if frameSize%16 != 0 {
 				ctxt.Diag("%v: unaligned frame size %d - must be 0 mod 16", p, frameSize)
 			}
-			noFrame := isNOFRAME(p)
-			if frameSize != 0 && noFrame {
-				ctxt.Diag("%v: non-zero framesize for NOFRAME function", p)
-			}
 
 			// Without these NOPs, DTrace changes the execution of the binary,
 			// This should never happen, but these NOPs seems to fix it.
@@ -591,9 +587,6 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			p.As = ARNOP
 			p = obj.Appendp(ctxt, p)
 			p.As = ARNOP
-			if noFrame {
-				break
-			}
 
 			// split check must be done before reserving stack
 			// space or changing register windows.
@@ -601,70 +594,29 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				p = stacksplit(ctxt, p, frameSize) // emit split check
 			}
 
-			// MOVD	$-(frameSize+MinStackFrameSize), RT1
-			p = obj.Appendp(ctxt, p)
-			p.As = AMOVD
-			p.From.Type = obj.TYPE_CONST
-			p.From.Offset = -int64(frameSize + MinStackFrameSize)
-			p.To.Type = obj.TYPE_REG
-			p.To.Reg = REG_RT1
+			if frameSize != 0 || !cursym.Leaf {
+				// SUB	$(frameSize+MinStackFrameSize), RSP
+				p = obj.Appendp(ctxt, p)
+				p.As = ASUB
+				p.From.Type = obj.TYPE_CONST
+				p.From.Offset = int64(frameSize + MinStackFrameSize)
+				p.To.Type = obj.TYPE_REG
+				p.To.Reg = REG_RSP
+				p.Spadj = frameSize + MinStackFrameSize
+			}
 
-			// SAVE	RT1, RSP
-			p = obj.Appendp(ctxt, p)
-			p.As = ASAVE
-			p.From.Type = obj.TYPE_REG
-			p.From.Reg = REG_RT1
-			p.Reg = REG_RSP
-			p.To.Type = obj.TYPE_REG
-			p.To.Reg = REG_RSP
-			p.Spadj = frameSize + MinStackFrameSize
+			if cursym.Leaf {
+				break
+			}
 
-			// MOVD LR, (120+bias)(RSP)
+			// MOVD OLR, (120+bias)(RSP)
 			p = obj.Appendp(ctxt, p)
 			p.As = AMOVD
 			p.From.Type = obj.TYPE_REG
-			p.From.Reg = REG_ILR
+			p.From.Reg = REG_OLR
 			p.To.Type = obj.TYPE_MEM
 			p.To.Reg = REG_RSP
 			p.To.Offset = int64(120 + StackBias)
-
-			// MOVD RFP, (112+bias)(RSP)
-			p = obj.Appendp(ctxt, p)
-			p.As = AMOVD
-			p.From.Type = obj.TYPE_REG
-			p.From.Reg = REG_RFP
-			p.To.Type = obj.TYPE_MEM
-			p.To.Reg = REG_RSP
-			p.To.Offset = int64(112 + StackBias)
-
-			if cursym.Args == obj.ArgsSizeUnknown {
-				break
-			}
-			args := int(cursym.Args) / 8
-			// At this point we have a stack frame that
-			// can be unwinded and register window spilled
-			// by native target code. However, the native
-			// target code (e.g. mdb(1)) doesn't know where
-			// to look for function arguments. Since we
-			// have argument information, we copy the
-			// arguments in the place where native tools
-			// expect them.
-
-			// For all functions copy at most 6 arguments into the
-			// %i registers.
-			if args > 6 {
-				args = 6
-			}
-			for i := 0; i < args; i++ {
-				// MOVD	argN+8N(BFP), %iN
-				p = obj.Appendp(ctxt, p)
-				p.As = AMOVD
-				p.From.Type = obj.TYPE_MEM
-				p.From.Reg = REG_RFP
-				p.From.Offset = int64(i*8 + MinStackFrameSize + StackBias)
-				p.To.Type = obj.TYPE_REG
-				p.To.Reg = int16(REG_I0 + i)
-			}
 
 			if cursym.Text.From3.Offset&obj.WRAPPER != 0 {
 				// if(g->panic != nil && g->panic->argp == FP) g->panic->argp = bottom-of-frame
@@ -751,6 +703,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			}
 
 		case obj.ARET:
+			frameSize := cursym.Locals
 			if isNOFRAME(cursym.Text) {
 				if p.To.Sym != nil { // RETJMP
 					p.As = obj.AJMP
@@ -758,34 +711,29 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				break
 			}
 
-			// MOVD (112+bias)(RSP), RFP
-			q = obj.Appendp(ctxt, p)
-			p.As = AMOVD
-			p.From.Type = obj.TYPE_MEM
-			p.From.Reg = REG_RSP
-			p.From.Offset = int64(112 + StackBias)
-			p.To.Type = obj.TYPE_REG
-			p.To.Reg = REG_RFP
+			if frameSize == 0 && cursym.Leaf {
+				break
+			}
 
-			q.As = ARETRESTORE
-			q.From.Type = obj.TYPE_NONE
-			q.From.Offset = 0
+			// ADD	$(frameSize+MinStackFrameSize), RSP
+			q = obj.Appendp(ctxt, p)
+			p.As = ASUB
+			p.From.Type = obj.TYPE_CONST
+			p.From.Offset = int64(frameSize + MinStackFrameSize)
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = REG_RSP
+			p.Spadj = -(frameSize + MinStackFrameSize)
+
+			// JMPL	$8(OLR), ZR
+			q.As = AJMPL
+			q.From.Type = obj.TYPE_ADDR
+			q.From.Offset = 8
+			q.From.Reg = REG_OLR
+			q.From.Index = 0
 			q.Reg = 0
-			q.To.Type = obj.TYPE_NONE
-			q.To.Reg = 0
-			// The SP restore operation needs a Spadj of
-			// -(cursym.Locals + MinStackFrameSize),
-			// and the JMP operation needs a Spadj of
-			// +(cursym.Locals + MinStackFrameSize).
-			//
-			// Since this operation does both, they cancel out
-			// so we don't do any Spadj adjustment.
-			//
-			// The best solution would be to split RETRESTORE
-			// into the constituent instructions, but that requires
-			// more sophisticated delay-slot processing,
-			// since the RESTORE has to be in the delay
-			// slot of the branch.
+			q.To.Type = obj.TYPE_REG
+			q.To.Reg = REG_ZR
+			q.Spadj = frameSize + MinStackFrameSize
 
 		case AADD, ASUB:
 			if p.To.Type == obj.TYPE_REG && p.To.Reg == REG_BSP && p.From.Type == obj.TYPE_CONST {
