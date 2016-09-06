@@ -579,6 +579,14 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			if frameSize%16 != 0 {
 				ctxt.Diag("%v: unaligned frame size %d - must be 0 mod 16", p, frameSize)
 			}
+			if frameSize != 0 && isNOFRAME(p) {
+				ctxt.Diag("%v: non-zero framesize for NOFRAME function", p)
+			}
+
+			if frameSize == 0 && cursym.Leaf {
+				// promote leaves without automatics to NOFRAME.
+				cursym.Text.From3.Offset |= obj.NOFRAME
+			}
 
 			// Without these NOPs, DTrace changes the execution of the binary,
 			// This should never happen, but these NOPs seems to fix it.
@@ -588,22 +596,24 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			p = obj.Appendp(ctxt, p)
 			p.As = ARNOP
 
+			if isNOFRAME(p) {
+				break
+			}
+
 			// split check must be done before reserving stack
 			// space or changing register windows.
 			if !(cursym.Text.From3.Offset&obj.NOSPLIT != 0) {
 				p = stacksplit(ctxt, p, frameSize) // emit split check
 			}
-
-			if frameSize != 0 || !cursym.Leaf {
-				// SUB	$(frameSize+MinStackFrameSize), RSP
-				p = obj.Appendp(ctxt, p)
-				p.As = ASUB
-				p.From.Type = obj.TYPE_CONST
-				p.From.Offset = int64(frameSize + MinStackFrameSize)
-				p.To.Type = obj.TYPE_REG
-				p.To.Reg = REG_RSP
-				p.Spadj = frameSize + MinStackFrameSize
-			}
+			
+			// SUB	$(frameSize+MinStackFrameSize), RSP
+			p = obj.Appendp(ctxt, p)
+			p.As = ASUB
+			p.From.Type = obj.TYPE_CONST
+			p.From.Offset = int64(frameSize + MinStackFrameSize)
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = REG_RSP
+			p.Spadj = frameSize + MinStackFrameSize
 
 			if cursym.Leaf {
 				break
@@ -703,7 +713,6 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			}
 
 		case obj.ARET:
-			frameSize := cursym.Locals
 			if isNOFRAME(cursym.Text) {
 				if p.To.Sym != nil { // RETJMP
 					p.As = obj.AJMP
@@ -711,29 +720,38 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				break
 			}
 
-			if frameSize == 0 && cursym.Leaf {
-				break
+			q = p
+			if !cursym.Leaf {
+				// MOVD (120+bias)(RSP), OLR
+				q = obj.Appendp(ctxt, p)
+				p.As = AMOVD
+				p.From.Type = obj.TYPE_MEM
+				p.From.Reg = REG_RSP
+				p.From.Offset = int64(120 + StackBias)
+				p.To.Type = obj.TYPE_REG
+				p.To.Reg = REG_OLR
 			}
 
+			frameSize := cursym.Locals
 			// ADD	$(frameSize+MinStackFrameSize), RSP
-			q = obj.Appendp(ctxt, p)
-			p.As = ASUB
-			p.From.Type = obj.TYPE_CONST
-			p.From.Offset = int64(frameSize + MinStackFrameSize)
-			p.To.Type = obj.TYPE_REG
-			p.To.Reg = REG_RSP
-			p.Spadj = -(frameSize + MinStackFrameSize)
+			q1 = obj.Appendp(ctxt, q)
+			q.As = ASUB
+			q.From.Type = obj.TYPE_CONST
+			q.From.Offset = int64(frameSize + MinStackFrameSize)
+			q.To.Type = obj.TYPE_REG
+			q.To.Reg = REG_RSP
+			q.Spadj = -(frameSize + MinStackFrameSize)
 
 			// JMPL	$8(OLR), ZR
-			q.As = AJMPL
-			q.From.Type = obj.TYPE_ADDR
-			q.From.Offset = 8
-			q.From.Reg = REG_OLR
-			q.From.Index = 0
-			q.Reg = 0
-			q.To.Type = obj.TYPE_REG
-			q.To.Reg = REG_ZR
-			q.Spadj = frameSize + MinStackFrameSize
+			q1.As = AJMPL
+			q1.From.Type = obj.TYPE_ADDR
+			q1.From.Offset = 8
+			q1.From.Reg = REG_OLR
+			q1.From.Index = 0
+			q1.Reg = 0
+			q1.To.Type = obj.TYPE_REG
+			q1.To.Reg = REG_ZR
+			q1.Spadj = frameSize + MinStackFrameSize
 
 		case AADD, ASUB:
 			if p.To.Type == obj.TYPE_REG && p.To.Reg == REG_BSP && p.From.Type == obj.TYPE_CONST {
