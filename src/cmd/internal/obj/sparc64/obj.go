@@ -266,7 +266,7 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 }
 
 // AutoeditProg returns a new obj.Prog, with off(SP), off(FP), $off(SP),
-// and $off(FP) replaced with new(RFP).
+// and $off(FP) replaced with new(RSP).
 func autoeditprog(ctxt *obj.Link, p *obj.Prog) *obj.Prog {
 	r := new(obj.Prog)
 	*r = *p
@@ -277,7 +277,7 @@ func autoeditprog(ctxt *obj.Link, p *obj.Prog) *obj.Prog {
 }
 
 // Autoeditaddr returns a new obj.Addr, with off(SP), off(FP), $off(SP),
-// and $off(FP) replaced with new(RFP).
+// and $off(FP) replaced with new(RSP).
 func autoeditaddr(ctxt *obj.Link, a *obj.Addr) *obj.Addr {
 	if a == nil {
 		return nil
@@ -288,18 +288,18 @@ func autoeditaddr(ctxt *obj.Link, a *obj.Addr) *obj.Addr {
 	r := new(obj.Addr)
 	*r = *a
 	if r.Name == obj.NAME_PARAM {
-		r.Reg = REG_RFP
-		if ctxt.Cursym.Text.From3Offset()&obj.NOFRAME != 0 {
-			// NOFRAME functions live in caller's frame.
-			r.Reg = REG_RSP
-		}
-		r.Offset += MinStackFrameSize + StackBias
+		r.Reg = REG_RSP
 		r.Name = obj.NAME_NONE
+		if ctxt.Cursym.Text.From3Offset()&obj.NOFRAME != 0 {
+			r.Offset += MinStackFrameSize + StackBias
+			return r
+		}
+		r.Offset += int64(ctxt.Cursym.Locals) + 2*MinStackFrameSize + StackBias
 		return r
 	}
 	if r.Name == obj.NAME_AUTO {
-		r.Reg = REG_RFP
-		r.Offset += StackBias
+		r.Reg = REG_RSP
+		r.Offset += int64(ctxt.Cursym.Locals) + MinStackFrameSize + StackBias
 		r.Name = obj.NAME_NONE
 	}
 	return r
