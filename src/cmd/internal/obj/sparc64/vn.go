@@ -87,7 +87,7 @@ loop:
 				continue
 			}
 
-			if a == obj.AJMP || a == obj.ARET || a == ARETRESTORE {
+			if a == obj.AJMP || a == obj.ARET {
 				goto copy
 			}
 			if q.Pcond == nil || (q.Pcond.Mark&FOLL != 0) {
@@ -114,7 +114,7 @@ loop:
 
 				(*last).Link = r
 				*last = r
-				if a == obj.AJMP || a == obj.ARET || a == ARETRESTORE {
+				if a == obj.AJMP || a == obj.ARET {
 					return
 				}
 				if a == ABNE {
@@ -147,7 +147,7 @@ loop:
 	p.Mark |= FOLL
 	(*last).Link = p
 	*last = p
-	if a == obj.AJMP || a == obj.ARET || a == ARETRESTORE {
+	if a == obj.AJMP || a == obj.ARET {
 		return
 	}
 	if p.Pcond != nil {
