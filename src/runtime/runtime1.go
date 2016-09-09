@@ -356,6 +356,10 @@ func parsedebugvars() {
 	debug.cgocheck = 1
 	debug.invalidptr = 1
 
+	// TODO(shawn): temporarily disable stack shrinking in hopes of
+	// making it easier to debug stacksplit issues on sparc64
+	debug.gcshrinkstackoff = 0 + sys.GoarchSparc64
+
 	for p := gogetenv("GODEBUG"); p != ""; {
 		field := ""
 		i := index(p, ",")
