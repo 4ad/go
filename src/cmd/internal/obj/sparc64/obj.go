@@ -596,7 +596,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			p = obj.Appendp(ctxt, p)
 			p.As = ARNOP
 
-			if isNOFRAME(p) {
+			if isNOFRAME(cursym.Text) {
 				break
 			}
 
