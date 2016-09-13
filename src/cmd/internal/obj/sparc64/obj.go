@@ -606,27 +606,49 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				p = stacksplit(ctxt, p, frameSize) // emit split check
 			}
 			
-			// SUB	$(frameSize+MinStackFrameSize), RSP
+			// ADD -(frameSize+MinStackFrameSize), RSP
 			p = obj.Appendp(ctxt, p)
-			p.As = ASUB
+			p.As = AADD
 			p.From.Type = obj.TYPE_CONST
-			p.From.Offset = int64(frameSize + MinStackFrameSize)
+			p.From.Offset = -int64(frameSize + MinStackFrameSize)
 			p.To.Type = obj.TYPE_REG
 			p.To.Reg = REG_RSP
 			p.Spadj = frameSize + MinStackFrameSize
 
-			if cursym.Leaf {
-				break
-			}
+			// SUB -(frameSize+MinStackFrameSize), RSP, RFP
+			p = obj.Appendp(ctxt, p)
+			p.As = ASUB
+			p.From.Type = obj.TYPE_CONST
+			p.From.Offset = -int64(frameSize + MinStackFrameSize)
+			p.Reg = REG_RSP
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = REG_RFP
 
-			// MOVD OLR, (120+frameSize+MinStackFrameSize+bias)(RSP)
+			// MOVD RFP, (112+bias)(RSP)
+			p = obj.Appendp(ctxt, p)
+			p.As = AMOVD
+			p.From.Type = obj.TYPE_REG
+			p.From.Reg = REG_RFP
+			p.To.Type = obj.TYPE_MEM
+			p.To.Reg = REG_RSP
+			p.To.Offset = int64(112 + StackBias)
+
+			// MOVD OLR, (120+bias)(RSP)
 			p = obj.Appendp(ctxt, p)
 			p.As = AMOVD
 			p.From.Type = obj.TYPE_REG
 			p.From.Reg = REG_OLR
 			p.To.Type = obj.TYPE_MEM
 			p.To.Reg = REG_RSP
-			p.To.Offset = int64(120+ frameSize + MinStackFrameSize + StackBias)
+			p.To.Offset = int64(120 + StackBias)
+
+			// MOVD OLR, ILR
+			p = obj.Appendp(ctxt, p)
+			p.As = AMOVD
+			p.From.Type = obj.TYPE_REG
+			p.From.Reg = REG_OLR
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = REG_ILR
 
 			if cursym.Text.From3.Offset&obj.WRAPPER != 0 {
 				// if(g->panic != nil && g->panic->argp == FP) g->panic->argp = bottom-of-frame
@@ -720,38 +742,60 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				break
 			}
 
-			q = p
 			frameSize := cursym.Locals
-			if !cursym.Leaf {
-				// MOVD (120+frameSize+MinStackFrameSize+bias)(RSP), OLR
-				q = obj.Appendp(ctxt, p)
-				p.As = AMOVD
-				p.From.Type = obj.TYPE_MEM
-				p.From.Reg = REG_RSP
-				p.From.Offset = int64(120+ frameSize + MinStackFrameSize + StackBias)
-				p.To.Type = obj.TYPE_REG
-				p.To.Reg = REG_OLR
-			}
 
-			// ADD	$(frameSize+MinStackFrameSize), RSP
-			q1 = obj.Appendp(ctxt, q)
-			q.As = ASUB
-			q.From.Type = obj.TYPE_CONST
-			q.From.Offset = int64(frameSize + MinStackFrameSize)
-			q.To.Type = obj.TYPE_REG
-			q.To.Reg = REG_RSP
-			q.Spadj = -(frameSize + MinStackFrameSize)
-
-			// JMPL	$8(OLR), ZR
-			q1.As = AJMPL
-			q1.From.Type = obj.TYPE_ADDR
-			q1.From.Offset = 8
-			q1.From.Reg = REG_OLR
-			q1.From.Index = 0
-			q1.Reg = 0
+			// MOVD RFP, TMP
+			q1 = p
+			p = obj.Appendp(ctxt, p)
+			p.As = AJMPL
+			p.From.Type = obj.TYPE_ADDR
+			p.From.Offset = 8
+			p.From.Reg = REG_OLR
+			p.From.Index = 0
+			p.Reg = 0
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = REG_ZR
+			p.Spadj = frameSize + MinStackFrameSize
+			q1.As = AMOVD
+			q1.From.Type = obj.TYPE_REG
+			q1.From.Reg = REG_RFP
 			q1.To.Type = obj.TYPE_REG
-			q1.To.Reg = REG_ZR
-			q1.Spadj = frameSize + MinStackFrameSize
+			q1.To.Reg = REG_TMP
+
+			// MOVD ILR, OLR
+			q1 = obj.Appendp(ctxt, q1)
+			q1.As = AMOVD
+			q1.From.Type = obj.TYPE_REG
+			q1.From.Reg = REG_ILR
+			q1.To.Type = obj.TYPE_REG
+			q1.To.Reg = REG_OLR
+
+			// MOVD (120+StackBias)(RFP), ILR
+			q1 = obj.Appendp(ctxt, q1)
+			q1.As = AMOVD
+			q1.From.Type = obj.TYPE_MEM
+			q1.From.Reg = REG_RFP
+			q1.From.Offset = 120 + StackBias
+			q1.To.Type = obj.TYPE_REG
+			q1.To.Reg = REG_ILR
+
+			// MOVD (112+StackBias)(RFP), RFP
+			q1 = obj.Appendp(ctxt, q1)
+			q1.As = AMOVD
+			q1.From.Type = obj.TYPE_MEM
+			q1.From.Reg = REG_RFP
+			q1.From.Offset = 112 + StackBias
+			q1.To.Type = obj.TYPE_REG
+			q1.To.Reg = REG_RFP
+
+			// MOVD TMP, RSP
+			q1 = obj.Appendp(ctxt, q1)
+			q1.As = AMOVD
+			q1.From.Type = obj.TYPE_REG
+			q1.From.Reg = REG_TMP
+			q1.To.Type = obj.TYPE_REG
+			q1.To.Reg = REG_RSP
+			q1.Spadj = -(frameSize + MinStackFrameSize)
 
 		case AADD, ASUB:
 			if p.To.Type == obj.TYPE_REG && p.To.Reg == REG_BSP && p.From.Type == obj.TYPE_CONST {
