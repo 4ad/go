@@ -51,9 +51,8 @@ TEXT runtime·rt0_go(SB),NOSPLIT,$16-0
 	MOVD	$runtime·tls_g(SB), O2 	// arg 2: &tls_g
 	MOVD	$setg_gcc<>(SB), O1	// arg 1: setg
 	MOVD	g, O0			// arg 0: G
-	MOVD	g, L3
 	CALL	(O4)
-	MOVD	L3, g
+	MOVD	$runtime·g0(SB), g
 
 nocgo:
 	// update stackguard after _cgo_init
