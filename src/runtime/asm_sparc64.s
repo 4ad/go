@@ -124,6 +124,8 @@ TEXT runtime·gogo(SB), NOSPLIT|NOFRAME, $0-8
 	MOVD	gobuf_g(L6), g
 	CALL	runtime·save_g(SB)
 
+	MOVD	buf+0(FP), L6
+	MOVD	gobuf_g(L6), g
 	MOVD	0(g), I4	// make sure g is not nil
 	MOVD	gobuf_lr(L6), OLR
 	MOVD	gobuf_ret(L6), RT1
