@@ -619,14 +619,14 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				break
 			}
 
-			// MOVD OLR, (120+bias)(RSP)
+			// MOVD OLR, (120+frameSize+MinStackFrameSize+bias)(RSP)
 			p = obj.Appendp(ctxt, p)
 			p.As = AMOVD
 			p.From.Type = obj.TYPE_REG
 			p.From.Reg = REG_OLR
 			p.To.Type = obj.TYPE_MEM
 			p.To.Reg = REG_RSP
-			p.To.Offset = int64(120 + StackBias)
+			p.To.Offset = int64(120+ frameSize + MinStackFrameSize + StackBias)
 
 			if cursym.Text.From3.Offset&obj.WRAPPER != 0 {
 				// if(g->panic != nil && g->panic->argp == FP) g->panic->argp = bottom-of-frame
@@ -721,18 +721,18 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			}
 
 			q = p
+			frameSize := cursym.Locals
 			if !cursym.Leaf {
-				// MOVD (120+bias)(RSP), OLR
+				// MOVD (120+frameSize+MinStackFrameSize+bias)(RSP), OLR
 				q = obj.Appendp(ctxt, p)
 				p.As = AMOVD
 				p.From.Type = obj.TYPE_MEM
 				p.From.Reg = REG_RSP
-				p.From.Offset = int64(120 + StackBias)
+				p.From.Offset = int64(120+ frameSize + MinStackFrameSize + StackBias)
 				p.To.Type = obj.TYPE_REG
 				p.To.Reg = REG_OLR
 			}
 
-			frameSize := cursym.Locals
 			// ADD	$(frameSize+MinStackFrameSize), RSP
 			q1 = obj.Appendp(ctxt, q)
 			q.As = ASUB
