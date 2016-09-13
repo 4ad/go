@@ -109,7 +109,6 @@ func exit1(code int32)
 func asminit()
 func setg(gg *g)
 func breakpoint()
-func regflush()
 
 // reflectcall calls fn with a copy of the n argument bytes pointed at by arg.
 // After fn returns, reflectcall copies n-retoffset result bytes

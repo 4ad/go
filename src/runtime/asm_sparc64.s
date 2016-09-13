@@ -12,15 +12,10 @@ GLOBL dbgbuf(SB), $8
 
 // Note: define used in this file to avoid affecting registers.
 // #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-#define REGFLUSH()	\
+#define REGFLUSH	\
 	MEMBAR	$111;	\
 	FLUSHW;		\
 	MEMBAR	$111
-
-// Note: should only be called from Go code.
-TEXT runtime·regflush(SB),NOSPLIT|NOFRAME,$0-0
-	REGFLUSH()
-	RET
 
 TEXT runtime·rt0_go(SB),NOSPLIT,$16-0
 	// BSP = stack; O0 = argc; O1 = argv
@@ -129,9 +124,6 @@ TEXT runtime·gogo(SB), NOSPLIT|NOFRAME, $0-8
 	MOVD	gobuf_g(L6), g
 	CALL	runtime·save_g(SB)
 
-	// Before every stack switch, registers must be flushed.
-	REGFLUSH()
-
 	MOVD	0(g), I4	// make sure g is not nil
 	MOVD	gobuf_lr(L6), OLR
 	MOVD	gobuf_ret(L6), RT1
@@ -176,8 +168,6 @@ TEXT runtime·mcall(SB), NOSPLIT|NOFRAME, $0-8
 	BNED	ok
 	JMP	runtime·badmcall(SB)
 ok:
-	// Before every stack switch, registers must be flushed.
-	REGFLUSH()
 
 	MOVD	fn+0(FP), CTXT			// context
 	MOVD	0(CTXT), I4			// code pointer
@@ -244,9 +234,6 @@ switch:
 
 	// switch to g0
 
-	// Before every stack switch, registers must be flushed.
-	REGFLUSH()
-
 	MOVD	L6, g
 	CALL	runtime·save_g(SB)
 	MOVD	(g_sched+gobuf_sp)(g), I1
@@ -261,9 +248,6 @@ switch:
 	// call target function
 	MOVD	0(CTXT), I1	// code pointer
 	CALL	(I1)
-
-	// Before every stack switch, registers must be flushed.
-	REGFLUSH()
 
 	// switch back to g
 	MOVD	g_m(g), I1
@@ -308,9 +292,6 @@ TEXT runtime·morestack(SB),NOSPLIT|NOFRAME,$0-0
 	CMP	g, I4
 	BNED	2(PC)
 	JMP	runtime·abort(SB)
-
-	// Before every stack switch, registers must be flushed.
-	REGFLUSH()
 
 	// Called from f.
 	// Set g->sched to context in f
@@ -586,9 +567,6 @@ TEXT ·asmcgocall(SB),NOSPLIT|NOFRAME,$0-20
 
 	CALL	gosave<>(SB)
 
-	// Before every stack switch, registers must be flushed.
-	REGFLUSH()
-
 	MOVD	L7, g
 	MOVD	(g_sched+gobuf_bp)(g), TMP
 	MOVD	TMP, BFP
@@ -604,9 +582,6 @@ g0:
 
 	CALL	runtime·save_g(SB)
 	CALL	(O1)
-
-	// Before every stack switch, registers must be flushed.
-	REGFLUSH()
 
 	// Restore g, stack pointer.
 	// R8 (O0) is errno, so don't touch it
@@ -710,9 +685,6 @@ havem:
 	MOVD	m_curg(O0), g
 	CALL	runtime·save_g(SB)
 
-	// Before every stack switch, registers must be flushed.
-	REGFLUSH()
-
 	MOVD	(g_sched+gobuf_sp)(g), I4 // prepare stack as I4
 	MOVD	(g_sched+gobuf_pc)(g), L6
 	MOVD	L6, -(FIXED_FRAME+16)(I4)
@@ -732,9 +704,6 @@ havem:
 	MOVD	g_m(g), O0
 	MOVD	m_g0(O0), g
 	CALL	runtime·save_g(SB)
-
-	// Before every stack switch, registers must be flushed.
-	REGFLUSH()
 
 	MOVD	(g_sched+gobuf_sp)(g), TMP
 	MOVD	TMP, BSP
