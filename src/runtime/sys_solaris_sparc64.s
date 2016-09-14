@@ -62,8 +62,7 @@ TEXT runtime·pipe1(SB),NOSPLIT,$16
 //
 // Called by runtime·asmcgocall or runtime·cgocall.
 // NOT USING GO CALLING CONVENTION.
-TEXT runtime·asmsysvicall6(SB),NOSPLIT|NOFRAME,$0
-	SAVE	$176, RSP
+TEXT runtime·asmsysvicall6(SB),NOSPLIT,$0
 	// asmcgocall will put first argument into I0.
 	MOVD	I0, L7
 	MOVD	libcall_fn(I0), I3
@@ -109,7 +108,7 @@ skipargs:
 	MOVD	I4, libcall_err(L7)
 
 skiperrno2:	
-	RETRESTORE
+	RET
 
 // uint32 tstart_sysvicall(M *newm);
 TEXT runtime·tstart_sysvicall(SB),NOSPLIT,$0
