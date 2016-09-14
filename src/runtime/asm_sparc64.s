@@ -551,7 +551,6 @@ TEXT ·asmcgocall(SB),NOSPLIT|NOFRAME,$0-20
 	MOVD	fn+0(FP), O1
 	MOVD	arg+8(FP), O0
 
-	MOVD	OLR, L1	// save LR
 	MOVD	BSP, L2	// save original stack pointer
 	MOVD	BFP, L3	// save original frame pointer
 	MOVD	g, L4		// save g
@@ -572,28 +571,38 @@ TEXT ·asmcgocall(SB),NOSPLIT|NOFRAME,$0-20
 	MOVD	L7, g
 	MOVD	(g_sched+gobuf_bp)(g), TMP
 	MOVD	TMP, BFP
-	MOVD	(g_sched+gobuf_sp)(g), TMP
-	MOVD	TMP, BSP
 
+	MOVD	(g_sched+gobuf_sp)(g), TMP
+	// Allocate a stack frame for ourselves on the g0 stack.
+	// We need two stack slots to save g and the stack depth.
+	SUB	$FIXED_FRAME+16, TMP
+	MOVD	TMP, BSP
+	MOVD	L2, BFP
+	MOVD	OLR, (120)(BSP)
+	MOVD	OLR, ILR
 	// Now on a scheduling stack (a pthread-created stack).
 g0:
+	// save old g on stack
+	MOVD	L4, (16+FIXED_FRAME-16)(BSP)
 	MOVD	(g_stack+stack_hi)(L4), TMP
 	// save depth (can't just save BSP/BFP, as stack might be copied during a callback)
-	SUB	L2, TMP, L5	
-	SUB	L3, TMP, L6
+	SUB	L2, TMP, L5
+	MOVD	L5, (16+FIXED_FRAME-8)(BSP)
 
 	CALL	runtime·save_g(SB)
 	CALL	(O1)
 
 	// Restore g, stack pointer.
-	// R8 (O0) is errno, so don't touch it
-	MOVD	L4, g
+	// R8 (O0) is errno, so don't touch it.
+	MOVD	(120)(BSP), L1
+	MOVD	(16+FIXED_FRAME-16)(BSP), g
+	MOVD	(16+FIXED_FRAME-8)(BSP), L5
 	MOVD	(g_stack+stack_hi)(g), TMP
 	SUB	L5, TMP, TMP2
+	MOVD	(112+FIXED_FRAME)(TMP2), L6
+	ADD	$STACK_BIAS, L6
+	MOVD	L6, BFP
 	MOVD	TMP2, BSP
-	SUB	L6, TMP, TMP2
-	MOVD	TMP2, BFP
-
 	MOVD	L1, OLR
 	MOVW	O0, ret+16(FP)
 	RET
