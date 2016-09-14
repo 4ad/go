@@ -764,7 +764,7 @@ TEXT runtime·stackcheck(SB), NOSPLIT, $0
 	MOVD	BSP, I4
 	MOVD	(g_stack+stack_hi)(g), I3
 	CMP	I4, I3
-	BGD	2(PC);
+	BGED	2(PC);
 	UNDEF
 
 	MOVD	(g_stack+stack_lo)(g), I3
