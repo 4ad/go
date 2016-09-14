@@ -543,67 +543,11 @@ TEXT gosave<>(SB),NOSPLIT|NOFRAME,$0
 	MOVD	TMP, (g_sched+gobuf_bp)(g)
 	RET
 
-// func asmcgocall(fn, arg unsafe.Pointer) int32
-// Call fn(arg) on the scheduler stack,
-// aligned appropriately for the gcc ABI.
-// See cgocall.go for more details.
-TEXT ·asmcgocall(SB),NOSPLIT|NOFRAME,$0-20
+// func asmcgocall2(fn, arg unsafe.Pointer) int32
+TEXT ·asmcgocall2(SB),NOSPLIT,$0-20
 	MOVD	fn+0(FP), O1
 	MOVD	arg+8(FP), O0
-
-	MOVD	BSP, L2	// save original stack pointer
-	MOVD	BFP, L3	// save original frame pointer
-	MOVD	g, L4		// save g
-
-	// Figure out if we need to switch to m->g0 stack.
-	// We get called to create new OS threads too, and those
-	// come in on the m->g0 stack already.
-	MOVD	g_m(g), TMP
-	MOVD	m_g0(TMP), L7
-	CMP	L7, ZR
-	BNED	2(PC)
-	JMP	runtime·abort(SB)
-	CMP	L7, g
-	BED	g0
-
-	CALL	gosave<>(SB)
-
-	MOVD	L7, g
-	MOVD	(g_sched+gobuf_bp)(g), TMP
-	MOVD	TMP, BFP
-
-	MOVD	(g_sched+gobuf_sp)(g), TMP
-	// Allocate a stack frame for ourselves on the g0 stack.
-	// We need two stack slots to save g and the stack depth.
-	SUB	$FIXED_FRAME+16, TMP
-	MOVD	TMP, BSP
-	MOVD	L2, BFP
-	MOVD	OLR, (120)(BSP)
-	MOVD	OLR, ILR
-	// Now on a scheduling stack (a pthread-created stack).
-g0:
-	// save old g on stack
-	MOVD	L4, (16+FIXED_FRAME-16)(BSP)
-	MOVD	(g_stack+stack_hi)(L4), TMP
-	// save depth (can't just save BSP/BFP, as stack might be copied during a callback)
-	SUB	L2, TMP, L5
-	MOVD	L5, (16+FIXED_FRAME-8)(BSP)
-
-	CALL	runtime·save_g(SB)
 	CALL	(O1)
-
-	// Restore g, stack pointer.
-	// R8 (O0) is errno, so don't touch it.
-	MOVD	(120)(BSP), L1
-	MOVD	(16+FIXED_FRAME-16)(BSP), g
-	MOVD	(16+FIXED_FRAME-8)(BSP), L5
-	MOVD	(g_stack+stack_hi)(g), TMP
-	SUB	L5, TMP, TMP2
-	MOVD	(112+FIXED_FRAME)(TMP2), L6
-	ADD	$STACK_BIAS, L6
-	MOVD	L6, BFP
-	MOVD	TMP2, BSP
-	MOVD	L1, OLR
 	MOVW	O0, ret+16(FP)
 	RET
 
@@ -759,7 +703,7 @@ TEXT runtime·setg(SB), NOSPLIT, $0-8
 
 // void setg_gcc(G*); set g called from gcc
 TEXT setg_gcc<>(SB),NOSPLIT,$16
-	MOVD	I0, g
+	MOVD	O0, g
 	MOVD	RT1, savedRT1-8(SP)
 	CALL	runtime·save_g(SB)
 	MOVD	savedRT1-8(SP), RT1
