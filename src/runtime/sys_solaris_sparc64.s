@@ -17,8 +17,9 @@
 // Called using runtime·asmcgocall from os_solaris.c:/minit.
 // NOT USING GO CALLING CONVENTION.
 TEXT runtime·miniterrno(SB),NOSPLIT,$0
-	// asmcgocall will put first argument into I0.
-	CALL	I0	// SysV ABI so returns in O0
+	// asmcgocall will put first argument into O0.
+	MOVD	O0, O1
+	CALL	O1	// SysV ABI so returns in O0
 	CALL	runtime·load_g(SB)
 	MOVD	g_m(g), I3
 	MOVD	O0,	(m_mOS+mOS_perrno)(I3)
@@ -40,7 +41,7 @@ TEXT runtime·nanotime1(SB),NOSPLIT,$64
 	MOVD	$1000000000, I1
 	MULD	I1, I3	// multiply into nanoseconds
 	MOVD	tv_nsec-8(SP), I5	// tv_nsec, offset should be stable.
-	ADD	I5, I3, I0
+	ADD	I5, I3, O0
 	RET
 
 // pipe(3c) wrapper that returns fds in AX, DX.
@@ -49,8 +50,8 @@ TEXT runtime·pipe1(SB),NOSPLIT,$16
 	MOVD	$FIXED_FRAME(BSP), O0
 	MOVD	$libc_pipe(SB), I3
 	CALL	I3
-	MOVW	(FIXED_FRAME+0)(BSP), I0
-	MOVW	(FIXED_FRAME+4)(BSP), I1
+	MOVW	(FIXED_FRAME+0)(BSP), O0
+	MOVW	(FIXED_FRAME+4)(BSP), O1
 	RET
 
 // Call a library function with SysV calling conventions.
@@ -63,11 +64,11 @@ TEXT runtime·pipe1(SB),NOSPLIT,$16
 // Called by runtime·asmcgocall or runtime·cgocall.
 // NOT USING GO CALLING CONVENTION.
 TEXT runtime·asmsysvicall6(SB),NOSPLIT,$0
-	// asmcgocall will put first argument into I0.
-	MOVD	I0, L7
-	MOVD	libcall_fn(I0), I3
-	MOVD	libcall_args(I0), L1
-	MOVD	libcall_n(I0), L2
+	// asmcgocall will put first argument into O0.
+	MOVD	O0, L7
+	MOVD	libcall_fn(O0), I3
+	MOVD	libcall_args(O0), L1
+	MOVD	libcall_n(O0), L2
 
 	CMP	ZR, g
 	BED	skiperrno1
@@ -112,9 +113,9 @@ skiperrno2:
 
 // uint32 tstart_sysvicall(M *newm);
 TEXT runtime·tstart_sysvicall(SB),NOSPLIT,$0
-	// I0 contains first arg newm
-	MOVD	m_g0(I0), g		// g
-	MOVD	I0, g_m(g)
+	// O0 contains first arg newm
+	MOVD	m_g0(O0), g		// g
+	MOVD	O0, g_m(g)
 
 	CALL	runtime·save_g(SB)
 
@@ -139,7 +140,7 @@ TEXT runtime·sigtramp(SB),NOSPLIT,$128
 	// check that g exists
 	CMP	g, ZR
 	BNED	allgood
-	MOVD	I0, (FIXED_FRAME+0)(BSP)
+	MOVD	O0, (FIXED_FRAME+0)(BSP)
 	CALL	runtime·badsignal(SB)
 	JMP	exit
 
@@ -192,10 +193,10 @@ allgood:
 	// TODO: If current SP is not in gsignal.stack, then adjust.
 
 	// prepare call
-	MOVW	I0, (FIXED_FRAME+8*0+128+FIXED_FRAME)(BSP)
-	MOVD	I1, (FIXED_FRAME+8*1+128+FIXED_FRAME)(BSP)
-	MOVD	I2, (FIXED_FRAME+8*2+128+FIXED_FRAME)(BSP)
-	MOVD	I3, (FIXED_FRAME+8*3+128+FIXED_FRAME)(BSP)
+	MOVW	O0, (FIXED_FRAME+8*0+128+FIXED_FRAME)(BSP)
+	MOVD	O1, (FIXED_FRAME+8*1+128+FIXED_FRAME)(BSP)
+	MOVD	O2, (FIXED_FRAME+8*2+128+FIXED_FRAME)(BSP)
+	MOVD	O3, (FIXED_FRAME+8*3+128+FIXED_FRAME)(BSP)
 	CALL	runtime·sighandler(SB)
 
 	// restore libcall
