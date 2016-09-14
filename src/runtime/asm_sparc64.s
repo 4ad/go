@@ -543,10 +543,72 @@ TEXT gosave<>(SB),NOSPLIT|NOFRAME,$0
 	MOVD	TMP, (g_sched+gobuf_bp)(g)
 	RET
 
-// func asmcgocall2(fn, arg unsafe.Pointer) int32
-TEXT ·asmcgocall2(SB),NOSPLIT,$0-20
+// func asmcgocall(fn, arg unsafe.Pointer) int32
+TEXT ·asmcgocall(SB),NOSPLIT,$0-20
 	MOVD	fn+0(FP), O1
 	MOVD	arg+8(FP), O0
+
+	MOVD	g_m(g), I4
+	MOVD	m_gsignal(I4), L6
+	CMP	g, L6
+	BED	noswitch
+	MOVD	m_g0(I4), L6
+	CMP	g, L6
+	BED	noswitch
+	MOVD	m_curg(I4), O3
+	CMP	g, O3
+	BED	switch
+
+	// Bad: g is not gsignal, not g0, not curg. What is it?
+	// Hide call from linker nosplit analysis.
+	MOVD	$runtime·badsystemstack(SB), I1
+	CALL	(I1)
+
+switch:
+	// save our state in g->sched. Pretend to
+	// be systemstack_switch if the G stack is scanned.
+	MOVD	$runtime·systemstack_switch(SB), O3
+	ADD	$20, O3	// get past prologue
+	MOVD	O3, (g_sched+gobuf_pc)(g)
+	MOVD	BSP, TMP
+	MOVD	TMP, (g_sched+gobuf_sp)(g)
+	MOVD	BFP, TMP
+	MOVD	TMP, (g_sched+gobuf_bp)(g)
+	MOVD	$0, (g_sched+gobuf_lr)(g)
+	MOVD	$0, (g_sched+gobuf_ret)(g)
+	MOVD	$0, (g_sched+gobuf_ctxt)(g)
+	MOVD	g, (g_sched+gobuf_g)(g)
+
+	// switch to g0
+	MOVD	L6, g
+	CALL	runtime·save_g(SB)
+	MOVD	(g_sched+gobuf_sp)(g), I1
+	MOVD	I1, BFP	// subtle
+	// make it look like mstart called systemstack on g0, to stop traceback.
+	SUB	$FIXED_FRAME, I1
+	MOVD	$runtime·mstart(SB), I4
+	MOVD	I4, 120(I1)
+	MOVD	I4, ILR
+	MOVD	I1, BSP
+
+	// call target function
+	CALL	(O1)
+
+	// switch back to g
+	MOVD	g_m(g), I1
+	MOVD	m_curg(I1), g
+	CALL	runtime·save_g(SB)
+	MOVD	(g_sched+gobuf_bp)(g), TMP
+	MOVD	TMP, BFP
+	MOVD	(g_sched+gobuf_sp)(g), TMP
+	MOVD	TMP, BSP
+	MOVD	ZR, (g_sched+gobuf_sp)(g)
+	MOVD	ZR, (g_sched+gobuf_bp)(g)
+	MOVW	O0, ret+16(FP)
+	RET
+
+noswitch:
+	CALL	runtime·save_g(SB)
 	CALL	(O1)
 	MOVW	O0, ret+16(FP)
 	RET
