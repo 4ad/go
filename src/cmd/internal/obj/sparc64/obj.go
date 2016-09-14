@@ -20,7 +20,6 @@ var isUncondJump = map[obj.As]bool{
 	obj.ARET:      true,
 	AFBA:          true,
 	AJMPL:         true,
-	ARETRESTORE:   true,
 }
 
 var isCondJump = map[obj.As]bool{
@@ -811,7 +810,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 
 	// Schedule delay-slots. Only RNOPs for now.
 	for p := cursym.Text; p != nil; p = p.Link {
-		if !isJump[p.As] || p.As == ARETRESTORE {
+		if !isJump[p.As] {
 			continue
 		}
 		if p.Link != nil && p.Link.As == ARNOP {

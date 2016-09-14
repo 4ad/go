@@ -490,9 +490,5 @@ const (
 	AWORD
 	ADWORD
 
-	// JMPL $8(ILR), ZR
-	//	RESTORE	$0, ZR, ZR
-	ARETRESTORE
-
 	ALAST
 )
