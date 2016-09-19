@@ -258,6 +258,8 @@ switch:
 	MOVD	(g_sched+gobuf_bp)(g), TMP
 	MOVD	TMP, BFP
 	MOVD	(g_sched+gobuf_sp)(g), TMP
+	MOVD	120(TMP), ILR
+	MOVD	(g_sched+gobuf_sp)(g), TMP
 	MOVD	TMP, BSP
 	MOVD	ZR, (g_sched+gobuf_sp)(g)
 	MOVD	ZR, (g_sched+gobuf_bp)(g)
@@ -595,6 +597,8 @@ g0:
 	MOVD	112(L1), L3
 	ADD	$STACK_BIAS, L3
 	MOVD	L3, BFP
+	// Restore frame pointer
+	MOVD	120(L1), ILR
 	// Restore stack pointer
 	MOVD	L1, BSP
 
