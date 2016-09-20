@@ -134,6 +134,9 @@ TEXT runtime·tstart_sysvicall(SB),NOSPLIT,$0
 	MOVW	ZR, ret+8(FP)
 	RET
 
+// Careful, this is called by __sighndlr, a libc function.
+// Go functions don't save the caller context on the caller frame,
+// so do that here manually instead.
 TEXT runtime·sigtramp(SB),NOSPLIT|NOFRAME,$0
 	MOVD	BFP, RT1
 	SUB	$STACK_BIAS, RT1
@@ -142,8 +145,8 @@ TEXT runtime·sigtramp(SB),NOSPLIT|NOFRAME,$0
 	REGFLUSH()
 	JMP	runtime·sigtramp1(SB)
 
-// Careful, this is called by __sighndlr, a libc function. We must preserve
-// registers as per SPARC64 ABI.
+// Careful, this is called by __sighndlr, a libc function through the
+// trampoline above. We must preserve registers as per SPARC64 ABI.
 TEXT runtime·sigtramp1(SB),NOSPLIT,$256
 	CMP	g, ZR
 	BNED	allgood
