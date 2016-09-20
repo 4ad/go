@@ -96,6 +96,12 @@ func deferproc(siz int32, fn *funcval) { // arguments of fn follow fn
 		}
 		d.fn = fn
 		d.pc = callerpc
+		if sys.GoarchSparc64 == 1 {
+			// on SPARC64 the link register contains the address of the
+			// 4-byte CALL instruction, which is always follwed by a
+			// 4-byteNOP.
+			d.pc += 8
+		}
 		d.sp = sp
 		memmove(add(unsafe.Pointer(d), unsafe.Sizeof(*d)), unsafe.Pointer(argp), uintptr(siz))
 	})
