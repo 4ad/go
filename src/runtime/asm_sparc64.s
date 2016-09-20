@@ -10,13 +10,6 @@
 DATA dbgbuf(SB)/8, $"\n\n"
 GLOBL dbgbuf(SB), $8
 
-// Note: define used in this file to avoid affecting registers.
-// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-#define REGFLUSH	\
-	MEMBAR	$111;	\
-	FLUSHW;		\
-	MEMBAR	$111
-
 TEXT runtime·rt0_go(SB),NOSPLIT,$16-0
 	// BSP = stack; O0 = argc; O1 = argv
 

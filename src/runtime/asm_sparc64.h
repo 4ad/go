@@ -38,3 +38,10 @@
 #define ARG_PUSH_SIZE 6*8
 #define WINDOW_SIZE 16*8
 #define FIXED_FRAME WINDOW_SIZE+ARG_PUSH_SIZE
+
+// Note: define used in this file to avoid affecting registers.
+// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
+#define REGFLUSH()	\
+	MEMBAR	$111;	\
+	FLUSHW;		\
+	MEMBAR	$111
