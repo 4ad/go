@@ -135,9 +135,12 @@ TEXT runtime·tstart_sysvicall(SB),NOSPLIT,$0
 	RET
 
 TEXT runtime·sigtramp(SB),NOSPLIT|NOFRAME,$0
+	MOVD	BFP, RT1
+	SUB	$STACK_BIAS, RT1
+	MOVD	RT1, 112(BSP)
+	MOVD	ILR, 120(BSP)
 	REGFLUSH()
 	JMP	runtime·sigtramp1(SB)
-
 
 // Careful, this is called by __sighndlr, a libc function. We must preserve
 // registers as per SPARC64 ABI.
