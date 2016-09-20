@@ -134,10 +134,14 @@ TEXT runtime·tstart_sysvicall(SB),NOSPLIT,$0
 	MOVW	ZR, ret+8(FP)
 	RET
 
+TEXT runtime·sigtramp(SB),NOSPLIT|NOFRAME,$0
+	REGFLUSH()
+	JMP	runtime·sigtramp1(SB)
+
+
 // Careful, this is called by __sighndlr, a libc function. We must preserve
 // registers as per SPARC64 ABI.
-TEXT runtime·sigtramp(SB),NOSPLIT,$128
-	// check that g exists
+TEXT runtime·sigtramp1(SB),NOSPLIT,$256
 	CMP	g, ZR
 	BNED	allgood
 	MOVD	O0, (FIXED_FRAME+0)(BSP)
@@ -145,6 +149,22 @@ TEXT runtime·sigtramp(SB),NOSPLIT,$128
 	JMP	exit
 
 allgood:
+	// save registers
+	MOVD	TMP2, -(8+13*8+128+FIXED_FRAME)(BSP)
+	MOVD	L1, -(8+14*8+128+FIXED_FRAME)(BSP)
+	MOVD	L2, -(8+15*8+128+FIXED_FRAME)(BSP)
+	MOVD	L3, -(8+16*8+128+FIXED_FRAME)(BSP)
+	MOVD	L4, -(8+17*8+128+FIXED_FRAME)(BSP)
+	MOVD	L5, -(8+18*8+128+FIXED_FRAME)(BSP)
+	MOVD	L6, -(8+19*8+128+FIXED_FRAME)(BSP)
+	MOVD	L7, -(8+20*8+128+FIXED_FRAME)(BSP)
+	MOVD	I0, -(8+21*8+128+FIXED_FRAME)(BSP)
+	MOVD	I1, -(8+22*8+128+FIXED_FRAME)(BSP)
+	MOVD	I2, -(8+23*8+128+FIXED_FRAME)(BSP)
+	MOVD	I3, -(8+24*8+128+FIXED_FRAME)(BSP)
+	MOVD	I4, -(8+25*8+128+FIXED_FRAME)(BSP)
+	MOVD	I5, -(8+26*8+128+FIXED_FRAME)(BSP)
+
 	// save g
 	MOVD	g, (-8+0+128+FIXED_FRAME)(BSP)
 
@@ -193,13 +213,14 @@ allgood:
 	// TODO: If current SP is not in gsignal.stack, then adjust.
 
 	// prepare call
-	MOVW	O0, (FIXED_FRAME+8*0+128+FIXED_FRAME)(BSP)
-	MOVD	O1, (FIXED_FRAME+8*1+128+FIXED_FRAME)(BSP)
-	MOVD	O2, (FIXED_FRAME+8*2+128+FIXED_FRAME)(BSP)
-	MOVD	O3, (FIXED_FRAME+8*3+128+FIXED_FRAME)(BSP)
+	MOVW	O0, (8*0+FIXED_FRAME)(BSP)
+	MOVD	O1, (8*1+FIXED_FRAME)(BSP)
+	MOVD	O2, (8*2+FIXED_FRAME)(BSP)
+	MOVD	I3, (8*3+FIXED_FRAME)(BSP)
 	CALL	runtime·sighandler(SB)
 
 	// restore libcall
+	MOVD	g_m(g), L1
 	MOVD	$m_libcall(L1), L2
 	MOVD	-(8+1*8+128+FIXED_FRAME)(BSP), L3
 	MOVD	L3, libcall_fn(L2)
@@ -234,6 +255,22 @@ allgood:
 
 	// restore g
 	MOVD	(-8+0+128+FIXED_FRAME)(BSP), g
+
+	// restore registers
+	MOVD	-(8+13*8+128+FIXED_FRAME)(BSP), TMP2
+	MOVD	-(8+14*8+128+FIXED_FRAME)(BSP), L1
+	MOVD	-(8+15*8+128+FIXED_FRAME)(BSP), L2
+	MOVD	-(8+16*8+128+FIXED_FRAME)(BSP), L3
+	MOVD	-(8+17*8+128+FIXED_FRAME)(BSP), L4
+	MOVD	-(8+18*8+128+FIXED_FRAME)(BSP), L5
+	MOVD	-(8+19*8+128+FIXED_FRAME)(BSP), L6
+	MOVD	-(8+20*8+128+FIXED_FRAME)(BSP), L7
+	MOVD	-(8+21*8+128+FIXED_FRAME)(BSP), I0
+	MOVD	-(8+22*8+128+FIXED_FRAME)(BSP), I1
+	MOVD	-(8+23*8+128+FIXED_FRAME)(BSP), I2
+	MOVD	-(8+24*8+128+FIXED_FRAME)(BSP), I3
+	MOVD	-(8+25*8+128+FIXED_FRAME)(BSP), I4
+	MOVD	-(8+26*8+128+FIXED_FRAME)(BSP), I5
 
 exit:
 	RET
