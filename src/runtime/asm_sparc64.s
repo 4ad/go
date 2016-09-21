@@ -309,15 +309,18 @@ TEXT runtime·morestack(SB),NOSPLIT|NOFRAME,$0-0
 	MOVD	I1, (m_morebuf+gobuf_pc)(O0)	// f's caller's PC
 	MOVD	BSP, TMP
 	MOVD	TMP, (m_morebuf+gobuf_sp)(O0)	// f's caller's BSP
-	MOVD	BFP, TMP
-	MOVD	TMP, (m_morebuf+gobuf_bp)(O0)	// f's caller's BFP
 	MOVD	g, (m_morebuf+gobuf_g)(O0)
 
 	// Call newstack on m->g0's stack.
 	MOVD	m_g0(O0), g
 	CALL	runtime·save_g(SB)
-	MOVD	(g_sched+gobuf_sp)(g), TMP
-	MOVD	TMP, BSP
+	MOVD	(g_sched+gobuf_sp)(g), L4
+	MOVD	L4, BFP
+	SUB	$FIXED_FRAME, L4, L5
+	MOVD	L5, BSP
+	SUB	$STACK_BIAS, L4
+	MOVD	L4, 112(BSP)
+	MOVD	ILR, 120(BSP)
 
 	CALL	runtime·newstack(SB)
 
