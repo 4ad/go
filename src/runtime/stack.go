@@ -65,7 +65,7 @@ const (
 	// to each stack below the usual guard area for OS-specific
 	// purposes like signal handling. Used on Windows, Plan 9,
 	// and Darwin/ARM because they do not use a separate stack.
-	_StackSystem = sys.GoosWindows*512*sys.PtrSize + sys.GoosPlan9*512 + sys.GoosDarwin*sys.GoarchArm*1024 + sys.GoarchSparc64*1024*1024
+	_StackSystem = sys.GoosWindows*512*sys.PtrSize + sys.GoosPlan9*512 + sys.GoosDarwin*sys.GoarchArm*1024
 
 	// The minimum size of stack used by Go code.
 	// SPARC64 needs more, as each frame has an 176-byte overhead.

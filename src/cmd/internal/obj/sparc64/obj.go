@@ -603,9 +603,9 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			// split check must be done before reserving stack
 			// space or changing register windows.
 			if !(cursym.Text.From3.Offset&obj.NOSPLIT != 0) {
-			//	p = stacksplit(ctxt, p, frameSize) // emit split check
+				p = stacksplit(ctxt, p, frameSize) // emit split check
 			}
-			
+
 			// ADD -(frameSize+MinStackFrameSize), RSP
 			p = obj.Appendp(ctxt, p)
 			p.As = AADD
