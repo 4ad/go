@@ -1223,7 +1223,13 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	// BLE XCC, n(PC)
 	// JMP n(PC)
 	case 17:
-		offset := p.Pcond.Pc - p.Pc
+		var offset int64
+		if p.Pcond != nil {
+			offset = p.Pcond.Pc - p.Pc
+		} else {
+			// obj.brloop will set p.Pcond to nil for jumps to the same instruction.
+			offset = p.To.Val.(*obj.Prog).Pc - p.Pc
+		}
 		if offset < -1<<22 || offset > 1<<22-1 {
 			return nil, errors.New("branch target out of range")
 		}
