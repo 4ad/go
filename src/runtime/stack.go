@@ -870,6 +870,8 @@ func copystack(gp *g, newsize uintptr, sync bool) {
 
 	// allocate new stack
 	new, newstkbar := stackalloc(uint32(newsize))
+	// TODO(aram): why do we need this, liveness analysis wrong?
+	fillstack(new, 0)
 	if stackPoisonCopy != 0 {
 		fillstack(new, 0xfd)
 	}
