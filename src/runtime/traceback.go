@@ -388,7 +388,9 @@ func gentraceback(pc0, sp0, lr0 uintptr, gp *g, skip int, pcbuf *uintptr, max in
 				//		/home/rsc/go/src/runtime/x.go:23 +0xf
 				//
 				tracepc := frame.pc // back up to CALL instruction for funcline.
-				if (n > 0 || flags&_TraceTrap == 0) && frame.pc > f.entry && !waspanic {
+				// SPARC64's PC holds the address of the *current* 
+				// instruction, so it doesn't need this.
+				if (n > 0 || flags&_TraceTrap == 0) && frame.pc > f.entry && !waspanic && sys.GoarchSparc64 == 0 {
 					tracepc--
 				}
 				name := funcname(f)
@@ -608,7 +610,9 @@ func printcreatedby(gp *g) {
 	if f != nil && showframe(f, gp) && gp.goid != 1 {
 		print("created by ", funcname(f), "\n")
 		tracepc := pc // back up to CALL instruction for funcline.
-		if pc > f.entry {
+		// SPARC64's PC holds the address of the *current* 
+		// instruction, so it doesn't need this.
+		if pc > f.entry && sys.GoarchSparc64 == 0 {
 			tracepc -= sys.PCQuantum
 		}
 		file, line := funcline(f, tracepc)
