@@ -189,7 +189,8 @@ func Caller(skip int) (pc uintptr, file string, line int, ok bool) {
 	// All architectures turn faults into apparent calls to sigpanic.
 	// If we see a call to sigpanic, we do not back up the PC to find
 	// the line number of the call instruction, because there is no call.
-	if xpc > f.entry && (g == nil || g.entry != funcPC(sigpanic)) {
+	// SPARC64's PC holds the address of the *current* instruction.
+	if xpc > f.entry && (g == nil || g.entry != funcPC(sigpanic)) && sys.GoarchSparc64 == 0 {
 		xpc--
 	}
 	file, line32 := funcline(f, xpc)
