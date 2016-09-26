@@ -1,4 +1,4 @@
-// +build !nacl !sparc64
+// +build !nacl,!sparc64
 // run
 
 // Copyright 2014 The Go Authors. All rights reserved.
