@@ -195,7 +195,7 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 		p = obj.Appendp(ctxt, p)
 		p.As = AMOVD
 		p.From.Type = obj.TYPE_CONST
-		p.From.Offset = int64(framesize + MinStackFrameSize) + (obj.StackGuard - obj.StackSmall)
+		p.From.Offset = int64(framesize+MinStackFrameSize) + (obj.StackGuard - obj.StackSmall)
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = REG_TMP
 

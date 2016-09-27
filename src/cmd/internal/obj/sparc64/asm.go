@@ -12,11 +12,11 @@ import (
 )
 
 type Optab struct {
-	as obj.As	// instruction
-	a1 int8		// from
-	a2 int8		// reg
-	a3 int8		// from3
-	a4 int8		// to
+	as obj.As // instruction
+	a1 int8   // from
+	a2 int8   // reg
+	a3 int8   // from3
+	a4 int8   // to
 }
 
 type OptabSlice []Optab
@@ -72,7 +72,8 @@ var optab = map[Optab]Opval{
 	Optab{AMULD, ClassReg, ClassReg, ClassNone, ClassReg}:  {1, 4, 0},
 	Optab{ASLLD, ClassReg, ClassReg, ClassNone, ClassReg}:  {1, 4, 0},
 	Optab{ASLLW, ClassReg, ClassReg, ClassNone, ClassReg}:  {1, 4, 0},
-	Optab{ASAVE, ClassReg, ClassReg, ClassNone, ClassReg}:  {1, 4, 0},
+
+	Optab{ASAVE, ClassReg, ClassReg | ClassBias, ClassNone, ClassReg | ClassBias}: {1, 4, 0},
 
 	Optab{AFADDD, ClassDReg, ClassNone, ClassNone, ClassDReg}:  {1, 4, 0},
 	Optab{AFADDD, ClassDReg, ClassDReg, ClassNone, ClassDReg}:  {1, 4, 0},
@@ -90,7 +91,8 @@ var optab = map[Optab]Opval{
 	Optab{AMULD, ClassConst13, ClassReg, ClassNone, ClassReg}:  {3, 4, 0},
 	Optab{ASLLD, ClassConst6, ClassReg, ClassNone, ClassReg}:   {3, 4, 0},
 	Optab{ASLLW, ClassConst5, ClassReg, ClassNone, ClassReg}:   {3, 4, 0},
-	Optab{ASAVE, ClassConst13, ClassReg, ClassNone, ClassReg}:  {3, 4, 0},
+
+	Optab{ASAVE, ClassConst13, ClassReg | ClassBias, ClassNone, ClassReg | ClassBias}: {3, 4, 0},
 
 	Optab{AMOVD, ClassConst13, ClassNone, ClassNone, ClassReg}: {4, 4, 0},
 	Optab{AMOVW, ClassConst13, ClassNone, ClassNone, ClassReg}: {4, 4, 0},
