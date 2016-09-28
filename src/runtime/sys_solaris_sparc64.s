@@ -16,10 +16,10 @@
 //
 // Called using runtime·asmcgocall from os_solaris.c:/minit.
 // NOT USING GO CALLING CONVENTION.
-TEXT runtime·miniterrno(SB),NOSPLIT,$0
-	// asmcgocall will put first argument into O0.
-	MOVD	O0, O1
-	CALL	O1	// SysV ABI so returns in O0
+TEXT runtime·miniterrno(SB),NOSPLIT|REGWIN,$0
+	// asmcgocall will put first argument into I0.
+	MOVD	I0, I1
+	CALL	I1	// SysV ABI so returns in O0
 	CALL	runtime·load_g(SB)
 	MOVD	g_m(g), I3
 	MOVD	O0,	(m_mOS+mOS_perrno)(I3)
@@ -32,7 +32,7 @@ TEXT runtime·miniterrno(SB),NOSPLIT,$0
 //
 // Called using runtime·sysvicall6 from os_solaris.c:/nanotime.
 // NOT USING GO CALLING CONVENTION.
-TEXT runtime·nanotime1(SB),NOSPLIT,$64
+TEXT runtime·nanotime1(SB),NOSPLIT|REGWIN,$64
 	MOVW	$3, O0	// CLOCK_REALTIME from <sys/time_impl.h>
 	MOVD	$tv-16(SP), O1
 	MOVD	$libc_clock_gettime(SB), I3
@@ -46,7 +46,7 @@ TEXT runtime·nanotime1(SB),NOSPLIT,$64
 
 // pipe(3c) wrapper that returns fds in AX, DX.
 // NOT USING GO CALLING CONVENTION.
-TEXT runtime·pipe1(SB),NOSPLIT,$16
+TEXT runtime·pipe1(SB),NOSPLIT|REGWIN,$16
 	MOVD	$FIXED_FRAME(BSP), O0
 	MOVD	$libc_pipe(SB), I3
 	CALL	I3
@@ -63,12 +63,12 @@ TEXT runtime·pipe1(SB),NOSPLIT,$16
 //
 // Called by runtime·asmcgocall or runtime·cgocall.
 // NOT USING GO CALLING CONVENTION.
-TEXT runtime·asmsysvicall6(SB),NOSPLIT,$0
-	// asmcgocall will put first argument into O0.
-	MOVD	O0, L7
-	MOVD	libcall_fn(O0), I3
-	MOVD	libcall_args(O0), L1
-	MOVD	libcall_n(O0), L2
+TEXT runtime·asmsysvicall6(SB),NOSPLIT|REGWIN,$0
+	// asmcgocall will put first argument into I0.
+	MOVD	I0, L7
+	MOVD	libcall_fn(I0), I3
+	MOVD	libcall_args(I0), L1
+	MOVD	libcall_n(I0), L2
 
 	CMP	ZR, g
 	BED	skiperrno1
@@ -112,10 +112,10 @@ skiperrno2:
 	RET
 
 // uint32 tstart_sysvicall(M *newm);
-TEXT runtime·tstart_sysvicall(SB),NOSPLIT,$0
-	// O0 contains first arg newm
-	MOVD	m_g0(O0), g		// g
-	MOVD	O0, g_m(g)
+TEXT runtime·tstart_sysvicall(SB),NOSPLIT|REGWIN,$0
+	// I0 contains first arg newm
+	MOVD	m_g0(I0), g		// g
+	MOVD	I0, g_m(g)
 
 	CALL	runtime·save_g(SB)
 
@@ -283,14 +283,14 @@ exit:
 
 
 // Runs on OS stack, called from runtime·usleep1_go.
-TEXT runtime·usleep2(SB),NOSPLIT,$0
+TEXT runtime·usleep2(SB),NOSPLIT|REGWIN,$0
 	MOVW	us+0(FP), O0
 	MOVD	$libc_usleep(SB), I3
 	CALL	I3
 	RET
 
 // Runs on OS stack, called from runtime·osyield.
-TEXT runtime·osyield1(SB),NOSPLIT,$0
+TEXT runtime·osyield1(SB),NOSPLIT|REGWIN,$0
 	MOVD	$libc_sched_yield(SB), I3
 	CALL	I3
 	RET
