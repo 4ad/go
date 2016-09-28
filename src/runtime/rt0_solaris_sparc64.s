@@ -11,16 +11,8 @@ TEXT _rt0_sparc64_solaris(SB),NOSPLIT|NOFRAME,$0
 	MOVD	$main(SB), O3
 	JMPL	O3, ZR
 
-TEXT main(SB),NOSPLIT|NOFRAME,$0
-	// Perform a save to get a new register window, this must be done
-	// before the flushw because flushw will flush every register window
-	// except the current.
-	SAVE	$-(FIXED_FRAME), BSP, BSP
-	// Now flush all other active windows to memory; this provides a
-	// level of insulation between us and the system to prevent
-	// unexpected spills/fills into our address space.
-	FLUSHW
+TEXT main(SB),NOSPLIT|REGWIN,$0
 	MOVW	I0, O0
 	MOVD	I1, O1
 	CALL	runtime·rt0_go(SB)
-	RETRESTORE
+	RET
