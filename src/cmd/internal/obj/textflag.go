@@ -47,4 +47,7 @@ const (
 
 	// Function can call reflect.Type.Method or reflect.Type.MethodByName.
 	REFLECTMETHOD = 1024
+
+	// This function switches the register window. Only for SPARC64.
+	REGWIN = 2048
 )

@@ -514,6 +514,10 @@ func isNOFRAME(p *obj.Prog) bool {
 	return p.From3Offset()&obj.NOFRAME != 0
 }
 
+func isREGWIN(p *obj.Prog) bool {
+	return p.From3Offset()&obj.REGWIN != 0
+}
+
 // TODO(aram):
 func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 	cursym.Text.Pc = 0
@@ -607,49 +611,83 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				p = stacksplit(ctxt, p, frameSize) // emit split check
 			}
 
-			// ADD -(frameSize+MinStackFrameSize), RSP
-			p = obj.Appendp(ctxt, p)
-			p.As = AADD
-			p.From.Type = obj.TYPE_CONST
-			p.From.Offset = -int64(frameSize + MinStackFrameSize)
-			p.To.Type = obj.TYPE_REG
-			p.To.Reg = REG_RSP
-			p.Spadj = frameSize + MinStackFrameSize
+			if isREGWIN(cursym.Text) {
+				// SAVE -(frameSize+MinStackFrameSize), RSP, RSP
+				p = obj.Appendp(ctxt, p)
+				p.As = ASAVE
+				p.From.Type = obj.TYPE_CONST
+				p.From.Offset = -int64(frameSize + MinStackFrameSize)
+				p.Reg = REG_RSP
+				p.To.Type = obj.TYPE_REG
+				p.To.Reg = REG_RSP
+				p.Spadj = frameSize + MinStackFrameSize
 
-			// SUB -(frameSize+MinStackFrameSize), RSP, RFP
-			p = obj.Appendp(ctxt, p)
-			p.As = ASUB
-			p.From.Type = obj.TYPE_CONST
-			p.From.Offset = -int64(frameSize + MinStackFrameSize)
-			p.Reg = REG_RSP
-			p.To.Type = obj.TYPE_REG
-			p.To.Reg = REG_RFP
+				// MOVD RFP, (112+bias)(RSP)
+				p = obj.Appendp(ctxt, p)
+				p.As = AMOVD
+				p.From.Type = obj.TYPE_REG
+				p.From.Reg = REG_RFP
+				p.To.Type = obj.TYPE_MEM
+				p.To.Reg = REG_RSP
+				p.To.Offset = int64(112 + StackBias)
 
-			// MOVD RFP, (112+bias)(RSP)
-			p = obj.Appendp(ctxt, p)
-			p.As = AMOVD
-			p.From.Type = obj.TYPE_REG
-			p.From.Reg = REG_RFP
-			p.To.Type = obj.TYPE_MEM
-			p.To.Reg = REG_RSP
-			p.To.Offset = int64(112 + StackBias)
+				// MOVD ILR, (120+bias)(RSP)
+				p = obj.Appendp(ctxt, p)
+				p.As = AMOVD
+				p.From.Type = obj.TYPE_REG
+				p.From.Reg = REG_ILR
+				p.To.Type = obj.TYPE_MEM
+				p.To.Reg = REG_RSP
+				p.To.Offset = int64(120 + StackBias)
 
-			// MOVD OLR, (120+bias)(RSP)
-			p = obj.Appendp(ctxt, p)
-			p.As = AMOVD
-			p.From.Type = obj.TYPE_REG
-			p.From.Reg = REG_OLR
-			p.To.Type = obj.TYPE_MEM
-			p.To.Reg = REG_RSP
-			p.To.Offset = int64(120 + StackBias)
+				// FLUSHW
+				p = obj.Appendp(ctxt, p)
+				p.As = AFLUSHW
+			} else {		
+				// ADD -(frameSize+MinStackFrameSize), RSP
+				p = obj.Appendp(ctxt, p)
+				p.As = AADD
+				p.From.Type = obj.TYPE_CONST
+				p.From.Offset = -int64(frameSize + MinStackFrameSize)
+				p.To.Type = obj.TYPE_REG
+				p.To.Reg = REG_RSP
+				p.Spadj = frameSize + MinStackFrameSize
 
-			// MOVD OLR, ILR
-			p = obj.Appendp(ctxt, p)
-			p.As = AMOVD
-			p.From.Type = obj.TYPE_REG
-			p.From.Reg = REG_OLR
-			p.To.Type = obj.TYPE_REG
-			p.To.Reg = REG_ILR
+				// SUB -(frameSize+MinStackFrameSize), RSP, RFP
+				p = obj.Appendp(ctxt, p)
+				p.As = ASUB
+				p.From.Type = obj.TYPE_CONST
+				p.From.Offset = -int64(frameSize + MinStackFrameSize)
+				p.Reg = REG_RSP
+				p.To.Type = obj.TYPE_REG
+				p.To.Reg = REG_RFP
+
+				// MOVD RFP, (112+bias)(RSP)
+				p = obj.Appendp(ctxt, p)
+				p.As = AMOVD
+				p.From.Type = obj.TYPE_REG
+				p.From.Reg = REG_RFP
+				p.To.Type = obj.TYPE_MEM
+				p.To.Reg = REG_RSP
+				p.To.Offset = int64(112 + StackBias)
+
+				// MOVD OLR, (120+bias)(RSP)
+				p = obj.Appendp(ctxt, p)
+				p.As = AMOVD
+				p.From.Type = obj.TYPE_REG
+				p.From.Reg = REG_OLR
+				p.To.Type = obj.TYPE_MEM
+				p.To.Reg = REG_RSP
+				p.To.Offset = int64(120 + StackBias)
+
+				// MOVD OLR, ILR
+				p = obj.Appendp(ctxt, p)
+				p.As = AMOVD
+				p.From.Type = obj.TYPE_REG
+				p.From.Reg = REG_OLR
+				p.To.Type = obj.TYPE_REG
+				p.To.Reg = REG_ILR
+			}
 
 			if cursym.Text.From3.Offset&obj.WRAPPER != 0 {
 				// if(g->panic != nil && g->panic->argp == FP) g->panic->argp = bottom-of-frame
@@ -740,6 +778,39 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				if p.To.Sym != nil { // RETJMP
 					p.As = obj.AJMP
 				}
+				break
+			}
+
+			if isREGWIN(cursym.Text) {
+				// MOVD (112+bias)(RSP), RFP
+				q = obj.Appendp(ctxt, p)
+				p.As = AMOVD
+				p.From.Type = obj.TYPE_MEM
+				p.From.Reg = REG_RSP
+				p.From.Offset = int64(112 + StackBias)
+				p.To.Type = obj.TYPE_REG
+				p.To.Reg = REG_RFP
+
+				q.As = ARETRESTORE
+				q.From.Type = obj.TYPE_NONE
+				q.From.Offset = 0
+				q.Reg = 0
+				q.To.Type = obj.TYPE_NONE
+				q.To.Reg = 0
+				// The SP restore operation needs a Spadj of
+				// -(cursym.Locals + MinStackFrameSize),
+				// and the JMP operation needs a Spadj of
+				// +(cursym.Locals + MinStackFrameSize).
+				//
+				// Since this operation does both, they cancel out
+				// so we don't do any Spadj adjustment.
+				//
+				// The best solution would be to split RETRESTORE
+				// into the constituent instructions, but that requires
+				// more sophisticated delay-slot processing,
+				// since the RESTORE has to be in the delay
+				// slot of the branch.
+
 				break
 			}
 

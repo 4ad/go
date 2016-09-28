@@ -32,3 +32,5 @@
 #define NOFRAME 512
 // Function can call reflect.Type.Method or reflect.Type.MethodByName.
 #define REFLECTMETHOD = 1024
+// This function switches the register window. Only for SPARC64.
+#define REGWIN 2048
