@@ -73,6 +73,7 @@ var optab = map[Optab]Opval{
 	Optab{ASLLD, ClassReg, ClassReg, ClassNone, ClassReg}:  {1, 4, 0},
 	Optab{ASLLW, ClassReg, ClassReg, ClassNone, ClassReg}:  {1, 4, 0},
 
+	Optab{ASAVE, ClassReg, ClassReg, ClassNone, ClassReg}: {1, 4, 0},
 	Optab{ASAVE, ClassReg, ClassReg | ClassBias, ClassNone, ClassReg | ClassBias}: {1, 4, 0},
 
 	Optab{AFADDD, ClassDReg, ClassNone, ClassNone, ClassDReg}:  {1, 4, 0},
@@ -92,7 +93,7 @@ var optab = map[Optab]Opval{
 	Optab{ASLLD, ClassConst6, ClassReg, ClassNone, ClassReg}:   {3, 4, 0},
 	Optab{ASLLW, ClassConst5, ClassReg, ClassNone, ClassReg}:   {3, 4, 0},
 
-	Optab{ARESTORE, ClassConst13, ClassReg, ClassNone, ClassReg}: {3, 4, 0},
+	Optab{ASAVE, ClassConst13, ClassReg, ClassNone, ClassReg}: {3, 4, 0},
 	Optab{ASAVE, ClassConst13, ClassReg | ClassBias, ClassNone, ClassReg | ClassBias}: {3, 4, 0},
 
 	Optab{AMOVD, ClassConst13, ClassNone, ClassNone, ClassReg}: {4, 4, 0},
@@ -334,6 +335,7 @@ var ci = map[obj.As][]obj.As{
 	ASLLW:  {ASLLW, ASRLW, ASRAW},
 	ASTD:   {ASTB, ASTH, ASTW, AMOVB, AMOVH, AMOVW, AMOVUB, AMOVUH, AMOVUW, AMOVD},
 	ASTDF:  {ASTSF, AFMOVD, AFMOVS},
+	ASAVE:  {ARESTORE},
 }
 
 func opkeys() OptabSlice {
