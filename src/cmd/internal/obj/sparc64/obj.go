@@ -622,6 +622,10 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				p.To.Reg = REG_RSP
 				p.Spadj = frameSize + MinStackFrameSize
 
+				// FLUSHW
+				p = obj.Appendp(ctxt, p)
+				p.As = AFLUSHW
+
 				// MOVD RFP, (112+bias)(RSP)
 				p = obj.Appendp(ctxt, p)
 				p.As = AMOVD
@@ -639,10 +643,6 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				p.To.Type = obj.TYPE_MEM
 				p.To.Reg = REG_RSP
 				p.To.Offset = int64(120 + StackBias)
-
-				// FLUSHW
-				p = obj.Appendp(ctxt, p)
-				p.As = AFLUSHW
 			} else {		
 				// ADD -(frameSize+MinStackFrameSize), RSP
 				p = obj.Appendp(ctxt, p)
