@@ -41,7 +41,7 @@ TEXT runtime·nanotime1(SB),NOSPLIT|REGWIN,$64
 	MOVD	$1000000000, I1
 	MULD	I1, I3	// multiply into nanoseconds
 	MOVD	tv_nsec-8(SP), I5	// tv_nsec, offset should be stable.
-	ADD	I5, I3, O0
+	ADD	I5, I3, I0
 	RET
 
 // pipe(3c) wrapper that returns fds in AX, DX.
@@ -50,8 +50,8 @@ TEXT runtime·pipe1(SB),NOSPLIT|REGWIN,$16
 	MOVD	$FIXED_FRAME(BSP), O0
 	MOVD	$libc_pipe(SB), I3
 	CALL	I3
-	MOVW	(FIXED_FRAME+0)(BSP), O0
-	MOVW	(FIXED_FRAME+4)(BSP), O1
+	MOVW	(FIXED_FRAME+0)(BSP), I0
+	MOVW	(FIXED_FRAME+4)(BSP), I1
 	RET
 
 // Call a library function with SysV calling conventions.
@@ -98,14 +98,16 @@ skipargs:
 	// Return result
 	MOVD	O0, libcall_r1(L7)
 	MOVD	O1, libcall_r2(L7)
+	MOVD	O0, I0
+	MOVD	O1, I1
 
 	CMP	g, ZR
 	BED	skiperrno2
 	MOVD	g_m(g), I5
-	MOVD	(m_mOS+mOS_perrno)(I5), I1
-	CMP	I1, ZR
+	MOVD	(m_mOS+mOS_perrno)(I5), I4
+	CMP	I4, ZR
 	BED	skiperrno2
-	MOVW	(I1), I4
+	MOVW	(I4), I4
 	MOVD	I4, libcall_err(L7)
 
 skiperrno2:	
