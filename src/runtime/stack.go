@@ -69,7 +69,7 @@ const (
 
 	// The minimum size of stack used by Go code.
 	// SPARC64 needs more, as each frame has an 176-byte overhead.
-	_StackMin = 2048*(1+sys.GoarchSparc64)
+	_StackMin = 2048 * (1 + sys.GoarchSparc64)
 
 	// The minimum stack size to allocate.
 	// The hackery here rounds FixedStack0 up to a power of 2.
@@ -96,7 +96,7 @@ const (
 	// After a stack split check the SP is allowed to be this
 	// many bytes below the stack guard. This saves an instruction
 	// in the checking sequence for tiny frames.
-	_StackSmall = 128
+	_StackSmall = 128 + 2*sys.GoarchSparc64
 
 	// The maximum number of bytes that a chain of NOSPLIT
 	// functions can use.

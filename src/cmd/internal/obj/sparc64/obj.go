@@ -127,15 +127,31 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 	p.To.Reg = REG_TMP
 
 	q := (*obj.Prog)(nil)
-	if framesize <= obj.StackBig {
+	if framesize <= obj.StackSmall {
+		// small stack: SP-StackBias < stackguard
+		//	MOVD BSP, TMP2
+		//	CMP	stackguard, TMP2
+		p = obj.Appendp(ctxt, p)
+		p.As = AMOVD
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = REG_BSP
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = REG_TMP2
+
+		p = obj.Appendp(ctxt, p)
+		p.As = ACMP
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = REG_TMP
+		p.Reg = REG_TMP2
+	} else if framesize <= obj.StackBig {
 		// large stack: SP-framesize < stackguard-StackSmall
-		//	SUB	$(framesize+MinStackFrameSize), RSP, TMP2
+		//	SUB	$(framesize), RSP, TMP2
 		//	CMP	stackguard, TMP2
 		p = obj.Appendp(ctxt, p)
 
 		p.As = ASUB
 		p.From.Type = obj.TYPE_CONST
-		p.From.Offset = int64(framesize + MinStackFrameSize)
+		p.From.Offset = int64(framesize - StackBias)
 		p.Reg = REG_RSP
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = REG_TMP2
@@ -172,7 +188,7 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 		p = obj.Appendp(ctxt, p)
 		p.As = AADD
 		p.From.Type = obj.TYPE_CONST
-		p.From.Offset = obj.StackGuard
+		p.From.Offset = obj.StackGuard + StackBias
 		p.Reg = REG_RSP
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = REG_TMP2
@@ -187,7 +203,7 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 		p = obj.Appendp(ctxt, p)
 		p.As = AMOVD
 		p.From.Type = obj.TYPE_CONST
-		p.From.Offset = int64(framesize+MinStackFrameSize) + (obj.StackGuard - obj.StackSmall)
+		p.From.Offset = int64(framesize) + (obj.StackGuard - obj.StackSmall)
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = REG_TMP
 
@@ -209,7 +225,7 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 
 	spfix := obj.Appendp(ctxt, last)
 	spfix.As = ARNOP
-	spfix.Spadj = -(framesize + MinStackFrameSize)
+	spfix.Spadj = -framesize
 
 	// MOV	OLR, I1
 	movlr := obj.Appendp(ctxt, spfix)
@@ -228,7 +244,7 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 		debug = obj.Appendp(ctxt, debug)
 		debug.As = AMOVD
 		debug.From.Type = obj.TYPE_CONST
-		debug.From.Offset = int64(framesize + MinStackFrameSize)
+		debug.From.Offset = int64(framesize)
 		debug.To.Type = obj.TYPE_REG
 		debug.To.Reg = REG_TMP
 	}
@@ -252,7 +268,7 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 	jmp.As = obj.AJMP
 	jmp.To.Type = obj.TYPE_BRANCH
 	jmp.Pcond = ctxt.Cursym.Text.Link
-	jmp.Spadj = framesize + MinStackFrameSize
+	jmp.Spadj = framesize
 
 	return ble
 }
@@ -599,7 +615,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			// split check must be done before reserving stack
 			// space or changing register windows.
 			if !(cursym.Text.From3.Offset&obj.NOSPLIT != 0) {
-				p = stacksplit(ctxt, p, frameSize) // emit split check
+				p = stacksplit(ctxt, p, frameSize+MinStackFrameSize) // emit split check
 			}
 
 			if isREGWIN(cursym.Text) {
@@ -634,7 +650,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				p.To.Type = obj.TYPE_MEM
 				p.To.Reg = REG_RSP
 				p.To.Offset = int64(120 + StackBias)
-			} else {		
+			} else {
 				// ADD -(frameSize+MinStackFrameSize), RSP
 				p = obj.Appendp(ctxt, p)
 				p.As = AADD
