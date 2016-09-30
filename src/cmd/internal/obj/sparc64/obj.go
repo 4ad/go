@@ -127,16 +127,7 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 	p.To.Reg = REG_TMP
 
 	q := (*obj.Prog)(nil)
-	if framesize <= obj.StackSmall {
-		// small stack: SP-StackBias < stackguard
-		//	CMP	stackguard, SP
-		p = obj.Appendp(ctxt, p)
-
-		p.As = ACMP
-		p.From.Type = obj.TYPE_REG
-		p.From.Reg = REG_TMP
-		p.Reg = REG_RSP
-	} else if framesize <= obj.StackBig {
+	if framesize <= obj.StackBig {
 		// large stack: SP-framesize < stackguard-StackSmall
 		//	SUB	$(framesize+MinStackFrameSize), RSP, TMP2
 		//	CMP	stackguard, TMP2
