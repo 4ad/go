@@ -65,11 +65,10 @@ const (
 	// to each stack below the usual guard area for OS-specific
 	// purposes like signal handling. Used on Windows, Plan 9,
 	// and Darwin/ARM because they do not use a separate stack.
-	_StackSystem = sys.GoosWindows*512*sys.PtrSize + sys.GoosPlan9*512 + sys.GoosDarwin*sys.GoarchArm*1024
+	_StackSystem = sys.GoosWindows*512*sys.PtrSize + sys.GoosPlan9*512 + sys.GoosDarwin*sys.GoarchArm*1024 + (sys.GoarchSparc64*sys.StackBias + sys.GoarchSparc64)
 
 	// The minimum size of stack used by Go code.
-	// SPARC64 needs more, as each frame has an 176-byte overhead.
-	_StackMin = 2048 * (1 + sys.GoarchSparc64)
+	_StackMin = 2048
 
 	// The minimum stack size to allocate.
 	// The hackery here rounds FixedStack0 up to a power of 2.
@@ -96,7 +95,7 @@ const (
 	// After a stack split check the SP is allowed to be this
 	// many bytes below the stack guard. This saves an instruction
 	// in the checking sequence for tiny frames.
-	_StackSmall = 128 + 2*sys.GoarchSparc64
+	_StackSmall = 128 + sys.GoarchSparc64*2*sys.MinFrameSize
 
 	// The maximum number of bytes that a chain of NOSPLIT
 	// functions can use.
@@ -119,7 +118,7 @@ const (
 	//            == 3: logging of per-word updates
 	//            == 4: logging of per-word reads
 	stackDebug       = 0
-	stackFromSystem  = 0 // allocate stacks from system memory instead of the heap
+	stackFromSystem  = 0 + sys.GoarchSparc64 // allocate stacks from system memory instead of the heap
 	stackFaultOnFree = 0 // old stacks are mapped noaccess to detect use after free
 	stackPoisonCopy  = 0 // fill stack that should not be accessed with garbage, to detect bad dereferences during copy
 

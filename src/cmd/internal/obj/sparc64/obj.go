@@ -128,8 +128,8 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 
 	q := (*obj.Prog)(nil)
 	if framesize <= obj.StackSmall {
-		// small stack: SP-StackBias < stackguard
-		//	MOVD BSP, TMP2
+		// small stack: BSP < stackguard
+		//	MOVD	BSP, TMP2
 		//	CMP	stackguard, TMP2
 		p = obj.Appendp(ctxt, p)
 		p.As = AMOVD
@@ -145,7 +145,7 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 		p.Reg = REG_TMP2
 	} else if framesize <= obj.StackBig {
 		// large stack: SP-framesize < stackguard-StackSmall
-		//	SUB	$(framesize), RSP, TMP2
+		//	SUB	$(framesize - StackBias), RSP, TMP2
 		//	CMP	stackguard, TMP2
 		p = obj.Appendp(ctxt, p)
 
