@@ -130,8 +130,8 @@ TEXT runtime·gogo(SB), NOSPLIT|NOFRAME, $0-8
 	// restore continuation's ILR before resetting the stack pointer
 	// otherwise a spill will overwrite the saved link register.
 	MOVD	120(I3), ILR
-	MOVD	I3, BSP
 	MOVD	I4, BFP
+	MOVD	I3, BSP
 
 	MOVD	ZR, gobuf_sp(L6)
 	MOVD	ZR, gobuf_ret(L6)
@@ -171,9 +171,9 @@ ok:
 	MOVD	fn+0(FP), CTXT			// context
 	MOVD	0(CTXT), I4			// code pointer
 	MOVD	(g_sched+gobuf_sp)(g), TMP
-	MOVD	TMP, BSP	// sp = m->g0->sched.sp
 	MOVD	TMP, BFP
-	SUB	$FIXED_FRAME+16, BSP
+	SUB	$FIXED_FRAME+16, TMP
+	MOVD	TMP, BSP	// sp = m->g0->sched.sp
 	MOVD	I1, (FIXED_FRAME+0)(BSP)
 	MOVD	$0, (FIXED_FRAME+8)(BSP)
 	CALL	(I4)
