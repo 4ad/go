@@ -434,6 +434,10 @@ func stackfree(stk stack, n uintptr) {
 		memclr(v, n) // for testing, clobber stack data
 	}
 	if debug.efence != 0 || stackFromSystem != 0 {
+		// TODO(shawn): stackalloc uses rounded size, but doesn't
+		// return this to caller, to avoid leaking memory or not
+		// faulting, apply same rounding here; see issue #17289.
+		n = round(uintptr(n), _PageSize)
 		if debug.efence != 0 || stackFaultOnFree != 0 {
 			sysFault(v, n)
 		} else {
