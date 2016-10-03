@@ -80,6 +80,10 @@ func linkarchinit() {
 }
 
 func archinit() {
+	// TODO(shawn): DWARF generation causes invalid elf binaries to be
+	// generated on sparc64
+	ld.Debug['w'] = 1 // disable DWARF generation
+
 	// getgoextlinkenabled is based on GO_EXTLINK_ENABLED when
 	// Go was built; see ../../make.bash.
 	if ld.Linkmode == ld.LinkAuto && obj.Getgoextlinkenabled() == "0" {
