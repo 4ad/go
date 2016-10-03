@@ -578,6 +578,22 @@ func adjustpointer(adjinfo *adjustinfo, vpp unsafe.Pointer) {
 	}
 }
 
+// Adjustrawpointer checks whether *vpp+StackBias is in the old stack described by adjinfo.
+// If so, it rewrites *vpp to point into the new stack.
+func adjustrawpointer(adjinfo *adjustinfo, vpp unsafe.Pointer) {
+	pp := (*uintptr)(vpp)
+	p := *pp + sys.StackBias
+	if stackDebug >= 4 {
+		print("        ", pp, ":", hex(p), "\n")
+	}
+	if adjinfo.old.lo <= p && p < adjinfo.old.hi {
+		*pp = p + adjinfo.delta - sys.StackBias
+		if stackDebug >= 3 {
+			print("        adjust ptr ", pp, ":", hex(p-sys.StackBias), " -> ", hex(*pp), "\n")
+		}
+	}
+}
+
 // Information from the compiler about the layout of stack frames.
 type bitvector struct {
 	n        int32 // # of bits
@@ -708,7 +724,7 @@ func adjustframe(frame *stkframe, arg unsafe.Pointer) bool {
 		if stackDebug >= 3 {
 			print("      saved bp\n")
 		}
-		adjustpointer(adjinfo, unsafe.Pointer(frame.sp+uintptr(112)))
+		adjustrawpointer(adjinfo, unsafe.Pointer(frame.sp+uintptr(112)))
 	}
 
 	if sys.ArchFamily == sys.AMD64 && frame.argp-frame.varp == 2*sys.RegSize {
