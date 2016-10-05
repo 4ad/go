@@ -1034,7 +1034,6 @@ func span(ctxt *obj.Link, cursym *obj.LSym) {
 		p.Pc = pc
 		pc += int64(o.size)
 	}
-	pc += -pc & (16 - 1)
 	cursym.Size = pc
 	cursym.Grow(cursym.Size)
 

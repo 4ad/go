@@ -318,7 +318,7 @@ func asmb() {
 
 	sect := ld.Segtext.Sect
 	ld.Cseek(int64(sect.Vaddr - ld.Segtext.Vaddr + ld.Segtext.Fileoff))
-	ld.Codeblk(int64(sect.Vaddr), int64(sect.Length))
+	ld.CodeblkPad(int64(sect.Vaddr), int64(sect.Length), []byte{0x0, 0x0d, 0xea, 0xd1})
 	for sect = sect.Next; sect != nil; sect = sect.Next {
 		ld.Cseek(int64(sect.Vaddr - ld.Segtext.Vaddr + ld.Segtext.Fileoff))
 		ld.Datblk(int64(sect.Vaddr), int64(sect.Length))
