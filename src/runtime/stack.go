@@ -68,7 +68,7 @@ const (
 	_StackSystem = sys.GoosWindows*512*sys.PtrSize + sys.GoosPlan9*512 + sys.GoosDarwin*sys.GoarchArm*1024
 
 	// The minimum size of stack used by Go code.
-	_StackMin = 2048
+	_StackMin = 8192
 
 	// The minimum stack size to allocate.
 	// The hackery here rounds FixedStack0 up to a power of 2.
@@ -90,12 +90,12 @@ const (
 
 	// The stack guard is a pointer this many bytes above the
 	// bottom of the stack.
-	_StackGuard = 720*sys.StackGuardMultiplier + _StackSystem
+	_StackGuard = 2160*sys.StackGuardMultiplier + _StackSystem
 
 	// After a stack split check the SP is allowed to be this
 	// many bytes below the stack guard. This saves an instruction
 	// in the checking sequence for tiny frames.
-	_StackSmall = 128 + sys.GoarchSparc64*2*sys.MinFrameSize
+	_StackSmall = 256
 
 	// The maximum number of bytes that a chain of NOSPLIT
 	// functions can use.
@@ -343,6 +343,9 @@ func stackalloc(n uint32) (stack, []stkbar) {
 		}
 		top := uintptr(n) - nstkbar
 		stkbarSlice := slice{add(v, top), 0, maxstkbar}
+		if stackDebug >= 1 {
+			print("  allocated ", v, "\n")
+		}
 		return stack{uintptr(v), uintptr(v) + top}, *(*[]stkbar)(unsafe.Pointer(&stkbarSlice))
 	}
 
@@ -1034,6 +1037,11 @@ func newstack() {
 	// it needs a lock held by the goroutine), that small preemption turns
 	// into a real deadlock.
 	if preempt {
+		if stackDebug >= 1 {
+			print("runtime: preempt0, newstack sp=", hex(gp.sched.sp), " stack=[", hex(gp.stack.lo), ", ", hex(gp.stack.hi), "]\n",
+				"\tmorebuf={pc:", funcNameForPc(morebuf.pc), " sp:", hex(morebuf.sp), " bp:", hex(morebuf.bp), " lr:", funcNameForPc(morebuf.lr), "}\n",
+				"\tsched={pc:", funcNameForPc(gp.sched.pc), " sp:", hex(gp.sched.sp), " bp:", hex(gp.sched.bp), " lr:", funcNameForPc(gp.sched.lr), " ctxt:", gp.sched.ctxt, "}\n")
+		}
 		if thisg.m.locks != 0 || thisg.m.mallocing != 0 || thisg.m.preemptoff != "" || thisg.m.p.ptr().status != _Prunning {
 			// Let the goroutine keep running for now.
 			// gp->preempt is set, so it will be preempted next time.
@@ -1052,8 +1060,8 @@ func newstack() {
 	}
 	if stackDebug >= 1 || sp < gp.stack.lo {
 		print("runtime: newstack sp=", hex(sp), " stack=[", hex(gp.stack.lo), ", ", hex(gp.stack.hi), "]\n",
-			"\tmorebuf={pc:", hex(morebuf.pc), " sp:", hex(morebuf.sp), " bp:", hex(morebuf.bp), " lr:", hex(morebuf.lr), "}\n",
-			"\tsched={pc:", hex(gp.sched.pc), " sp:", hex(gp.sched.sp), " bp:", hex(gp.sched.bp), " lr:", hex(gp.sched.lr), " ctxt:", gp.sched.ctxt, "}\n")
+			"\tmorebuf={pc:", funcNameForPc(morebuf.pc), " sp:", hex(morebuf.sp), " bp:", hex(morebuf.bp), " lr:", funcNameForPc(morebuf.lr), "}\n",
+			"\tsched={pc:", funcNameForPc(gp.sched.pc), " sp:", hex(gp.sched.sp), " bp:", hex(gp.sched.bp), " lr:", funcNameForPc(gp.sched.lr), " ctxt:", gp.sched.ctxt, "}\n")
 	}
 	if sp < gp.stack.lo {
 		print("runtime: gp=", gp, ", gp->status=", hex(readgstatus(gp)), "\n ")
@@ -1070,6 +1078,11 @@ func newstack() {
 	}
 
 	if preempt {
+		if stackDebug >= 1 {
+			print("runtime: preempt1, newstack sp=", hex(gp.sched.sp), " stack=[", hex(gp.stack.lo), ", ", hex(gp.stack.hi), "]\n",
+				"\tmorebuf={pc:", funcNameForPc(morebuf.pc), " sp:", hex(morebuf.sp), " bp:", hex(morebuf.bp), " lr:", funcNameForPc(morebuf.lr), "}\n",
+				"\tsched={pc:", funcNameForPc(gp.sched.pc), " sp:", hex(gp.sched.sp), " bp:", hex(gp.sched.bp), " lr:", funcNameForPc(gp.sched.lr), " ctxt:", gp.sched.ctxt, "}\n")
+		}
 		if gp == thisg.m.g0 {
 			throw("runtime: preempt g0")
 		}

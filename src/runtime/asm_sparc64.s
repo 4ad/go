@@ -285,14 +285,15 @@ TEXT runtime·morestack(SB),NOSPLIT|NOFRAME,$0-0
 	MOVD	g_m(g), O0
 	MOVD	m_g0(O0), I4
 	CMP	g, I4
-	BNED	2(PC)
-	JMP	runtime·abort(SB)
+	BNED	3(PC)
+	CALL	runtime·threaddump(SB)
+	CALL	runtime·abort(SB)
 
 	// Cannot grow signal stack (m->gsignal).
 	MOVD	m_gsignal(O0), I4
 	CMP	g, I4
 	BNED	2(PC)
-	JMP	runtime·abort(SB)
+	CALL	runtime·abort(SB)
 
 	// Called from f.
 	// Set g->sched to context in f

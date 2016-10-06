@@ -355,6 +355,36 @@ func findmoduledatap(pc uintptr) *moduledata {
 	return nil
 }
 
+func funcNameForPc(pc uintptr) string {
+	f := findfunc(pc)
+	if f == nil {
+		return "nil"
+	}
+	s := funcname(f)
+	if pc != f.entry {
+		s += "+" + itox(uint64(pc-f.entry))
+	}
+	return s
+}
+
+func itox(v uint64) string {
+	const dig = "0123456789abcdef"
+	buf := rawbyteslice(100)
+	i := len(buf)
+	for i--; i > 0; i-- {
+		buf[i] = dig[v%16]
+		if v < 16 {
+			break
+		}
+		v /= 16
+	}
+	i--
+	buf[i] = 'x'
+	i--
+	buf[i] = '0'
+	return slicebytetostringtmp(buf[i:])
+}
+
 func findfunc(pc uintptr) *_func {
 	datap := findmoduledatap(pc)
 	if datap == nil {

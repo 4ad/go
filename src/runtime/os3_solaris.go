@@ -600,3 +600,11 @@ func osyield() {
 	}
 	osyield1()
 }
+
+//go:nosplit
+func threaddump() {
+	g := getg()
+	print("threaddump: g=", g, ", g.m=", g.m, ", g.m.g0=", g.m.g0, ", g.m.gsignal=", g.m.gsignal, "\n")
+	print("	g.stack.hi=", hex(g.stack.hi), ", g.stack.lo", hex(g.stack.lo), ", g.stackguard0=", hex(g.stackguard0), ", g.stackguard1=", hex(g.stackguard1), "\n")
+	print("	callersp=", hex(getcallersp(unsafe.Pointer(&g))), "\n")
+}

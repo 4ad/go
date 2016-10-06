@@ -104,16 +104,16 @@ func init() {
 }
 
 // The stacksplit code is the first thing emitted in the prologue, so must
-// carefully limit its register usage to only the temporary registers
-// (e.g. REG_TMP) when storing values in a register as it's essentially a
-// leaf function executing in the caller's frame.
+// carefully limit its register usage to only those safe for use by the
+// runtime (e.g. REG_RT1) when storing values in a register as it's
+// essentially a leaf function executing in the caller's frame.
 //
 // In addition, since it must be executed before the initial stack setup,
 // any arguments expected in registers (such as ILR) will instead be
 // found in the output registers (OLR) since a 'save' instruction has not
 // been executed yet.
 func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
-	// MOV	g_stackguard(g), TMP
+	// MOV	g_stackguard(g), RT1
 	p = obj.Appendp(ctxt, p)
 
 	p.As = AMOVD
@@ -124,61 +124,62 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 		p.From.Offset = 3 * int64(ctxt.Arch.PtrSize) // G.stackguard1
 	}
 	p.To.Type = obj.TYPE_REG
-	p.To.Reg = REG_TMP
+	p.To.Reg = REG_RT1
 
 	q := (*obj.Prog)(nil)
 	if framesize <= obj.StackSmall {
-		// small stack: BSP < stackguard
-		//	MOVD	BSP, TMP2
-		//	CMP	stackguard, TMP2
+		// small stack: SP+StackBias < stackguard
+		//	ADD	Stackbias, RSP, RT2
+		//	CMP	stackguard, RT2
 		p = obj.Appendp(ctxt, p)
-		p.As = AMOVD
-		p.From.Type = obj.TYPE_REG
-		p.From.Reg = REG_BSP
-		p.To.Type = obj.TYPE_REG
-		p.To.Reg = REG_TMP2
-
-		p = obj.Appendp(ctxt, p)
-		p.As = ACMP
-		p.From.Type = obj.TYPE_REG
-		p.From.Reg = REG_TMP
-		p.Reg = REG_TMP2
-	} else if framesize <= obj.StackBig {
-		// large stack: SP-framesize < stackguard-StackSmall
-		//	SUB	$(framesize - StackBias), RSP, TMP2
-		//	CMP	stackguard, TMP2
-		p = obj.Appendp(ctxt, p)
-
-		p.As = ASUB
+		p.As = AADD
 		p.From.Type = obj.TYPE_CONST
-		p.From.Offset = int64(framesize - StackBias)
+		p.From.Offset = StackBias
 		p.Reg = REG_RSP
 		p.To.Type = obj.TYPE_REG
-		p.To.Reg = REG_TMP2
+		p.To.Reg = REG_RT2
 
 		p = obj.Appendp(ctxt, p)
 		p.As = ACMP
 		p.From.Type = obj.TYPE_REG
-		p.From.Reg = REG_TMP
-		p.Reg = REG_TMP2
+		p.From.Reg = REG_RT1
+		p.Reg = REG_RT2
+	} else if framesize <= obj.StackBig {
+		// large stack: SP-framesize < stackguard-StackSmall
+		//	ADD	$StackBias - $(framesize - StackSmall), RSP, RT2
+		//	CMP	stackguard, RT2
+		p = obj.Appendp(ctxt, p)
+		p.As = AADD
+		p.From.Type = obj.TYPE_CONST
+		p.From.Offset = int64(StackBias - (framesize - obj.StackSmall))
+		p.Reg = REG_RSP
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = REG_RT2
+
+		p = obj.Appendp(ctxt, p)
+		p.As = ACMP
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = REG_RT1
+		p.Reg = REG_RT2
 	} else {
 		// Such a large stack we need to protect against wraparound
 		// if SP is close to zero.
 		//	SP-stackguard+StackGuard < framesize + (StackGuard-StackSmall)
 		// The +StackGuard on both sides is required to keep the left side positive:
 		// SP is allowed to be slightly below stackguard. See stack.h.
-		//	CMP	$StackPreempt, TMP
+		//	CMP	$StackPreempt, RT1
 		//	BED	label_of_call_to_morestack
-		//	ADD	$StackGuard, RSP, TMP2
-		//	SUB	TMP, TMP2
-		//	MOV	$(framesize+(StackGuard-StackSmall)), TMP
-		//	CMP	TMP, TMP2
+		//	ADD	$StackBias, RSP, RT2
+		//	ADD	$StackGuard, RT2, RT2
+		//	SUB	RT1, RT2
+		//	MOV	$(framesize+(StackGuard-StackSmall)), RT1
+		//	CMP	RT1, RT2
 		p = obj.Appendp(ctxt, p)
 
 		p.As = ACMP
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = obj.StackPreempt
-		p.Reg = REG_TMP
+		p.Reg = REG_RT1
 
 		p = obj.Appendp(ctxt, p)
 		q = p
@@ -188,30 +189,38 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 		p = obj.Appendp(ctxt, p)
 		p.As = AADD
 		p.From.Type = obj.TYPE_CONST
-		p.From.Offset = obj.StackGuard + StackBias
+		p.From.Offset = StackBias
 		p.Reg = REG_RSP
 		p.To.Type = obj.TYPE_REG
-		p.To.Reg = REG_TMP2
+		p.To.Reg = REG_RT2
+
+		p = obj.Appendp(ctxt, p)
+		p.As = AADD
+		p.From.Type = obj.TYPE_CONST
+		p.From.Offset = obj.StackGuard
+		p.Reg = REG_RT2
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = REG_RT2
 
 		p = obj.Appendp(ctxt, p)
 		p.As = ASUB
 		p.From.Type = obj.TYPE_REG
-		p.From.Reg = REG_TMP
+		p.From.Reg = REG_RT1
 		p.To.Type = obj.TYPE_REG
-		p.To.Reg = REG_TMP2
+		p.To.Reg = REG_RT2
 
 		p = obj.Appendp(ctxt, p)
 		p.As = AMOVD
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = int64(framesize) + (obj.StackGuard - obj.StackSmall)
 		p.To.Type = obj.TYPE_REG
-		p.To.Reg = REG_TMP
+		p.To.Reg = REG_RT1
 
 		p = obj.Appendp(ctxt, p)
 		p.As = ACMP
 		p.From.Type = obj.TYPE_REG
-		p.From.Reg = REG_TMP
-		p.Reg = REG_TMP2
+		p.From.Reg = REG_RT1
+		p.Reg = REG_RT2
 	}
 
 	// BLE	do-morestack
@@ -246,7 +255,7 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 		debug.From.Type = obj.TYPE_CONST
 		debug.From.Offset = int64(framesize)
 		debug.To.Type = obj.TYPE_REG
-		debug.To.Reg = REG_TMP
+		debug.To.Reg = REG_RT1
 	}
 
 	// CALL runtime.morestack(SB)
