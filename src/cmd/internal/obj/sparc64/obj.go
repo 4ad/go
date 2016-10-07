@@ -128,7 +128,7 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 
 	q := (*obj.Prog)(nil)
 	if framesize <= obj.StackSmall {
-		// small stack: SP+StackBias < stackguard
+		// small stack: SP+StackBias <= stackguard
 		//	ADD	Stackbias, RSP, RT2
 		//	CMP	stackguard, RT2
 		p = obj.Appendp(ctxt, p)
@@ -145,7 +145,7 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 		p.From.Reg = REG_RT1
 		p.Reg = REG_RT2
 	} else if framesize <= obj.StackBig {
-		// large stack: SP-framesize < stackguard-StackSmall
+		// large stack: SP-framesize <= stackguard-StackSmall
 		//	ADD	$StackBias - $(framesize - StackSmall), RSP, RT2
 		//	CMP	stackguard, RT2
 		p = obj.Appendp(ctxt, p)
@@ -164,7 +164,7 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 	} else {
 		// Such a large stack we need to protect against wraparound
 		// if SP is close to zero.
-		//	SP-stackguard+StackGuard < framesize + (StackGuard-StackSmall)
+		//	SP-stackguard+StackGuard <= framesize + (StackGuard-StackSmall)
 		// The +StackGuard on both sides is required to keep the left side positive:
 		// SP is allowed to be slightly below stackguard. See stack.h.
 		//	CMP	$StackPreempt, RT1
@@ -223,10 +223,12 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 		p.Reg = REG_RT2
 	}
 
-	// BLE	do-morestack
-	ble := obj.Appendp(ctxt, p)
-	ble.As = ABLED
-	ble.To.Type = obj.TYPE_BRANCH
+	// BLEU	do-morestack; note the comparison here is explicitly unsigned,
+	// so that in the event that g_stackguardX is set to StackPreempt or
+	// StackFork, a call to morestack will be triggered.
+	bleu := obj.Appendp(ctxt, p)
+	bleu.As = ABLEUD
+	bleu.To.Type = obj.TYPE_BRANCH
 
 	var last *obj.Prog
 	for last = ctxt.Cursym.Text; last.Link != nil; last = last.Link {
@@ -246,7 +248,7 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 	if q != nil {
 		q.Pcond = movlr
 	}
-	ble.Pcond = movlr
+	bleu.Pcond = movlr
 
 	// CALL runtime.morestack(SB)
 	call := obj.Appendp(ctxt, movlr)
@@ -269,7 +271,7 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 	jmp.Pcond = ctxt.Cursym.Text.Link
 	jmp.Spadj = framesize
 
-	return ble
+	return bleu
 }
 
 // AutoeditProg returns a new obj.Prog, with off(SP), off(FP), $off(SP),
