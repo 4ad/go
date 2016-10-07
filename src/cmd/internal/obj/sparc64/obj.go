@@ -248,18 +248,8 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 	}
 	ble.Pcond = movlr
 
-	debug := movlr
-	if true {
-		debug = obj.Appendp(ctxt, debug)
-		debug.As = AMOVD
-		debug.From.Type = obj.TYPE_CONST
-		debug.From.Offset = int64(framesize)
-		debug.To.Type = obj.TYPE_REG
-		debug.To.Reg = REG_RT1
-	}
-
 	// CALL runtime.morestack(SB)
-	call := obj.Appendp(ctxt, debug)
+	call := obj.Appendp(ctxt, movlr)
 	call.As = obj.ACALL
 	call.To.Type = obj.TYPE_MEM
 	call.To.Name = obj.NAME_EXTERN
