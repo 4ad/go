@@ -68,7 +68,7 @@ const (
 	_StackSystem = sys.GoosWindows*512*sys.PtrSize + sys.GoosPlan9*512 + sys.GoosDarwin*sys.GoarchArm*1024
 
 	// The minimum size of stack used by Go code.
-	_StackMin = 8192
+	_StackMin = 4096
 
 	// The minimum stack size to allocate.
 	// The hackery here rounds FixedStack0 up to a power of 2.
@@ -90,7 +90,7 @@ const (
 
 	// The stack guard is a pointer this many bytes above the
 	// bottom of the stack.
-	_StackGuard = 2160*sys.StackGuardMultiplier + _StackSystem
+	_StackGuard = 2048*sys.StackGuardMultiplier + _StackSystem
 
 	// After a stack split check the SP is allowed to be this
 	// many bytes below the stack guard. This saves an instruction
@@ -652,6 +652,7 @@ func adjustpointers(scanp unsafe.Pointer, cbv *bitvector, adjinfo *adjustinfo, f
 				// Looks like a junk value in a pointer slot.
 				// Live analysis wrong?
 				getg().m.traceback = 2
+				println("old -> hi delta ", hex(delta), "(", delta, ")")
 				print("runtime: bad pointer in frame ", funcname(f), " at ", pp, ": ", hex(p), "\n")
 				throw("invalid stack pointer")
 			}
@@ -1010,7 +1011,7 @@ func newstack() {
 		gp.syscallsp = morebuf.sp
 		gp.syscallpc = morebuf.pc
 		print("runtime: newstack sp=", hex(gp.sched.sp), " stack=[", hex(gp.stack.lo), ", ", hex(gp.stack.hi), "]\n",
-			"\tmorebuf={pc:", hex(morebuf.pc), " sp:", hex(morebuf.sp), " bp=", hex(morebuf.bp), " lr:", hex(morebuf.lr), "}\n",
+			"\tmorebuf={pc:", hex(morebuf.pc), " sp:", hex(morebuf.sp), " bp:", hex(morebuf.bp), " lr:", hex(morebuf.lr), " stackguard=", hex(morebuf.g.ptr().stackguard0), "}\n",
 			"\tsched={pc:", hex(gp.sched.pc), " sp:", hex(gp.sched.sp), " bp=", hex(gp.sched.bp), " lr:", hex(gp.sched.lr), " ctxt:", gp.sched.ctxt, "}\n")
 
 		traceback(morebuf.pc, morebuf.sp, morebuf.lr, gp)
@@ -1046,8 +1047,8 @@ func newstack() {
 	if preempt {
 		if stackDebug >= 1 {
 			print("runtime: preempt0, newstack sp=", hex(gp.sched.sp), " stack=[", hex(gp.stack.lo), ", ", hex(gp.stack.hi), "]\n",
-				"\tmorebuf={pc:", hex(morebuf.pc), " sp:", hex(morebuf.sp), " bp:", hex(morebuf.bp), " lr:", morebuf.lr, "}\n",
-				"\tsched={pc:", hex(gp.sched.pc), " sp:", hex(gp.sched.sp), " bp:", hex(gp.sched.bp), " lr:", gp.sched.lr, " ctxt:", gp.sched.ctxt, "}\n")
+				"\tmorebuf={pc:", hex(morebuf.pc), " sp:", hex(morebuf.sp), " bp:", hex(morebuf.bp), " lr:", hex(morebuf.lr), " stackguard=", hex(morebuf.g.ptr().stackguard0), "}\n",
+				"\tsched={pc:", hex(gp.sched.pc), " sp:", hex(gp.sched.sp), " bp:", hex(gp.sched.bp), " lr:", hex(gp.sched.lr), " ctxt:", gp.sched.ctxt, "}\n\n")
 		}
 		if thisg.m.locks != 0 || thisg.m.mallocing != 0 || thisg.m.preemptoff != "" || thisg.m.p.ptr().status != _Prunning {
 			// Let the goroutine keep running for now.
@@ -1067,8 +1068,8 @@ func newstack() {
 	}
 	if stackDebug >= 1 || sp < gp.stack.lo {
 		print("runtime: newstack sp=", hex(sp), " stack=[", hex(gp.stack.lo), ", ", hex(gp.stack.hi), "]\n",
-			"\tmorebuf={pc:", hex(morebuf.pc), " sp:", hex(morebuf.sp), " bp:", hex(morebuf.bp), " lr:", morebuf.lr, "}\n",
-			"\tsched={pc:", hex(gp.sched.pc), " sp:", hex(gp.sched.sp), " bp:", hex(gp.sched.bp), " lr:", gp.sched.lr, " ctxt:", gp.sched.ctxt, "}\n")
+			"\tmorebuf={pc:", hex(morebuf.pc), " sp:", hex(morebuf.sp), " bp:", hex(morebuf.bp), " lr:", hex(morebuf.lr), " stackguard=", hex(morebuf.g.ptr().stackguard0), "}\n",
+			"\tsched={pc:", hex(gp.sched.pc), " sp:", hex(gp.sched.sp), " bp:", hex(gp.sched.bp), " lr:", hex(gp.sched.lr), " ctxt:", gp.sched.ctxt, "}\n")
 	}
 	if sp < gp.stack.lo {
 		print("runtime: gp=", gp, ", gp->status=", hex(readgstatus(gp)), "\n ")
@@ -1087,8 +1088,8 @@ func newstack() {
 	if preempt {
 		if stackDebug >= 1 {
 			print("runtime: preempt1, newstack sp=", hex(gp.sched.sp), " stack=[", hex(gp.stack.lo), ", ", hex(gp.stack.hi), "]\n",
-				"\tmorebuf={pc:", hex(morebuf.pc), " sp:", hex(morebuf.sp), " bp:", hex(morebuf.bp), " lr:", morebuf.lr, "}\n",
-				"\tsched={pc:", hex(gp.sched.pc), " sp:", hex(gp.sched.sp), " bp:", hex(gp.sched.bp), " lr:", gp.sched.lr, " ctxt:", gp.sched.ctxt, "}\n")
+				"\tmorebuf={pc:", hex(morebuf.pc), " sp:", hex(morebuf.sp), " bp:", hex(morebuf.bp), " lr:", hex(morebuf.lr), " stackguard=", hex(morebuf.g.ptr().stackguard0), "}\n",
+				"\tsched={pc:", hex(gp.sched.pc), " sp:", hex(gp.sched.sp), " bp:", hex(gp.sched.bp), " lr:", hex(gp.sched.lr), " ctxt:", gp.sched.ctxt, "}\n\n")
 		}
 		if gp == thisg.m.g0 {
 			throw("runtime: preempt g0")
@@ -1146,7 +1147,7 @@ func newstack() {
 	// the gp is in a Gcopystack status.
 	copystack(gp, uintptr(newsize), true)
 	if stackDebug >= 1 {
-		print("stack grow done\n")
+		print("stack grow done\n\n")
 	}
 	casgstatus(gp, _Gcopystack, _Grunning)
 	gogo(&gp.sched)
