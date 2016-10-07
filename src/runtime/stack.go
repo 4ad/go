@@ -337,14 +337,15 @@ func stackalloc(n uint32) (stack, []stkbar) {
 	nstkbar := unsafe.Sizeof(stkbar{}) * uintptr(maxstkbar)
 
 	if debug.efence != 0 || stackFromSystem != 0 {
-		v := sysAlloc(round(uintptr(n), _PageSize), &memstats.stacks_sys)
+		allocsz := round(uintptr(n), _PageSize)
+		v := sysAlloc(allocsz, &memstats.stacks_sys)
 		if v == nil {
 			throw("out of memory (stackalloc)")
 		}
 		top := uintptr(n) - nstkbar
 		stkbarSlice := slice{add(v, top), 0, maxstkbar}
 		if stackDebug >= 1 {
-			print("  allocated ", v, "\n")
+			print("  allocated bytes ", allocsz, " lo ",  v, " hi ", hex(uintptr(v) + top), "\n")
 		}
 		return stack{uintptr(v), uintptr(v) + top}, *(*[]stkbar)(unsafe.Pointer(&stkbarSlice))
 	}
@@ -409,11 +410,11 @@ func stackalloc(n uint32) (stack, []stkbar) {
 	if msanenabled {
 		msanmalloc(v, uintptr(n))
 	}
-	if stackDebug >= 1 {
-		print("  allocated ", v, "\n")
-	}
 	top := uintptr(n) - nstkbar
 	stkbarSlice := slice{add(v, top), 0, maxstkbar}
+	if stackDebug >= 1 {
+		print("  allocated bytes ", n, " lo ",  v, " hi ", hex(uintptr(v) + top), "\n")
+	}
 	return stack{uintptr(v), uintptr(v) + top}, *(*[]stkbar)(unsafe.Pointer(&stkbarSlice))
 }
 
@@ -589,11 +590,17 @@ func adjustrawpointer(adjinfo *adjustinfo, vpp unsafe.Pointer) {
 	if stackDebug >= 4 {
 		print("        ", pp, ":", hex(p), "\n")
 	}
-	if adjinfo.old.lo <= p && p < adjinfo.old.hi {
-		*pp = p + adjinfo.delta - sys.StackBias
-		if stackDebug >= 3 {
-			print("        adjust ptr ", pp, ":", hex(p-sys.StackBias), " -> ", hex(*pp), "\n")
+	if adjinfo.old.lo <= p {
+		if p < adjinfo.old.hi {
+			*pp = p + adjinfo.delta - sys.StackBias
+			if stackDebug >= 3 {
+				print("        adjust bp ", pp, ":", hex(p-sys.StackBias), " -> ", hex(*pp), "\n")
+			}
+		} else if stackDebug >= 3 {
+				print("        >= old.hi; NOT adjusting bp ", pp, ":", hex(p-sys.StackBias), "\n")
 		}
+	} else if stackDebug >= 3 {
+		print("        > old.lo; NOT adjusting bp ", pp, ":", hex(p-sys.StackBias), "\n")
 	}
 }
 
@@ -1039,8 +1046,8 @@ func newstack() {
 	if preempt {
 		if stackDebug >= 1 {
 			print("runtime: preempt0, newstack sp=", hex(gp.sched.sp), " stack=[", hex(gp.stack.lo), ", ", hex(gp.stack.hi), "]\n",
-				"\tmorebuf={pc:", funcNameForPc(morebuf.pc), " sp:", hex(morebuf.sp), " bp:", hex(morebuf.bp), " lr:", funcNameForPc(morebuf.lr), "}\n",
-				"\tsched={pc:", funcNameForPc(gp.sched.pc), " sp:", hex(gp.sched.sp), " bp:", hex(gp.sched.bp), " lr:", funcNameForPc(gp.sched.lr), " ctxt:", gp.sched.ctxt, "}\n")
+				"\tmorebuf={pc:", hex(morebuf.pc), " sp:", hex(morebuf.sp), " bp:", hex(morebuf.bp), " lr:", morebuf.lr, "}\n",
+				"\tsched={pc:", hex(gp.sched.pc), " sp:", hex(gp.sched.sp), " bp:", hex(gp.sched.bp), " lr:", gp.sched.lr, " ctxt:", gp.sched.ctxt, "}\n")
 		}
 		if thisg.m.locks != 0 || thisg.m.mallocing != 0 || thisg.m.preemptoff != "" || thisg.m.p.ptr().status != _Prunning {
 			// Let the goroutine keep running for now.
@@ -1060,8 +1067,8 @@ func newstack() {
 	}
 	if stackDebug >= 1 || sp < gp.stack.lo {
 		print("runtime: newstack sp=", hex(sp), " stack=[", hex(gp.stack.lo), ", ", hex(gp.stack.hi), "]\n",
-			"\tmorebuf={pc:", funcNameForPc(morebuf.pc), " sp:", hex(morebuf.sp), " bp:", hex(morebuf.bp), " lr:", funcNameForPc(morebuf.lr), "}\n",
-			"\tsched={pc:", funcNameForPc(gp.sched.pc), " sp:", hex(gp.sched.sp), " bp:", hex(gp.sched.bp), " lr:", funcNameForPc(gp.sched.lr), " ctxt:", gp.sched.ctxt, "}\n")
+			"\tmorebuf={pc:", hex(morebuf.pc), " sp:", hex(morebuf.sp), " bp:", hex(morebuf.bp), " lr:", morebuf.lr, "}\n",
+			"\tsched={pc:", hex(gp.sched.pc), " sp:", hex(gp.sched.sp), " bp:", hex(gp.sched.bp), " lr:", gp.sched.lr, " ctxt:", gp.sched.ctxt, "}\n")
 	}
 	if sp < gp.stack.lo {
 		print("runtime: gp=", gp, ", gp->status=", hex(readgstatus(gp)), "\n ")
@@ -1080,8 +1087,8 @@ func newstack() {
 	if preempt {
 		if stackDebug >= 1 {
 			print("runtime: preempt1, newstack sp=", hex(gp.sched.sp), " stack=[", hex(gp.stack.lo), ", ", hex(gp.stack.hi), "]\n",
-				"\tmorebuf={pc:", funcNameForPc(morebuf.pc), " sp:", hex(morebuf.sp), " bp:", hex(morebuf.bp), " lr:", funcNameForPc(morebuf.lr), "}\n",
-				"\tsched={pc:", funcNameForPc(gp.sched.pc), " sp:", hex(gp.sched.sp), " bp:", hex(gp.sched.bp), " lr:", funcNameForPc(gp.sched.lr), " ctxt:", gp.sched.ctxt, "}\n")
+				"\tmorebuf={pc:", hex(morebuf.pc), " sp:", hex(morebuf.sp), " bp:", hex(morebuf.bp), " lr:", morebuf.lr, "}\n",
+				"\tsched={pc:", hex(gp.sched.pc), " sp:", hex(gp.sched.sp), " bp:", hex(gp.sched.bp), " lr:", gp.sched.lr, " ctxt:", gp.sched.ctxt, "}\n")
 		}
 		if gp == thisg.m.g0 {
 			throw("runtime: preempt g0")
