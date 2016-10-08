@@ -2168,7 +2168,7 @@ func callgraph() {
 			if r.Sym == nil {
 				continue
 			}
-			if (r.Type == obj.R_CALL || r.Type == obj.R_CALLARM || r.Type == obj.R_CALLPOWER || r.Type == obj.R_CALLMIPS) && r.Sym.Type == obj.STEXT {
+			if (r.Type == obj.R_CALL || r.Type == obj.R_CALLARM || r.Type == obj.R_CALLPOWER || r.Type == obj.R_CALLMIPS || r.Type == obj.R_CALLSPARC64) && r.Sym.Type == obj.STEXT {
 				fmt.Fprintf(Bso, "%s calls %s\n", s.Name, r.Sym.Name)
 			}
 		}
