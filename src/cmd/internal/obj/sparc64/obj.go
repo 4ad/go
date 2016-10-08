@@ -234,24 +234,19 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 	for last = ctxt.Cursym.Text; last.Link != nil; last = last.Link {
 	}
 
-	spfix := obj.Appendp(ctxt, last)
-	spfix.As = ARNOP
-	spfix.Spadj = -framesize
-
 	// MOV	OLR, I1
-	movlr := obj.Appendp(ctxt, spfix)
+	movlr := obj.Appendp(ctxt, last)
 	movlr.As = AMOVD
 	movlr.From.Type = obj.TYPE_REG
 	movlr.From.Reg = REG_OLR
 	movlr.To.Type = obj.TYPE_REG
 	movlr.To.Reg = REG_I1
-	if q != nil {
-		q.Pcond = movlr
-	}
-	bleu.Pcond = movlr
+	movlr.Spadj = -framesize
 
 	// CALL runtime.morestack(SB)
 	call := obj.Appendp(ctxt, movlr)
+	call.Lineno = ctxt.Cursym.Text.Lineno
+	call.Mode = ctxt.Cursym.Text.Mode
 	call.As = obj.ACALL
 	call.To.Type = obj.TYPE_MEM
 	call.To.Name = obj.NAME_EXTERN
@@ -269,7 +264,12 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 	jmp.As = obj.AJMP
 	jmp.To.Type = obj.TYPE_BRANCH
 	jmp.Pcond = ctxt.Cursym.Text.Link
-	jmp.Spadj = framesize
+	jmp.Spadj = +framesize
+
+	bleu.Pcond = movlr
+	if q != nil {
+		q.Pcond = movlr
+	}
 
 	return bleu
 }
