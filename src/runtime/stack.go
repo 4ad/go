@@ -640,6 +640,7 @@ func adjustpointers(scanp unsafe.Pointer, cbv *bitvector, adjinfo *adjustinfo, f
 	// could race with adjusting those pointers. (The sent value
 	// itself can never contain stack pointers.)
 	useCAS := uintptr(scanp) < adjinfo.sghi
+	abortAdjust := false
 	for i := uintptr(0); i < num; i++ {
 		if stackDebug >= 4 {
 			print("        ", add(scanp, i*sys.PtrSize), ":", ptrnames[ptrbit(&bv, i)], ":", hex(*(*uintptr)(add(scanp, i*sys.PtrSize))), " # ", i, " ", bv.bytedata[i/8], "\n")
@@ -654,7 +655,7 @@ func adjustpointers(scanp unsafe.Pointer, cbv *bitvector, adjinfo *adjustinfo, f
 				getg().m.traceback = 2
 				println("old -> hi delta ", hex(delta), "(", delta, ")")
 				print("runtime: bad pointer in frame ", funcname(f), " at ", pp, ": ", hex(p), "\n")
-				throw("invalid stack pointer")
+				abortAdjust = true
 			}
 			if minp <= p && p < maxp {
 				if stackDebug >= 3 {
@@ -670,6 +671,9 @@ func adjustpointers(scanp unsafe.Pointer, cbv *bitvector, adjinfo *adjustinfo, f
 				}
 			}
 		}
+	}
+	if abortAdjust {
+		throw("invalid stack pointer(s)")
 	}
 }
 
