@@ -90,7 +90,7 @@ func zerorange(p *obj.Prog, frame int64, lo int64, hi int64) *obj.Prog {
 		p.To.Offset = 4 * (128 - cnt/int64(gc.Widthptr)) + 8
 	} else {
 		//	ADD	$lo, BFP, RT1
-		//	ADD	$(cnt-8), RT1, RT2
+		//	ADD	$(cnt), RT1, RT2
 		// loop:
 		//	MOVD	ZR, (RT1)
 		//	ADD	$8, RT1
@@ -98,7 +98,7 @@ func zerorange(p *obj.Prog, frame int64, lo int64, hi int64) *obj.Prog {
 		//	BNED	loop
 		p = appendpp(p, sparc64.AADD, obj.TYPE_CONST, 0, int64(lo+sparc64.StackBias), obj.TYPE_REG, sparc64.REG_RT1, 0)
 		p.Reg = sparc64.REG_RFP
-		p = appendpp(p, sparc64.AADD, obj.TYPE_CONST, 0, cnt-8, obj.TYPE_REG, sparc64.REG_RT2, 0)
+		p = appendpp(p, sparc64.AADD, obj.TYPE_CONST, 0, cnt, obj.TYPE_REG, sparc64.REG_RT2, 0)
 		p.Reg = sparc64.REG_RT1
 		p = appendpp(p, sparc64.AMOVD, obj.TYPE_REG, sparc64.REG_ZR, 0, obj.TYPE_MEM, sparc64.REG_RT1, 0)
 		p1 := p
