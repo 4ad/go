@@ -460,12 +460,13 @@ func clearfat(nl *gc.Node) {
 
 		// The loop leaves G1 (RT1) on the last zeroed dword
 		boff = 8
-	} else if q >= 4 && !darwin { // darwin ld64 cannot handle BR26 (I2) reloc with non-zero addend
-		p := gins(sparc64.ASUB, nil, &dst)
-		p.From.Type = obj.TYPE_CONST
-		p.From.Offset = 8
+	} else if false && q >= 4 {
+		// TODO(shawn):
+		// Disabled for now since it's likely that the call to duffzero
+		// will stomp on the link register in a tail call case; see
+		// mips issue https://golang.org/issue/12108
 		f := gc.Sysfunc("duffzero")
-		p = gins(obj.ADUFFZERO, nil, f)
+		p := gins(obj.ADUFFZERO, nil, f)
 		gc.Afunclit(&p.To, f)
 
 		// 8 and 128 = magic constants: see ../../../../runtime/mkduff.go
