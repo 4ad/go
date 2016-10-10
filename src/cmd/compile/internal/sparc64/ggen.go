@@ -77,9 +77,13 @@ func zerorange(p *obj.Prog, frame int64, lo int64, hi int64) *obj.Prog {
 		for i := int64(0); i < cnt; i += int64(gc.Widthptr) {
 			p = appendpp(p, sparc64.AMOVD, obj.TYPE_REG, sparc64.REG_ZR, 0, obj.TYPE_MEM, sparc64.REG_BFP, lo+i)
 		}
-	} else if false && cnt <= int64(128*gc.Widthptr) && !darwin { // darwin ld64 cannot handle BR26 (I2) reloc with non-zero addend
+	} else if false && cnt <= int64(128*gc.Widthptr) {
+		// TODO(shawn):
+		// Disabled for now since it's likely that the call to duffzero
+		// will stomp on the link register in a tail call case; see
+		// mips issue https://golang.org/issue/12108
 		p = appendpp(p, sparc64.AMOVD, obj.TYPE_REG, sparc64.REG_BFP, 0, obj.TYPE_REG, sparc64.REG_RT1, 0)
-		p = appendpp(p, sparc64.AADD, obj.TYPE_CONST, 0, lo-8, obj.TYPE_REG, sparc64.REG_RT1, 0)
+		p = appendpp(p, sparc64.AADD, obj.TYPE_CONST, 0, lo, obj.TYPE_REG, sparc64.REG_RT1, 0)
 		p.Reg = sparc64.REG_RT1
 		p = appendpp(p, obj.ADUFFZERO, obj.TYPE_NONE, 0, 0, obj.TYPE_MEM, 0, 0)
 		f := gc.Sysfunc("duffzero")
@@ -87,7 +91,7 @@ func zerorange(p *obj.Prog, frame int64, lo int64, hi int64) *obj.Prog {
 		gc.Afunclit(&p.To, f)
 		// the extra +8 is to account for the prologue padding
 		// added by preprocess()
-		p.To.Offset = 4 * (128 - cnt/int64(gc.Widthptr)) + 8
+		p.To.Offset = 8 * (128 - cnt/int64(gc.Widthptr)) + 8
 	} else {
 		//	ADD	$lo, BFP, RT1
 		//	ADD	$(cnt), RT1, RT2
