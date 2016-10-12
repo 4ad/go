@@ -356,11 +356,6 @@ func parsedebugvars() {
 	debug.cgocheck = 1
 	debug.invalidptr = 1
 
-	// TODO(shawn): temporarily disable stack barriers as either the
-	// installation of them or the get/set pc logic used for them appears
-	// to be broken
-	debug.gcstackbarrieroff = 0 + sys.GoarchSparc64
-
 	for p := gogetenv("GODEBUG"); p != ""; {
 		field := ""
 		i := index(p, ",")
