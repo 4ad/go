@@ -43,7 +43,7 @@ func defframe(ptxt *obj.Prog) {
 			gc.Fatalf("needzero class %d", n.Class)
 		}
 		if n.Type.Width%int64(gc.Widthptr) != 0 || n.Xoffset%int64(gc.Widthptr) != 0 || n.Type.Width == 0 {
-			gc.Fatalf("var %v has size %d offset %d", gc.Nconv(n, gc.FmtLong), int(n.Type.Width), int(n.Xoffset))
+			gc.Fatalf("var %L has size %d offset %d", n, int(n.Type.Width), int(n.Xoffset))
 		}
 
 		if lo != hi && n.Xoffset+n.Type.Width >= lo-int64(2*gc.Widthreg) {
@@ -66,7 +66,7 @@ func defframe(ptxt *obj.Prog) {
 	zerorange(p, int64(frame), lo, hi)
 }
 
-var darwin = obj.Getgoos() == "darwin"
+var darwin = obj.GOOS == "darwin"
 
 func zerorange(p *obj.Prog, frame int64, lo int64, hi int64) *obj.Prog {
 	cnt := hi - lo

@@ -1,5 +1,5 @@
 // Derived from Inferno utils/5c/swt.c
-// http://code.google.com/p/inferno-os/source/browse/utils/5c/swt.c
+// https://bitbucket.org/inferno-os/inferno-os/src/default/utils/5c/swt.c
 //
 //	Copyright © 1994-1999 Lucent Technologies Inc.  All rights reserved.
 //	Portions Copyright © 1995-1997 C H Forsyth (forsyth@terzarima.net)
@@ -66,7 +66,7 @@ func progedit(ctxt *obj.Link, p *obj.Prog) {
 				ctxt.Diag("%v: TLS MRC instruction must write to R0 as it might get translated into a BL instruction", p.Line())
 			}
 
-			if ctxt.Goarm < 7 {
+			if obj.GOARM < 7 {
 				// Replace it with BL runtime.read_tls_fallback(SB) for ARM CPUs that lack the tls extension.
 				if progedit_tlsfallback == nil {
 					progedit_tlsfallback = obj.Linklookup(ctxt, "runtime.read_tls_fallback", 0)
@@ -359,8 +359,7 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 
 			if autosize == 0 && cursym.Text.Mark&LEAF == 0 {
 				if ctxt.Debugvlog != 0 {
-					fmt.Fprintf(ctxt.Bso, "save suppressed in: %s\n", cursym.Name)
-					ctxt.Bso.Flush()
+					ctxt.Logf("save suppressed in: %s\n", cursym.Name)
 				}
 
 				cursym.Text.Mark |= LEAF
@@ -627,7 +626,7 @@ func isfloatreg(a *obj.Addr) bool {
 }
 
 func softfloat(ctxt *obj.Link, cursym *obj.LSym) {
-	if ctxt.Goarm > 5 {
+	if obj.GOARM > 5 {
 		return
 	}
 
@@ -669,7 +668,9 @@ func softfloat(ctxt *obj.Link, cursym *obj.LSym) {
 			ASQRTF,
 			ASQRTD,
 			AABSF,
-			AABSD:
+			AABSD,
+			ANEGF,
+			ANEGD:
 			goto soft
 
 		default:

@@ -33,19 +33,16 @@ func envOr(key, value string) string {
 	return value
 }
 
-func Getgoroot() string {
-	return envOr("GOROOT", defaultGOROOT)
-}
+var (
+	GOROOT  = envOr("GOROOT", defaultGOROOT)
+	GOARCH  = envOr("GOARCH", defaultGOARCH)
+	GOOS    = envOr("GOOS", defaultGOOS)
+	GO386   = envOr("GO386", defaultGO386)
+	GOARM   = goarm()
+	Version = version
+)
 
-func Getgoarch() string {
-	return envOr("GOARCH", defaultGOARCH)
-}
-
-func Getgoos() string {
-	return envOr("GOOS", defaultGOOS)
-}
-
-func Getgoarm() int32 {
+func goarm() int {
 	switch v := envOr("GOARM", defaultGOARM); v {
 	case "5":
 		return 5
@@ -59,17 +56,8 @@ func Getgoarm() int32 {
 	panic("unreachable")
 }
 
-func Getgo386() string {
-	// Validated by cmd/compile.
-	return envOr("GO386", defaultGO386)
-}
-
 func Getgoextlinkenabled() string {
 	return envOr("GO_EXTLINK_ENABLED", defaultGO_EXTLINK_ENABLED)
-}
-
-func Getgoversion() string {
-	return version
 }
 
 func (p *Prog) Line() string {
@@ -147,7 +135,7 @@ func (p *Prog) String() string {
 
 	var buf bytes.Buffer
 
-	fmt.Fprintf(&buf, "%.5d (%v)\t%v%s", p.Pc, p.Line(), Aconv(p.As), sc)
+	fmt.Fprintf(&buf, "%.5d (%v)\t%v%s", p.Pc, p.Line(), p.As, sc)
 	sep := "\t"
 	quadOpAmd64 := p.RegTo2 == -1
 	if quadOpAmd64 {
@@ -298,14 +286,23 @@ func Dconv(p *Prog, a *Addr) string {
 
 	case TYPE_SHIFT:
 		v := int(a.Offset)
-		op := "<<>>->@>"[((v>>5)&3)<<1:]
-		if v&(1<<4) != 0 {
-			str = fmt.Sprintf("R%d%c%cR%d", v&15, op[0], op[1], (v>>8)&15)
-		} else {
-			str = fmt.Sprintf("R%d%c%c%d", v&15, op[0], op[1], (v>>7)&31)
-		}
-		if a.Reg != 0 {
-			str += fmt.Sprintf("(%v)", Rconv(int(a.Reg)))
+		ops := "<<>>->@>"
+		switch GOARCH {
+		case "arm":
+			op := ops[((v>>5)&3)<<1:]
+			if v&(1<<4) != 0 {
+				str = fmt.Sprintf("R%d%c%cR%d", v&15, op[0], op[1], (v>>8)&15)
+			} else {
+				str = fmt.Sprintf("R%d%c%c%d", v&15, op[0], op[1], (v>>7)&31)
+			}
+			if a.Reg != 0 {
+				str += fmt.Sprintf("(%v)", Rconv(int(a.Reg)))
+			}
+		case "arm64":
+			op := ops[((v>>22)&3)<<1:]
+			str = fmt.Sprintf("R%d%c%c%d", (v>>16)&31, op[0], op[1], (v>>10)&63)
+		default:
+			panic("TYPE_SHIFT is not supported on " + GOARCH)
 		}
 
 	case TYPE_REGREG:
@@ -471,10 +468,13 @@ var aSpace []opSet
 // RegisterOpcode binds a list of instruction names
 // to a given instruction number range.
 func RegisterOpcode(lo As, Anames []string) {
+	if len(Anames) > AllowedOpCodes {
+		panic(fmt.Sprintf("too many instructions, have %d max %d", len(Anames), AllowedOpCodes))
+	}
 	aSpace = append(aSpace, opSet{lo, Anames})
 }
 
-func Aconv(a As) string {
+func (a As) String() string {
 	if 0 <= a && int(a) < len(Anames) {
 		return Anames[a]
 	}
@@ -510,8 +510,13 @@ var Anames = []string{
 }
 
 func Bool2int(b bool) int {
+	// The compiler currently only optimizes this form.
+	// See issue 6011.
+	var i int
 	if b {
-		return 1
+		i = 1
+	} else {
+		i = 0
 	}
-	return 0
+	return i
 }

@@ -1,5 +1,5 @@
 // Derived from Inferno utils/6c/txt.c
-// http://code.google.com/p/inferno-os/source/browse/utils/6c/txt.c
+// https://bitbucket.org/inferno-os/inferno-os/src/default/utils/6c/txt.c
 //
 //	Copyright © 1994-1999 Lucent Technologies Inc.  All rights reserved.
 //	Portions Copyright © 1995-1997 C H Forsyth (forsyth@terzarima.net)
@@ -43,10 +43,6 @@ var resvd = []int{
 	arm64.REGRT1,
 	arm64.REGRT2,
 	arm64.REG_R31, // REGZERO and REGSP
-	arm64.FREGZERO,
-	arm64.FREGHALF,
-	arm64.FREGONE,
-	arm64.FREGTWO,
 }
 
 /*
@@ -137,7 +133,7 @@ func ginscmp(op gc.Op, t *gc.Type, n1, n2 *gc.Node, likely int) *obj.Prog {
  */
 func gmove(f *gc.Node, t *gc.Node) {
 	if gc.Debug['M'] != 0 {
-		fmt.Printf("gmove %v -> %v\n", gc.Nconv(f, gc.FmtLong), gc.Nconv(t, gc.FmtLong))
+		fmt.Printf("gmove %L -> %L\n", f, t)
 	}
 
 	ft := int(gc.Simsimtype(f.Type))
@@ -214,7 +210,7 @@ func gmove(f *gc.Node, t *gc.Node) {
 
 	switch uint32(ft)<<16 | uint32(tt) {
 	default:
-		gc.Fatalf("gmove %v -> %v", gc.Tconv(f.Type, gc.FmtLong), gc.Tconv(t.Type, gc.FmtLong))
+		gc.Fatalf("gmove %L -> %L", f.Type, t.Type)
 
 		/*
 		 * integer copy and truncate

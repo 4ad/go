@@ -10,9 +10,6 @@ import (
 )
 
 func betypeinit() {
-	gc.Widthptr = 8
-	gc.Widthint = 8
-	gc.Widthreg = 8
 }
 
 func Main() {
@@ -60,6 +57,11 @@ func Main() {
 	gc.Thearch.Optoas = optoas
 	gc.Thearch.Doregbits = doregbits
 	gc.Thearch.Regnames = regnames
+
+	gc.Thearch.SSARegToReg = ssaRegToReg
+	gc.Thearch.SSAMarkMoves = ssaMarkMoves
+	gc.Thearch.SSAGenValue = ssaGenValue
+	gc.Thearch.SSAGenBlock = ssaGenBlock
 
 	gc.Main()
 	gc.Exit(0)

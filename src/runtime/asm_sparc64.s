@@ -932,7 +932,7 @@ notfound:
 	MOVD	I1, ret+24(FP)
 	RET
 
-TEXT runtime·fastrand1(SB),NOSPLIT|NOFRAME,$0-4
+TEXT runtime·fastrand(SB),NOSPLIT|NOFRAME,$0-4
 	MOVD	g_m(g), I4
 	MOVUW	m_fastrand(I4), I1
 	ADD	I1, I1

@@ -1022,7 +1022,7 @@ func relinv(a obj.As) obj.As {
 		return AFBGE
 	}
 
-	log.Fatalf("unknown relation: %s", obj.Aconv(a))
+	log.Fatalf("unknown relation: %s", a.String())
 	return 0
 }
 

@@ -281,7 +281,7 @@ solaris_sparc64)
 	mktypes="GOARCH=$GOARCH go tool cgo -godefs"
 	;;
 windows_*)
-	echo 'run "go generate syscall_windows.go" instead' 1>&2
+	echo 'run "go generate" instead' 1>&2
 	exit 1
 	;;
 *)

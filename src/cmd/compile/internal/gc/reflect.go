@@ -18,9 +18,15 @@ type itabEntry struct {
 	sym      *Sym
 }
 
+type ptabEntry struct {
+	s *Sym
+	t *Type
+}
+
 // runtime interface and reflection data structures
 var signatlist []*Node
 var itabs []itabEntry
+var ptabs []ptabEntry
 
 type Sig struct {
 	name   string
@@ -176,20 +182,22 @@ func hmap(t *Type) *Type {
 	}
 
 	bucket := mapbucket(t)
-	var field [8]*Field
-	field[0] = makefield("count", Types[TINT])
-	field[1] = makefield("flags", Types[TUINT8])
-	field[2] = makefield("B", Types[TUINT8])
-	field[3] = makefield("hash0", Types[TUINT32])
-	field[4] = makefield("buckets", Ptrto(bucket))
-	field[5] = makefield("oldbuckets", Ptrto(bucket))
-	field[6] = makefield("nevacuate", Types[TUINTPTR])
-	field[7] = makefield("overflow", Types[TUNSAFEPTR])
+	fields := []*Field{
+		makefield("count", Types[TINT]),
+		makefield("flags", Types[TUINT8]),
+		makefield("B", Types[TUINT8]),
+		makefield("noverflow", Types[TUINT16]),
+		makefield("hash0", Types[TUINT32]),
+		makefield("buckets", Ptrto(bucket)),
+		makefield("oldbuckets", Ptrto(bucket)),
+		makefield("nevacuate", Types[TUINTPTR]),
+		makefield("overflow", Types[TUNSAFEPTR]),
+	}
 
 	h := typ(TSTRUCT)
 	h.Noalg = true
 	h.Local = t.Local
-	h.SetFields(field[:])
+	h.SetFields(fields)
 	dowidth(h)
 	t.MapType().Hmap = h
 	h.StructType().Map = t
@@ -282,7 +290,7 @@ func methodfunc(f *Type, receiver *Type) *Type {
 // Generates stub functions as needed.
 func methods(t *Type) []*Sig {
 	// method type
-	mt := methtype(t, 0)
+	mt := methtype(t)
 
 	if mt == nil {
 		return nil
@@ -595,7 +603,7 @@ func dextratype(s *Sym, ot int, t *Type, dataAdd int) int {
 	}
 	noff := int(Rnd(int64(ot), int64(Widthptr)))
 	if noff != ot {
-		Fatalf("unexpected alignment in dextratype for %s", t)
+		Fatalf("unexpected alignment in dextratype for %v", t)
 	}
 
 	for _, a := range m {
@@ -607,10 +615,10 @@ func dextratype(s *Sym, ot int, t *Type, dataAdd int) int {
 	dataAdd += uncommonSize(t)
 	mcount := len(m)
 	if mcount != int(uint16(mcount)) {
-		Fatalf("too many methods on %s: %d", t, mcount)
+		Fatalf("too many methods on %v: %d", t, mcount)
 	}
 	if dataAdd != int(uint32(dataAdd)) {
-		Fatalf("methods are too far away on %s: %d", t, dataAdd)
+		Fatalf("methods are too far away on %v: %d", t, dataAdd)
 	}
 
 	ot = duint16(s, ot, uint16(mcount))
@@ -858,7 +866,7 @@ func dcommontype(s *Sym, ot int, t *Type) int {
 	}
 
 	exported := false
-	p := Tconv(t, FmtLeft|FmtUnsigned)
+	p := t.tconv(FmtLeft | FmtUnsigned)
 	// If we're writing out type T,
 	// we are very likely to write out type *T as well.
 	// Use the string "*T"[1:] for "T", so that the two
@@ -920,22 +928,22 @@ func dcommontype(s *Sym, ot int, t *Type) int {
 }
 
 func typesym(t *Type) *Sym {
-	return Pkglookup(Tconv(t, FmtLeft), typepkg)
+	return Pkglookup(t.tconv(FmtLeft), typepkg)
 }
 
 // tracksym returns the symbol for tracking use of field/method f, assumed
 // to be a member of struct/interface type t.
 func tracksym(t *Type, f *Field) *Sym {
-	return Pkglookup(Tconv(t, FmtLeft)+"."+f.Sym.Name, trackpkg)
+	return Pkglookup(t.tconv(FmtLeft)+"."+f.Sym.Name, trackpkg)
 }
 
 func typelinkLSym(t *Type) *obj.LSym {
-	name := "go.typelink." + Tconv(t, FmtLeft) // complete, unambiguous type name
+	name := "go.typelink." + t.tconv(FmtLeft) // complete, unambiguous type name
 	return obj.Linklookup(Ctxt, name, 0)
 }
 
 func typesymprefix(prefix string, t *Type) *Sym {
-	p := prefix + "." + Tconv(t, FmtLeft)
+	p := prefix + "." + t.tconv(FmtLeft)
 	s := Pkglookup(p, typepkg)
 
 	//print("algsym: %s -> %+S\n", p, s);
@@ -972,10 +980,10 @@ func typename(t *Type) *Node {
 }
 
 func itabname(t, itype *Type) *Node {
-	if t == nil || (t.IsPtr() && t.Elem() == nil) || t.IsUntyped() {
-		Fatalf("itabname %v", t)
+	if t == nil || (t.IsPtr() && t.Elem() == nil) || t.IsUntyped() || !itype.IsInterface() || itype.IsEmptyInterface() {
+		Fatalf("itabname(%v, %v)", t, itype)
 	}
-	s := Pkglookup(Tconv(t, FmtLeft)+","+Tconv(itype, FmtLeft), itabpkg)
+	s := Pkglookup(t.tconv(FmtLeft)+","+itype.tconv(FmtLeft), itabpkg)
 	if s.Def == nil {
 		n := newname(s)
 		n.Type = Types[TUINT8]
@@ -1301,6 +1309,15 @@ ok:
 		pkg := localpkg
 		if t.Sym != nil {
 			pkg = t.Sym.Pkg
+		} else {
+			// Unnamed type. Grab the package from the first field, if any.
+			for _, f := range t.Fields().Slice() {
+				if f.Embedded != 0 {
+					continue
+				}
+				pkg = f.Sym.Pkg
+				break
+			}
 		}
 		ot = dgopkgpath(s, ot, pkg)
 		ot = dsymptr(s, ot, s, ot+Widthptr+2*Widthint+uncommonSize(t))
@@ -1391,9 +1408,34 @@ func dumptypestructs() {
 		// method functions. None are allocated on heap, so we can use obj.NOPTR.
 		ggloblsym(i.sym, int32(o), int16(obj.DUPOK|obj.NOPTR))
 
-		ilink := Pkglookup(Tconv(i.t, FmtLeft)+","+Tconv(i.itype, FmtLeft), itablinkpkg)
+		ilink := Pkglookup(i.t.tconv(FmtLeft)+","+i.itype.tconv(FmtLeft), itablinkpkg)
 		dsymptr(ilink, 0, i.sym, 0)
 		ggloblsym(ilink, int32(Widthptr), int16(obj.DUPOK|obj.RODATA))
+	}
+
+	// process ptabs
+	if localpkg.Name == "main" && len(ptabs) > 0 {
+		ot := 0
+		s := obj.Linklookup(Ctxt, "go.plugin.tabs", 0)
+		for _, p := range ptabs {
+			// Dump ptab symbol into go.pluginsym package.
+			//
+			// type ptab struct {
+			//	name nameOff
+			//	typ  typeOff // pointer to symbol
+			// }
+			nsym := dname(p.s.Name, "", nil, true)
+			ot = dsymptrOffLSym(s, ot, nsym, 0)
+			ot = dsymptrOffLSym(s, ot, Linksym(typesym(p.t)), 0)
+		}
+		ggloblLSym(s, int32(ot), int16(obj.RODATA))
+
+		ot = 0
+		s = obj.Linklookup(Ctxt, "go.plugin.exports", 0)
+		for _, p := range ptabs {
+			ot = dsymptrLSym(s, ot, Linksym(p.s), 0)
+		}
+		ggloblLSym(s, int32(ot), int16(obj.RODATA))
 	}
 
 	// generate import strings for imported packages

@@ -26,7 +26,7 @@ func readProtocols() {
 			if len(f) < 2 {
 				continue
 			}
-			if proto, _, ok := dtoi(f[1], 0); ok {
+			if proto, _, ok := dtoi(f[1]); ok {
 				if _, ok := protocols[f[0]]; !ok {
 					protocols[f[0]] = proto
 				}
@@ -45,11 +45,7 @@ func readProtocols() {
 // returns correspondent protocol number.
 func lookupProtocol(_ context.Context, name string) (int, error) {
 	onceReadProtocols.Do(readProtocols)
-	proto, found := protocols[name]
-	if !found {
-		return 0, &AddrError{Err: "unknown IP protocol specified", Addr: name}
-	}
-	return proto, nil
+	return lookupProtocolMap(name)
 }
 
 func lookupHost(ctx context.Context, host string) (addrs []string, err error) {

@@ -42,7 +42,7 @@ import (
 
 func Main() {
 	linkarchinit()
-	ld.Ldmain()
+	ld.Main()
 }
 
 func linkarchinit() {
@@ -79,10 +79,10 @@ func linkarchinit() {
 	ld.Thearch.Solarisdynld = "/usr/lib/sparcv9/ld.so.1"
 }
 
-func archinit() {
+func archinit(ctxt *ld.Link) {
 	// TODO(shawn): DWARF generation causes invalid elf binaries to be
 	// generated on sparc64
-	ld.Debug['w'] = 1 // disable DWARF generation
+	*ld.FlagW = true // disable DWARF generation
 
 	// getgoextlinkenabled is based on GO_EXTLINK_ENABLED when
 	// Go was built; see ../../make.bash.
@@ -90,37 +90,38 @@ func archinit() {
 		ld.Linkmode = ld.LinkInternal
 	}
 
-	switch ld.HEADTYPE {
+	switch ld.Headtype {
 	default:
 		if ld.Linkmode == ld.LinkAuto {
 			ld.Linkmode = ld.LinkInternal
 		}
 		if ld.Linkmode == ld.LinkExternal && obj.Getgoextlinkenabled() != "1" {
-			log.Fatalf("cannot use -linkmode=external with -H %s", ld.Headstr(int(ld.HEADTYPE)))
+			log.Fatalf("cannot use -linkmode=external with -H %v", ld.Headtype)
 		}
+
 	case obj.Hlinux, obj.Hdarwin:
 		break
 	}
 
-	switch ld.HEADTYPE {
+	switch ld.Headtype {
 	default:
-		ld.Exitf("unknown -H option: %v", ld.HEADTYPE)
+		ld.Exitf("unknown -H option: %v", ld.Headtype)
 
 	case obj.Hlinux, obj.Hsolaris: /* sparc64 elf */
-		ld.Elfinit()
+		ld.Elfinit(ctxt)
 		ld.HEADR = ld.ELFRESERVE
-		if ld.INITTEXT == -1 {
-			ld.INITTEXT = 0x10000 + int64(ld.HEADR)
+		if *ld.FlagTextAddr == -1 {
+			*ld.FlagTextAddr = 0x10000 + int64(ld.HEADR)
 		}
-		if ld.INITDAT == -1 {
-			ld.INITDAT = 0
+		if *ld.FlagDataAddr == -1 {
+			*ld.FlagDataAddr = 0
 		}
-		if ld.INITRND == -1 {
-			ld.INITRND = 0x10000
+		if *ld.FlagRound == -1 {
+			*ld.FlagRound = 0x10000
 		}
 	}
 
-	if ld.INITDAT != 0 && ld.INITRND != 0 {
-		fmt.Printf("warning: -D0x%x is ignored because of -R0x%x\n", uint64(ld.INITDAT), uint32(ld.INITRND))
+	if *ld.FlagDataAddr != 0 && *ld.FlagRound != 0 {
+		fmt.Printf("warning: -D0x%x is ignored because of -R0x%x\n", uint64(*ld.FlagDataAddr), uint32(*ld.FlagRound))
 	}
 }

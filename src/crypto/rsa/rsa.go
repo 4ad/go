@@ -27,6 +27,7 @@ import (
 	"errors"
 	"hash"
 	"io"
+	"math"
 	"math/big"
 )
 
@@ -214,6 +215,21 @@ func GenerateMultiPrimeKey(random io.Reader, nprimes int, bits int) (*PrivateKey
 		return nil, errors.New("crypto/rsa: GenerateMultiPrimeKey: nprimes must be >= 2")
 	}
 
+	if bits < 64 {
+		primeLimit := float64(uint64(1) << uint(bits/nprimes))
+		// pi approximates the number of primes less than primeLimit
+		pi := primeLimit / (math.Log(primeLimit) - 1)
+		// Generated primes start with 11 (in binary) so we can only
+		// use a quarter of them.
+		pi /= 4
+		// Use a factor of two to ensure that key generation terminates
+		// in a reasonable amount of time.
+		pi /= 2
+		if pi <= float64(nprimes) {
+			return nil, errors.New("crypto/rsa: too few primes of given length to generate an RSA key")
+		}
+	}
+
 	primes := make([]*big.Int, nprimes)
 
 NextSetOfPrimes:
@@ -268,9 +284,8 @@ NextSetOfPrimes:
 
 		g := new(big.Int)
 		priv.D = new(big.Int)
-		y := new(big.Int)
 		e := big.NewInt(int64(priv.E))
-		g.GCD(priv.D, y, e, totient)
+		g.GCD(priv.D, nil, e, totient)
 
 		if g.Cmp(bigOne) == 0 {
 			if priv.D.Sign() < 0 {

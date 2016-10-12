@@ -252,9 +252,9 @@ func propagateCancel(parent Context, child canceler) {
 			child.cancel(false, p.err)
 		} else {
 			if p.children == nil {
-				p.children = make(map[canceler]bool)
+				p.children = make(map[canceler]struct{})
 			}
-			p.children[child] = true
+			p.children[child] = struct{}{}
 		}
 		p.mu.Unlock()
 	} else {
@@ -314,8 +314,8 @@ type cancelCtx struct {
 	done chan struct{} // closed by the first cancel call.
 
 	mu       sync.Mutex
-	children map[canceler]bool // set to nil by the first cancel call
-	err      error             // set to non-nil by the first cancel call
+	children map[canceler]struct{} // set to nil by the first cancel call
+	err      error                 // set to non-nil by the first cancel call
 }
 
 func (c *cancelCtx) Done() <-chan struct{} {
@@ -376,7 +376,7 @@ func WithDeadline(parent Context, deadline time.Time) (Context, CancelFunc) {
 		deadline:  deadline,
 	}
 	propagateCancel(parent, c)
-	d := deadline.Sub(time.Now())
+	d := time.Until(deadline)
 	if d <= 0 {
 		c.cancel(true, DeadlineExceeded) // deadline has already passed
 		return c, func() { c.cancel(true, Canceled) }
@@ -406,7 +406,7 @@ func (c *timerCtx) Deadline() (deadline time.Time, ok bool) {
 }
 
 func (c *timerCtx) String() string {
-	return fmt.Sprintf("%v.WithDeadline(%s [%s])", c.cancelCtx.Context, c.deadline, c.deadline.Sub(time.Now()))
+	return fmt.Sprintf("%v.WithDeadline(%s [%s])", c.cancelCtx.Context, c.deadline, time.Until(c.deadline))
 }
 
 func (c *timerCtx) cancel(removeFromParent bool, err error) {

@@ -80,16 +80,6 @@ func checkFunc(f *Func) {
 			if !b.Control.Type.IsBoolean() {
 				f.Fatalf("if block %s has non-bool control value %s", b, b.Control.LongString())
 			}
-		case BlockCall:
-			if len(b.Succs) != 1 {
-				f.Fatalf("call block %s len(Succs)==%d, want 1", b, len(b.Succs))
-			}
-			if b.Control == nil {
-				f.Fatalf("call block %s has no control value", b)
-			}
-			if !b.Control.Type.IsMemory() {
-				f.Fatalf("call block %s has non-memory control value %s", b, b.Control.LongString())
-			}
 		case BlockDefer:
 			if len(b.Succs) != 2 {
 				f.Fatalf("defer block %s len(Succs)==%d, want 2", b, len(b.Succs))
@@ -165,6 +155,8 @@ func checkFunc(f *Func) {
 				if !isExactFloat32(v) {
 					f.Fatalf("value %v has an AuxInt value that is not an exact float32", v)
 				}
+			case auxSizeAndAlign:
+				canHaveAuxInt = true
 			case auxString, auxSym:
 				canHaveAux = true
 			case auxSymOff, auxSymValAndOff:

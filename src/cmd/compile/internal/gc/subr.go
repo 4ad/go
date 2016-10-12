@@ -59,7 +59,7 @@ func (x byLineno) Less(i, j int) bool { return x[i].lineno < x[j].lineno }
 func (x byLineno) Swap(i, j int)      { x[i], x[j] = x[j], x[i] }
 
 func Flusherrors() {
-	bstdout.Flush()
+	Ctxt.Bso.Flush()
 	if len(errors) == 0 {
 		return
 	}
@@ -155,7 +155,7 @@ func Fatalf(fmt_ string, args ...interface{}) {
 	fmt.Printf("\n")
 
 	// If this is a released compiler version, ask for a bug report.
-	if strings.HasPrefix(obj.Getgoversion(), "release") {
+	if strings.HasPrefix(obj.Version, "release") {
 		fmt.Printf("\n")
 		fmt.Printf("Please file a bug report including a short program that triggers the error.\n")
 		fmt.Printf("https://golang.org/issue/new\n")
@@ -244,6 +244,25 @@ func LookupN(prefix string, n int) *Sym {
 	copy(buf[:], prefix)
 	b := strconv.AppendInt(buf[:len(prefix)], int64(n), 10)
 	return LookupBytes(b)
+}
+
+// autolabel generates a new Name node for use with
+// an automatically generated label.
+// prefix is a short mnemonic (e.g. ".s" for switch)
+// to help with debugging.
+// It should begin with "." to avoid conflicts with
+// user labels.
+func autolabel(prefix string) *Node {
+	if prefix[0] != '.' {
+		Fatalf("autolabel prefix must start with '.', have %q", prefix)
+	}
+	fn := Curfn
+	if Curfn == nil {
+		Fatalf("autolabel outside function")
+	}
+	n := fn.Func.Label
+	fn.Func.Label++
+	return newname(LookupN(prefix, int(n)))
 }
 
 var initSyms []*Sym
@@ -570,14 +589,15 @@ func isblanksym(s *Sym) bool {
 	return s != nil && s.Name == "_"
 }
 
-// given receiver of type t (t == r or t == *r)
-// return type to hang methods off (r).
-func methtype(t *Type, mustname int) *Type {
+// methtype returns the underlying type, if any,
+// that owns methods with receiver parameter t.
+// The result is either a named type or an anonymous struct.
+func methtype(t *Type) *Type {
 	if t == nil {
 		return nil
 	}
 
-	// strip away pointer if it's there
+	// Strip away pointer if it's there.
 	if t.IsPtr() {
 		if t.Sym != nil {
 			return nil
@@ -588,29 +608,20 @@ func methtype(t *Type, mustname int) *Type {
 		}
 	}
 
-	// need a type name
-	if t.Sym == nil && (mustname != 0 || !t.IsStruct()) {
+	// Must be a named type or anonymous struct.
+	if t.Sym == nil && !t.IsStruct() {
 		return nil
 	}
 
-	// check types
-	if !issimple[t.Etype] {
-		switch t.Etype {
-		default:
-			return nil
-
-		case TSTRUCT,
-			TARRAY,
-			TSLICE,
-			TMAP,
-			TCHAN,
-			TSTRING,
-			TFUNC:
-			break
-		}
+	// Check types.
+	if issimple[t.Etype] {
+		return t
 	}
-
-	return t
+	switch t.Etype {
+	case TARRAY, TCHAN, TFUNC, TMAP, TSLICE, TSTRING, TSTRUCT:
+		return t
+	}
+	return nil
 }
 
 func cplxsubtype(et EType) EType {
@@ -799,11 +810,13 @@ func assignop(src *Type, dst *Type, why *string) Op {
 			} else if have != nil && have.Sym == missing.Sym && have.Nointerface {
 				*why = fmt.Sprintf(":\n\t%v does not implement %v (%v method is marked 'nointerface')", src, dst, missing.Sym)
 			} else if have != nil && have.Sym == missing.Sym {
-				*why = fmt.Sprintf(":\n\t%v does not implement %v (wrong type for %v method)\n"+"\t\thave %v%v\n\t\twant %v%v", src, dst, missing.Sym, have.Sym, Tconv(have.Type, FmtShort|FmtByte), missing.Sym, Tconv(missing.Type, FmtShort|FmtByte))
+				*why = fmt.Sprintf(":\n\t%v does not implement %v (wrong type for %v method)\n"+
+					"\t\thave %v%0S\n\t\twant %v%0S", src, dst, missing.Sym, have.Sym, have.Type, missing.Sym, missing.Type)
 			} else if ptr != 0 {
 				*why = fmt.Sprintf(":\n\t%v does not implement %v (%v method has pointer receiver)", src, dst, missing.Sym)
 			} else if have != nil {
-				*why = fmt.Sprintf(":\n\t%v does not implement %v (missing %v method)\n"+"\t\thave %v%v\n\t\twant %v%v", src, dst, missing.Sym, have.Sym, Tconv(have.Type, FmtShort|FmtByte), missing.Sym, Tconv(missing.Type, FmtShort|FmtByte))
+				*why = fmt.Sprintf(":\n\t%v does not implement %v (missing %v method)\n"+
+					"\t\thave %v%0S\n\t\twant %v%0S", src, dst, missing.Sym, have.Sym, have.Type, missing.Sym, missing.Type)
 			} else {
 				*why = fmt.Sprintf(":\n\t%v does not implement %v (missing %v method)", src, dst, missing.Sym)
 			}
@@ -1002,7 +1015,7 @@ func assignconvfn(n *Node, t *Type, context func() string) *Node {
 	var why string
 	op := assignop(n.Type, t, &why)
 	if op == 0 {
-		Yyerror("cannot use %v as type %v in %s%s", Nconv(n, FmtLong), t, context(), why)
+		Yyerror("cannot use %L as type %v in %s%s", n, t, context(), why)
 		op = OCONV
 	}
 
@@ -1027,6 +1040,12 @@ func Is64(t *Type) bool {
 	return false
 }
 
+// IsMethod reports whether n is a method.
+// n must be a function or a method.
+func (n *Node) IsMethod() bool {
+	return n.Type.Recv() != nil
+}
+
 // SliceBounds returns n's slice bounds: low, high, and max in expr[low:high:max].
 // n must be a slice expression. max is nil if n is a simple slice expression.
 func (n *Node) SliceBounds() (low, high, max *Node) {
@@ -1045,7 +1064,7 @@ func (n *Node) SliceBounds() (low, high, max *Node) {
 		}
 		return n.Right.Left, n.Right.Right.Left, n.Right.Right.Right
 	}
-	Fatalf("SliceBounds op %s: %v", n.Op, n)
+	Fatalf("SliceBounds op %v: %v", n.Op, n)
 	return nil, nil, nil
 }
 
@@ -1055,7 +1074,7 @@ func (n *Node) SetSliceBounds(low, high, max *Node) {
 	switch n.Op {
 	case OSLICE, OSLICEARR, OSLICESTR:
 		if max != nil {
-			Fatalf("SetSliceBounds %s given three bounds", n.Op)
+			Fatalf("SetSliceBounds %v given three bounds", n.Op)
 		}
 		if n.Right == nil {
 			n.Right = Nod(OKEY, low, high)
@@ -1073,7 +1092,7 @@ func (n *Node) SetSliceBounds(low, high, max *Node) {
 		n.Right.Right.Right = max
 		return
 	}
-	Fatalf("SetSliceBounds op %s: %v", n.Op, n)
+	Fatalf("SetSliceBounds op %v: %v", n.Op, n)
 }
 
 // IsSlice3 reports whether o is a slice3 op (OSLICE3, OSLICE3ARR).
@@ -1128,10 +1147,11 @@ func syslook(name string) *Node {
 // typehash computes a hash value for type t to use in type switch
 // statements.
 func typehash(t *Type) uint32 {
-	// Tconv already contains all the necessary logic to generate
-	// a representation that completely describes the type, so using
+	// t.tconv(FmtLeft | FmtUnsigned) already contains all the necessary logic
+	// to generate a representation that completely describes the type, so using
 	// it here avoids duplicating that code.
-	p := Tconv(t, FmtLeft|FmtUnsigned)
+	// See the comments in exprSwitch.checkDupCases.
+	p := t.tconv(FmtLeft | FmtUnsigned)
 
 	// Using MD5 is overkill, but reduces accidental collisions.
 	h := md5.Sum([]byte(p))
@@ -1386,7 +1406,7 @@ func safeexpr(n *Node, init *Nodes) *Node {
 		a = walkexpr(a, init)
 		return a
 
-	case OSTRUCTLIT, OARRAYLIT:
+	case OSTRUCTLIT, OARRAYLIT, OSLICELIT:
 		if isStaticCompositeLiteral(n) {
 			return n
 		}
@@ -1468,7 +1488,7 @@ func lookdot0(s *Sym, t *Type, save **Field, ignorecase bool) int {
 		}
 	}
 
-	u = methtype(t, 0)
+	u = methtype(t)
 	if u != nil {
 		for _, f := range u.Methods().Slice() {
 			if f.Embedded == 0 && (f.Sym == s || (ignorecase && strings.EqualFold(f.Sym.Name, s.Name))) {
@@ -1634,7 +1654,7 @@ func expand0(t *Type, followptr bool) {
 		return
 	}
 
-	u = methtype(t, 0)
+	u = methtype(t)
 	if u != nil {
 		for _, f := range u.Methods().Slice() {
 			if f.Sym.Flags&SymUniq != 0 {
@@ -1996,7 +2016,7 @@ func implements(t, iface *Type, m, samename **Field, ptr *int) bool {
 		return true
 	}
 
-	t = methtype(t, 0)
+	t = methtype(t)
 	if t != nil {
 		expandmeth(t)
 	}
@@ -2109,37 +2129,6 @@ func powtwo(n *Node) int {
 	}
 
 	return -1
-}
-
-// return the unsigned type for
-// a signed integer type.
-// returns T if input is not a
-// signed integer type.
-func tounsigned(t *Type) *Type {
-	// this is types[et+1], but not sure
-	// that this relation is immutable
-	switch t.Etype {
-	default:
-		fmt.Printf("tounsigned: unknown type %v\n", t)
-		t = nil
-
-	case TINT:
-		t = Types[TUINT]
-
-	case TINT8:
-		t = Types[TUINT8]
-
-	case TINT16:
-		t = Types[TUINT16]
-
-	case TINT32:
-		t = Types[TUINT32]
-
-	case TINT64:
-		t = Types[TUINT64]
-	}
-
-	return t
 }
 
 func ngotype(n *Node) *Sym {
@@ -2296,6 +2285,35 @@ func isdirectiface(t *Type) bool {
 	}
 
 	return false
+}
+
+// itabType loads the _type field from a runtime.itab struct.
+func itabType(itab *Node) *Node {
+	typ := NodSym(ODOTPTR, itab, nil)
+	typ.Type = Ptrto(Types[TUINT8])
+	typ.Typecheck = 1
+	typ.Xoffset = int64(Widthptr) // offset of _type in runtime.itab
+	typ.Bounded = true            // guaranteed not to fault
+	return typ
+}
+
+// ifaceData loads the data field from an interface.
+// The concrete type must be known to have type t.
+// It follows the pointer if !isdirectiface(t).
+func ifaceData(n *Node, t *Type) *Node {
+	ptr := NodSym(OIDATA, n, nil)
+	if isdirectiface(t) {
+		ptr.Type = t
+		ptr.Typecheck = 1
+		return ptr
+	}
+	ptr.Type = Ptrto(t)
+	ptr.Bounded = true
+	ptr.Typecheck = 1
+	ind := Nod(OIND, ptr, nil)
+	ind.Type = t
+	ind.Typecheck = 1
+	return ind
 }
 
 // iet returns 'T' if t is a concrete type,

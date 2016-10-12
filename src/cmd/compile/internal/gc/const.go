@@ -61,6 +61,55 @@ func (v Val) Ctype() Ctype {
 	}
 }
 
+func eqval(a, b Val) bool {
+	if a.Ctype() != b.Ctype() {
+		return false
+	}
+	switch x := a.U.(type) {
+	default:
+		Fatalf("unexpected Ctype for %T", a.U)
+		panic("not reached")
+	case *NilVal:
+		return true
+	case bool:
+		y := b.U.(bool)
+		return x == y
+	case *Mpint:
+		y := b.U.(*Mpint)
+		return x.Cmp(y) == 0
+	case *Mpflt:
+		y := b.U.(*Mpflt)
+		return x.Cmp(y) == 0
+	case *Mpcplx:
+		y := b.U.(*Mpcplx)
+		return x.Real.Cmp(&y.Real) == 0 && x.Imag.Cmp(&y.Imag) == 0
+	case string:
+		y := b.U.(string)
+		return x == y
+	}
+}
+
+// Interface returns the constant value stored in v as an interface{}.
+// It returns int64s for ints and runes, float64s for floats,
+// complex128s for complex values, and nil for constant nils.
+func (v Val) Interface() interface{} {
+	switch x := v.U.(type) {
+	default:
+		Fatalf("unexpected Interface for %T", v.U)
+		panic("not reached")
+	case *NilVal:
+		return nil
+	case bool, string:
+		return x
+	case *Mpint:
+		return x.Int64()
+	case *Mpflt:
+		return x.Float64()
+	case *Mpcplx:
+		return complex(x.Real.Float64(), x.Imag.Float64())
+	}
+}
+
 type NilVal struct{}
 
 // IntLiteral returns the Node's literal value as an integer.
@@ -507,7 +556,7 @@ func overflow(v Val, t *Type) {
 	}
 
 	if doesoverflow(v, t) {
-		Yyerror("constant %s overflows %v", vconv(v, 0), t)
+		Yyerror("constant %v overflows %v", v, t)
 	}
 }
 
@@ -1337,7 +1386,7 @@ func defaultlitreuse(n *Node, t *Type, reuse canReuseNode) *Node {
 		Yyerror("defaultlit: unknown literal: %v", n)
 
 	case CTxxx:
-		Fatalf("defaultlit: idealkind is CTxxx: %v", Nconv(n, FmtSign))
+		Fatalf("defaultlit: idealkind is CTxxx: %+v", n)
 
 	case CTBOOL:
 		t1 := Types[TBOOL]
@@ -1546,7 +1595,7 @@ func (n *Node) Convconst(con *Node, t *Type) {
 		var i int64
 		switch n.Val().Ctype() {
 		default:
-			Fatalf("convconst ctype=%d %v", n.Val().Ctype(), Tconv(t, FmtLong))
+			Fatalf("convconst ctype=%d %L", n.Val().Ctype(), t)
 
 		case CTINT, CTRUNE:
 			i = n.Int64()
@@ -1583,7 +1632,7 @@ func (n *Node) Convconst(con *Node, t *Type) {
 		return
 	}
 
-	Fatalf("convconst %v constant", Tconv(t, FmtLong))
+	Fatalf("convconst %L constant", t)
 }
 
 // complex multiply v *= rv

@@ -65,6 +65,7 @@ var progtable = [arm.ALAST & obj.AMask]obj.ProgInfo{
 	arm.ASRA & obj.AMask:    {Flags: gc.SizeL | gc.LeftRead | gc.RegRead | gc.RightWrite},
 	arm.ASRL & obj.AMask:    {Flags: gc.SizeL | gc.LeftRead | gc.RegRead | gc.RightWrite},
 	arm.ASUB & obj.AMask:    {Flags: gc.SizeL | gc.LeftRead | gc.RegRead | gc.RightWrite},
+	arm.ACLZ & obj.AMask:    {Flags: gc.SizeL | gc.LeftRead | gc.RightWrite},
 	arm.ATEQ & obj.AMask:    {Flags: gc.SizeL | gc.LeftRead | gc.RightRead},
 	arm.ATST & obj.AMask:    {Flags: gc.SizeL | gc.LeftRead | gc.RightRead},
 
@@ -79,6 +80,8 @@ var progtable = [arm.ALAST & obj.AMask]obj.ProgInfo{
 	arm.AMULF & obj.AMask:  {Flags: gc.SizeF | gc.LeftRead | RightRdwr},
 	arm.ASUBD & obj.AMask:  {Flags: gc.SizeD | gc.LeftRead | RightRdwr},
 	arm.ASUBF & obj.AMask:  {Flags: gc.SizeF | gc.LeftRead | RightRdwr},
+	arm.ANEGD & obj.AMask:  {Flags: gc.SizeD | gc.LeftRead | RightRdwr},
+	arm.ANEGF & obj.AMask:  {Flags: gc.SizeF | gc.LeftRead | RightRdwr},
 	arm.ASQRTD & obj.AMask: {Flags: gc.SizeD | gc.LeftRead | RightRdwr},
 
 	// Conversions.

@@ -514,7 +514,7 @@ func opload(a obj.As) uint32 {
 		return op3(3, 0x23)
 
 	default:
-		panic("unknown instruction: " + obj.Aconv(a))
+		panic("unknown instruction: " + a.String())
 	}
 }
 
@@ -537,7 +537,7 @@ func opstore(a obj.As) uint32 {
 		return op3(3, 0x27)
 
 	default:
-		panic("unknown instruction: " + obj.Aconv(a))
+		panic("unknown instruction: " + a.String())
 	}
 }
 
@@ -548,7 +548,7 @@ func oprd(a obj.As) uint32 {
 		return op3(2, 0x28)
 
 	default:
-		panic("unknown instruction: " + obj.Aconv(a))
+		panic("unknown instruction: " + a.String())
 	}
 }
 
@@ -658,7 +658,7 @@ func opalu(a obj.As) uint32 {
 		return op3(2, 0x3D)
 
 	default:
-		panic("unknown instruction: " + obj.Aconv(a))
+		panic("unknown instruction: " + a.String())
 	}
 }
 
@@ -882,7 +882,7 @@ func opcode(a obj.As) uint32 {
 		return op3(2, 0x3A)
 
 	default:
-		panic("unknown instruction: " + obj.Aconv(a))
+		panic("unknown instruction: " + a.String())
 	}
 }
 

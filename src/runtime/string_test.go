@@ -82,28 +82,42 @@ func BenchmarkCompareStringBig(b *testing.B) {
 	b.SetBytes(int64(len(s1)))
 }
 
-func BenchmarkRuneIterate(b *testing.B) {
-	bytes := make([]byte, 100)
-	for i := range bytes {
-		bytes[i] = byte('A')
-	}
-	s := string(bytes)
-	for i := 0; i < b.N; i++ {
-		for range s {
-		}
-	}
+var stringdata = []struct{ name, data string }{
+	{"ASCII", "01234567890"},
+	{"Japanese", "日本語日本語日本語"},
 }
 
-func BenchmarkRuneIterate2(b *testing.B) {
-	bytes := make([]byte, 100)
-	for i := range bytes {
-		bytes[i] = byte('A')
-	}
-	s := string(bytes)
-	for i := 0; i < b.N; i++ {
-		for range s {
+func BenchmarkRuneIterate(b *testing.B) {
+	b.Run("range", func(b *testing.B) {
+		for _, sd := range stringdata {
+			b.Run(sd.name, func(b *testing.B) {
+				for i := 0; i < b.N; i++ {
+					for range sd.data {
+					}
+				}
+			})
 		}
-	}
+	})
+	b.Run("range1", func(b *testing.B) {
+		for _, sd := range stringdata {
+			b.Run(sd.name, func(b *testing.B) {
+				for i := 0; i < b.N; i++ {
+					for _ = range sd.data {
+					}
+				}
+			})
+		}
+	})
+	b.Run("range2", func(b *testing.B) {
+		for _, sd := range stringdata {
+			b.Run(sd.name, func(b *testing.B) {
+				for i := 0; i < b.N; i++ {
+					for _, _ = range sd.data {
+					}
+				}
+			})
+		}
+	})
 }
 
 func BenchmarkArrayEqual(b *testing.B) {
@@ -145,19 +159,6 @@ func TestLargeStringConcat(t *testing.T) {
 		strings.Repeat("2", 1<<10) + strings.Repeat("3", 1<<10)
 	if !strings.HasPrefix(output, want) {
 		t.Fatalf("output does not start with %q:\n%s", want, output)
-	}
-}
-
-func TestGostringnocopy(t *testing.T) {
-	max := *runtime.Maxstring
-	b := make([]byte, max+10)
-	for i := uintptr(0); i < max+9; i++ {
-		b[i] = 'a'
-	}
-	_ = runtime.Gostringnocopy(&b[0])
-	newmax := *runtime.Maxstring
-	if newmax != max+9 {
-		t.Errorf("want %d, got %d", max+9, newmax)
 	}
 }
 

@@ -1,5 +1,5 @@
 // Derived from Inferno utils/8c/txt.c
-// http://code.google.com/p/inferno-os/source/browse/utils/8c/txt.c
+// https://bitbucket.org/inferno-os/inferno-os/src/default/utils/8c/txt.c
 //
 //	Copyright © 1994-1999 Lucent Technologies Inc.  All rights reserved.
 //	Portions Copyright © 1995-1997 C H Forsyth (forsyth@terzarima.net)
@@ -1594,7 +1594,7 @@ hardmem:
 
 	// should not happen
 fatal:
-	gc.Fatalf("gmove %v -> %v", gc.Nconv(f, gc.FmtLong), gc.Nconv(t, gc.FmtLong))
+	gc.Fatalf("gmove %L -> %L", f, t)
 
 	return
 }

@@ -93,7 +93,7 @@ func TestGdbPython(t *testing.T) {
 		t.Fatalf("failed to create file: %v", err)
 	}
 
-	cmd := exec.Command("go", "build", "-o", "a.exe")
+	cmd := exec.Command(testenv.GoToolPath(t), "build", "-o", "a.exe")
 	cmd.Dir = dir
 	out, err := testEnv(cmd).CombinedOutput()
 	if err != nil {
@@ -105,17 +105,20 @@ func TestGdbPython(t *testing.T) {
 		"-ex", "set startup-with-shell off",
 		"-ex", "info auto-load python-scripts",
 		"-ex", "set python print-stack full",
-		"-ex", "br main.go:10",
+		"-ex", "br fmt.Println",
 		"-ex", "run",
 		"-ex", "echo BEGIN info goroutines\n",
 		"-ex", "info goroutines",
 		"-ex", "echo END\n",
+		"-ex", "up", // up from fmt.Println to main
 		"-ex", "echo BEGIN print mapvar\n",
 		"-ex", "print mapvar",
 		"-ex", "echo END\n",
 		"-ex", "echo BEGIN print strvar\n",
 		"-ex", "print strvar",
-		"-ex", "echo END\n"}
+		"-ex", "echo END\n",
+		"-ex", "down", // back to fmt.Println (goroutine 2 below only works at bottom of stack.  TODO: fix that)
+	}
 
 	// without framepointer, gdb cannot backtrace our non-standard
 	// stack frames on RISC architectures.
@@ -137,7 +140,7 @@ func TestGdbPython(t *testing.T) {
 		// This can happen when using all.bash with
 		// GOROOT_FINAL set, because the tests are run before
 		// the final installation of the files.
-		cmd := exec.Command("go", "env", "GOROOT")
+		cmd := exec.Command(testenv.GoToolPath(t), "env", "GOROOT")
 		cmd.Env = []string{}
 		out, err := cmd.CombinedOutput()
 		if err != nil && bytes.Contains(out, []byte("cannot find GOROOT")) {
@@ -227,7 +230,7 @@ func TestGdbBacktrace(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create file: %v", err)
 	}
-	cmd := exec.Command("go", "build", "-o", "a.exe")
+	cmd := exec.Command(testenv.GoToolPath(t), "build", "-o", "a.exe")
 	cmd.Dir = dir
 	out, err := testEnv(cmd).CombinedOutput()
 	if err != nil {

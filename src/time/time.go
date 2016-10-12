@@ -640,6 +640,12 @@ func Since(t Time) Duration {
 	return Now().Sub(t)
 }
 
+// Until returns the duration until t.
+// It is shorthand for t.Sub(time.Now()).
+func Until(t Time) Duration {
+	return t.Sub(Now())
+}
+
 // AddDate returns the time corresponding to adding the
 // given number of years, months, and days to t.
 // For example, AddDate(-1, 2, 3) applied to January 1, 2011
@@ -1097,6 +1103,11 @@ func Date(year int, month Month, day, hour, min, sec, nsec int, loc *Location) T
 
 // Truncate returns the result of rounding t down to a multiple of d (since the zero time).
 // If d <= 0, Truncate returns t unchanged.
+//
+// Truncate operates on the time as an absolute duration since the
+// zero time; it does not operate on the presentation form of the
+// time. Thus, Truncate(Hour) may return a time with a non-zero
+// minute, depending on the time's Location.
 func (t Time) Truncate(d Duration) Time {
 	if d <= 0 {
 		return t
@@ -1108,6 +1119,11 @@ func (t Time) Truncate(d Duration) Time {
 // Round returns the result of rounding t to the nearest multiple of d (since the zero time).
 // The rounding behavior for halfway values is to round up.
 // If d <= 0, Round returns t unchanged.
+//
+// Round operates on the time as an absolute duration since the
+// zero time; it does not operate on the presentation form of the
+// time. Thus, Round(Hour) may return a time with a non-zero
+// minute, depending on the time's Location.
 func (t Time) Round(d Duration) Time {
 	if d <= 0 {
 		return t

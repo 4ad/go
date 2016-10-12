@@ -184,7 +184,7 @@ func cgen_wb(n, res *Node, wb bool) {
 			n.Addable = n.Left.Addable
 		}
 
-	case OITAB:
+	case OITAB, OIDATA:
 		n.Addable = n.Left.Addable
 	}
 
@@ -361,7 +361,7 @@ func cgen_wb(n, res *Node, wb bool) {
 	default:
 		Dump("cgen", n)
 		Dump("cgen-res", res)
-		Fatalf("cgen: unknown op %v", Nconv(n, FmtShort|FmtSign))
+		Fatalf("cgen: unknown op %+S", n)
 
 	case OOROR, OANDAND,
 		OEQ, ONE,
@@ -525,12 +525,20 @@ func cgen_wb(n, res *Node, wb bool) {
 		Thearch.Gmove(&n1, res)
 		Regfree(&n1)
 
-		// interface table is first word of interface value
 	case OITAB:
+		// interface table is first word of interface value
 		var n1 Node
 		Igen(nl, &n1, res)
-
 		n1.Type = n.Type
+		Thearch.Gmove(&n1, res)
+		Regfree(&n1)
+
+	case OIDATA:
+		// interface data is second word of interface value
+		var n1 Node
+		Igen(nl, &n1, res)
+		n1.Type = n.Type
+		n1.Xoffset += int64(Widthptr)
 		Thearch.Gmove(&n1, res)
 		Regfree(&n1)
 
@@ -591,7 +599,7 @@ func cgen_wb(n, res *Node, wb bool) {
 			break
 		}
 
-		Fatalf("cgen: OLEN: unknown type %v", Tconv(nl.Type, FmtLong))
+		Fatalf("cgen: OLEN: unknown type %L", nl.Type)
 
 	case OCAP:
 		if nl.Type.IsChan() {
@@ -629,7 +637,7 @@ func cgen_wb(n, res *Node, wb bool) {
 			break
 		}
 
-		Fatalf("cgen: OCAP: unknown type %v", Tconv(nl.Type, FmtLong))
+		Fatalf("cgen: OCAP: unknown type %L", nl.Type)
 
 	case OADDR:
 		if n.Bounded { // let race detector avoid nil checks
@@ -1545,7 +1553,7 @@ func Agen(n *Node, res *Node) {
 	switch n.Op {
 	default:
 		Dump("bad agen", n)
-		Fatalf("agen: unknown op %v", Nconv(n, FmtShort|FmtSign))
+		Fatalf("agen: unknown op %+S", n)
 
 	case OCALLMETH:
 		cgen_callmeth(n, 0)
@@ -1856,7 +1864,7 @@ func bgenx(n, res *Node, wantTrue bool, likely int, to *obj.Prog) {
 	case OLITERAL:
 		// n is a constant.
 		if !Isconst(n, CTBOOL) {
-			Fatalf("bgen: non-bool const %v\n", Nconv(n, FmtLong))
+			Fatalf("bgen: non-bool const %L\n", n)
 		}
 		if genval {
 			Cgen(Nodbool(wantTrue == n.Val().U.(bool)), res)

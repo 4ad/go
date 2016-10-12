@@ -103,23 +103,6 @@ func (n *Node) isParamHeapCopy() bool {
 	return n.Op == ONAME && n.Class == PAUTOHEAP && n.Name.Param.Stackcopy != nil
 }
 
-// paramClass reports the parameter class (PPARAM or PPARAMOUT)
-// of the node, which may be an unmoved on-stack parameter
-// or the on-heap or on-stack copy of a parameter that moved to the heap.
-// If the node is not a parameter, paramClass returns Pxxx.
-func (n *Node) paramClass() Class {
-	if n.Op != ONAME {
-		return Pxxx
-	}
-	if n.Class == PPARAM || n.Class == PPARAMOUT {
-		return n.Class
-	}
-	if n.isParamHeapCopy() {
-		return n.Name.Param.Stackcopy.Class
-	}
-	return Pxxx
-}
-
 // moveToHeap records the parameter or local variable n as moved to the heap.
 func moveToHeap(n *Node) {
 	if Debug['r'] != 0 {
@@ -217,6 +200,9 @@ func newlab(n *Node) *Label {
 		lab = new(Label)
 		lab.Sym = s
 		s.Label = lab
+		if n.Used {
+			lab.Used = true
+		}
 		labellist = append(labellist, lab)
 	}
 
@@ -730,7 +716,7 @@ func gen(n *Node) {
 
 	switch n.Op {
 	default:
-		Fatalf("gen: unknown op %v", Nconv(n, FmtShort|FmtSign))
+		Fatalf("gen: unknown op %+S", n)
 
 	case OCASE,
 		OFALL,
@@ -1222,7 +1208,7 @@ func componentgen_wb(nr, nl *Node, wb bool) bool {
 	visitComponents(nl.Type, 0, func(t *Type, offset int64) bool {
 		if wb && Simtype[t.Etype] == Tptr && t != itable {
 			if ptrType != nil {
-				Fatalf("componentgen_wb %v", Tconv(nl.Type, 0))
+				Fatalf("componentgen_wb %v", nl.Type)
 			}
 			ptrType = t
 			ptrOffset = offset

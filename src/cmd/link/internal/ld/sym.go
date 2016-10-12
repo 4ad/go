@@ -1,6 +1,6 @@
 // Derived from Inferno utils/6l/obj.c and utils/6l/span.c
-// http://code.google.com/p/inferno-os/source/browse/utils/6l/obj.c
-// http://code.google.com/p/inferno-os/source/browse/utils/6l/span.c
+// https://bitbucket.org/inferno-os/inferno-os/src/default/utils/6l/obj.c
+// https://bitbucket.org/inferno-os/inferno-os/src/default/utils/6l/span.c
 //
 //	Copyright © 1994-1999 Lucent Technologies Inc.  All rights reserved.
 //	Portions Copyright © 1995-1997 C H Forsyth (forsyth@terzarima.net)
@@ -34,57 +34,35 @@ package ld
 import (
 	"cmd/internal/obj"
 	"cmd/internal/sys"
+	"fmt"
 	"log"
-	"strconv"
 )
-
-var headers = []struct {
-	name string
-	val  int
-}{
-	{"darwin", obj.Hdarwin},
-	{"dragonfly", obj.Hdragonfly},
-	{"freebsd", obj.Hfreebsd},
-	{"linux", obj.Hlinux},
-	{"android", obj.Hlinux}, // must be after "linux" entry or else headstr(Hlinux) == "android"
-	{"nacl", obj.Hnacl},
-	{"netbsd", obj.Hnetbsd},
-	{"openbsd", obj.Hopenbsd},
-	{"plan9", obj.Hplan9},
-	{"solaris", obj.Hsolaris},
-	{"windows", obj.Hwindows},
-	{"windowsgui", obj.Hwindows},
-}
 
 func linknew(arch *sys.Arch) *Link {
 	ctxt := &Link{
-		Hash: []map[string]*LSym{
+		Hash: []map[string]*Symbol{
 			// preallocate about 2mb for hash of
 			// non static symbols
-			make(map[string]*LSym, 100000),
+			make(map[string]*Symbol, 100000),
 		},
-		Allsym: make([]*LSym, 0, 100000),
+		Allsym: make([]*Symbol, 0, 100000),
 		Arch:   arch,
-		Goroot: obj.Getgoroot(),
 	}
 
-	p := obj.Getgoarch()
-	if p != arch.Name {
-		log.Fatalf("invalid goarch %s (want %s)", p, arch.Name)
+	if obj.GOARCH != arch.Name {
+		log.Fatalf("invalid obj.GOARCH %s (want %s)", obj.GOARCH, arch.Name)
 	}
 
-	ctxt.Headtype = headtype(obj.Getgoos())
-	if ctxt.Headtype < 0 {
-		log.Fatalf("unknown goos %s", obj.Getgoos())
-	}
+	return ctxt
+}
 
-	// Record thread-local storage offset.
-	// TODO(rsc): Move tlsoffset back into the linker.
-	switch ctxt.Headtype {
+// computeTLSOffset records the thread-local storage offset.
+func (ctxt *Link) computeTLSOffset() {
+	switch Headtype {
 	default:
-		log.Fatalf("unknown thread-local storage offset for %s", Headstr(ctxt.Headtype))
+		log.Fatalf("unknown thread-local storage offset for %v", Headtype)
 
-	case obj.Hplan9, obj.Hwindows:
+	case obj.Hplan9, obj.Hwindows, obj.Hwindowsgui:
 		break
 
 		/*
@@ -98,7 +76,7 @@ func linknew(arch *sys.Arch) *Link {
 		obj.Hopenbsd,
 		obj.Hdragonfly,
 		obj.Hsolaris:
-		if obj.Getgoos() == "android" {
+		if obj.GOOS == "android" {
 			switch ctxt.Arch.Family {
 			case sys.AMD64:
 				// Android/amd64 constant - offset from 0(FS) to our TLS slot.
@@ -152,21 +130,15 @@ func linknew(arch *sys.Arch) *Link {
 		}
 	}
 
-	// On arm, record goarm.
-	if ctxt.Arch.Family == sys.ARM {
-		ctxt.Goarm = obj.Getgoarm()
-	}
-
-	return ctxt
 }
 
-func linknewsym(ctxt *Link, name string, v int) *LSym {
-	batch := ctxt.LSymBatch
+func linknewsym(ctxt *Link, name string, v int) *Symbol {
+	batch := ctxt.SymbolBatch
 	if len(batch) == 0 {
-		batch = make([]LSym, 1000)
+		batch = make([]Symbol, 1000)
 	}
 	s := &batch[0]
-	ctxt.LSymBatch = batch[1:]
+	ctxt.SymbolBatch = batch[1:]
 
 	s.Dynid = -1
 	s.Plt = -1
@@ -178,7 +150,7 @@ func linknewsym(ctxt *Link, name string, v int) *LSym {
 	return s
 }
 
-func Linklookup(ctxt *Link, name string, v int) *LSym {
+func Linklookup(ctxt *Link, name string, v int) *Symbol {
 	m := ctxt.Hash[v]
 	s := m[name]
 	if s != nil {
@@ -191,24 +163,95 @@ func Linklookup(ctxt *Link, name string, v int) *LSym {
 }
 
 // read-only lookup
-func Linkrlookup(ctxt *Link, name string, v int) *LSym {
+func Linkrlookup(ctxt *Link, name string, v int) *Symbol {
 	return ctxt.Hash[v][name]
 }
 
-func Headstr(v int) string {
-	for i := 0; i < len(headers); i++ {
-		if v == headers[i].val {
-			return headers[i].name
-		}
+// A BuildMode indicates the sort of object we are building:
+//   "exe": build a main package and everything it imports into an executable.
+//   "c-shared": build a main package, plus all packages that it imports, into a
+//     single C shared library. The only callable symbols will be those functions
+//     marked as exported.
+//   "shared": combine all packages passed on the command line, and their
+//     dependencies, into a single shared library that will be used when
+//     building with the -linkshared option.
+type BuildMode uint8
+
+const (
+	BuildmodeUnset BuildMode = iota
+	BuildmodeExe
+	BuildmodePIE
+	BuildmodeCArchive
+	BuildmodeCShared
+	BuildmodeShared
+)
+
+func (mode *BuildMode) Set(s string) error {
+	badmode := func() error {
+		return fmt.Errorf("buildmode %s not supported on %s/%s", s, obj.GOOS, obj.GOARCH)
 	}
-	return strconv.Itoa(v)
+	switch s {
+	default:
+		return fmt.Errorf("invalid buildmode: %q", s)
+	case "exe":
+		*mode = BuildmodeExe
+	case "pie":
+		switch obj.GOOS {
+		case "android", "linux":
+		default:
+			return badmode()
+		}
+		*mode = BuildmodePIE
+	case "c-archive":
+		switch obj.GOOS {
+		case "darwin", "linux":
+		case "windows":
+			switch obj.GOARCH {
+			case "amd64", "386":
+			default:
+				return badmode()
+			}
+		default:
+			return badmode()
+		}
+		*mode = BuildmodeCArchive
+	case "c-shared":
+		switch obj.GOARCH {
+		case "386", "amd64", "arm", "arm64":
+		default:
+			return badmode()
+		}
+		*mode = BuildmodeCShared
+	case "shared":
+		switch obj.GOOS {
+		case "linux":
+			switch obj.GOARCH {
+			case "386", "amd64", "arm", "arm64", "ppc64le", "s390x":
+			default:
+				return badmode()
+			}
+		default:
+			return badmode()
+		}
+		*mode = BuildmodeShared
+	}
+	return nil
 }
 
-func headtype(name string) int {
-	for i := 0; i < len(headers); i++ {
-		if name == headers[i].name {
-			return headers[i].val
-		}
+func (mode *BuildMode) String() string {
+	switch *mode {
+	case BuildmodeUnset:
+		return "" // avoid showing a default in usage message
+	case BuildmodeExe:
+		return "exe"
+	case BuildmodePIE:
+		return "pie"
+	case BuildmodeCArchive:
+		return "c-archive"
+	case BuildmodeCShared:
+		return "c-shared"
+	case BuildmodeShared:
+		return "shared"
 	}
-	return -1
+	return fmt.Sprintf("BuildMode(%d)", uint8(*mode))
 }

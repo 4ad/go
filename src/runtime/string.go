@@ -4,10 +4,7 @@
 
 package runtime
 
-import (
-	"runtime/internal/atomic"
-	"unsafe"
-)
+import "unsafe"
 
 // The constant is known to the compiler.
 // There is no fundamental theory behind this number.
@@ -47,10 +44,9 @@ func concatstrings(buf *tmpBuf, a []string) string {
 		return a[idx]
 	}
 	s, b := rawstringtmp(buf, l)
-	l = 0
 	for _, x := range a {
-		copy(b[l:], x)
-		l += len(x)
+		copy(b, x)
+		b = b[len(x):]
 	}
 	return s
 }
@@ -164,12 +160,10 @@ func stringtoslicerune(buf *[tmpStringBufSize]rune, s string) []rune {
 	// two passes.
 	// unlike slicerunetostring, no race because strings are immutable.
 	n := 0
-	t := s
-	for len(s) > 0 {
-		_, k := charntorune(s)
-		s = s[k:]
+	for range s {
 		n++
 	}
+
 	var a []rune
 	if buf != nil && n <= len(buf) {
 		*buf = [tmpStringBufSize]rune{}
@@ -177,10 +171,9 @@ func stringtoslicerune(buf *[tmpStringBufSize]rune, s string) []rune {
 	} else {
 		a = rawruneslice(n)
 	}
+
 	n = 0
-	for len(t) > 0 {
-		r, k := charntorune(t)
-		t = t[k:]
+	for _, r := range s {
 		a[n] = r
 		n++
 	}
@@ -245,42 +238,6 @@ func intstring(buf *[4]byte, v int64) string {
 	return s[:n]
 }
 
-// stringiter returns the index of the next
-// rune after the rune that starts at s[k].
-func stringiter(s string, k int) int {
-	if k >= len(s) {
-		// 0 is end of iteration
-		return 0
-	}
-
-	c := s[k]
-	if c < runeself {
-		return k + 1
-	}
-
-	// multi-char rune
-	_, n := charntorune(s[k:])
-	return k + n
-}
-
-// stringiter2 returns the rune that starts at s[k]
-// and the index where the next rune starts.
-func stringiter2(s string, k int) (int, rune) {
-	if k >= len(s) {
-		// 0 is end of iteration
-		return 0, 0
-	}
-
-	c := s[k]
-	if c < runeself {
-		return k + 1, rune(c)
-	}
-
-	// multi-char rune
-	r, n := charntorune(s[k:])
-	return k + n, r
-}
-
 // rawstring allocates storage for a new string. The returned
 // string and byte slice both refer to the same storage.
 // The storage is not zeroed. Callers should use
@@ -293,12 +250,7 @@ func rawstring(size int) (s string, b []byte) {
 
 	*(*slice)(unsafe.Pointer(&b)) = slice{p, size, size}
 
-	for {
-		ms := maxstring
-		if uintptr(size) <= ms || atomic.Casuintptr((*uintptr)(unsafe.Pointer(&maxstring)), ms, uintptr(size)) {
-			return
-		}
-	}
+	return
 }
 
 // rawbyteslice allocates a new byte slice. The byte slice is not zeroed.
@@ -411,18 +363,10 @@ func findnullw(s *uint16) int {
 	return l
 }
 
-var maxstring uintptr = 256 // a hint for print
-
 //go:nosplit
 func gostringnocopy(str *byte) string {
 	ss := stringStruct{str: unsafe.Pointer(str), len: findnull(str)}
 	s := *(*string)(unsafe.Pointer(&ss))
-	for {
-		ms := maxstring
-		if uintptr(len(s)) <= ms || atomic.Casuintptr(&maxstring, ms, uintptr(len(s))) {
-			break
-		}
-	}
 	return s
 }
 

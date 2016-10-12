@@ -157,3 +157,17 @@ var ArchSPARC64 = &Arch{
 	RegSize:   8,
 	MinLC:     4,
 }
+
+var Archs = [...]*Arch{
+	Arch386,
+	ArchAMD64,
+	ArchAMD64P32,
+	ArchARM,
+	ArchARM64,
+	ArchMIPS64,
+	ArchMIPS64LE,
+	ArchPPC64,
+	ArchPPC64LE,
+	ArchSPARC64,
+	ArchS390X,
+}

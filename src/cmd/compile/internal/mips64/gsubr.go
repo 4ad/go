@@ -1,5 +1,5 @@
 // Derived from Inferno utils/6c/txt.c
-// http://code.google.com/p/inferno-os/source/browse/utils/6c/txt.c
+// https://bitbucket.org/inferno-os/inferno-os/src/default/utils/6c/txt.c
 //
 //	Copyright © 1994-1999 Lucent Technologies Inc.  All rights reserved.
 //	Portions Copyright © 1995-1997 C H Forsyth (forsyth@terzarima.net)
@@ -47,10 +47,6 @@ var resvd = []int{
 	mips.REGTMP,
 	mips.REG_R26, // kernel
 	mips.REG_R27, // kernel
-	mips.FREGZERO,
-	mips.FREGHALF,
-	mips.FREGONE,
-	mips.FREGTWO,
 }
 
 /*
@@ -149,7 +145,7 @@ func ginscmp(op gc.Op, t *gc.Type, n1, n2 *gc.Node, likely int) *obj.Prog {
 	case gc.TFLOAT32:
 		switch op {
 		default:
-			gc.Fatalf("ginscmp: no entry for op=%s type=%v", op, t)
+			gc.Fatalf("ginscmp: no entry for op=%v type=%v", op, t)
 
 		case gc.OEQ,
 			gc.ONE:
@@ -166,7 +162,7 @@ func ginscmp(op gc.Op, t *gc.Type, n1, n2 *gc.Node, likely int) *obj.Prog {
 	case gc.TFLOAT64:
 		switch op {
 		default:
-			gc.Fatalf("ginscmp: no entry for op=%s type=%v", op, t)
+			gc.Fatalf("ginscmp: no entry for op=%v type=%v", op, t)
 
 		case gc.OEQ,
 			gc.ONE:
@@ -219,7 +215,7 @@ func bignodes() {
  */
 func gmove(f *gc.Node, t *gc.Node) {
 	if gc.Debug['M'] != 0 {
-		fmt.Printf("gmove %v -> %v\n", gc.Nconv(f, gc.FmtLong), gc.Nconv(t, gc.FmtLong))
+		fmt.Printf("gmove %L -> %L\n", f, t)
 	}
 
 	ft := int(gc.Simsimtype(f.Type))
@@ -297,7 +293,7 @@ func gmove(f *gc.Node, t *gc.Node) {
 
 	switch uint32(ft)<<16 | uint32(tt) {
 	default:
-		gc.Fatalf("gmove %v -> %v", gc.Tconv(f.Type, gc.FmtLong), gc.Tconv(t.Type, gc.FmtLong))
+		gc.Fatalf("gmove %L -> %L", f.Type, t.Type)
 
 		/*
 		 * integer copy and truncate
@@ -516,8 +512,7 @@ func gmove(f *gc.Node, t *gc.Node) {
 
 		if ft == gc.TUINT64 {
 			p1 := ginsbranch(mips.ABEQ, nil, &rtmp, nil, 0)
-			gc.Nodreg(&r1, gc.Types[gc.TFLOAT64], mips.FREGTWO)
-			gins(mips.AMULD, &r1, &r2)
+			gins(mips.AADDD, &r2, &r2)
 			gc.Patch(p1, gc.Pc)
 		}
 
@@ -723,7 +718,7 @@ func optoas(op gc.Op, t *gc.Type) obj.As {
 	a := obj.AXXX
 	switch uint32(op)<<16 | uint32(gc.Simtype[t.Etype]) {
 	default:
-		gc.Fatalf("optoas: no entry for op=%s type=%v", op, t)
+		gc.Fatalf("optoas: no entry for op=%v type=%v", op, t)
 
 	case OEQ_ | gc.TBOOL,
 		OEQ_ | gc.TINT8,
