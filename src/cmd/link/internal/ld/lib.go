@@ -1132,7 +1132,9 @@ func hostlink() {
 		// Do not let the host linker generate COPY relocations. These
 		// can move symbols out of sections that rely on stable offsets
 		// from the beginning of the section (like STYPE).
-		argv = append(argv, "-Wl,-znocopyreloc")
+		if goos != "solaris" {
+			argv = append(argv, "-Wl,-znocopyreloc")
+		}
 
 		if SysArch.InFamily(sys.ARM, sys.ARM64) {
 			// On ARM, the GNU linker will generate COPY relocations
