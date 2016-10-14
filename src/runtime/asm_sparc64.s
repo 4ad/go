@@ -348,6 +348,7 @@ TEXT runtime·stackBarrier(SB),NOSPLIT|NOFRAME,$0
 	ADD	$1, L6
 	MOVD	L6, g_stkbarPos(g)
 	// Jump to the original return PC.
+	ADD	$8, O1
 	JMPL	O1, ZR
 
 // reflectcall: call a function with the given argument list
