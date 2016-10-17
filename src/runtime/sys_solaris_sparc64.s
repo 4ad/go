@@ -138,25 +138,16 @@ TEXT runtime·tstart_sysvicall(SB),NOSPLIT|REGWIN,$0
 
 // Careful, this is called by __sighndlr, a libc function.
 // We must preserve registers as per SPARC64 ABI.
-TEXT runtime·sigtramp(SB),NOSPLIT|REGWIN,$192
-	// save registers
-	MOVD	I0, (32+FIXED_FRAME)(BSP)
-	MOVD	I1, (40+FIXED_FRAME)(BSP)
-	MOVD	I2, (48+FIXED_FRAME)(BSP)
-	MOVD	I3, (56+FIXED_FRAME)(BSP)
-	MOVD	I4, (64+FIXED_FRAME)(BSP)
-	MOVD	I5, (72+FIXED_FRAME)(BSP)
-
-	// check that g exists
+TEXT runtime·sigtramp(SB),NOSPLIT|REGWIN,$256
 	CMP	g, ZR
 	BNED	allgood
-	MOVD	I0, (0+FIXED_FRAME)(BSP)
+	MOVD	I0, (FIXED_FRAME+0)(BSP)
 	CALL	runtime·badsignal(SB)
 	JMP	exit
 
 allgood:
 	// save g
-	MOVD	g, (80+FIXED_FRAME)(BSP)
+	MOVD	g, (-8+0+256+FIXED_FRAME)(BSP)
 
 	// Save m->libcall and m->scratch. We need to do this because we
 	// might get interrupted by a signal in runtime·asmcgocall.
@@ -165,96 +156,88 @@ allgood:
 	MOVD	g_m(g), L1
 	MOVD	$m_libcall(L1), L2
 	MOVD	libcall_fn(L2), L3
-	MOVD	L3, (88+FIXED_FRAME)(BSP)
+	MOVD	L3, -(8+1*8+256+FIXED_FRAME)(BSP)
 	MOVD	libcall_args(L2), L3
-	MOVD	L3, (96+FIXED_FRAME)(BSP)
+	MOVD	L3, -(8+2*8+256+FIXED_FRAME)(BSP)
 	MOVD	libcall_n(L2), L3
-	MOVD	L3, (104+FIXED_FRAME)(BSP)
+	MOVD	L3, -(8+3*8+256+FIXED_FRAME)(BSP)
 	MOVD	libcall_r1(L2), L3
-	MOVD	L3, (168+FIXED_FRAME)(BSP)
+	MOVD	L3, -(8+4*8+256+FIXED_FRAME)(BSP)
 	MOVD	libcall_r2(L2), L3
-	MOVD	L3, (176+FIXED_FRAME)(BSP)
+	MOVD	L3, -(8+5*8+256+FIXED_FRAME)(BSP)
 
 	// save m->scratch
 	MOVD	$(m_mOS+mOS_scratch)(L1), L2
 	MOVD	0(L2), L3
-	MOVD	L3, (112+FIXED_FRAME)(BSP)
+	MOVD	L3, -(8+6*8+256+FIXED_FRAME)(BSP)
 	MOVD	8(L2), L3
-	MOVD	L3, (120+FIXED_FRAME)(BSP)
+	MOVD	L3, -(8+7*8+256+FIXED_FRAME)(BSP)
 	MOVD	16(L2), L3
-	MOVD	L3, (128+FIXED_FRAME)(BSP)
+	MOVD	L3, -(8+8*8+256+FIXED_FRAME)(BSP)
 	MOVD	24(L2), L3
-	MOVD	L3, (136+FIXED_FRAME)(BSP)
+	MOVD	L3, -(8+9*8+256+FIXED_FRAME)(BSP)
 	MOVD	32(L2), L3
-	MOVD	L3, (144+FIXED_FRAME)(BSP)
+	MOVD	L3, -(8+10*8+256+FIXED_FRAME)(BSP)
 	MOVD	40(L2), L3
-	MOVD	L3, (152+FIXED_FRAME)(BSP)
+	MOVD	L3, -(8+11*8+256+FIXED_FRAME)(BSP)
 
 	// save errno, it might be EINTR; stuff we do here might reset it.
-	MOVD	(m_mOS+mOS_perrno)(L1), L3
-	MOVW	0(L3), L3
-	MOVD	L3, (160+FIXED_FRAME)(BSP)
+	MOVD	(m_mOS+mOS_perrno)(L1), L2
+	MOVW	0(L2), L3
+	MOVD	L3, -(8+12*8+256+FIXED_FRAME)(BSP)
 
-	MOVD	g, L3
+	MOVD	g, I3
 	// g = m->gsignal
-	MOVD	m_gsignal(L1), L1
-	MOVD	L1, g
+	MOVD	m_gsignal(L1), L4
+	MOVD	L4, g
 
 	// TODO: If current SP is not in gsignal.stack, then adjust.
 
 	// prepare call
-	MOVW	I0, (0+FIXED_FRAME)(BSP)
-	MOVD	I1, (8+FIXED_FRAME)(BSP)
-	MOVD	I2, (16+FIXED_FRAME)(BSP)
-	MOVD	L3, (24+FIXED_FRAME)(BSP)
+	MOVW	I0, (8*0+FIXED_FRAME)(BSP)
+	MOVD	I1, (8*1+FIXED_FRAME)(BSP)
+	MOVD	I2, (8*2+FIXED_FRAME)(BSP)
+	MOVD	I3, (8*3+FIXED_FRAME)(BSP)
 	CALL	runtime·sighandler(SB)
 
-	MOVD	g_m(g), L1
 	// restore libcall
+	MOVD	g_m(g), L1
 	MOVD	$m_libcall(L1), L2
-	MOVD	(88+FIXED_FRAME)(BSP), L3
+	MOVD	-(8+1*8+256+FIXED_FRAME)(BSP), L3
 	MOVD	L3, libcall_fn(L2)
-	MOVD	(96+FIXED_FRAME)(BSP), L3
+	MOVD	-(8+2*8+256+FIXED_FRAME)(BSP), L3
 	MOVD	L3, libcall_args(L2)
-	MOVD	(104+FIXED_FRAME)(BSP), L3
+	MOVD	-(8+3*8+256+FIXED_FRAME)(BSP), L3	
 	MOVD	L3, libcall_n(L2)
-	MOVD	(168+FIXED_FRAME)(BSP), L3
+	MOVD	-(8+4*8+256+FIXED_FRAME)(BSP), L3
 	MOVD	L3, libcall_r1(L2)
-	MOVD	(176+FIXED_FRAME)(BSP), L3
+	MOVD	-(8+5*8+256+FIXED_FRAME)(BSP), L3
 	MOVD	L3, libcall_r2(L2)
 
 	// restore scratch
 	MOVD	$(m_mOS+mOS_scratch)(L1), L2
-	MOVD	(112+FIXED_FRAME)(BSP), L3
+	MOVD	-(8+6*8+256+FIXED_FRAME)(BSP), L3
 	MOVD	L3, 0(L2)
-	MOVD	(120+FIXED_FRAME)(BSP), L3
+	MOVD	-(8+7*8+256+FIXED_FRAME)(BSP), L3
 	MOVD	L3, 8(L2)
-	MOVD	(128+FIXED_FRAME)(BSP), L3
+	MOVD	-(8+8*8+256+FIXED_FRAME)(BSP), L3
 	MOVD	L3, 16(L2)
-	MOVD	(136+FIXED_FRAME)(BSP), L3
+	MOVD	-(8+9*8+256+FIXED_FRAME)(BSP), L3
 	MOVD	L3, 24(L2)
-	MOVD	(144+FIXED_FRAME)(BSP), L3
+	MOVD	-(8+10*8+256+FIXED_FRAME)(BSP), L3
 	MOVD	L3, 32(L2)
-	MOVD	(152+FIXED_FRAME)(BSP), L3
+	MOVD	-(8+11*8+256+FIXED_FRAME)(BSP), L3
 	MOVD	L3, 40(L2)
 
 	// restore errno
 	MOVD	(m_mOS+mOS_perrno)(L1), L2
-	MOVD	(160+FIXED_FRAME)(BSP), L3
+	MOVD	-(8+12*8+256+FIXED_FRAME)(BSP), L3
 	MOVW	L3, 0(L2)
 
 	// restore g
-	MOVD	(80+FIXED_FRAME)(BSP), g
+	MOVD	(-8+0+256+FIXED_FRAME)(BSP), g
 
 exit:
-	// restore registers
-	MOVD	(32+FIXED_FRAME)(BSP), I0
-	MOVD	(40+FIXED_FRAME)(BSP), I1
-	MOVD	(48+FIXED_FRAME)(BSP), I2
-	MOVD	(56+FIXED_FRAME)(BSP), I3
-	MOVD	(64+FIXED_FRAME)(BSP), I4
-	MOVD	(72+FIXED_FRAME)(BSP), I5
-
 	RET
 
 
