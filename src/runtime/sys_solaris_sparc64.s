@@ -201,6 +201,7 @@ allgood:
 	// g = m->gsignal
 	MOVD	m_gsignal(L1), L4
 	MOVD	L4, g
+	CALL	runtime·save_g(SB)
 
 	// TODO: If current SP is not in gsignal.stack, then adjust.
 
@@ -256,6 +257,7 @@ allgood:
 
 	// restore g
 	MOVD	(-8+0*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP), g
+	CALL	runtime·save_g(SB)
 
 exit:
 	RET
