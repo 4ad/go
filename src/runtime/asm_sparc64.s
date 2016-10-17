@@ -622,6 +622,7 @@ TEXT runtime·cgocallback(SB),NOSPLIT,$32-24
 // See cgocall.go for more details.
 TEXT ·cgocallback_gofunc(SB),NOSPLIT,$32-24
 	NO_LOCAL_POINTERS
+	UNDEF
 
 	// Load m and g from thread-local storage.
 	MOVB	runtime·iscgo(SB), I1
