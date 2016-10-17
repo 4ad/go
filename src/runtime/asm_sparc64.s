@@ -555,6 +555,9 @@ TEXT ·asmcgocall(SB),NOSPLIT,$16-20
 	MOVD	g, I2
 
 	MOVD	g_m(g), L1
+	MOVD	m_gsignal(L1), L2
+	CMP	g, L2
+	BED	g0
 	MOVD	m_g0(L1), L2
 	CMP	g, L2
 	BED	g0
