@@ -155,7 +155,7 @@ allgood:
 	MOVD	I5, -(8+26*8+256+FIXED_FRAME)(BSP)
 
 	// save g
-	MOVD	g, (-8+0+128+FIXED_FRAME)(BSP)
+	MOVD	g, (-8+0+256+FIXED_FRAME)(BSP)
 
 	// Save m->libcall and m->scratch. We need to do this because we
 	// might get interrupted by a signal in runtime·asmcgocall.
