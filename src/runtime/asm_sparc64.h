@@ -38,3 +38,6 @@
 #define ARG_PUSH_SIZE 6*8
 #define WINDOW_SIZE 16*8
 #define FIXED_FRAME WINDOW_SIZE+ARG_PUSH_SIZE
+
+// membar #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
+#define MEM_SYNC MEMBAR $111
