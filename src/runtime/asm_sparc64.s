@@ -343,13 +343,12 @@ TEXT runtime·stackBarrier(SB),NOSPLIT|NOFRAME,$0
 	MOVD	$stkbar__size, O1
 	MULD	L6, O1
 	ADD	I4, O1
-	MOVD	stkbar_savedLRVal(O1), O1
+	MOVD	stkbar_savedLRVal(O1), OLR
 	// Record that this stack barrier was hit.
 	ADD	$1, L6
 	MOVD	L6, g_stkbarPos(g)
 	// Jump to the original return PC.
-	ADD	$8, O1
-	JMPL	O1, ZR
+	JMPL	$8(OLR), ZR
 
 // reflectcall: call a function with the given argument list
 // func call(argtype *_type, f *FuncVal, arg *byte, argsize, retoffset uint32).
