@@ -140,7 +140,7 @@ TEXT runtime·gogo(SB), NOSPLIT|NOFRAME, $0-8
 	MOVD	ZR, gobuf_bp(L6)
 	CMP	ZR, ZR // set condition codes for == test, needed by stack split
 	MOVD	gobuf_pc(L6), O0
-	JMPL	O0, ZR
+	JMPL	O0, L7
 
 // void mcall(fn func(*g))
 // Switch to m->g0's stack, call fn(g).
@@ -348,7 +348,7 @@ TEXT runtime·stackBarrier(SB),NOSPLIT|NOFRAME,$0
 	ADD	$1, L6
 	MOVD	L6, g_stkbarPos(g)
 	// Jump to the original return PC.
-	JMPL	$8(OLR), ZR
+	JMPL	$8(OLR), L7
 
 // reflectcall: call a function with the given argument list
 // func call(argtype *_type, f *FuncVal, arg *byte, argsize, retoffset uint32).
@@ -361,7 +361,7 @@ TEXT runtime·stackBarrier(SB),NOSPLIT|NOFRAME,$0
 	CMP	TMP, RT1;		\
 	BGD	3(PC);			\
 	MOVD	$NAME(SB), RT1;	\
-	JMPL	RT1, ZR
+	JMPL	RT1, L7
 // Note: can't just "B NAME(SB)" - bad inlining results.
 
 TEXT reflect·call(SB), NOSPLIT|NOFRAME, $0-0
@@ -398,7 +398,7 @@ TEXT ·reflectcall(SB), NOSPLIT|NOFRAME, $0-32
 	DISPATCH(runtime·call536870912, 536870912)
 	DISPATCH(runtime·call1073741824, 1073741824)
 	MOVD	$runtime·badreflectcall(SB), I3
-	JMPL	I3, ZR
+	JMPL	I3, L7
 
 #define CALLFN(NAME,MAXSIZE)			\
 TEXT NAME(SB), WRAPPER, $MAXSIZE-24;		\
@@ -527,7 +527,7 @@ TEXT runtime·jmpdefer(SB), NOSPLIT|NOFRAME, $0-16
 	MOVD	I4, BSP
 	
 	// call deferred function
-	JMPL	I1, ZR
+	JMPL	I1, L7
 
 // Save state of caller into g->sched.
 TEXT gosave<>(SB),NOSPLIT|NOFRAME,$0
