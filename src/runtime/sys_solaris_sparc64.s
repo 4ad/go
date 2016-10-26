@@ -65,7 +65,7 @@ TEXT runtime·pipe1(SB),NOSPLIT|REGWIN,$16
 // NOT USING GO CALLING CONVENTION.
 TEXT runtime·asmsysvicall6(SB),NOSPLIT|REGWIN,$0
 	// asmcgocall will put first argument into I0.
-	MOVD	I0, L7
+	MOVD	I0, L6
 	MOVD	libcall_fn(I0), I3
 	MOVD	libcall_args(I0), L1
 	MOVD	libcall_n(I0), L2
@@ -96,8 +96,8 @@ skipargs:
 	MOVD	L1, g
 
 	// Return result
-	MOVD	O0, libcall_r1(L7)
-	MOVD	O1, libcall_r2(L7)
+	MOVD	O0, libcall_r1(L6)
+	MOVD	O1, libcall_r2(L6)
 	MOVD	O0, I0
 	MOVD	O1, I1
 
@@ -108,7 +108,7 @@ skipargs:
 	CMP	I4, ZR
 	BED	skiperrno2
 	MOVW	(I4), I4
-	MOVD	I4, libcall_err(L7)
+	MOVD	I4, libcall_err(L6)
 
 skiperrno2:	
 	RET
