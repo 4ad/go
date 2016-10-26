@@ -679,15 +679,6 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				p.To.Reg = REG_RSP
 				p.To.Offset = int64(112 + StackBias)
 
-				// MOVD OLR, (120+bias)(RSP)
-				p = obj.Appendp(ctxt, p)
-				p.As = AMOVD
-				p.From.Type = obj.TYPE_REG
-				p.From.Reg = REG_OLR
-				p.To.Type = obj.TYPE_MEM
-				p.To.Reg = REG_RSP
-				p.To.Offset = int64(120 + StackBias)
-
 				// MOVD OLR, ILR
 				p = obj.Appendp(ctxt, p)
 				p.As = AMOVD
@@ -695,6 +686,23 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				p.From.Reg = REG_OLR
 				p.To.Type = obj.TYPE_REG
 				p.To.Reg = REG_ILR
+
+				// MOVD ILR, (120+bias)(RSP)
+				p = obj.Appendp(ctxt, p)
+				p.As = AMOVD
+				p.From.Type = obj.TYPE_REG
+				p.From.Reg = REG_ILR
+				p.To.Type = obj.TYPE_MEM
+				p.To.Reg = REG_RSP
+				p.To.Offset = int64(120 + StackBias)
+
+				// MOVD 0, OLR
+				p = obj.Appendp(ctxt, p)
+				p.As = AMOVD
+				p.From.Type = obj.TYPE_REG
+				p.From.Reg = REG_ZR
+				p.To.Type = obj.TYPE_REG
+				p.To.Reg = REG_OLR
 			}
 
 			if cursym.Text.From3.Offset&obj.WRAPPER != 0 {
@@ -842,11 +850,12 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			q1.To.Type = obj.TYPE_REG
 			q1.To.Reg = REG_TMP
 
-			// MOVD ILR, OLR
+			// MOVD (120+StackBias)(RSP), OLR
 			q1 = obj.Appendp(ctxt, q1)
 			q1.As = AMOVD
-			q1.From.Type = obj.TYPE_REG
-			q1.From.Reg = REG_ILR
+			q1.From.Type = obj.TYPE_MEM
+			q1.From.Reg = REG_RSP
+			q1.From.Offset = 120 + StackBias
 			q1.To.Type = obj.TYPE_REG
 			q1.To.Reg = REG_OLR
 
