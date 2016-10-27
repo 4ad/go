@@ -22,6 +22,9 @@ import (
 var lldbPath string
 
 func checkLldbPython(t *testing.T) {
+	if runtime.GOARCH == "sparc64" {
+		t.Skipf("lldb not supported on sparc64")
+	}
 	cmd := exec.Command("lldb", "-P")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -185,6 +188,9 @@ func TestLldbPython(t *testing.T) {
 
 // Check that aranges are valid even when lldb isn't installed.
 func TestDwarfAranges(t *testing.T) {
+	if runtime.GOARCH == "sparc64" {
+		t.Skipf("dwarf not currently supported on sparc64")
+	}
 	testenv.MustHaveGoBuild(t)
 	dir, err := ioutil.TempDir("", "go-build")
 	if err != nil {
