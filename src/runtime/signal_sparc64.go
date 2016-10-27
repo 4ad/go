@@ -81,7 +81,7 @@ func sighandler(sig uint32, info *siginfo, ctxt unsafe.Pointer, gp *g) {
 		// the stack frame but we're not going back there
 		// anyway.
 		fp := c.sp()
-		sp := c.sp() - (sys.SpAlign + sys.MinFrameSize) // needs only sizeof uint64, but must align the stack
+		sp := c.sp() - sys.MinFrameSize
 		c.set_sp(sp)
 		c.set_fp(fp)
 		*(*uint64)(unsafe.Pointer(uintptr(sp + 120))) = c.lr()
