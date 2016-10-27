@@ -23,6 +23,9 @@ func checkGdbEnvironment(t *testing.T) {
 	if runtime.GOOS == "darwin" {
 		t.Skip("gdb does not work on darwin")
 	}
+	if runtime.GOOS == "solaris" {
+		t.Skip("gdb Python integration often broken on solaris")
+	}
 	if final := os.Getenv("GOROOT_FINAL"); final != "" && runtime.GOROOT() != final {
 		t.Skip("gdb test can fail with GOROOT_FINAL pending")
 	}
