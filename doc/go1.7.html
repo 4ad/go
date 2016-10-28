@@ -67,8 +67,7 @@ This change has no effect on the correctness of existing programs.
 
 <p>
 Go 1.7 adds support for macOS 10.12 Sierra.
-This support was backported to Go 1.6.3.
-Binaries built with versions of Go before 1.6.3 will not work
+Binaries built with versions of Go before 1.7 will not work
 correctly on Sierra.
 </p>
 
@@ -909,7 +908,7 @@ For example, the address on which a request received is
 <p>
 The server's <a href="/pkg/net/http/#Server.Serve"><code>Serve</code></a> method
 now only enables HTTP/2 support if the <code>Server.TLSConfig</code> field is <code>nil</code>
-or includes <code>"h2"</code> in its <code>TLSConfig.NextProto</code>.
+or includes <code>"h2"</code> in its <code>TLSConfig.NextProtos</code>.
 </p>
 
 <p>
