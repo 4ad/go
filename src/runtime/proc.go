@@ -2762,7 +2762,7 @@ func newproc1(fn *funcval, argp *uint8, narg int32, nret int32, callerpc uintptr
 	spArg := sp
 	if usesLR {
 		// caller's LR
-		*(*unsafe.Pointer)(unsafe.Pointer(sp + ReturnAddrOffset)) = nil
+		*(*unsafe.Pointer)(unsafe.Pointer(sp + returnAddrOffset)) = nil
 		prepGoExitFrame(sp)
 		spArg += sys.MinFrameSize
 	}
