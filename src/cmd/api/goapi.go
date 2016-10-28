@@ -68,10 +68,6 @@ var contexts = []*build.Context{
 	{GOOS: "openbsd", GOARCH: "386"},
 	{GOOS: "openbsd", GOARCH: "amd64", CgoEnabled: true},
 	{GOOS: "openbsd", GOARCH: "amd64"},
-	{GOOS: "solaris", GOARCH: "amd64", CgoEnabled: true},
-	{GOOS: "solaris", GOARCH: "amd64"},
-	{GOOS: "solaris", GOARCH: "sparc64", CgoEnabled: false},
-	{GOOS: "solaris", GOARCH: "sparc64"},
 }
 
 func contextName(c *build.Context) string {
