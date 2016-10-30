@@ -111,32 +111,29 @@ TEXT runtime·gosave(SB), NOSPLIT|NOFRAME, $0-8
 // void gogo(Gobuf*)
 // restore state from Gobuf; longjmp
 TEXT runtime·gogo(SB), NOSPLIT|NOFRAME, $0-8
-	MOVD	buf+0(FP), L6
-	MOVD	gobuf_g(L6), g
+	MOVD	buf+0(FP), O0
+	MOVD	gobuf_g(O0), g
 	CALL	runtime·save_g(SB)
 
-	MOVD	buf+0(FP), L6
-	MOVD	gobuf_g(L6), g
-	MOVD	0(g), I4	// make sure g is not nil
-	MOVD	gobuf_lr(L6), OLR
-	MOVD	gobuf_ret(L6), RT1
-	MOVD	gobuf_ctxt(L6), CTXT
-	MOVD	gobuf_sp(L6), I3
-	MOVD	gobuf_bp(L6), I4
-	// restore continuation's ILR before resetting the stack pointer
+	MOVD	0(g), ZR	// make sure g is not nil
+	MOVD	gobuf_lr(O0), OLR
+	MOVD	gobuf_ret(O0), RT1
+	MOVD	gobuf_ctxt(O0), CTXT
+	MOVD	gobuf_bp(O0), TMP
+	MOVD	TMP, BFP
+	MOVD	gobuf_sp(O0), TMP
+	// restore registers before resetting the stack pointer;
 	// otherwise a spill will overwrite the saved link register.
-	MOVD	120(I3), ILR
-	MOVD	I4, BFP
-	MOVD	I3, BSP
+	MOVD	120(TMP), ILR
+	MOVD	TMP, BSP
 
-	MOVD	ZR, gobuf_sp(L6)
-	MOVD	ZR, gobuf_ret(L6)
-	MOVD	ZR, gobuf_lr(L6)
-	MOVD	ZR, gobuf_ctxt(L6)
-	MOVD	ZR, gobuf_bp(L6)
-	CMP	ZR, ZR // set condition codes for == test, needed by stack split
-	MOVD	gobuf_pc(L6), O0
-	JMPL	O0, L7
+	MOVD	ZR, gobuf_sp(O0)
+	MOVD	ZR, gobuf_ret(O0)
+	MOVD	ZR, gobuf_lr(O0)
+	MOVD	ZR, gobuf_ctxt(O0)
+	MOVD	ZR, gobuf_bp(O0)
+	MOVD	gobuf_pc(O0), TMP
+	JMPL	TMP, L7
 
 // void mcall(fn func(*g))
 // Switch to m->g0's stack, call fn(g).
