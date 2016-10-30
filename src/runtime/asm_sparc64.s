@@ -98,18 +98,14 @@ TEXT runtime·reginit(SB),NOSPLIT|NOFRAME,$0-0
 // void gosave(Gobuf*)
 // save state in Gobuf; setjmp
 TEXT runtime·gosave(SB), NOSPLIT|NOFRAME, $0-8
-	MOVD	buf+0(FP), I1
-	MOVD	BSP, I3
-	MOVD	I3, gobuf_sp(I1)
-	MOVD	OLR, I2
-	ADD	$8, I2
-	MOVD	I2, gobuf_pc(I1)
-	MOVD	g, gobuf_g(I1)
-	MOVD	ZR, gobuf_lr(I1)
-	MOVD	ZR, gobuf_ret(I1)
-	MOVD	ZR, gobuf_ctxt(I1)
-	MOVD	BFP, I3
-	MOVD	I3, gobuf_bp(I1)
+	MOVD	buf+0(FP), O0
+	MOVD	$0(BSP), gobuf_sp(O0)
+	MOVD	$8(OLR), gobuf_pc(O0)
+	MOVD	g, gobuf_g(O0)
+	MOVD	ZR, gobuf_lr(O0)
+	MOVD	ZR, gobuf_ret(O0)
+	MOVD	ZR, gobuf_ctxt(O0)
+	MOVD	$0(BFP), gobuf_bp(O0)
 	RET
 
 // void gogo(Gobuf*)
