@@ -531,14 +531,12 @@ TEXT runtime·jmpdefer(SB), NOSPLIT|NOFRAME, $0-16
 
 // Save state of caller into g->sched.
 TEXT gosave<>(SB),NOSPLIT|NOFRAME,$0
-	MOVD	OLR, TMP
-	ADD	$8, TMP
-	MOVD	TMP, (g_sched+gobuf_pc)(g)
+	MOVD	$8(OLR), (g_sched+gobuf_pc)(g)
 	MOVD	BSP, TMP
 	MOVD	TMP, (g_sched+gobuf_sp)(g)
-	MOVD	$0, (g_sched+gobuf_lr)(g)
-	MOVD	$0, (g_sched+gobuf_ret)(g)
-	MOVD	$0, (g_sched+gobuf_ctxt)(g)
+	MOVD	ZR, (g_sched+gobuf_lr)(g)
+	MOVD	ZR, (g_sched+gobuf_ret)(g)
+	MOVD	ZR, (g_sched+gobuf_ctxt)(g)
 	MOVD	BFP, TMP
 	MOVD	TMP, (g_sched+gobuf_bp)(g)
 	RET
