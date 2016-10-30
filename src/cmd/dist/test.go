@@ -151,7 +151,7 @@ func (t *tester) run() {
 	}
 
 	t.timeoutScale = 1
-	if t.goarch == "arm" || t.goos == "windows" {
+	if t.goarch == "arm" || t.goarch == "sparc64" || t.goos == "windows" {
 		t.timeoutScale = 2
 	}
 	if s := os.Getenv("GO_TEST_TIMEOUT_SCALE"); s != "" {
