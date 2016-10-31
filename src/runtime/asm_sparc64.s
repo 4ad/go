@@ -141,35 +141,31 @@ TEXT runtime·gogo(SB), NOSPLIT|NOFRAME, $0-8
 // to keep running g.
 TEXT runtime·mcall(SB), NOSPLIT|NOFRAME, $0-8
 	// Save caller state in g->sched
-	MOVD	BSP, TMP
-	MOVD	TMP, (g_sched+gobuf_sp)(g)
-	MOVD	OLR, TMP
-	ADD	$8, TMP
-	MOVD	TMP, (g_sched+gobuf_pc)(g)
-	MOVD	$0, (g_sched+gobuf_lr)(g)
+	MOVD	$0(BSP), (g_sched+gobuf_sp)(g)
+	MOVD	$8(OLR), (g_sched+gobuf_pc)(g)
+	MOVD	ZR, (g_sched+gobuf_lr)(g)
 	MOVD	g, (g_sched+gobuf_g)(g)
-	MOVD	BFP, I3
-	MOVD	I3, (g_sched+gobuf_bp)(g)
+	MOVD	$0(BFP), (g_sched+gobuf_bp)(g)
 
 	// Switch to m->g0 & its stack, call fn.
-	MOVD	g, I1
-	MOVD	g_m(g), O0
-	MOVD	m_g0(O0), g
+	MOVD	g, O0
+	MOVD	g_m(g), TMP
+	MOVD	m_g0(TMP), g
 	CALL	runtime·save_g(SB)
-	CMP	g, I1
+	CMP	g, O0
 	BNED	ok
 	JMP	runtime·badmcall(SB)
 ok:
 
 	MOVD	fn+0(FP), CTXT			// context
-	MOVD	0(CTXT), I4			// code pointer
+	MOVD	0(CTXT), O1			// code pointer
 	MOVD	(g_sched+gobuf_sp)(g), TMP
 	MOVD	TMP, BFP
 	SUB	$FIXED_FRAME+16, TMP
 	MOVD	TMP, BSP	// sp = m->g0->sched.sp
-	MOVD	I1, (FIXED_FRAME+0)(BSP)
-	MOVD	$0, (FIXED_FRAME+8)(BSP)
-	CALL	(I4)
+	MOVD	O0, (FIXED_FRAME+0)(BSP)
+	MOVD	ZR, (FIXED_FRAME+8)(BSP)
+	CALL	(O1)
 	JMP	runtime·badmcall2(SB)
 
 // systemstack_switch is a dummy routine that systemstack leaves at the bottom
