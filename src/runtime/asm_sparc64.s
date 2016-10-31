@@ -272,15 +272,19 @@ noswitch:
 TEXT runtime·morestack(SB),NOSPLIT|NOFRAME,$0-0
 	// Cannot grow scheduler stack (m->g0).
 	MOVD	g_m(g), O0
-	MOVD	m_g0(O0), I4
-	CMP	g, I4
-	BNED	3(PC)
-	CALL	runtime·threaddump(SB)
-	CALL	runtime·abort(SB)
+	MOVD	m_g0(O0), O1
+	CMP	g, O1
+	BNED	5(PC)
+	// stomp on saved link register to force callee to return to
+	// runtime.abort
+	MOVD	$runtime·abort(SB), OLR
+	MOVD	OLR, 120(BSP)
+	JMP	runtime·threaddump(SB)
+	JMPL	ZR, ZR
 
 	// Cannot grow signal stack (m->gsignal).
-	MOVD	m_gsignal(O0), I4
-	CMP	g, I4
+	MOVD	m_gsignal(O0), O1
+	CMP	g, O1
 	BNED	2(PC)
 	CALL	runtime·abort(SB)
 
@@ -292,25 +296,26 @@ TEXT runtime·morestack(SB),NOSPLIT|NOFRAME,$0-0
 	MOVD	BFP, TMP
 	MOVD	TMP, (g_sched+gobuf_bp)(g)
 	MOVD	OLR, (g_sched+gobuf_pc)(g)
-	MOVD	I1, (g_sched+gobuf_lr)(g)
+	MOVD	I0, (g_sched+gobuf_lr)(g)
 
 	// Called from f.
 	// Set m->morebuf to f's callers.
-	MOVD	I1, (m_morebuf+gobuf_pc)(O0)	// f's caller's PC
+	MOVD	I0, (m_morebuf+gobuf_pc)(O0)	// f's caller's PC
 	MOVD	BSP, TMP
 	MOVD	TMP, (m_morebuf+gobuf_sp)(O0)	// f's caller's BSP
 	MOVD	g, (m_morebuf+gobuf_g)(O0)
 
 	// Call newstack on m->g0's stack.
 	MOVD	m_g0(O0), g
+	MOVD	OLR, O2
 	CALL	runtime·save_g(SB)
-	MOVD	(g_sched+gobuf_sp)(g), L4
-	MOVD	L4, BFP
-	SUB	$FIXED_FRAME, L4, L5
-	MOVD	L5, BSP
-	SUB	$STACK_BIAS, L4
-	MOVD	L4, 112(BSP)
-	MOVD	ILR, 120(BSP)
+	MOVD	(g_sched+gobuf_sp)(g), O0
+	MOVD	O0, BFP
+	SUB	$FIXED_FRAME, O0, O1
+	MOVD	O1, BSP
+	SUB	$STACK_BIAS, O0
+	MOVD	O0, 112(BSP)
+	MOVD	O2, 120(BSP)
 
 	CALL	runtime·newstack(SB)
 

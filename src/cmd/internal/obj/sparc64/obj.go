@@ -234,13 +234,13 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 	for last = ctxt.Cursym.Text; last.Link != nil; last = last.Link {
 	}
 
-	// MOV	OLR, I1
+	// MOV	OLR, I0
 	movlr := obj.Appendp(ctxt, last)
 	movlr.As = AMOVD
 	movlr.From.Type = obj.TYPE_REG
 	movlr.From.Reg = REG_OLR
 	movlr.To.Type = obj.TYPE_REG
-	movlr.To.Reg = REG_I1
+	movlr.To.Reg = REG_I0
 	movlr.Spadj = -framesize
 
 	// CALL runtime.morestack(SB)
