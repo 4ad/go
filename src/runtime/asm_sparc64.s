@@ -334,18 +334,20 @@ TEXT runtime·morestack_noctxt(SB),NOSPLIT|NOFRAME,$0-0
 
 TEXT runtime·stackBarrier(SB),NOSPLIT|NOFRAME,$0
 	// We came here via a RET to an overwritten LR.
-	// RT1 may be live (see return0). Other registers are available.
+	// RT1 may be live (see return0). Only the REG_TMP*, REG_L*, or
+	// REG_G* registers should be used here (except for ILR/OLR) to
+	// avoid accidental alterations of the in or out registers of
+	// functions that use register windows and use the Sys V calling
+	// ABI.
 
 	// Get the original return PC, g.stkbar[g.stkbarPos].savedLRVal.
-	MOVD	(g_stkbar+slice_array)(g), I4
-	MOVD	g_stkbarPos(g), L6
-	MOVD	$stkbar__size, O1
-	MULD	L6, O1
-	ADD	I4, O1
-	MOVD	stkbar_savedLRVal(O1), OLR
+	MOVD	(g_stkbar+slice_array)(g), L1
+	MOVD	g_stkbarPos(g), L2
+	MULD	$stkbar__size, L2, L3
+	ADD	L1, L3
+	MOVD	stkbar_savedLRVal(L3), OLR
 	// Record that this stack barrier was hit.
-	ADD	$1, L6
-	MOVD	L6, g_stkbarPos(g)
+	MOVD	$1(L2), g_stkbarPos(g)
 	// Jump to the original return PC.
 	JMPL	$8(OLR), L7
 
