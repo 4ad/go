@@ -120,6 +120,11 @@ TEXT runtime·gogo(SB), NOSPLIT|NOFRAME, $0-8
 	MOVD	gobuf_ret(O0), RT1
 	MOVD	gobuf_ctxt(O0), CTXT
 	MOVD	gobuf_bp(O0), TMP
+	// special case; assume that if bp is zero, this is topofstack()
+	// and add bias so that BFP will be zero.
+	CMP	TMP, ZR
+	BNED	2(PC)
+	ADD	$STACK_BIAS, TMP
 	MOVD	TMP, BFP
 	MOVD	gobuf_sp(O0), TMP
 	// restore registers before resetting the stack pointer;
