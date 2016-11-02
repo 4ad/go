@@ -507,28 +507,31 @@ TEXT runtime·jmpdefer(SB), NOSPLIT|NOFRAME, $0-16
 	// so this retrieves the return address to deferreturn's caller.
 	// 
 	// We need to subtract -8 from this value, because the deferred
-	// functions returns to $8(ILR).
-	MOVD	(8*15)(BSP), I3
-	SUB	$8, I3
-	MOVD	I3, OLR
+	// functions return to $8(OLR).
+	MOVD	(120)(BSP), L3
+	SUB	$8, L3
+	// use deferreturn's return address
+	MOVD	L3, OLR
+	// restore deferreturn's caller's return address
+	MOVD	(120)(BFP), ILR
 
 	// fv is the deferred function.
 	MOVD	fv+0(FP), CTXT
-	MOVD	0(CTXT), I1
+	MOVD	0(CTXT), L1
 
 	// retrieve BSP, we reuse deferreturn's frame,
 	// so BFP is our caller's BSP
-	MOVD	BFP, 	I4
+	MOVD	BFP, 	L4
 	// retrieve RFP
-	MOVD	112(I4), I5
+	MOVD	112(L4), L5
 	// set BFP
-	ADD	$STACK_BIAS, I5
-	MOVD	I5, BFP
+	ADD	$STACK_BIAS, L5
+	MOVD	L5, BFP
 	// set BSP
-	MOVD	I4, BSP
-	
+	MOVD	L4, BSP
+
 	// call deferred function
-	JMPL	I1, L7
+	JMPL	L1, L7
 
 // Save state of caller into g->sched.
 TEXT gosave<>(SB),NOSPLIT|NOFRAME,$0
