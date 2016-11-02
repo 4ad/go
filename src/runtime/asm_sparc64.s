@@ -333,6 +333,14 @@ TEXT runtime·morestack_noctxt(SB),NOSPLIT|NOFRAME,$0-0
 	JMP	runtime·morestack(SB)
 
 TEXT runtime·stackBarrier(SB),NOSPLIT|NOFRAME,$0
+	// Functions that hit a barrier will jump into this function typically via
+	// JMP $8(OLR). Currently, the compiler begins all function prologues with
+	// two NOP instructions to workaround DTrace issues, but if that ever
+	// changes, callers would enter at the wrong place.  To avoid a
+	// future trap, we pad this function to avoid that assumption.
+	MOVD	L1, L1 // NOP
+	MOVD	L1, L1 // NOP
+
 	// We came here via a RET to an overwritten LR.
 	// RT1 may be live (see return0). Only the REG_TMP*, REG_L*, or
 	// REG_G* registers should be used here (except for ILR/OLR) to
