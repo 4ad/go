@@ -184,6 +184,7 @@ TEXT runtime·systemstack_switch(SB), NOSPLIT, $0-0
 	UNDEF
 	UNDEF
 	UNDEF
+	UNDEF
 	CALL	(ILR)	// make sure this function is not leaf
 	RET
 
@@ -214,7 +215,7 @@ switch:
 	// save our state in g->sched. Pretend to
 	// be systemstack_switch if the G stack is scanned.
 	MOVD	$runtime·systemstack_switch(SB), O0
-	ADD	$20, O0	// get past prologue
+	ADD	$40, O0	// get past prologue
 	MOVD	O0, (g_sched+gobuf_pc)(g)
 	MOVD	BSP, TMP
 	MOVD	TMP, (g_sched+gobuf_sp)(g)
