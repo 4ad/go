@@ -233,7 +233,7 @@ const (
 	ClassIndir13     // n(R), n is 13-bit signed
 	ClassIndir       // n(R), n large
 
-	ClassBranch // n(PC) branch target, n is 21-bit signed, mod 4
+	ClassBranch // n(PC) branch target, n is 19-bit signed, mod 4
 
 	ClassAddr    // $sym(SB)
 	ClassMem     // sym(SB)
