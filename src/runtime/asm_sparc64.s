@@ -226,7 +226,6 @@ switch:
 	MOVD	g, (g_sched+gobuf_g)(g)
 
 	// switch to g0
-
 	MOVD	L6, g
 	CALL	runtime·save_g(SB)
 	MOVD	(g_sched+gobuf_sp)(g), I1
@@ -249,6 +248,8 @@ switch:
 	MOVD	(g_sched+gobuf_bp)(g), TMP
 	MOVD	TMP, BFP
 	MOVD	(g_sched+gobuf_sp)(g), TMP
+	// restore registers before resetting the stack pointer;
+	// otherwise a spill will overwrite the saved link register.
 	MOVD	120(TMP), ILR
 	MOVD	(g_sched+gobuf_sp)(g), TMP
 	MOVD	TMP, BSP
@@ -516,12 +517,14 @@ TEXT runtime·jmpdefer(SB), NOSPLIT|NOFRAME, $0-16
 	// 
 	// We need to subtract -8 from this value, because the deferred
 	// functions return to $8(OLR).
-	MOVD	(120)(BSP), L3
+	MOVD	120(BSP), L3
 	SUB	$8, L3
 	// use deferreturn's return address
 	MOVD	L3, OLR
-	// restore deferreturn's caller's return address
-	MOVD	(120)(BFP), ILR
+	// restore deferreturn's caller's return address before resetting
+	// the stack pointer; otherwise a spill will overwrite the saved
+	// link register.
+	MOVD	120(BFP), ILR
 
 	// fv is the deferred function.
 	MOVD	fv+0(FP), CTXT
@@ -608,7 +611,8 @@ g0:
 	MOVD	112(L1), L3
 	ADD	$STACK_BIAS, L3
 	MOVD	L3, BFP
-	// Restore frame pointer
+	// restore registers before resetting the stack pointer;
+	// otherwise a spill will overwrite the saved link register.
 	MOVD	120(L1), ILR
 	// Restore stack pointer
 	MOVD	L1, BSP
@@ -727,6 +731,9 @@ havem:
 	CALL	runtime·save_g(SB)
 
 	MOVD	(g_sched+gobuf_sp)(g), TMP
+	// restore registers before resetting the stack pointer;
+	// otherwise a spill will overwrite the saved link register.
+	MOVD	120(TMP), ILR
 	MOVD	TMP, BSP
 	MOVD	savedsp-16(SP), I4
 	MOVD	I4, (g_sched+gobuf_sp)(g)

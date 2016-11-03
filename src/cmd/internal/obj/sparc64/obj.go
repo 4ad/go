@@ -850,6 +850,10 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			q1.To.Type = obj.TYPE_REG
 			q1.To.Reg = REG_TMP
 
+			// restore registers before resetting the stack
+			// pointer; otherwise a spill will overwrite the saved
+			// link register.
+
 			// MOVD (120+StackBias)(RSP), OLR
 			q1 = obj.Appendp(ctxt, q1)
 			q1.As = AMOVD
