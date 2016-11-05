@@ -214,23 +214,34 @@ var optab = map[Optab]Opval{
 	Optab{AMOVD, ClassTLSAddr, ClassNone, ClassNone, ClassReg}: {50, 12, 0},
 
 	Optab{ARETRESTORE, ClassNone, ClassNone, ClassNone, ClassNone}: {51, 12, 0},
+
+	Optab{obj.AJMP, ClassNone, ClassNone, ClassNone, ClassLargeBranch}: {52, 28, ClobberTMP},
+	Optab{ABN, ClassCond, ClassNone, ClassNone, ClassLargeBranch}:  {53, 48, ClobberTMP},
+	Optab{ABNW, ClassNone, ClassNone, ClassNone, ClassLargeBranch}: {53, 48, ClobberTMP},
+	Optab{ABRZ, ClassReg, ClassNone, ClassNone, ClassLargeBranch}:  {54, 48, ClobberTMP},
+	Optab{AFBA, ClassNone, ClassNone, ClassNone, ClassLargeBranch}: {55, 48, ClobberTMP},
+	Optab{ABND, ClassNone, ClassNone, ClassNone, ClassLargeBranch}: {56, 48, ClobberTMP},
+
+	Optab{obj.ACALL, ClassNone, ClassNone, ClassNone, ClassBranch}:      {57, 4, 0},
+	Optab{obj.ACALL, ClassNone, ClassNone, ClassNone, ClassLargeBranch}: {57, 4, 0},
 }
 
 // Compatible classes, if something accepts a $hugeconst, it
 // can also accept $smallconst, $0 and ZR. Something that accepts a
 // register, can also accept $0, etc.
 var cc = map[int8][]int8{
-	ClassReg:      {ClassZero},
-	ClassConst6:   {ClassConst5, ClassZero},
-	ClassConst10:  {ClassConst6, ClassConst5, ClassZero},
-	ClassConst11:  {ClassConst10, ClassConst6, ClassConst5, ClassZero},
-	ClassConst13:  {ClassConst11, ClassConst10, ClassConst6, ClassConst5, ClassZero},
-	ClassConst31:  {ClassConst6, ClassConst5, ClassZero},
-	ClassConst32:  {ClassConst31_, ClassConst31, ClassConst13, ClassConst11, ClassConst10, ClassConst6, ClassConst5, ClassZero},
-	ClassConst:    {ClassConst32, ClassConst31_, ClassConst31, ClassConst13, ClassConst11, ClassConst10, ClassConst6, ClassConst5, ClassZero},
-	ClassRegConst: {ClassRegConst13},
-	ClassIndir13:  {ClassIndir0},
-	ClassIndir:    {ClassIndir13, ClassIndir0},
+	ClassReg:         {ClassZero},
+	ClassConst6:      {ClassConst5, ClassZero},
+	ClassConst10:     {ClassConst6, ClassConst5, ClassZero},
+	ClassConst11:     {ClassConst10, ClassConst6, ClassConst5, ClassZero},
+	ClassConst13:     {ClassConst11, ClassConst10, ClassConst6, ClassConst5, ClassZero},
+	ClassConst31:     {ClassConst6, ClassConst5, ClassZero},
+	ClassConst32:     {ClassConst31_, ClassConst31, ClassConst13, ClassConst11, ClassConst10, ClassConst6, ClassConst5, ClassZero},
+	ClassConst:       {ClassConst32, ClassConst31_, ClassConst31, ClassConst13, ClassConst11, ClassConst10, ClassConst6, ClassConst5, ClassZero},
+	ClassRegConst:    {ClassRegConst13},
+	ClassIndir13:     {ClassIndir0},
+	ClassIndir:       {ClassIndir13, ClassIndir0},
+	ClassLargeBranch: {ClassBranch},
 }
 
 func isAddrCompatible(ctxt *obj.Link, a *obj.Addr, class int8) bool {
@@ -1015,6 +1026,10 @@ func aclass(ctxt *obj.Link, a *obj.Addr) int8 {
 			return aclass(ctxt, autoeditaddr(ctxt, a))
 		}
 	case obj.TYPE_BRANCH:
+		if a.Class == ClassLargeBranch {
+			// Set by span() after initial pcs have been calculated.
+			return ClassLargeBranch
+		}
 		return ClassBranch
 	}
 	return ClassUnknown
@@ -1034,6 +1049,39 @@ func span(ctxt *obj.Link, cursym *obj.LSym) {
 		p.Pc = pc
 		pc += int64(o.size)
 	}
+
+	// Now that initial Pcs have been determined, reclassify branches that
+	// exceed the standard 21-bit signed maximum offset and recalculate.
+	pc = 0
+	for p := cursym.Text.Link; p != nil; p = p.Link {
+		if p.To.Type == obj.TYPE_BRANCH && p.To.Class == ClassBranch {
+			var offset int64
+			if p.Pcond != nil {
+				offset = p.Pcond.Pc - p.Pc
+			} else {
+				// obj.brloop will set p.Pcond to nil for jumps
+				// to the same instruction.
+				offset = p.To.Val.(*obj.Prog).Pc - p.Pc
+			}
+			if offset < -1<<20 || offset > 1<<20-1 {
+				// Ideally, this would be done in aclass(), but
+				// we don't have access to p there or the pc
+				// (yet) in most cases. oplook will use this to
+				// transform the branch appropriately so that
+				// asmout will perform a "large" branch.
+				p.To.Class = ClassLargeBranch
+			}
+		}
+
+		o, err := oplook(autoeditprog(ctxt, p))
+		if err != nil {
+			ctxt.Diag(err.Error())
+		}
+
+		p.Pc = pc
+		pc += int64(o.size)
+	}
+
 	cursym.Size = pc
 	cursym.Grow(cursym.Size)
 
@@ -1115,8 +1163,46 @@ func srcCount(p *obj.Prog) (c int) {
 	return c
 }
 
+// largebranch assembles a branch to a pc that exceeds a 21-bit signed displacement
+func largebranch(offset int64) ([]uint32, error) {
+	if offset%4 != 0 {
+		return nil, errors.New("branch target not mod 4")
+	}
+
+	out := make([]uint32, 7)
+	// We don't know where we are, and we don't want to emit a
+	// reloc, so save %o7 since we may be in the function prologue,
+	// then do a pc-relative call to determine current address,
+	// then restore %o7 so that we can use the current address plus
+	// the calculated offset to perform a "large" jump to the
+	// desired location.
+	out[0] = opalu(AMOVD) | rrr(REG_ZR, 0, REG_OLR, REG_TMP2)
+	out[1] = opcode(obj.ACALL) | d30(1)
+	out[2] = opalu(AMOVD) | rrr(REG_ZR, 0, REG_OLR, REG_TMP)
+	out[3] = opalu(AMOVD) | rrr(REG_ZR, 0, REG_TMP2, REG_OLR)
+	offset -= 4 // make branch relative to call
+	class := constclass(offset)
+	switch class {
+	// 	SETHI hi($imm32), R
+	// 	OR R, lo($imm32), R
+	case ClassConst31, ClassConst32:
+		out[4] = opcode(ASETHI) | ir(uint32(offset)>>10, REG_TMP2)
+		out[5] = opalu(AOR) | rsr(REG_TMP2, int64(offset&0x3FF), REG_TMP2)
+
+	// 	SETHI hi(^$imm32), R
+	// 	XOR R, lo($imm32)|0x1C00, R
+	case ClassConst31_:
+		out[4] = opcode(ASETHI) | ir(^(uint32(offset))>>10, REG_TMP2)
+		out[5] = opalu(AXOR) | rsr(REG_TMP2, int64(uint32(offset)&0x3ff|0x1C00), REG_TMP2)
+	default:
+		panic("unexpected operand class: " + DRconv(class))
+	}
+	out[6] = opcode(AJMPL) | rrr(REG_TMP, 0, REG_TMP2, REG_ZR)
+	return out, nil
+}
+
 func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
-	out = make([]uint32, 7)
+	out = make([]uint32, 12)
 	o1 := &out[0]
 	o2 := &out[1]
 	o3 := &out[2]
@@ -1124,6 +1210,11 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	o5 := &out[4]
 	o6 := &out[5]
 	o7 := &out[6]
+	o8 := &out[7]
+	o9 := &out[8]
+	o10 := &out[9]
+	o11 := &out[10]
+	o12 := &out[11]
 	if o.OpInfo == ClobberTMP {
 		if usesTMP(&p.From) {
 			return nil, fmt.Errorf("asmout: %q not allowed: synthetic instruction clobbers temporary registers", obj.Mconv(&p.From))
@@ -1235,7 +1326,7 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 			// obj.brloop will set p.Pcond to nil for jumps to the same instruction.
 			offset = p.To.Val.(*obj.Prog).Pc - p.Pc
 		}
-		if offset < -1<<22 || offset > 1<<22-1 {
+		if offset < -1<<20 || offset > 1<<20-1 {
 			return nil, errors.New("branch target out of range")
 		}
 		if offset%4 != 0 {
@@ -1265,7 +1356,7 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	// FBA n(PC)
 	case 19:
 		offset := p.Pcond.Pc - p.Pc
-		if offset < -1<<25 || offset > 1<<25-1 {
+		if offset < -1<<24 || offset > 1<<24-1 {
 			return nil, errors.New("branch target out of range")
 		}
 		if offset%4 != 0 {
@@ -1435,7 +1526,7 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	// JMP n(PC)
 	case 38:
 		offset := p.Pcond.Pc - p.Pc
-		if offset < -1<<22 || offset > 1<<22-1 {
+		if offset < -1<<20 || offset > 1<<20-1 {
 			return nil, errors.New("branch target out of range")
 		}
 		if offset%4 != 0 {
@@ -1554,6 +1645,197 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		*o1 = opload(AMOVD) | rsr(REG_RSP, StackBias+120, REG_ILR)
 		*o2 = opcode(AJMPL) | rsr(REG_ILR, 8, REG_ZR)
 		*o3 = opalu(ARESTORE) | rsr(REG_ZR, 0, REG_ZR)
+
+	// JMP $huge(n(PC)) ->
+	//	MOVD	OLR, TMP2
+	//	CALL	+0x4
+	//	MOVD	OLR, TMP
+	//	MOVD	TMP2, OLR
+	//	MOVD	$huge(n(PC)), TMP2
+	//	...
+	//	JMPL	TMP + TMP2
+	case 52:
+		var offset int64
+		if p.Pcond != nil {
+			offset = p.Pcond.Pc - p.Pc
+		} else {
+			// obj.brloop will set p.Pcond to nil for jumps to the same instruction.
+			offset = p.To.Val.(*obj.Prog).Pc - p.Pc
+		}
+
+		branch, err := largebranch(offset)
+		if err != nil {
+			return nil, err
+		}
+		*o1, *o2, *o3, *o4, *o5, *o6, *o7 =
+			branch[0], branch[1], branch[2],
+			branch[3], branch[4], branch[5],
+			branch[6]
+
+	// BLE XCC, $huge(n(PC)) ->
+	//	BLE	XCC, 4(PC)
+	//	NOP
+	//	BA	10(PC)
+	//	NOP
+	//	MOVD	OLR, TMP2
+	//	CALL	+0x4
+	//	MOVD	OLR, TMP
+	//	MOVD	TMP2, OLR
+	//	MOVD	$huge(n(PC)), TMP2
+	//	...
+	//	JMP	TMP + TMP2
+	//	NOP
+	case 53:
+		offset := int64(16)
+		*o1 = opcode(p.As) | uint32(p.From.Reg&3)<<20 | uint32(offset>>2)&(1<<19-1)
+		// default is to predict branch taken
+		if p.Scond == 0 {
+			*o1 |= 1 << 19
+		}
+
+		if p.Pcond != nil {
+			offset = p.Pcond.Pc - p.Pc
+		} else {
+			// obj.brloop will set p.Pcond to nil for jumps to the same instruction.
+			offset = p.To.Val.(*obj.Prog).Pc - p.Pc
+		}
+		*o2 = opcode(ARNOP)
+		*o3 = opcode(obj.AJMP) | uint32(10)&(1<<22-1)
+		*o4 = opcode(ARNOP)
+
+		offset = p.Pcond.Pc - p.Pc
+		offset -= 16 // make branch relative to first instruction
+		branch, err := largebranch(offset)
+		if err != nil {
+			return nil, err
+		}
+		*o5, *o6, *o7, *o8, *o9, *o10, *o11 =
+			branch[0], branch[1], branch[2],
+			branch[3], branch[4], branch[5],
+			branch[6]
+		*o12 = opcode(ARNOP)
+
+	// BRZ R, $huge(n(PC)) ->
+	//	BRZ	R, 4(PC)
+	//	NOP
+	//	BA	10(PC)
+	//	NOP
+	//	MOVD	OLR, TMP2
+	//	CALL	+0x4
+	//	MOVD	OLR, TMP
+	//	MOVD	TMP2, OLR
+	//	MOVD	$huge(n(PC)), TMP2
+	//	...
+	//	JMP	TMP + TMP2
+	//	NOP
+	case 54:
+		offset := int64(16)
+		*o1 = opcode(p.As) | uint32((offset>>14)&3)<<20 | uint32(p.From.Reg&31)<<14 | uint32(offset>>2)&(1<<14-1)
+		// default is to predict branch taken
+		if p.Scond == 0 {
+			*o1 |= 1 << 19
+		}
+		*o2 = opcode(ARNOP)
+		*o3 = opcode(obj.AJMP) | uint32(10)&(1<<22-1)
+		*o4 = opcode(ARNOP)
+
+		offset = p.Pcond.Pc - p.Pc
+		offset -= 16 // make branch relative to first instruction
+		branch, err := largebranch(offset)
+		if err != nil {
+			return nil, err
+		}
+		*o5, *o6, *o7, *o8, *o9, *o10, *o11 =
+			branch[0], branch[1], branch[2],
+			branch[3], branch[4], branch[5],
+			branch[6]
+		*o12 = opcode(ARNOP)
+
+	// FBA $huge(n(PC)) ->
+	//	FBA	4(PC)
+	//	NOP
+	//	BA	10(PC)
+	//	NOP
+	//	MOVD	OLR, TMP2
+	//	CALL	+0x4
+	//	MOVD	OLR, TMP
+	//	MOVD	TMP2, OLR
+	//	MOVD	$huge(n(PC)), TMP2
+	//	...
+	//	JMP	TMP + TMP2
+	//	NOP
+	case 55:
+		offset := int64(16)
+		*o1 = opcode(p.As) | uint32(offset>>2)&(1<<22-1)
+		*o2 = opcode(ARNOP)
+		*o3 = opcode(obj.AJMP) | uint32(10)&(1<<22-1)
+		*o4 = opcode(ARNOP)
+
+		offset = p.Pcond.Pc - p.Pc
+		offset -= 16 // make branch relative to first instruction
+		branch, err := largebranch(offset)
+		if err != nil {
+			return nil, err
+		}
+		*o5, *o6, *o7, *o8, *o9, *o10, *o11 =
+			branch[0], branch[1], branch[2],
+			branch[3], branch[4], branch[5],
+			branch[6]
+		*o12 = opcode(ARNOP)
+
+	// BLED, $huge(n(PC)) ->
+	//	BLED, 4(PC)
+	//	NOP
+	//	BA	10(PC)
+	//	NOP
+	//	MOVD	OLR, TMP2
+	//	CALL	+0x4
+	//	MOVD	OLR, TMP
+	//	MOVD	TMP2, OLR
+	//	MOVD	$huge(n(PC)), TMP2
+	//	...
+	//	JMP	TMP + TMP2
+	//	NOP
+	case 56:
+		offset := int64(16)
+		*o1 = opcode(p.As) | 2<<20 | uint32(offset>>2)&(1<<19-1)
+		// default is to predict branch taken
+		if p.Scond == 0 {
+			*o1 |= 1 << 19
+		}
+		*o2 = opcode(ARNOP)
+		*o3 = opcode(obj.AJMP) | uint32(10)&(1<<22-1)
+		*o4 = opcode(ARNOP)
+
+		offset = p.Pcond.Pc - p.Pc
+		offset -= 16 // make branch relative to first instruction
+		branch, err := largebranch(offset)
+		if err != nil {
+			return nil, err
+		}
+		*o5, *o6, *o7, *o8, *o9, *o10, *o11 =
+			branch[0], branch[1], branch[2],
+			branch[3], branch[4], branch[5],
+			branch[6]
+		*o12 = opcode(ARNOP)
+
+	// CALL n(PC)
+	// CALL $huge(n(PC))
+	case 57:
+		var offset int64
+		if p.Pcond != nil {
+			offset = p.Pcond.Pc - p.Pc
+		} else {
+			// obj.brloop will set p.Pcond to nil for jumps to the same instruction.
+			offset = p.To.Val.(*obj.Prog).Pc - p.Pc
+		}
+		if offset < -1<<31 || offset > 1<<31-4 {
+			return nil, errors.New("branch target out of range")
+		}
+		if offset%4 != 0 {
+			return nil, errors.New("branch target not mod 4")
+		}
+		*o1 = opcode(obj.ACALL) | d30(int(offset>>2))
 	}
 
 	return out[:o.size/4], nil

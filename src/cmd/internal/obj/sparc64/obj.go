@@ -259,9 +259,16 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 	}
 	call.To.Sym = obj.Linklookup(ctxt, morestack, 0)
 
-	// JMP start
+	// A CALL is used here instead of a JMP so that we have a full 32
+	// bit-signed displacement that we can encode into the instruction.
+	// Since this instruction is never actually executed, but instead used
+	// by rewindmorestack(), this is safe (if it was actually executed, it
+	// would overwrite %o7 which would destroy our original return
+	// address).
+
+	// CALL start
 	jmp := obj.Appendp(ctxt, call)
-	jmp.As = obj.AJMP
+	jmp.As = obj.ACALL
 	jmp.To.Type = obj.TYPE_BRANCH
 	jmp.Pcond = ctxt.Cursym.Text.Link
 	jmp.Spadj = +framesize
