@@ -130,6 +130,9 @@ TEXT runtime·tstart_sysvicall(SB),NOSPLIT|REGWIN,$0
 	MOVD	I3, g_stackguard0(g)
 	MOVD	I3, g_stackguard1(g)
 
+	// initialize essential registers
+	CALL	runtime·reginit(SB)
+
 	CALL	runtime·stackcheck(SB)
 	CALL	runtime·mstart(SB)
 
