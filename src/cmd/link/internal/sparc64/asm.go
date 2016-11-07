@@ -55,9 +55,18 @@ func adddynrel(s *ld.LSym, r *ld.Reloc) {
 	switch r.Type {
 	default:
 		if r.Type >= 256 {
-			ld.Diag("unexpected relocation type %d", r.Type)
+			ld.Diag("unexpected relocation type %d (%d)", r.Type, r.Type-256)
 			return
 		}
+/*
+	TODO(shawn): implement the following relocation types required by crypto/x509 test:
+	R_SPARC_PC10          = 16
+	R_SPARC_PC22          = 17
+	R_SPARC_WPLT30        = 18
+	R_SPARC_GOTDATA_OP_HIX22 = 82
+	R_SPARC_GOTDATA_OP_LOX10 = 83
+	R_SPARC_GOTDATA_OP = 84
+*/
 	}
 
 	// Handle references to ELF symbols from our own object files.
