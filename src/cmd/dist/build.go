@@ -1121,7 +1121,7 @@ var cgoEnabled = map[string]bool{
 	"plan9/amd64":     false,
 	"plan9/arm":       false,
 	"solaris/amd64":   true,
-	"solaris/sparc64": false,
+	"solaris/sparc64": true,
 	"windows/386":     true,
 	"windows/amd64":   true,
 }
