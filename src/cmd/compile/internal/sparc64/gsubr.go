@@ -471,17 +471,28 @@ func gmove(f *gc.Node, t *gc.Node) {
 		gc.TUINT64<<16 | gc.TFLOAT64:
 		bignodes()
 
+		// The algorithm is:
+		//	if small enough, use native int64 -> float64 conversion,
+		//	otherwise halve (x -> (x>>1)|(x&1)), convert, and double.
 		var r1 gc.Node
 		gc.Regalloc(&r1, gc.Types[gc.TINT64], nil)
 		gmove(f, &r1)
 		if ft == gc.TUINT64 {
 			gc.Nodreg(&r2, gc.Types[gc.TUINT64], sparc64.REG_RT1)
 			gmove(&bigi, &r2)
-			gins(sparc64.ACMP, &r2, &r1)
-			p1 := gc.Gbranch(sparc64.ABGUD, nil, +1)
-			p2 := gins(sparc64.ASRLD, nil, &r1)
+			gins(sparc64.ACMP, &r1, &r2)
+			p1 := gc.Gbranch(sparc64.ABLEUD, nil, +1)
+			var r3 gc.Node
+			gc.Regalloc(&r3, gc.Types[gc.TUINT64], nil)
+			p2 := gins(sparc64.AAND, nil, &r3) // andi.
+			p2.Reg = r1.Reg
 			p2.From.Type = obj.TYPE_CONST
 			p2.From.Offset = 1
+			p3 := gins(sparc64.ASRLD, nil, &r1)
+			p3.From.Type = obj.TYPE_CONST
+			p3.From.Offset = 1
+			gins(sparc64.AOR, &r3, &r1)
+			gc.Regfree(&r3)
 			gc.Patch(p1, gc.Pc)
 		}
 
@@ -497,7 +508,7 @@ func gmove(f *gc.Node, t *gc.Node) {
 		gins(sparc64.AFXTOD, &r2, &r2)
 		gc.Regfree(&r1)
 		if ft == gc.TUINT64 {
-			p1 := gc.Gbranch(sparc64.ABGUD, nil, +1)
+			p1 := gc.Gbranch(sparc64.ABLEUD, nil, +1)
 			gc.Nodreg(&r1, gc.Types[gc.TFLOAT64], sparc64.REG_YTWO)
 			gins(sparc64.AFMULD, &r1, &r2)
 			gc.Patch(p1, gc.Pc)
