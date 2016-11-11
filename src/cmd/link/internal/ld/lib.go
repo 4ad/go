@@ -564,6 +564,11 @@ func loadlib() {
 			Linkmode = LinkExternal
 		}
 
+		// cgo on SPARC64 requires external linking.
+		if SysArch.InFamily(sys.SPARC64) && iscgo {
+			Linkmode = LinkExternal
+		}
+
 		// Force external linking for msan.
 		if flag_msan != 0 {
 			Linkmode = LinkExternal
