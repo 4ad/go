@@ -5,6 +5,7 @@
 #include "go_asm.h"
 #include "funcdata.h"
 #include "textflag.h"
+#include "asm_sparc64.h"
 
 // save_g saves the g register into pthread-provided
 // thread-local memory, so that we can call externally compiled
@@ -46,6 +47,29 @@ TEXT runtime·load_g(SB),NOSPLIT|NOFRAME,$0-0
 	MOVD	$runtime·tls_g(SB), RT1
 	MOVD	(RT1), g
 nocgo:
+	RET
+
+TEXT runtime·do_cgo_init(SB),NOSPLIT,$0-0
+	// if there is a _cgo_init, call it using the gcc ABI.
+	MOVD	_cgo_init(SB), O4
+	CMP	ZR, O4
+	BED	nocgo
+
+	MOVD	TLS, O3			// arg 3: TLS base pointer
+	MOVD	$runtime·tls_g(SB), O2 	// arg 2: &tls_g
+	MOVD	$setg_gcc<>(SB), O1	// arg 1: setg
+	MOVD	g, O0			// arg 0: G
+	CALL	(O4)
+	MOVD	$runtime·g0(SB), g
+nocgo:
+	RET
+
+// void setg_gcc(G*); set g called from gcc
+TEXT setg_gcc<>(SB),NOSPLIT,$16
+	MOVD	O0, g
+	MOVD	RT1, savedRT1-8(SP)
+	CALL	runtime·save_g(SB)
+	MOVD	savedRT1-8(SP), RT1
 	RET
 
 GLOBL runtime·tls_g+0(SB), TLSBSS, $8

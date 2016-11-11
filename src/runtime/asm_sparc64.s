@@ -30,17 +30,7 @@ TEXT runtime·rt0_go(SB),NOSPLIT,$16-0
 	MOVD	RT2, (g_stack+stack_lo)(g)
 	MOVD	RT1, (g_stack+stack_hi)(g)
 
-	// if there is a _cgo_init, call it using the gcc ABI.
-	MOVD	_cgo_init(SB), O4
-	CMP	ZR, O4
-	BED	nocgo
-
-	MOVD	TLS, O3			// arg 3: TLS base pointer
-	MOVD	$runtime·tls_g(SB), O2 	// arg 2: &tls_g
-	MOVD	$setg_gcc<>(SB), O1	// arg 1: setg
-	MOVD	g, O0			// arg 0: G
-	CALL	(O4)
-	MOVD	$runtime·g0(SB), g
+	CALL	runtime·do_cgo_init(SB)
 
 nocgo:
 	// update stackguard after _cgo_init
@@ -773,14 +763,6 @@ TEXT runtime·setg(SB), NOSPLIT, $0-8
 	MOVD	gg+0(FP), g
 	// This only happens if iscgo, so jump straight to save_g
 	CALL	runtime·save_g(SB)
-	RET
-
-// void setg_gcc(G*); set g called from gcc
-TEXT setg_gcc<>(SB),NOSPLIT,$16
-	MOVD	O0, g
-	MOVD	RT1, savedRT1-8(SP)
-	CALL	runtime·save_g(SB)
-	MOVD	savedRT1-8(SP), RT1
 	RET
 
 // check that SP is in range [g->stack.lo, g->stack.hi)
