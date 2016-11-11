@@ -1857,7 +1857,7 @@ func dodataSect(symn int, syms []*LSym) (result []*LSym, maxAlign int32) {
 	}
 
 	if Iself && symn == obj.SELFROSECT {
-		// Make .rela and .rela.plt contiguous, the ELF ABI requires this
+		// Make .rela, .rela.plt, .rela.got contiguous, the ELF ABI requires this
 		// and Solaris actually cares.
 		reli, plti := -1, -1
 		for i, s := range syms {
@@ -1868,6 +1868,7 @@ func dodataSect(symn int, syms []*LSym) (result []*LSym, maxAlign int32) {
 				reli = i
 			}
 		}
+
 		if reli >= 0 && plti >= 0 && plti != reli+1 {
 			var first, second int
 			if plti > reli {
@@ -1879,6 +1880,42 @@ func dodataSect(symn int, syms []*LSym) (result []*LSym, maxAlign int32) {
 			copy(syms[first+2:], syms[first+1:second])
 			syms[first+0] = rel
 			syms[first+1] = plt
+		}
+
+		reli, plti, goti := -1, -1, -1
+		for i, s := range syms {
+			switch s.Name {
+			case ".rel.got", ".rela.got":
+				goti = i
+			case ".rel.plt", ".rela.plt":
+				plti = i
+			case ".rel", ".rela":
+				reli = i
+			}
+		}
+
+		if plti >= 0 && goti >= 0 && goti != plti+1 {
+			var first, second int
+			if goti > plti {
+				first, second = plti, goti
+			} else {
+				first, second = goti, plti
+			}
+			plt, got := syms[plti], syms[goti]
+			copy(syms[first+2:], syms[first+1:second])
+			syms[first+0] = plt
+			syms[first+1] = got
+		} else if reli >= 0 && plti < 0 && goti >= 0 && goti != reli+1 {
+			var first, second int
+			if goti > reli {
+				first, second = reli, goti
+			} else {
+				first, second = goti, reli
+			}
+			rel, got := syms[reli], syms[goti]
+			copy(syms[first+2:], syms[first+1:second])
+			syms[first+0] = rel
+			syms[first+1] = got
 		}
 	}
 

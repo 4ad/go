@@ -1960,6 +1960,9 @@ func doelf() {
 		Addstring(shstrtab, ".dynstr")
 		Addstring(shstrtab, elfRelType)
 		Addstring(shstrtab, elfRelType+".plt")
+		if SysArch.Family == sys.SPARC64 {
+			Addstring(shstrtab, elfRelType+".got")
+		}
 
 		Addstring(shstrtab, ".plt")
 		Addstring(shstrtab, ".gnu.version")
@@ -2039,6 +2042,12 @@ func doelf() {
 		s = Linklookup(Ctxt, elfRelType+".plt", 0)
 		s.Attr |= AttrReachable
 		s.Type = obj.SELFROSECT
+
+		if SysArch.Family == sys.SPARC64 {
+			s = Linklookup(Ctxt, elfRelType+".got", 0)
+			s.Attr |= AttrReachable
+			s.Type = obj.SELFROSECT
+		}
 
 		s = Linklookup(Ctxt, ".gnu.version", 0)
 		s.Attr |= AttrReachable
@@ -2451,6 +2460,17 @@ func Asmbelf(symo int64) {
 		}
 
 		shsym(sh, Linklookup(Ctxt, ".plt", 0))
+
+		if eh.machine == EM_SPARCV9 {
+			sh := elfshname(".rela.got")
+			sh.type_ = SHT_RELA
+			sh.flags = SHF_ALLOC
+			sh.entsize = ELF64RELASIZE
+			sh.addralign = uint64(SysArch.RegSize)
+			sh.link = uint32(elfshname(".dynsym").shnum)
+			sh.info = uint32(elfshname(".got").shnum)
+			shsym(sh, Linklookup(Ctxt, ".rela.got", 0))
+		}
 
 		// On ppc64, .got comes from the input files, so don't
 		// create it here
