@@ -179,7 +179,7 @@ func elfreloc1(r *ld.Reloc, sectoff int64) int {
 		}
 
 	case obj.R_ADDRSPARC64LO:
-		ld.Thearch.Vput(ld.R_SPARC_HI22 | uint64(elfsym)<<32)
+		ld.Thearch.Vput(ld.R_SPARC_LM22 | uint64(elfsym)<<32)
 		ld.Thearch.Vput(uint64(r.Xadd))
 		ld.Thearch.Vput(uint64(sectoff + 4))
 		ld.Thearch.Vput(ld.R_SPARC_LO10 | uint64(elfsym)<<32)
