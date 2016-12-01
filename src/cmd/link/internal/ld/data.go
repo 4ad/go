@@ -408,7 +408,7 @@ func relocsym(s *LSym) {
 				r.Xsym = r.Sym
 				r.Xadd = r.Add
 				o = 0
-				if SysArch.Family != sys.AMD64 {
+				if !SysArch.InFamily(sys.AMD64, sys.SPARC64) {
 					o = r.Add
 				}
 				break
@@ -442,7 +442,7 @@ func relocsym(s *LSym) {
 				r.Xsym = r.Sym
 				r.Xadd = r.Add
 				o = 0
-				if SysArch.Family != sys.AMD64 {
+				if !SysArch.InFamily(sys.AMD64, sys.SPARC64) {
 					o = r.Add
 				}
 				break
@@ -469,7 +469,7 @@ func relocsym(s *LSym) {
 
 				o = r.Xadd
 				if Iself {
-					if SysArch.Family == sys.AMD64 {
+					if SysArch.InFamily(sys.AMD64, sys.SPARC64) {
 						o = 0
 					}
 				} else if HEADTYPE == obj.Hdarwin {
@@ -519,7 +519,7 @@ func relocsym(s *LSym) {
 				r.Xadd = r.Add + Symaddr(r.Sym) - int64(r.Sym.Sect.Vaddr)
 				o = r.Xadd
 				rs = r.Xsym
-				if Iself && SysArch.Family == sys.AMD64 {
+				if Iself && SysArch.InFamily(sys.AMD64, sys.SPARC64) {
 					o = 0
 				}
 				break
@@ -551,7 +551,7 @@ func relocsym(s *LSym) {
 
 				o = r.Xadd
 				if Iself {
-					if SysArch.Family == sys.AMD64 {
+					if SysArch.InFamily(sys.AMD64, sys.SPARC64) {
 						o = 0
 					}
 				} else if HEADTYPE == obj.Hdarwin {
