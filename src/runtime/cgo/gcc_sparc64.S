@@ -39,8 +39,8 @@ EXT(crosscall1):
 
 	ret
 	restore
-
 #ifdef __ELF__
+.size	crosscall1,.-crosscall1
+.type	crosscall1,#function
 .section .note.GNU-stack,"",%progbits
-.type crosscall1,#function
 #endif
