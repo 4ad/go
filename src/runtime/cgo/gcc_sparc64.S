@@ -13,9 +13,8 @@
 #define EXT(s) s
 #endif
 
-// Apple's ld64 wants 4-byte alignment for ARM code sections.
-// .align in both Apple as and GNU as treat n as aligning to 2**n bytes.
-.align	2
+// Solaris wants 4-byte alignment for SPARC code sections.
+.align	4
 
 /*
  * void crosscall1(void (*fn)(void), void (*setg_gcc)(void *g), void *g)
@@ -26,7 +25,8 @@
  */
 .globl EXT(crosscall1)
 EXT(crosscall1):
-	save  %sp, -304, %sp
+	save	%sp, -304, %sp
+	flushw
 
 	mov	%i0, %l0
 	mov	%i1, %l1
@@ -37,9 +37,10 @@ EXT(crosscall1):
 	call %l0
 	nop
 
-	rett  %i7 + 8
-	nop
+	ret
+	restore
 
 #ifdef __ELF__
 .section .note.GNU-stack,"",%progbits
+.type crosscall1,#function
 #endif
