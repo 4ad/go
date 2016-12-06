@@ -743,16 +743,16 @@ droppedm:
 
 // Called from cgo wrappers, this function returns g->m->curg.stack.hi.
 // Must obey the gcc calling convention.
-TEXT _cgo_topofstack(SB),NOSPLIT,$32
+TEXT _cgo_topofstack(SB),NOSPLIT|REGWIN,$32
 	// g and RT1 might be clobbered by load_g. They
 	// are callee-save in the gcc calling convention, so save them.
 	MOVD	RT1, savedRT1-8(SP)
 	MOVD	g, saveG-16(SP)
 
 	CALL	runtime·load_g(SB)
-	MOVD	g_m(g), I3
-	MOVD	m_curg(I3), I3
-	MOVD	(g_stack+stack_hi)(I3), I3
+	MOVD	g_m(g), I0
+	MOVD	m_curg(I0), I0
+	MOVD	(g_stack+stack_hi)(I0), I0
 
 	MOVD	saveG-16(SP), g
 	MOVD	savedRT1-8(SP), RT1
