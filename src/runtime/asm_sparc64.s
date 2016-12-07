@@ -180,26 +180,25 @@ TEXT runtime·systemstack_switch(SB), NOSPLIT, $0-0
 
 // func systemstack(fn func())
 TEXT runtime·systemstack(SB), NOSPLIT, $0-8
-	MOVD	fn+0(FP), I1	// I1 = fn
-	MOVD	I1, CTXT	// context
-	MOVD	g_m(g), I4	// I4 = m
+	MOVD	fn+0(FP), CTXT	// context (fn)
+	MOVD	g_m(g), O0	// O0 = m
 
-	MOVD	m_gsignal(I4), L6	// L6 = gsignal
-	CMP	g, L6
+	MOVD	m_gsignal(O0), O1	// O1 = gsignal
+	CMP	g, O1
 	BED	noswitch
 
-	MOVD	m_g0(I4), L6	// L6 = g0
-	CMP	g, L6
+	MOVD	m_g0(O0), O1	// O1 = g0
+	CMP	g, O1
 	BED	noswitch
 
-	MOVD	m_curg(I4), O0
+	MOVD	m_curg(O0), O0
 	CMP	g, O0
 	BED	switch
 
 	// Bad: g is not gsignal, not g0, not curg. What is it?
 	// Hide call from linker nosplit analysis.
-	MOVD	$runtime·badsystemstack(SB), I1
-	CALL	(I1)
+	MOVD	$runtime·badsystemstack(SB), O0
+	CALL	(O0)
 
 switch:
 	// save our state in g->sched. Pretend to
@@ -211,49 +210,58 @@ switch:
 	MOVD	TMP, (g_sched+gobuf_sp)(g)
 	MOVD	BFP, TMP
 	MOVD	TMP, (g_sched+gobuf_bp)(g)
-	MOVD	$0, (g_sched+gobuf_lr)(g)
-	MOVD	$0, (g_sched+gobuf_ret)(g)
-	MOVD	$0, (g_sched+gobuf_ctxt)(g)
+	MOVD	ZR, (g_sched+gobuf_lr)(g)
+	MOVD	ZR, (g_sched+gobuf_ret)(g)
+	MOVD	ZR, (g_sched+gobuf_ctxt)(g)
 	MOVD	g, (g_sched+gobuf_g)(g)
 
 	// switch to g0
-	MOVD	L6, g
+	MOVD	O1, g
 	CALL	runtime·save_g(SB)
-	MOVD	(g_sched+gobuf_sp)(g), RT1
-	MOVD	RT1, BFP	// subtle
+	MOVD	(g_sched+gobuf_sp)(g), O0
 	// make it look like mstart called systemstack on g0, to stop traceback.
-	SUB	$FIXED_FRAME, RT1
+	SUB	$FIXED_FRAME, O0, RT1
 	MOVD	RT1, BSP
-	// set ILR *after* switching stacks to prevent spilling to original
-	// stack; then manually spill to new stack to ensure Go itself will
-	// read the desired return address from memory
+	// set BFP/ILR *after* switching stacks to avoid spills to original
+	// stack; then manually spill to new stack to ensure Go itself can
+	// read the new values
+	MOVD	O0, BFP	// subtle
+	SUB	$STACK_BIAS, O0
+	MOVD	O0, 112(BSP)
 	MOVD	$runtime·mstart(SB), ILR
 	MOVD	ILR, 120(BSP)
 
 	// call target function
-	MOVD	0(CTXT), I1	// code pointer
-	CALL	(I1)
+	MOVD	0(CTXT), O0	// code pointer
+	CALL	(O0)
 
 	// switch back to g
-	MOVD	g_m(g), I1
-	MOVD	m_curg(I1), g
+	MOVD	g_m(g), O0
+	MOVD	m_curg(O0), g
 	CALL	runtime·save_g(SB)
-	MOVD	(g_sched+gobuf_bp)(g), TMP
-	MOVD	TMP, BFP
-	MOVD	(g_sched+gobuf_sp)(g), TMP
-	// restore registers before resetting the stack pointer;
-	// otherwise a spill will overwrite the saved link register.
-	MOVD	120(TMP), ILR
-	MOVD	(g_sched+gobuf_sp)(g), TMP
-	MOVD	TMP, BSP
+	MOVD	(g_sched+gobuf_bp)(g), RT1
+	MOVD	(g_sched+gobuf_sp)(g), O0
+	MOVD	120(O0), O1
+	MOVD	O0, BSP
+	// set BFP/ILR *after* switching stacks to avoid spills to original
+	// stack; then manually spill to new stack to ensure Go itself can
+	// read the new values
+	MOVD	RT1, BFP
+	SUB	$STACK_BIAS, RT1
+	MOVD	RT1, 112(BSP)
+	MOVD	O1, ILR
+	MOVD	ILR, 120(BSP)
+
 	MOVD	ZR, (g_sched+gobuf_sp)(g)
 	MOVD	ZR, (g_sched+gobuf_bp)(g)
+	MOVD	ZR, O0
+	MOVD	ZR, O1
 	RET
 
 noswitch:
 	// already on m stack, just call directly
-	MOVD	0(CTXT), I1	// code pointer
-	CALL	(I1)
+	MOVD	0(CTXT), O0	// code pointer
+	CALL	(O0)
 	RET
 
 /*
