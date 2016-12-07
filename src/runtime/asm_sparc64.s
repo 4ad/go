@@ -219,14 +219,16 @@ switch:
 	// switch to g0
 	MOVD	L6, g
 	CALL	runtime·save_g(SB)
-	MOVD	(g_sched+gobuf_sp)(g), I1
-	MOVD	I1, BFP	// subtle
+	MOVD	(g_sched+gobuf_sp)(g), RT1
+	MOVD	RT1, BFP	// subtle
 	// make it look like mstart called systemstack on g0, to stop traceback.
-	SUB	$FIXED_FRAME, I1
-	MOVD	$runtime·mstart(SB), I4
-	MOVD	I4, 120(I1)
-	MOVD	I4, ILR
-	MOVD	I1, BSP
+	SUB	$FIXED_FRAME, RT1
+	MOVD	RT1, BSP
+	// set ILR *after* switching stacks to prevent spilling to original
+	// stack; then manually spill to new stack to ensure Go itself will
+	// read the desired return address from memory
+	MOVD	$runtime·mstart(SB), ILR
+	MOVD	ILR, 120(BSP)
 
 	// call target function
 	MOVD	0(CTXT), I1	// code pointer
