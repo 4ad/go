@@ -106,29 +106,52 @@ TEXT runtime·gogo(SB), NOSPLIT|NOFRAME, $0-8
 	CALL	runtime·save_g(SB)
 
 	MOVD	0(g), ZR	// make sure g is not nil
-	MOVD	gobuf_lr(O0), OLR
+	MOVD	gobuf_sp(O0), O1
+	MOVD	gobuf_bp(O0), O2
+	MOVD	gobuf_lr(O0), O3
+	// retrieve ILR *before* switching stacks since a spill may
+	// overwrite the saved value
+	MOVD	120(O1), O4
 	MOVD	gobuf_ret(O0), RT1
 	MOVD	gobuf_ctxt(O0), CTXT
-	MOVD	gobuf_bp(O0), TMP
-	// special case; assume that if bp is zero, this is topofstack()
-	// and add bias so that BFP will be zero.
-	CMP	TMP, ZR
-	BNED	2(PC)
-	ADD	$STACK_BIAS, TMP
-	MOVD	TMP, BFP
-	MOVD	gobuf_sp(O0), TMP
-	// restore registers before resetting the stack pointer;
-	// otherwise a spill will overwrite the saved link register.
-	MOVD	120(TMP), ILR
-	MOVD	TMP, BSP
+	MOVD	gobuf_pc(O0), O5
 
 	MOVD	ZR, gobuf_sp(O0)
-	MOVD	ZR, gobuf_ret(O0)
-	MOVD	ZR, gobuf_lr(O0)
-	MOVD	ZR, gobuf_ctxt(O0)
 	MOVD	ZR, gobuf_bp(O0)
-	MOVD	gobuf_pc(O0), TMP
-	JMPL	TMP, L7
+	MOVD	ZR, gobuf_lr(O0)
+	MOVD	ZR, gobuf_ret(O0)
+	MOVD	ZR, gobuf_ctxt(O0)
+	MOVD	ZR, gobuf_pc(O0)
+
+	// switch stacks
+	MOVD	O1, BSP
+
+	// set registers *after* switching stacks to avoid spills to
+	// original stack; then manually spill to new stack to ensure Go
+	// itself can read the new values
+	MOVD	ZR, O0
+	MOVD	ZR, O1
+	MOVD	O3, OLR
+	MOVD	O4, ILR
+	MOVD	O4, 120(BSP)
+
+	// special case; if bp is zero, assume this is topofstack()
+	// and add bias before setting BFP so that it will be zero.
+	CMP	O2, ZR
+	BNED	nottop
+	MOVD	ZR, 112(BSP)
+	ADD	$STACK_BIAS, O2
+	MOVD	O2, BFP
+	MOVD	ZR, O2
+	JMPL	O5, L7
+
+nottop:
+	MOVD	O2, BFP
+	SUB	$STACK_BIAS, O2
+	MOVD	O2, 112(BSP)
+	MOVD	ZR, O2
+	JMPL	O5, L7
+
 
 // void mcall(fn func(*g))
 // Switch to m->g0's stack, call fn(g).
@@ -241,6 +264,8 @@ switch:
 	CALL	runtime·save_g(SB)
 	MOVD	(g_sched+gobuf_bp)(g), RT1
 	MOVD	(g_sched+gobuf_sp)(g), O0
+	// retrieve ILR *before* switching stacks since a spill may
+	// overwrite the saved value
 	MOVD	120(O0), O1
 	MOVD	O0, BSP
 	// set BFP/ILR *after* switching stacks to avoid spills to original
