@@ -588,9 +588,12 @@ TEXT ·asmcgocall(SB),NOSPLIT,$16-20
 	MOVD	arg+8(FP), O0
 
 	// save original stack pointer
-	MOVD	BSP, I1
+	MOVD	BSP, O2
+
 	// save g
-	MOVD	g, I2
+	MOVD	g, O3
+	CMP	O3, ZR
+	BED	nosave
 
 	MOVD	g_m(g), L1
 	MOVD	m_gsignal(L1), L2
@@ -615,15 +618,14 @@ TEXT ·asmcgocall(SB),NOSPLIT,$16-20
 g0:
 	// Now on a scheduling stack (a pthread-created stack).
 	// save old g on stack
-	MOVD	I2, (16+FIXED_FRAME-8)(BSP)
+	MOVD	O3, (16+FIXED_FRAME-8)(BSP)
 	// save depth in old g stack, can't just save SP, as stack
 	// might be copied during a callback
-	MOVD	(g_stack+stack_hi)(I2), L1
-	SUB	I1, L1
+	MOVD	(g_stack+stack_hi)(O3), L1
+	SUB	O2, L1
 	MOVD	L1, (16+FIXED_FRAME-16)(BSP)
 
 	// call target function
-//	CALL	runtime·save_g(SB)
 	CALL	(O1)
 
 	// Restore g
@@ -646,30 +648,82 @@ g0:
 	MOVW	O0, ret+16(FP)
 	RET
 
-// cgocallback(void (*fn)(void*), void *frame, uintptr framesize)
-// Turn the fn into a Go func (by taking its address) and call
-// cgocallback_gofunc.
-TEXT runtime·cgocallback(SB),NOSPLIT,$32-24
-	MOVD	$fn+0(FP), I3
-	MOVD	I3, (FIXED_FRAME+0)(BSP)
-	MOVD	frame+8(FP), I3
-	MOVD	I3, (FIXED_FRAME+8)(BSP)
-	MOVD	framesize+16(FP), I3
-	MOVD	I3, (FIXED_FRAME+16)(BSP)
-	MOVD	$runtime·cgocallback_gofunc(SB), I3
-	CALL	I3
+nosave:
+	// Running on a system stack, perhaps even without a g.
+	// Having no g can happen during thread creation or thread teardown
+	// (see needm/dropm on Solaris, for example).
+	// This code is like the above sequence but without saving/restoring g
+	// and without worrying about the stack moving out from under us
+	// (because we're on a system stack, not a goroutine stack).
+	// The above code could be used directly if already on a system stack,
+	// but then the only path through this code would be a rare case on Solaris.
+	// Using this code for all "already on system stack" calls exercises it more,
+	// which should help keep it correct.
+	SUB	$(16+FIXED_FRAME), O2, O4
+	MOVD	O4, BSP
+	// set BFP/ILR *after* switching stacks to avoid spills to original
+	// stack; then manually spill to new stack to ensure Go itself can
+	// read the new values
+	MOVD	O2, BFP				// previous %sp becomes %fp
+	SUB	$STACK_BIAS, O2, O4
+	MOVD	O4, 112(BSP)
+	MOVD	ILR, 120(BSP)
+	MOVD	ZR, (16+FIXED_FRAME-8)(BSP)	// where above code stores g; in case someone looks during debugging
+
+	MOVD	O2, (16+FIXED_FRAME-16)(BSP)	// save original stack pointer
+
+	// call target function
+	CALL	(O1)
+
+	// retrieve BFP/ILR *before* switching stacks since a spill may
+	// overwrite the saved value
+	MOVD	(16+FIXED_FRAME-16)(BSP), TMP	// retrieve original stack pointer
+	MOVD	112(TMP), RT1
+	ADD	$STACK_BIAS, RT1		// %fp in stack is unbiased
+	MOVD	120(TMP), O2
+
+	MOVD	TMP, BSP // restore original stack pointer
+
+	// set BFP/ILR *after* switching stacks to avoid spills to original
+	// stack; then manually spill to new stack to ensure Go itself can
+	// read the new values
+	MOVD	RT1, BFP
+	MOVD	RT1, 112(BSP)
+	MOVD	O2, ILR
+	MOVD	O2, 120(BSP)
+
+	MOVW	O0, ret+16(FP)
 	RET
 
-// cgocallback_gofunc(FuncVal*, void *frame, uintptr framesize)
+
+// cgocallback(void (*fn)(void*), void *frame, uintptr framesize, uintptr ctxt)
+// Turn the fn into a Go func (by taking its address) and call
+// cgocallback_gofunc.
+TEXT runtime·cgocallback(SB),NOSPLIT,$32-32
+	MOVD	$fn+0(FP), TMP
+	MOVD	TMP, (FIXED_FRAME+0)(BSP)
+	MOVD	frame+8(FP), TMP
+	MOVD	TMP, (FIXED_FRAME+8)(BSP)
+	MOVD	framesize+16(FP), TMP
+	MOVD	TMP, (FIXED_FRAME+16)(BSP)
+	MOVD	ctxt+24(FP), TMP
+	MOVD	TMP, FIXED_FRAME+24(BSP)
+	MOVD	$runtime·cgocallback_gofunc(SB), RT1
+	CALL	RT1
+	RET
+
+// cgocallback_gofunc(FuncVal*, void *frame, uintptr framesize, uintptr ctxt)
 // See cgocall.go for more details.
-TEXT ·cgocallback_gofunc(SB),NOSPLIT,$32-24
+TEXT ·cgocallback_gofunc(SB),NOSPLIT,$16-32
 	NO_LOCAL_POINTERS
-	UNDEF
 
 	// Load m and g from thread-local storage.
-	MOVB	runtime·iscgo(SB), I1
-	CMP	I1, ZR
+	// On Solaris we always use TLS, even without cgo.
+#ifndef GOOS_solaris
+	MOVB	runtime·iscgo(SB), RT1
+	CMP	RT1, ZR
 	BED	nocgo
+#endif
 	CALL	runtime·load_g(SB)
 nocgo:
 
@@ -702,9 +756,11 @@ needm:
 	// that restored SP will be uninitialized (typically 0) and
 	// will not be usable.
 	MOVD	g_m(g), O0
-	MOVD	m_g0(O0), I1
+	MOVD	m_g0(O0), O1
 	MOVD	BSP, TMP
-	MOVD	TMP, (g_sched+gobuf_sp)(I1)
+	MOVD	TMP, (g_sched+gobuf_sp)(O1)
+	MOVD	BFP, TMP
+	MOVD	TMP, (g_sched+gobuf_bp)(O1)
 
 havem:
 	// Now there's a valid m, and we're running on its m->g0.
@@ -712,11 +768,14 @@ havem:
 	// Save current sp in m->g0->sched.sp in preparation for
 	// switch back to m->curg stack.
 	// NOTE: unwindm knows that the saved g->sched.sp is at 8(I3) aka savedsp-16(SP).
-	MOVD	m_g0(O0), I1
-	MOVD	(g_sched+gobuf_sp)(I1), I4
-	MOVD	I4, savedsp-16(SP)
+	MOVD	m_g0(O0), O1
+	MOVD	(g_sched+gobuf_sp)(O1), TMP
+	MOVD	(g_sched+gobuf_bp)(O1), RT1
+	MOVD	TMP, savedsp-16(SP)
 	MOVD	BSP, TMP
-	MOVD	TMP, (g_sched+gobuf_sp)(I1)
+	MOVD	TMP, (g_sched+gobuf_sp)(O1)
+	MOVD	BFP, TMP
+	MOVD	TMP, (g_sched+gobuf_bp)(O1)
 
 	// Switch to m->curg stack and call runtime.cgocallbackg.
 	// Because we are taking over the execution of m->curg
@@ -736,18 +795,23 @@ havem:
 	MOVD	m_curg(O0), g
 	CALL	runtime·save_g(SB)
 
-	MOVD	(g_sched+gobuf_sp)(g), I4 // prepare stack as I4
-	MOVD	(g_sched+gobuf_pc)(g), L6
-	MOVD	L6, -(FIXED_FRAME+16)(I4)
-	MOVD	$-(FIXED_FRAME+16)(I4), TMP
+	MOVD	(g_sched+gobuf_sp)(g), O1 // prepare stack as O1
+	MOVD	(g_sched+gobuf_pc)(g), O2
+	MOVD	O2, -(FIXED_FRAME+16)(O1)
+	MOVD	$-(FIXED_FRAME+16)(O1), TMP
 	MOVD	TMP, BSP
+	MOVD	O1, BFP			// sched's %sp becomes %fp
+	SUB	$STACK_BIAS, O1
+	MOVD	O1, 112(TMP)
+	MOVD	O2, ILR
+	MOVD	ILR, 120(TMP)		// set return address for traceback
 	CALL	runtime·cgocallbackg(SB)
 
 	// Restore g->sched (== m->curg->sched) from saved values.
-	MOVD	0(BSP), L6
-	MOVD	L6, (g_sched+gobuf_pc)(g)
-	MOVD	$(FIXED_FRAME+16)(BSP), I4
-	MOVD	I4, (g_sched+gobuf_sp)(g)
+	MOVD	0(BSP), TMP
+	MOVD	TMP, (g_sched+gobuf_pc)(g)
+	MOVD	$(FIXED_FRAME+16)(BSP), TMP
+	MOVD	TMP, (g_sched+gobuf_sp)(g)
 
 	// Switch back to m->g0's stack and restore m->g0->sched.sp.
 	// (Unlike m->curg, the g0 goroutine never uses sched.pc,
@@ -756,18 +820,27 @@ havem:
 	MOVD	m_g0(O0), g
 	CALL	runtime·save_g(SB)
 
-	MOVD	(g_sched+gobuf_sp)(g), TMP
-	// restore registers before resetting the stack pointer;
-	// otherwise a spill will overwrite the saved link register.
-	MOVD	120(TMP), ILR
-	MOVD	TMP, BSP
-	MOVD	savedsp-16(SP), I4
-	MOVD	I4, (g_sched+gobuf_sp)(g)
+	// retrieve BFP/ILR *before* switching stacks since a spill may
+	// overwrite the saved value
+	MOVD	(g_sched+gobuf_bp)(g), RT1
+	MOVD	(g_sched+gobuf_sp)(g), O0
+	MOVD	120(O0), O1
+	MOVD	O0, BSP
+	// set BFP/ILR *after* switching stacks to avoid spills to original
+	// stack; then manually spill to new stack to ensure Go itself can
+	// read the new values
+	MOVD	RT1, BFP
+	SUB	$STACK_BIAS, RT1
+	MOVD	RT1, 112(BSP)
+	MOVD	O1, ILR
+	MOVD	ILR, 120(BSP)
+	MOVD	savedsp-16(SP), TMP
+	MOVD	TMP, (g_sched+gobuf_sp)(g)
 
 	// If the m on entry was nil, we called needm above to borrow an m
 	// for the duration of the call. Since the call is over, return it with dropm.
-	MOVD	savedm-8(SP), O1
-	CMP	O1, ZR
+	MOVD	savedm-8(SP), TMP
+	CMP	TMP, ZR
 	BNED	droppedm
 	MOVD	$runtime·dropm(SB), RT1
 	CALL	(RT1)
