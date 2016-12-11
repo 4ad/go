@@ -18,8 +18,7 @@
 // NOT USING GO CALLING CONVENTION.
 TEXT runtime·miniterrno(SB),NOSPLIT|REGWIN,$0
 	// asmcgocall will put first argument into I0.
-	MOVD	I0, I1
-	CALL	I1	// SysV ABI so returns in O0
+	CALL	I0	// SysV ABI so returns in O0
 	CALL	runtime·load_g(SB)
 	MOVD	g_m(g), I3
 	MOVD	O0,	(m_mOS+mOS_perrno)(I3)
