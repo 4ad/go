@@ -583,7 +583,7 @@ TEXT gosave<>(SB),NOSPLIT|NOFRAME,$0
 	RET
 
 // func asmcgocall(fn, arg unsafe.Pointer) int32
-TEXT ·asmcgocall(SB),NOSPLIT,$16-20
+TEXT ·asmcgocall(SB),NOSPLIT,$0-20
 	MOVD	fn+0(FP), O1
 	MOVD	arg+8(FP), O0
 
