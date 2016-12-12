@@ -165,6 +165,9 @@ TEXT runtime·mcall(SB), NOSPLIT|NOFRAME, $0-8
 	MOVD	g, (g_sched+gobuf_g)(g)
 	MOVD	$0(BFP), (g_sched+gobuf_bp)(g)
 
+	// Preserve return address for use when switching stacks later.
+	MOVD	OLR, O1
+
 	// Switch to m->g0 & its stack, call fn.
 	MOVD	g, O0
 	MOVD	g_m(g), TMP
@@ -173,17 +176,24 @@ TEXT runtime·mcall(SB), NOSPLIT|NOFRAME, $0-8
 	CMP	g, O0
 	BNED	ok
 	JMP	runtime·badmcall(SB)
-ok:
 
+ok:
 	MOVD	fn+0(FP), CTXT			// context
-	MOVD	0(CTXT), O1			// code pointer
-	MOVD	(g_sched+gobuf_sp)(g), TMP
-	MOVD	TMP, BFP
-	SUB	$FIXED_FRAME+16, TMP
-	MOVD	TMP, BSP	// sp = m->g0->sched.sp
+	MOVD	0(CTXT), O2			// code pointer
+	MOVD	(g_sched+gobuf_sp)(g), O3
+	SUB	$FIXED_FRAME+16, O3, O4
+	MOVD	O4, BSP	// sp = m->g0->sched.sp
+	// set BFP/ILR *after* switching stacks to avoid spills to original
+	// stack; then manually spill to new stack to ensure Go itself can
+	// read the new values
+	MOVD	O3, BFP
+	SUB	$STACK_BIAS, O3
+	MOVD	O3, 112(BSP)
+	MOVD	O1, ILR
+	MOVD	ILR, 120(BSP)
 	MOVD	O0, (FIXED_FRAME+0)(BSP)
 	MOVD	ZR, (FIXED_FRAME+8)(BSP)
-	CALL	(O1)
+	CALL	(O2)
 	JMP	runtime·badmcall2(SB)
 
 // systemstack_switch is a dummy routine that systemstack leaves at the bottom
