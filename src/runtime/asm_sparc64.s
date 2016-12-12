@@ -791,7 +791,7 @@ havem:
 	// so that the traceback will seamlessly trace back into
 	// the earlier calls.
 	//
-	// In the new goroutine, -16(SP) and -8(SP) are unused.
+	// In the new goroutine, -8(SP) is unused.
 	MOVD	m_curg(O0), g
 	CALL	runtime·save_g(SB)
 
@@ -799,6 +799,9 @@ havem:
 	MOVD	(g_sched+gobuf_pc)(g), O2
 	MOVD	O2, -(FIXED_FRAME+16)(O1)
 	MOVD	$-(FIXED_FRAME+16)(O1), TMP
+	MOVD	ctxt+24(FP), O3
+	MOVD	ZR, -8(O1)
+	MOVD	O3, -16(O1)
 	MOVD	TMP, BSP
 	MOVD	O1, BFP			// sched's %sp becomes %fp
 	SUB	$STACK_BIAS, O1
