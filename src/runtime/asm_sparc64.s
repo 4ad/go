@@ -349,15 +349,20 @@ TEXT runtime·morestack(SB),NOSPLIT|NOFRAME,$0-0
 
 	// Call newstack on m->g0's stack.
 	MOVD	m_g0(O0), g
+	// Preserve return address for use when switching stacks later.
 	MOVD	OLR, O2
 	CALL	runtime·save_g(SB)
 	MOVD	(g_sched+gobuf_sp)(g), O0
-	MOVD	O0, BFP
 	SUB	$FIXED_FRAME, O0, O1
 	MOVD	O1, BSP
+	// set BFP/ILR *after* switching stacks to avoid spills to original
+	// stack; then manually spill to new stack to ensure Go itself can
+	// read the new values
+	MOVD	O0, BFP
 	SUB	$STACK_BIAS, O0
 	MOVD	O0, 112(BSP)
-	MOVD	O2, 120(BSP)
+	MOVD	O2, ILR
+	MOVD	ILR, 120(BSP)
 
 	CALL	runtime·newstack(SB)
 
