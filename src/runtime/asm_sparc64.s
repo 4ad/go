@@ -550,7 +550,7 @@ TEXT runtime·procyield(SB),NOSPLIT,$0-0
 // void jmpdefer(fv, sp);
 // called from deferreturn.
 // 1. grab stored LR for caller
-// 2. sub 4 bytes to get back to BL deferreturn
+// 2. sub 8 bytes to get back to BL deferreturn
 // 3. BR to fn
 TEXT runtime·jmpdefer(SB), NOSPLIT|NOFRAME, $0-16
 	// We're in the same stack frame as our caller, deferreturn,
@@ -558,32 +558,37 @@ TEXT runtime·jmpdefer(SB), NOSPLIT|NOFRAME, $0-16
 	// 
 	// We need to subtract -8 from this value, because the deferred
 	// functions return to $8(OLR).
-	MOVD	120(BSP), L3
-	SUB	$8, L3
-	// use deferreturn's return address
-	MOVD	L3, OLR
-	// restore deferreturn's caller's return address before resetting
-	// the stack pointer; otherwise a spill will overwrite the saved
-	// link register.
-	MOVD	120(BFP), ILR
+	MOVD	120(BSP), L1
+	SUB	$8, L1
+	// Preserve deferreturn's caller's return address before resetting
+	// BSP/BFP.
+	MOVD	120(BFP), L2
 
 	// fv is the deferred function.
 	MOVD	fv+0(FP), CTXT
-	MOVD	0(CTXT), L1
 
 	// retrieve BSP, we reuse deferreturn's frame,
 	// so BFP is our caller's BSP
-	MOVD	BFP, 	L4
+	MOVD	BFP, RT1
 	// retrieve RFP
-	MOVD	112(L4), L5
-	// set BFP
-	ADD	$STACK_BIAS, L5
-	MOVD	L5, BFP
+	MOVD	112(BFP), RT2
 	// set BSP
-	MOVD	L4, BSP
+	MOVD	RT1, BSP
+	// set BFP
+	ADD	$STACK_BIAS, RT2, RT1
+	MOVD	RT1, BFP
+	MOVD	RT2, 112(BSP)
+	// set BFP/*LR *after* switching stacks to avoid spills to original
+	// stack; then manually spill to new stack to ensure Go itself can
+	// read the new values
+	MOVD	L2, ILR
+	MOVD	ILR, 120(BSP)
+	// return to deferreturn's return address
+	MOVD	L1, OLR
 
 	// call deferred function
-	JMPL	L1, L7
+	MOVD	0(CTXT), TMP
+	JMPL	TMP, L7
 
 // Save state of caller into g->sched.
 TEXT gosave<>(SB),NOSPLIT|NOFRAME,$0
