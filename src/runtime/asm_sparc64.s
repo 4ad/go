@@ -32,7 +32,6 @@ TEXT runtime·rt0_go(SB),NOSPLIT,$16-0
 
 	CALL	runtime·do_cgo_init(SB)
 
-nocgo:
 	// update stackguard after _cgo_init
 	MOVD	(g_stack+stack_lo)(g), I1
 	ADD	$const__StackGuard, I1
@@ -46,6 +45,7 @@ nocgo:
 	MOVD	g, m_g0(I1)
 	// save m0 to g0->m
 	MOVD	I1, g_m(g)
+	CALL	runtime·save_g(SB)
 
 	CALL	runtime·check(SB)
 
@@ -603,6 +603,8 @@ TEXT gosave<>(SB),NOSPLIT|NOFRAME,$0
 	MOVD	TMP, (g_sched+gobuf_bp)(g)
 	RET
 
+#define CGOFRAMESZ 192
+
 // func asmcgocall(fn, arg unsafe.Pointer) int32
 TEXT ·asmcgocall(SB),NOSPLIT,$0-20
 	MOVD	fn+0(FP), O1
@@ -610,61 +612,76 @@ TEXT ·asmcgocall(SB),NOSPLIT,$0-20
 
 	// save original stack pointer
 	MOVD	BSP, O2
+	MOVD	O2, O4
 
-	// save g
+	// Figure out if we need to switch to m->g0 stack.
+	// We get called to create new OS threads too, and those
+	// come in on the m->g0 stack already.
 	MOVD	g, O3
 	CMP	O3, ZR
 	BED	nosave
 
-	MOVD	g_m(g), L1
-	MOVD	m_gsignal(L1), L2
-	CMP	g, L2
-	BED	g0
-	MOVD	m_g0(L1), L2
-	CMP	g, L2
-	BED	g0
+	// These cases use the noswitch path instead of the nosave path, as
+	// stack might be copied during a callback.
+	MOVD	g_m(O3), O5
+	MOVD	m_gsignal(O5), O5
+	CMP	g, O5
+	BED	noswitch
 
+	MOVD	g_m(O3), O5
+	MOVD	m_g0(O5), O5
+	CMP	g, O5
+	BED	noswitch
+
+	// Switch to g0 and system stack
 	CALL	gosave<>(SB)
-	MOVD	L2, g
+	MOVD	O5, g
 	CALL	runtime·save_g(SB)
+	MOVD	(g_sched+gobuf_sp)(g), O4
 
-	MOVD	(g_sched+gobuf_sp)(g), L4
-	MOVD	L4, BFP
-	SUB	$(16+FIXED_FRAME), L4, L5
-	MOVD	L5, BSP
-	SUB	$STACK_BIAS, L4
-	MOVD	L4, 112(BSP)
+noswitch:
+	SUB	$(CGOFRAMESZ), O4, O5
+	MOVD	O5, BSP
+	// set BFP *after* switching stacks to avoid spills to original
+	// stack; then manually spill to new stack to ensure Go itself can
+	// read the new values
+	MOVD	O4, BFP
+	SUB	$STACK_BIAS, O4
+	MOVD	O4, 112(BSP)
 	MOVD	ILR, 120(BSP)
 
-g0:
 	// Now on a scheduling stack (a pthread-created stack).
 	// save old g on stack
-	MOVD	O3, (16+FIXED_FRAME-8)(BSP)
+	MOVD	O3, (CGOFRAMESZ-8)(BSP)
 	// save depth in old g stack, can't just save SP, as stack
 	// might be copied during a callback
-	MOVD	(g_stack+stack_hi)(O3), L1
-	SUB	O2, L1
-	MOVD	L1, (16+FIXED_FRAME-16)(BSP)
+	MOVD	(g_stack+stack_hi)(O3), O3
+	SUB	O2, O3
+	MOVD	O3, (CGOFRAMESZ-16)(BSP)
 
 	// call target function
 	CALL	(O1)
 
 	// Restore g
-	MOVD	(16+FIXED_FRAME-8)(BSP), g
+	MOVD	(CGOFRAMESZ-8)(BSP), g
 	CALL	runtime·save_g(SB)
 	// Retrieve stack pointer
-	MOVD	(g_stack+stack_hi)(g), L1
-	MOVD	(16+FIXED_FRAME-16)(BSP), L2
-	SUB	L2, L1
-	// Restore frame pointer
-	MOVD	112(L1), L3
-	ADD	$STACK_BIAS, L3
-	MOVD	L3, BFP
-	// restore registers before resetting the stack pointer;
-	// otherwise a spill will overwrite the saved link register.
-	MOVD	120(L1), ILR
+	MOVD	(g_stack+stack_hi)(g), O2
+	MOVD	(CGOFRAMESZ-16)(BSP), O3
+	SUB	O3, O2
+	// Retrieve frame pointer and return address.
+	MOVD	112(O2), O3
+	ADD	$STACK_BIAS, O3, O4
+	MOVD	120(O2), O5
 	// Restore stack pointer
-	MOVD	L1, BSP
+	MOVD	O2, BSP
+	// set BFP/ILR *after* switching stacks to avoid spills to original
+	// stack; then manually spill to new stack to ensure Go itself can
+	// read the new values
+	MOVD	O4, BFP
+	MOVD	O3, 112(BSP)
+	MOVD	O5, ILR
+	MOVD	ILR, 120(BSP)
 
 	MOVW	O0, ret+16(FP)
 	RET
@@ -676,42 +693,38 @@ nosave:
 	// This code is like the above sequence but without saving/restoring g
 	// and without worrying about the stack moving out from under us
 	// (because we're on a system stack, not a goroutine stack).
-	// The above code could be used directly if already on a system stack,
-	// but then the only path through this code would be a rare case on Solaris.
-	// Using this code for all "already on system stack" calls exercises it more,
-	// which should help keep it correct.
-	SUB	$(16+FIXED_FRAME), O2, O4
-	MOVD	O4, BSP
+	SUB	$(CGOFRAMESZ), O4, O5
+	MOVD	O5, BSP
 	// set BFP/ILR *after* switching stacks to avoid spills to original
 	// stack; then manually spill to new stack to ensure Go itself can
 	// read the new values
-	MOVD	O2, BFP				// previous %sp becomes %fp
-	SUB	$STACK_BIAS, O2, O4
+	MOVD	O4, BFP				// previous %sp becomes %fp
+	SUB	$STACK_BIAS, O4
 	MOVD	O4, 112(BSP)
 	MOVD	ILR, 120(BSP)
-	MOVD	ZR, (16+FIXED_FRAME-8)(BSP)	// where above code stores g; in case someone looks during debugging
 
-	MOVD	O2, (16+FIXED_FRAME-16)(BSP)	// save original stack pointer
+	MOVD	ZR, (CGOFRAMESZ-8)(BSP)		// where above code stores g; in case someone looks during debugging
+
+	MOVD	O2, (CGOFRAMESZ-16)(BSP)	// save original stack pointer
 
 	// call target function
 	CALL	(O1)
 
-	// retrieve BFP/ILR *before* switching stacks since a spill may
-	// overwrite the saved value
-	MOVD	(16+FIXED_FRAME-16)(BSP), TMP	// retrieve original stack pointer
-	MOVD	112(TMP), RT1
-	ADD	$STACK_BIAS, RT1		// %fp in stack is unbiased
-	MOVD	120(TMP), O2
-
-	MOVD	TMP, BSP // restore original stack pointer
-
+	// Retrieve stack pointer
+	MOVD	(CGOFRAMESZ-16)(BSP), O2
+	// Retrieve frame pointer and return address.
+	MOVD	112(O2), O3
+	ADD	$STACK_BIAS, O3, O4
+	MOVD	120(O2), O5
+	// Restore stack pointer
+	MOVD	O2, BSP
 	// set BFP/ILR *after* switching stacks to avoid spills to original
 	// stack; then manually spill to new stack to ensure Go itself can
 	// read the new values
-	MOVD	RT1, BFP
-	MOVD	RT1, 112(BSP)
-	MOVD	O2, ILR
-	MOVD	O2, 120(BSP)
+	MOVD	O4, BFP
+	MOVD	O3, 112(BSP)
+	MOVD	O5, ILR
+	MOVD	ILR, 120(BSP)
 
 	MOVW	O0, ret+16(FP)
 	RET
