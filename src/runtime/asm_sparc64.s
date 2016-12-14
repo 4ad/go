@@ -347,10 +347,11 @@ TEXT runtime·morestack(SB),NOSPLIT|NOFRAME,$0-0
 	MOVD	TMP, (m_morebuf+gobuf_sp)(O0)	// f's caller's BSP
 	MOVD	g, (m_morebuf+gobuf_g)(O0)
 
-	// Call newstack on m->g0's stack.
-	MOVD	m_g0(O0), g
 	// Preserve return address for use when switching stacks later.
 	MOVD	OLR, O2
+
+	// Call newstack on m->g0's stack.
+	MOVD	m_g0(O0), g
 	CALL	runtime·save_g(SB)
 	MOVD	(g_sched+gobuf_sp)(g), O0
 	SUB	$FIXED_FRAME, O0, O1
