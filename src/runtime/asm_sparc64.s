@@ -577,11 +577,11 @@ TEXT runtime·jmpdefer(SB), NOSPLIT|NOFRAME, $0-16
 	MOVD	RT1, BSP
 	// set BFP
 	ADD	$STACK_BIAS, RT2, RT1
-	MOVD	RT1, BFP
-	MOVD	RT2, 112(BSP)
 	// set BFP/*LR *after* switching stacks to avoid spills to original
 	// stack; then manually spill to new stack to ensure Go itself can
 	// read the new values
+	MOVD	RT1, BFP
+	MOVD	RT2, 112(BSP)
 	MOVD	L2, ILR
 	MOVD	ILR, 120(BSP)
 	// return to deferreturn's return address
