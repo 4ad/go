@@ -109,6 +109,8 @@ func TestDisasm(t *testing.T) {
 		t.Skipf("skipping on %s, issue 12559", runtime.GOARCH)
 	case "s390x":
 		t.Skipf("skipping on %s, issue 15255", runtime.GOARCH)
+	case "sparc64":
+		t.Skipf("skipping on %s, not yet supported", runtime.GOARCH)
 	}
 	testDisasm(t)
 }
@@ -127,6 +129,8 @@ func TestDisasmExtld(t *testing.T) {
 		t.Skipf("skipping on %s, issue 12559 and 12560", runtime.GOARCH)
 	case "s390x":
 		t.Skipf("skipping on %s, issue 15255", runtime.GOARCH)
+	case "sparc64":
+		t.Skipf("skipping on %s, not yet supported", runtime.GOARCH)
 	}
 	// TODO(jsing): Reenable once openbsd/arm has external linking support.
 	if runtime.GOOS == "openbsd" && runtime.GOARCH == "arm" {

@@ -713,6 +713,15 @@ func adjustframe(frame *stkframe, arg unsafe.Pointer) bool {
 	default:
 		minsize = sys.MinFrameSize
 	}
+
+	if sys.ArchFamily == sys.SPARC64 && size >= sys.MinFrameSize {
+		// framepointer is always available if there's a frame on sparc64
+		if stackDebug >= 3 {
+			print("      saved bp\n")
+		}
+		adjustrawpointer(adjinfo, unsafe.Pointer(frame.sp+uintptr(112)))
+	}
+
 	if size > minsize {
 		var bv bitvector
 		stackmap := (*stackmap)(funcdata(f, _FUNCDATA_LocalsPointerMaps))
@@ -732,14 +741,6 @@ func adjustframe(frame *stkframe, arg unsafe.Pointer) bool {
 			print("      locals ", pcdata, "/", stackmap.n, " ", size/sys.PtrSize, " words ", bv.bytedata, "\n")
 		}
 		adjustpointers(unsafe.Pointer(frame.varp-size), &bv, adjinfo, f)
-	}
-
-	if sys.ArchFamily == sys.SPARC64 && frame.sp > 0 {
-		// framepointer is always enabled for sparc64
-		if stackDebug >= 3 {
-			print("      saved bp\n")
-		}
-		adjustrawpointer(adjinfo, unsafe.Pointer(frame.sp+uintptr(112)))
 	}
 
 	if sys.ArchFamily == sys.AMD64 && frame.argp-frame.varp == 2*sys.RegSize {

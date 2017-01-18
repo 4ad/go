@@ -99,7 +99,7 @@ func archinit(ctxt *ld.Link) {
 			log.Fatalf("cannot use -linkmode=external with -H %v", ld.Headtype)
 		}
 
-	case obj.Hlinux, obj.Hdarwin:
+	case obj.Hlinux, obj.Hsolaris:
 		break
 	}
 

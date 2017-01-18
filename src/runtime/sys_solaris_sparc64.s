@@ -18,8 +18,7 @@
 // NOT USING GO CALLING CONVENTION.
 TEXT runtime·miniterrno(SB),NOSPLIT|REGWIN,$0
 	// asmcgocall will put first argument into I0.
-	MOVD	I0, I1
-	CALL	I1	// SysV ABI so returns in O0
+	CALL	I0	// SysV ABI so returns in O0
 	CALL	runtime·load_g(SB)
 	MOVD	g_m(g), I3
 	MOVD	O0,	(m_mOS+mOS_perrno)(I3)
@@ -65,7 +64,7 @@ TEXT runtime·pipe1(SB),NOSPLIT|REGWIN,$16
 // NOT USING GO CALLING CONVENTION.
 TEXT runtime·asmsysvicall6(SB),NOSPLIT|REGWIN,$0
 	// asmcgocall will put first argument into I0.
-	MOVD	I0, L7
+	MOVD	I0, L6
 	MOVD	libcall_fn(I0), I3
 	MOVD	libcall_args(I0), L1
 	MOVD	libcall_n(I0), L2
@@ -96,8 +95,8 @@ skipargs:
 	MOVD	L1, g
 
 	// Return result
-	MOVD	O0, libcall_r1(L7)
-	MOVD	O1, libcall_r2(L7)
+	MOVD	O0, libcall_r1(L6)
+	MOVD	O1, libcall_r2(L6)
 	MOVD	O0, I0
 	MOVD	O1, I1
 
@@ -108,7 +107,7 @@ skipargs:
 	CMP	I4, ZR
 	BED	skiperrno2
 	MOVW	(I4), I4
-	MOVD	I4, libcall_err(L7)
+	MOVD	I4, libcall_err(L6)
 
 skiperrno2:	
 	RET
@@ -130,32 +129,37 @@ TEXT runtime·tstart_sysvicall(SB),NOSPLIT|REGWIN,$0
 	MOVD	I3, g_stackguard0(g)
 	MOVD	I3, g_stackguard1(g)
 
+	// initialize essential registers
+	CALL	runtime·reginit(SB)
+
 	CALL	runtime·stackcheck(SB)
 	CALL	runtime·mstart(SB)
 
 	MOVW	ZR, ret+8(FP)
 	RET
 
+#define SIGTRAMP_FRAME 144
+
 // Careful, this is called by __sighndlr, a libc function.
 // We must preserve registers as per SPARC64 ABI.
-TEXT runtime·sigtramp(SB),NOSPLIT|REGWIN,$256
+TEXT runtime·sigtramp(SB),NOSPLIT|REGWIN,$SIGTRAMP_FRAME
+	MOVD	g, L1
+	CALL	runtime·load_g(SB)
 	CMP	g, ZR
 	BNED	allgood
-	MOVD	I0, (FIXED_FRAME+0)(BSP)
-	CALL	runtime·badsignal(SB)
+	MOVD	L1, g
+	MOVD	I0, (8*0+FIXED_FRAME)(BSP)
+	MOVD	ZR, (8*1+FIXED_FRAME)(BSP)
+	MOVD	$runtime·badsignal(SB), L1
+	CALL	(L1)
 	JMP	exit
 
 allgood:
-	// save registers
-	MOVD	I0, -(8+21*8+256+FIXED_FRAME)(BSP)
-	MOVD	I1, -(8+22*8+256+FIXED_FRAME)(BSP)
-	MOVD	I2, -(8+23*8+256+FIXED_FRAME)(BSP)
-	MOVD	I3, -(8+24*8+256+FIXED_FRAME)(BSP)
-	MOVD	I4, -(8+25*8+256+FIXED_FRAME)(BSP)
-	MOVD	I5, -(8+26*8+256+FIXED_FRAME)(BSP)
+	// initialize essential registers (just in case)
+	CALL	runtime·reginit(SB)
 
 	// save g
-	MOVD	g, (-8+0+128+FIXED_FRAME)(BSP)
+	MOVD	g, (-8-0*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP)
 
 	// Save m->libcall and m->scratch. We need to do this because we
 	// might get interrupted by a signal in runtime·asmcgocall.
@@ -164,96 +168,104 @@ allgood:
 	MOVD	g_m(g), L1
 	MOVD	$m_libcall(L1), L2
 	MOVD	libcall_fn(L2), L3
-	MOVD	L3, -(8+1*8+256+FIXED_FRAME)(BSP)
+	MOVD	L3, (-8-1*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP)
 	MOVD	libcall_args(L2), L3
-	MOVD	L3, -(8+2*8+256+FIXED_FRAME)(BSP)
+	MOVD	L3, (-8-2*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP)
 	MOVD	libcall_n(L2), L3
-	MOVD	L3, -(8+3*8+256+FIXED_FRAME)(BSP)
+	MOVD	L3, (-8-3*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP)
 	MOVD	libcall_r1(L2), L3
-	MOVD	L3, -(8+4*8+256+FIXED_FRAME)(BSP)
+	MOVD	L3, (-8-4*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP)
 	MOVD	libcall_r2(L2), L3
-	MOVD	L3, -(8+5*8+256+FIXED_FRAME)(BSP)
+	MOVD	L3, (-8-5*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP)
 
 	// save m->scratch
 	MOVD	$(m_mOS+mOS_scratch)(L1), L2
 	MOVD	0(L2), L3
-	MOVD	L3, -(8+6*8+256+FIXED_FRAME)(BSP)
+	MOVD	L3, (-8-6*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP)
 	MOVD	8(L2), L3
-	MOVD	L3, -(8+7*8+256+FIXED_FRAME)(BSP)
+	MOVD	L3, (-8-7*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP)
 	MOVD	16(L2), L3
-	MOVD	L3, -(8+8*8+256+FIXED_FRAME)(BSP)
+	MOVD	L3, (-8-8*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP)
 	MOVD	24(L2), L3
-	MOVD	L3, -(8+9*8+256+FIXED_FRAME)(BSP)
+	MOVD	L3, (-8-9*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP)
 	MOVD	32(L2), L3
-	MOVD	L3, -(8+10*8+256+FIXED_FRAME)(BSP)
+	MOVD	L3, (-8-10*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP)
 	MOVD	40(L2), L3
-	MOVD	L3, -(8+11*8+256+FIXED_FRAME)(BSP)
+	MOVD	L3, (-8-11*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP)
 
 	// save errno, it might be EINTR; stuff we do here might reset it.
 	MOVD	(m_mOS+mOS_perrno)(L1), L2
-	MOVW	0(L2), L3
-	MOVD	L3, -(8+12*8+256+FIXED_FRAME)(BSP)
-
-	MOVD	g, I3
-	// g = m->gsignal
-	MOVD	m_gsignal(L1), L4
-	MOVD	L4, g
-
-	// TODO: If current SP is not in gsignal.stack, then adjust.
+	MOVW	0(L2), L2
+	MOVD	L2, (-8-12*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP)
 
 	// prepare call
 	MOVW	I0, (8*0+FIXED_FRAME)(BSP)
 	MOVD	I1, (8*1+FIXED_FRAME)(BSP)
 	MOVD	I2, (8*2+FIXED_FRAME)(BSP)
-	MOVD	I3, (8*3+FIXED_FRAME)(BSP)
+	MOVD	g, (8*3+FIXED_FRAME)(BSP)
+
+	// g = m->gsignal
+	MOVD	m_gsignal(L1), g
+	CALL	runtime·save_g(SB)
+
+	// TODO(shawn): If current SP is not in gsignal.stack, then assume
+	// non-Go code caused a signal and adjust gsignal.stack?
+	MOVD	(g_stack+stack_lo)(g), L2
+	MOVD	BSP, TMP
+	CMP	L2, TMP
+	BGED	checkhi
+	CALL	runtime·abort(SB)
+
+checkhi:
+	MOVD	(g_stack+stack_hi)(g), L2
+	MOVD	BSP, TMP
+	CMP	L2, TMP
+	BLD	handler
+	CALL	runtime·abort(SB)
+
+handler:
 	CALL	runtime·sighandler(SB)
 
-	// restore libcall
 	MOVD	g_m(g), L1
+	// restore libcall
 	MOVD	$m_libcall(L1), L2
-	MOVD	-(8+1*8+256+FIXED_FRAME)(BSP), L3
+	MOVD	(-8-1*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP), L3
 	MOVD	L3, libcall_fn(L2)
-	MOVD	-(8+2*8+256+FIXED_FRAME)(BSP), L3
+	MOVD	(-8-2*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP), L3
 	MOVD	L3, libcall_args(L2)
-	MOVD	-(8+3*8+256+FIXED_FRAME)(BSP), L3	
+	MOVD	(-8-3*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP), L3	
 	MOVD	L3, libcall_n(L2)
-	MOVD	-(8+4*8+256+FIXED_FRAME)(BSP), L3
+	MOVD	(-8-4*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP), L3
 	MOVD	L3, libcall_r1(L2)
-	MOVD	-(8+5*8+256+FIXED_FRAME)(BSP), L3
+	MOVD	(-8-5*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP), L3
 	MOVD	L3, libcall_r2(L2)
 
 	// restore scratch
 	MOVD	$(m_mOS+mOS_scratch)(L1), L2
-	MOVD	-(8+6*8+256+FIXED_FRAME)(BSP), L3
+	MOVD	(-8-6*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP), L3
 	MOVD	L3, 0(L2)
-	MOVD	-(8+7*8+256+FIXED_FRAME)(BSP), L3
+	MOVD	(-8-7*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP), L3
 	MOVD	L3, 8(L2)
-	MOVD	-(8+8*8+256+FIXED_FRAME)(BSP), L3
+	MOVD	(-8-8*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP), L3
 	MOVD	L3, 16(L2)
-	MOVD	-(8+9*8+256+FIXED_FRAME)(BSP), L3
+	MOVD	(-8-9*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP), L3
 	MOVD	L3, 24(L2)
-	MOVD	-(8+10*8+256+FIXED_FRAME)(BSP), L3
+	MOVD	(-8-10*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP), L3
 	MOVD	L3, 32(L2)
-	MOVD	-(8+11*8+256+FIXED_FRAME)(BSP), L3
+	MOVD	(-8-11*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP), L3
 	MOVD	L3, 40(L2)
 
 	// restore errno
 	MOVD	(m_mOS+mOS_perrno)(L1), L2
-	MOVD	-(8+12*8+256+FIXED_FRAME)(BSP), L3
+	MOVD	(-8-12*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP), L3
 	MOVW	L3, 0(L2)
 
 	// restore g
-	MOVD	(-8+0+256+FIXED_FRAME)(BSP), g
-
-	// restore registers
-	MOVD	-(8+21*8+256+FIXED_FRAME)(BSP), I0
-	MOVD	-(8+22*8+256+FIXED_FRAME)(BSP), I1
-	MOVD	-(8+23*8+256+FIXED_FRAME)(BSP), I2
-	MOVD	-(8+24*8+256+FIXED_FRAME)(BSP), I3
-	MOVD	-(8+25*8+256+FIXED_FRAME)(BSP), I4
-	MOVD	-(8+26*8+256+FIXED_FRAME)(BSP), I5
+	MOVD	(-8-0*8+SIGTRAMP_FRAME+FIXED_FRAME)(BSP), g
+	CALL	runtime·save_g(SB)
 
 exit:
+	// kernel will restore registers
 	RET
 
 

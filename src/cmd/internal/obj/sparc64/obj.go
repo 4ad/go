@@ -234,13 +234,13 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 	for last = ctxt.Cursym.Text; last.Link != nil; last = last.Link {
 	}
 
-	// MOV	OLR, I1
+	// MOV	OLR, I0
 	movlr := obj.Appendp(ctxt, last)
 	movlr.As = AMOVD
 	movlr.From.Type = obj.TYPE_REG
 	movlr.From.Reg = REG_OLR
 	movlr.To.Type = obj.TYPE_REG
-	movlr.To.Reg = REG_I1
+	movlr.To.Reg = REG_I0
 	movlr.Spadj = -framesize
 
 	// CALL runtime.morestack(SB)
@@ -259,9 +259,16 @@ func stacksplit(ctxt *obj.Link, p *obj.Prog, framesize int32) *obj.Prog {
 	}
 	call.To.Sym = obj.Linklookup(ctxt, morestack, 0)
 
-	// JMP start
+	// A CALL is used here instead of a JMP so that we have a full 32
+	// bit-signed displacement that we can encode into the instruction.
+	// Since this instruction is never actually executed, but instead used
+	// by rewindmorestack(), this is safe (if it was actually executed, it
+	// would overwrite %o7 which would destroy our original return
+	// address).
+
+	// CALL start
 	jmp := obj.Appendp(ctxt, call)
-	jmp.As = obj.AJMP
+	jmp.As = obj.ACALL
 	jmp.To.Type = obj.TYPE_BRANCH
 	jmp.Pcond = ctxt.Cursym.Text.Link
 	jmp.Spadj = +framesize
@@ -679,15 +686,6 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				p.To.Reg = REG_RSP
 				p.To.Offset = int64(112 + StackBias)
 
-				// MOVD OLR, (120+bias)(RSP)
-				p = obj.Appendp(ctxt, p)
-				p.As = AMOVD
-				p.From.Type = obj.TYPE_REG
-				p.From.Reg = REG_OLR
-				p.To.Type = obj.TYPE_MEM
-				p.To.Reg = REG_RSP
-				p.To.Offset = int64(120 + StackBias)
-
 				// MOVD OLR, ILR
 				p = obj.Appendp(ctxt, p)
 				p.As = AMOVD
@@ -695,6 +693,23 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 				p.From.Reg = REG_OLR
 				p.To.Type = obj.TYPE_REG
 				p.To.Reg = REG_ILR
+
+				// MOVD ILR, (120+bias)(RSP)
+				p = obj.Appendp(ctxt, p)
+				p.As = AMOVD
+				p.From.Type = obj.TYPE_REG
+				p.From.Reg = REG_ILR
+				p.To.Type = obj.TYPE_MEM
+				p.To.Reg = REG_RSP
+				p.To.Offset = int64(120 + StackBias)
+
+				// MOVD 0, OLR
+				p = obj.Appendp(ctxt, p)
+				p.As = AMOVD
+				p.From.Type = obj.TYPE_REG
+				p.From.Reg = REG_ZR
+				p.To.Type = obj.TYPE_REG
+				p.To.Reg = REG_OLR
 			}
 
 			if cursym.Text.From3.Offset&obj.WRAPPER != 0 {
@@ -842,11 +857,16 @@ func preprocess(ctxt *obj.Link, cursym *obj.LSym) {
 			q1.To.Type = obj.TYPE_REG
 			q1.To.Reg = REG_TMP
 
-			// MOVD ILR, OLR
+			// restore registers before resetting the stack
+			// pointer; otherwise a spill will overwrite the saved
+			// link register.
+
+			// MOVD (120+StackBias)(RSP), OLR
 			q1 = obj.Appendp(ctxt, q1)
 			q1.As = AMOVD
-			q1.From.Type = obj.TYPE_REG
-			q1.From.Reg = REG_ILR
+			q1.From.Type = obj.TYPE_MEM
+			q1.From.Reg = REG_RSP
+			q1.From.Offset = 120 + StackBias
 			q1.To.Type = obj.TYPE_REG
 			q1.To.Reg = REG_OLR
 

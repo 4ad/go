@@ -297,7 +297,6 @@ func setsig(i int32, fn uintptr, restart bool) {
 	var sa sigactiont
 
 	sa.sa_flags = _SA_SIGINFO | _SA_ONSTACK
-	sa.sa_flags = _SA_SIGINFO | _SA_ONSTACK
 	if restart {
 		sa.sa_flags |= _SA_RESTART
 	}

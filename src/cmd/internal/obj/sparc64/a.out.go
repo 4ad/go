@@ -185,7 +185,6 @@ const (
 )
 
 const (
-	StackAlign            = 8      // ABI says 16
 	StackBias             = 0x7ff  // craziness
 	WindowSaveAreaSize    = 16 * 8 // only slots for RFP and PLR used
 	ArgumentsSaveAreaSize = 6 * 8  // unused
@@ -234,7 +233,8 @@ const (
 	ClassIndir13     // n(R), n is 13-bit signed
 	ClassIndir       // n(R), n large
 
-	ClassBranch // n(PC) branch target, n is 21-bit signed, mod 4
+	ClassBranch      // n(PC) branch target, n is 21-bit signed, mod 4
+	ClassLargeBranch // n(PC) branch target, n is 32-bit signed, mod 4
 
 	ClassAddr    // $sym(SB)
 	ClassMem     // sym(SB)
@@ -274,6 +274,7 @@ var cnames = []string{
 	ClassIndir13:     "ClassIndir13",
 	ClassIndir:       "ClassIndir",
 	ClassBranch:      "ClassBranch",
+	ClassLargeBranch: "ClassLargeBranch",
 	ClassAddr:        "ClassAddr",
 	ClassMem:         "ClassMem",
 	ClassTLSAddr:     "ClassTLSAddr",

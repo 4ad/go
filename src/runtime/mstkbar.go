@@ -192,7 +192,7 @@ func gcInstallStackBarrier(gp *g, frame *stkframe) bool {
 	// Save the return PC and overwrite it with stackBarrier.
 	var lrUintptr uintptr
 	if usesLR {
-		lrUintptr = frame.sp + ReturnAddrOffset
+		lrUintptr = frame.sp + returnAddrOffset
 	} else {
 		lrUintptr = frame.fp - sys.RegSize
 	}

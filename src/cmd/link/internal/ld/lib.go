@@ -469,6 +469,11 @@ func (ctxt *Link) loadlib() {
 			Linkmode = LinkExternal
 		}
 
+		// cgo on SPARC64 requires external linking.
+		if SysArch.InFamily(sys.SPARC64) && iscgo {
+			Linkmode = LinkExternal
+		}
+
 		// Force external linking for msan.
 		if *flagMsan {
 			Linkmode = LinkExternal
@@ -1029,7 +1034,9 @@ func (l *Link) hostlink() {
 		// Do not let the host linker generate COPY relocations. These
 		// can move symbols out of sections that rely on stable offsets
 		// from the beginning of the section (like STYPE).
-		argv = append(argv, "-Wl,-znocopyreloc")
+		if obj.GOOS != "solaris" {
+			argv = append(argv, "-Wl,-znocopyreloc")
+		}
 
 		if SysArch.InFamily(sys.ARM, sys.ARM64) {
 			// On ARM, the GNU linker will generate COPY relocations

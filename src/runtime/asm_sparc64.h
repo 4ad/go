@@ -39,10 +39,5 @@
 #define WINDOW_SIZE 16*8
 #define FIXED_FRAME WINDOW_SIZE+ARG_PUSH_SIZE
 
-// Note: a define is used to avoid affecting registers.
-// TODO(shawn): membar may not be necessary for where we need flushes
-// #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
-#define REGFLUSH()	\
-	MEMBAR	$111;	\
-	FLUSHW;		\
-	MEMBAR	$111
+// membar #MemIssue|#Sync|#LoadLoad|#StoreLoad|#LoadStore|#StoreStore
+#define MEM_SYNC MEMBAR $111

@@ -44,6 +44,30 @@ func gentext(ctxt *ld.Link) {
 	log.Fatalf("gentext() not implemented")
 }
 
+func addgotsym(ctxt *ld.Link, s *ld.Symbol) {
+	if s.Got >= 0 {
+		return
+	}
+
+	ld.Adddynsym(ctxt, s)
+	got := ld.Linklookup(ctxt, ".got", 0)
+	s.Got = int32(got.Size)
+	ld.Adduint64(ctxt, got, 0)
+
+	if ld.Iself {
+		rela := ld.Linklookup(ctxt, ".rela.got", 0)
+		ld.Addaddrplus(ctxt, rela, got, int64(s.Got))
+		ld.Adduint64(ctxt, rela, ld.ELF64_R_INFO(uint32(s.Dynid), ld.R_SPARC_GLOB_DAT))
+		ld.Adduint64(ctxt, rela, 0)
+	} else {
+		ctxt.Diag("addgotsym: unsupported binary format")
+	}
+}
+
+func adddynrela(ctxt *ld.Link, rela *ld.Symbol, s *ld.Symbol, r *ld.Reloc) {
+	log.Fatalf("adddynrela not implemented")
+}
+
 func adddynrel(ctxt *ld.Link, s *ld.Symbol, r *ld.Reloc) bool {
 	targ := r.Sym
 	ctxt.Cursym = s
@@ -54,6 +78,66 @@ func adddynrel(ctxt *ld.Link, s *ld.Symbol, r *ld.Reloc) bool {
 			ctxt.Diag("unexpected relocation type %d", r.Type)
 			return false
 		}
+	case 256 + ld.R_SPARC_PC10:
+		if targ.Type == obj.SDYNIMPORT {
+			ctxt.Diag("unexpected R_SPARC_PC10 relocation for dynamic symbol %s", targ.Name)
+		}
+		if targ.Type == 0 || targ.Type == obj.SXREF {
+			ctxt.Diag("unknown symbol %s in pcrel", targ.Name)
+		}
+		r.Type = obj.R_PCREL
+		r.Add += int64(r.Siz)
+		println("R_SPARC_PC10 relocation for symbol ", targ.Name)
+		return true
+
+	case 256 + ld.R_SPARC_PC22:
+		if targ.Type == obj.SDYNIMPORT {
+			ctxt.Diag("unexpected R_SPARC_PC22 relocation for dynamic symbol %s", targ.Name)
+		}
+		if targ.Type == 0 || targ.Type == obj.SXREF {
+			ctxt.Diag("unknown symbol %s in pcrel", targ.Name)
+		}
+		r.Type = obj.R_PCREL
+		r.Add += int64(r.Siz)
+		println("R_SPARC_PC22 relocation for symbol ", targ.Name)
+		return true
+
+	case 256 + ld.R_SPARC_WPLT30:
+		r.Add += int64(r.Siz)
+		if targ.Type == obj.SDYNIMPORT {
+			addpltsym(ctxt, targ)
+			r.Sym = ld.Linklookup(ctxt, ".plt", 0)
+			r.Add += int64(targ.Plt)
+		}
+		r.Type = obj.R_CALLSPARC64
+		println("R_SPARC_WPLT30 relocation for symbol ", targ.Name)
+		fmt.Printf("r %#v\n", r)
+		return true
+
+	// TODO(shawn):
+	// The R_SPARC_GOTDATA_OP* relocations are an optimized form of
+	// relocation that only supports a range of +/- 2 Gbytes.  We should
+	// eventually support these, but for now, simplify them to standard GOT
+	// relocations for simplicity in implementation.
+	case 256 + ld.R_SPARC_GOT10, 256 + ld.R_SPARC_GOTDATA_OP_LOX10:
+		addgotsym(ctxt, targ)
+		r.Sym = ld.Linklookup(ctxt, ".got", 0)
+		r.Add += int64(targ.Got)
+		r.Type = obj.R_GOTOFF
+		println("R_SPARC_GOT10 relocation for symbol ", targ.Name)
+		return true
+
+	case 256 + ld.R_SPARC_GOT22, 256 + ld.R_SPARC_GOTDATA_OP_HIX22:
+		addgotsym(ctxt, targ)
+		r.Sym = ld.Linklookup(ctxt, ".got", 0)
+		r.Add += int64(targ.Got)
+		r.Type = obj.R_GOTOFF
+		println("R_SPARC_GOT22 relocation for symbol ", targ.Name)
+		return true
+
+	case 256 + ld.R_SPARC_GOTDATA_OP:
+		r.Type = ld.R_SPARC_NONE
+		return true
 	}
 
 	// Handle references to ELF symbols from our own object files.
@@ -94,7 +178,7 @@ func elfreloc1(ctxt *ld.Link, r *ld.Reloc, sectoff int64) int {
 		}
 
 	case obj.R_ADDRSPARC64LO:
-		ld.Thearch.Vput(ld.R_SPARC_HI22 | uint64(elfsym)<<32)
+		ld.Thearch.Vput(ld.R_SPARC_LM22 | uint64(elfsym)<<32)
 		ld.Thearch.Vput(uint64(r.Xadd))
 		ld.Thearch.Vput(uint64(sectoff + 4))
 		ld.Thearch.Vput(ld.R_SPARC_LO10 | uint64(elfsym)<<32)
@@ -117,6 +201,11 @@ func elfreloc1(ctxt *ld.Link, r *ld.Reloc, sectoff int64) int {
 		}
 		ld.Thearch.Vput(ld.R_SPARC_WDISP30 | uint64(elfsym)<<32)
 
+	case obj.R_PCREL:
+		if r.Siz != 4 {
+			return -1
+		}
+		ld.Thearch.Vput(ld.R_SPARC_RELATIVE | uint64(elfsym)<<32)
 	}
 	ld.Thearch.Vput(uint64(r.Xadd))
 
@@ -158,6 +247,7 @@ func archreloc(ctxt *ld.Link, r *ld.Reloc, s *ld.Symbol, val *int64) int {
 	if ld.Linkmode == ld.LinkExternal {
 		switch r.Type {
 		default:
+			ctxt.Diag("unsupported LinkExternal archreloc %s", r.Type)
 			return -1
 
 		case obj.R_ADDRSPARC64LO, obj.R_ADDRSPARC64HI:
@@ -223,6 +313,12 @@ func archreloc(ctxt *ld.Link, r *ld.Reloc, s *ld.Symbol, val *int64) int {
 		*val |= (t >> 2) & 0x3fffffff
 		return 0
 
+	case obj.R_GOTOFF:
+		// TODO(shawn): GOT10 needs (val) & 0x3ff
+		// GOT22 needs (val) >> 10
+		*val = ld.Symaddr(ctxt, r.Sym) + r.Add - ld.Symaddr(ctxt, ld.Linklookup(ctxt, ".got", 0))
+		return 0
+
 	case obj.R_SPARC64_TLS_LE:
 		// The thread pointer points to the TCB, and then the
 		// address of the first TLS block follows, giving an
@@ -235,6 +331,7 @@ func archreloc(ctxt *ld.Link, r *ld.Reloc, s *ld.Symbol, val *int64) int {
 		return 0
 	}
 
+	ctxt.Diag("unsupported LinkInternal archreloc %s", r.Type)
 	return -1
 }
 

@@ -720,6 +720,15 @@ const (
 	R_SPARC_TLS_DTPOFF64  = 77
 	R_SPARC_TLS_TPOFF32   = 78
 	R_SPARC_TLS_TPOFF64   = 79
+	R_SPARC_GOTDATA_HIX22 = 80
+	R_SPARC_GOTDATA_LOX10 = 81
+	R_SPARC_GOTDATA_OP_HIX22 = 82
+	R_SPARC_GOTDATA_OP_LOX10 = 83
+	R_SPARC_GOTDATA_OP = 84
+	R_SPARC_H34 = 85
+	R_SPARC_SIZE32 = 86
+	R_SPARC_SIZE64 = 87
+	R_SPARC_WDISP10 = 88
 
 	R_390_NONE        = 0
 	R_390_8           = 1
@@ -1966,6 +1975,9 @@ func (ctxt *Link) doelf() {
 		Addstring(ctxt, shstrtab, ".dynstr")
 		Addstring(ctxt, shstrtab, elfRelType)
 		Addstring(ctxt, shstrtab, elfRelType+".plt")
+		if SysArch.Family == sys.SPARC64 {
+			Addstring(ctxt, shstrtab, elfRelType+".got")
+		}
 
 		Addstring(ctxt, shstrtab, ".plt")
 		Addstring(ctxt, shstrtab, ".gnu.version")
@@ -2045,6 +2057,12 @@ func (ctxt *Link) doelf() {
 		s = Linklookup(ctxt, elfRelType+".plt", 0)
 		s.Attr |= AttrReachable
 		s.Type = obj.SELFROSECT
+
+		if SysArch.Family == sys.SPARC64 {
+			s = Linklookup(ctxt, elfRelType+".got", 0)
+			s.Attr |= AttrReachable
+			s.Type = obj.SELFROSECT
+		}
 
 		s = Linklookup(ctxt, ".gnu.version", 0)
 		s.Attr |= AttrReachable
@@ -2463,6 +2481,17 @@ func Asmbelf(ctxt *Link, symo int64) {
 		}
 		sh.addralign = sh.entsize
 		shsym(ctxt, sh, Linklookup(ctxt, ".plt", 0))
+
+		if eh.machine == EM_SPARCV9 {
+			sh := elfshname(ctxt, ".rela.got")
+			sh.type_ = SHT_RELA
+			sh.flags = SHF_ALLOC
+			sh.entsize = ELF64RELASIZE
+			sh.addralign = uint64(SysArch.RegSize)
+			sh.link = uint32(elfshname(ctxt, ".dynsym").shnum)
+			sh.info = uint32(elfshname(ctxt, ".got").shnum)
+			shsym(ctxt, sh, Linklookup(ctxt, ".rela.got", 0))
+		}
 
 		// On ppc64, .got comes from the input files, so don't
 		// create it here
