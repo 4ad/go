@@ -39,6 +39,7 @@ var (
 	summary        = flag.Bool("summary", false, "show summary of results")
 	showSkips      = flag.Bool("show_skips", false, "show skipped tests")
 	runSkips       = flag.Bool("run_skips", false, "run skipped tests (ignore skip and build tags)")
+	linkexternal     = flag.Bool("linkexternal", false, "")
 	linkshared     = flag.Bool("linkshared", false, "")
 	updateErrors   = flag.Bool("update_errors", false, "update error messages in test file based on compiler output")
 	runoutputLimit = flag.Int("l", defaultRunOutputLimit(), "number of parallel runoutput tests to run")
@@ -219,6 +220,9 @@ func linkFile(runcmd runCmd, goname string) (err error) {
 	cmd := []string{"go", "tool", "link", "-w", "-o", "a.exe", "-L", "."}
 	if *linkshared {
 		cmd = append(cmd, "-linkshared", "-installsuffix=dynlink")
+	}
+	if *linkexternal {
+		cmd = append(cmd, "-linkmode=external")
 	}
 	cmd = append(cmd, pfile)
 	_, err = runcmd(cmd...)
@@ -685,6 +689,9 @@ func (t *test) run() {
 		if *linkshared {
 			cmd = append(cmd, "-linkshared")
 		}
+		if *linkexternal {
+			cmd = append(cmd, "-ldflags='-linkmode=external'")
+		}
 		cmd = append(cmd, t.goFileName())
 		out, err := runcmd(append(cmd, args...)...)
 		if err != nil {
@@ -705,6 +712,9 @@ func (t *test) run() {
 		if *linkshared {
 			cmd = append(cmd, "-linkshared")
 		}
+		if *linkexternal {
+			cmd = append(cmd, "-ldflags='-linkmode=external'")
+		}
 		cmd = append(cmd, t.goFileName())
 		out, err := runcmd(append(cmd, args...)...)
 		if err != nil {
@@ -721,6 +731,9 @@ func (t *test) run() {
 		if *linkshared {
 			cmd = append(cmd, "-linkshared")
 		}
+		if *linkexternal {
+			cmd = append(cmd, "-ldflags='-linkmode=external'")
+		}
 		cmd = append(cmd, tfile)
 		out, err = runcmd(cmd...)
 		if err != nil {
@@ -736,6 +749,9 @@ func (t *test) run() {
 		cmd := []string{"go", "run"}
 		if *linkshared {
 			cmd = append(cmd, "-linkshared")
+		}
+		if *linkexternal {
+			cmd = append(cmd, "-ldflags='-linkmode=external'")
 		}
 		cmd = append(cmd, t.goFileName())
 		out, err := runcmd(append(cmd, args...)...)
