@@ -12,38 +12,38 @@ import (
 )
 
 var ssaRegToReg = []int16{
-	sparc64.REG_ZR,
-	sparc64.REG_RT1,
-	sparc64.REG_CTXT,
-	sparc64.REG_G,
-	sparc64.REG_RT2,
-	sparc64.REG_TMP,
-	sparc64.REG_TLS,
-	sparc64.REG_G7,
+	// sparc64.REG_ZR,   // zero register, not used by regalloc
+	// sparc64.REG_RT1,  // reserved for runtime, linblink and duff device
+	// sparc64.REG_CTXT, // environment for closures
+	// sparc64.REG_G,    // g register
+	// sparc64.REG_RT2,  // reserved for runtime, linblink and duff device
+	// sparc64.REG_TMP,  // reserved for runtime and linblink
+	// sparc64.REG_G6,   // reserved for the operating system
+	// sparc64.REG_TLS,  // reserved for the operating system
 	sparc64.REG_O0,
 	sparc64.REG_O1,
 	sparc64.REG_O2,
 	sparc64.REG_O3,
 	sparc64.REG_O4,
 	sparc64.REG_O5,
-	sparc64.REG_RSP,
-	sparc64.REG_OLR,
-	sparc64.REG_TMP2,
+	// sparc64.REG_RSP,  // stack pointer
+	// sparc64.REG_OLR,  // the output link register
+	// sparc64.REG_TMP2, // reserved for runtime and linblink
 	sparc64.REG_L1,
 	sparc64.REG_L2,
 	sparc64.REG_L3,
 	sparc64.REG_L4,
 	sparc64.REG_L5,
 	sparc64.REG_L6,
-	sparc64.REG_L7,
-	sparc64.REG_I0,
-	sparc64.REG_I1,
-	sparc64.REG_I2,
-	sparc64.REG_I3,
-	sparc64.REG_I4,
-	sparc64.REG_I5,
-	sparc64.REG_RFP,
-	sparc64.REG_ILR,
+	// sparc64.REG_L7,  // reserved for runtime, to debug register windows
+	// sparc64.REG_I0,  // unused to debug register windows
+	// sparc64.REG_I1,  // unused to debug register windows
+	// sparc64.REG_I2,  // unused to debug register windows
+	// sparc64.REG_I3,  // unused to debug register windows
+	// sparc64.REG_I4,  // unused to debug register windows
+	// sparc64.REG_I5,  // unused to debug register windows
+	// sparc64.REG_RFP, // frame pointer
+	// sparc64.REG_ILR, // the input link register
 
 	sparc64.REG_Y0,
 	sparc64.REG_Y1,
@@ -59,8 +59,8 @@ var ssaRegToReg = []int16{
 	sparc64.REG_Y11,
 	sparc64.REG_Y12,
 	sparc64.REG_Y13,
-	sparc64.REG_YTWO,
-	sparc64.REG_YTMP,
+	// sparc64.REG_YTWO, // uncertain if used
+	// sparc64.REG_YTMP, // uncertain if used
 }
 
 // Smallest possible faulting page at address zero,
