@@ -450,6 +450,8 @@ func main() {
 			}
 		case strings.Contains(out, "s390x"):
 			gohostarch = "s390x"
+		case strings.Contains(out, "sparc64"):
+			gohostarch = "sparc64"
 		case gohostos == "darwin":
 			if strings.Contains(run("", CheckExit, "uname", "-v"), "RELEASE_ARM_") {
 				gohostarch = "arm"
