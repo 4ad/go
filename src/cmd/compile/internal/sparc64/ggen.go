@@ -89,7 +89,7 @@ func zerorange(p *obj.Prog, frame int64, lo int64, hi int64) *obj.Prog {
 		gc.Afunclit(&p.To, f)
 		// the extra +8 is to account for the prologue padding
 		// added by preprocess()
-		p.To.Offset = 8 * (128 - cnt/int64(gc.Widthptr)) + 8
+		p.To.Offset = 8*(128-cnt/int64(gc.Widthptr)) + 8
 	} else {
 		//	ADD	$lo, BFP, RT1
 		//	ADD	$(cnt), RT1, RT2
@@ -470,7 +470,7 @@ func clearfat(nl *gc.Node) {
 		// 8 and 128 = magic constants: see ../../../../runtime/mkduff.go
 		// the extra +8 is to account for the prologue padding
 		// added by preprocess()
-		p.To.Offset = int64(8 * (128 - q)) + 8
+		p.To.Offset = int64(8*(128-q)) + 8
 
 		// duffzero leaves G1 (RT1) on the last zeroed dword
 		boff = 8
