@@ -130,6 +130,58 @@ func storeByType(t ssa.Type) obj.As {
 func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 	s.SetLineno(v.Line)
 	switch v.Op {
+	case ssa.OpInitMem:
+		// memory arg needs no code
+	case ssa.OpArg:
+		// input args need no code
+	case ssa.OpSP, ssa.OpSB, ssa.OpGetG:
+		// nothing to do
+
+	case ssa.OpLoadReg:
+		loadOp := loadByType(v.Type)
+		n, off := gc.AutoVar(v.Args[0])
+		p := gc.Prog(loadOp)
+		p.From.Type = obj.TYPE_MEM
+		p.From.Node = n
+		p.From.Sym = gc.Linksym(n.Sym)
+		p.From.Offset = off
+		if n.Class == gc.PPARAM || n.Class == gc.PPARAMOUT {
+			p.From.Name = obj.NAME_PARAM
+			p.From.Offset += n.Xoffset
+		} else {
+			p.From.Name = obj.NAME_AUTO
+		}
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = gc.SSARegNum(v)
+
+	case ssa.OpStoreReg:
+		storeOp := storeByType(v.Type)
+		n, off := gc.AutoVar(v)
+		p := gc.Prog(storeOp)
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = gc.SSARegNum(v.Args[0])
+		p.To.Type = obj.TYPE_MEM
+		p.To.Node = n
+		p.To.Sym = gc.Linksym(n.Sym)
+		p.To.Offset = off
+		if n.Class == gc.PPARAM || n.Class == gc.PPARAMOUT {
+			p.To.Name = obj.NAME_PARAM
+			p.To.Offset += n.Xoffset
+		} else {
+			p.To.Name = obj.NAME_AUTO
+		}
+
+	case ssa.OpVarDef:
+		gc.Gvardef(v.Aux.(*gc.Node))
+	case ssa.OpVarKill:
+		gc.Gvarkill(v.Aux.(*gc.Node))
+	case ssa.OpVarLive:
+		gc.Gvarlive(v.Aux.(*gc.Node))
+	case ssa.OpKeepAlive:
+		gc.KeepAlive(v)
+	case ssa.OpPhi:
+		gc.CheckLoweredPhi(v)
+
 	default:
 		v.Unimplementedf("genValue not implemented: %s", v.LongString())
 	}
