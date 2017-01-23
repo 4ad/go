@@ -5,6 +5,7 @@
 package sparc64
 
 import (
+	"cmd/compile/internal/gc"
 	"cmd/compile/internal/ssa"
 	"cmd/internal/obj"
 	"cmd/internal/obj/sparc64"
@@ -124,4 +125,12 @@ func storeByType(t ssa.Type) obj.As {
 		}
 	}
 	panic("bad store type")
+}
+
+func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
+	s.SetLineno(v.Line)
+	switch v.Op {
+	default:
+		v.Unimplementedf("genValue not implemented: %s", v.LongString())
+	}
 }
