@@ -186,3 +186,28 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		v.Unimplementedf("genValue not implemented: %s", v.LongString())
 	}
 }
+
+func ssaGenBlock(s *gc.SSAGenState, b, next *ssa.Block) {
+	s.SetLineno(b.Line)
+
+	switch b.Kind {
+	case ssa.BlockPlain, ssa.BlockCheck:
+		if b.Succs[0].Block() != next {
+			p := gc.Prog(obj.AJMP)
+			p.To.Type = obj.TYPE_BRANCH
+			s.Branches = append(s.Branches, gc.Branch{P: p, B: b.Succs[0].Block()})
+		}
+	case ssa.BlockExit:
+		gc.Prog(obj.AUNDEF) // tell plive.go that we never reach here
+	case ssa.BlockRet:
+		gc.Prog(obj.ARET)
+	case ssa.BlockRetJmp:
+		p := gc.Prog(obj.AJMP)
+		p.To.Type = obj.TYPE_MEM
+		p.To.Name = obj.NAME_EXTERN
+		p.To.Sym = gc.Linksym(b.Aux.(*gc.Sym))
+
+	default:
+		b.Unimplementedf("branch not implemented: %s. Control: %s", b.LongString(), b.Control.LongString())
+	}
+}
