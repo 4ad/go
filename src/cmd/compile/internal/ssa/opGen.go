@@ -1440,12 +1440,16 @@ const (
 	OpSPARC64SUB
 	OpSPARC64SUBconst
 	OpSPARC64MULD
+	OpSPARC64SDIVD
+	OpSPARC64UDIVD
 	OpSPARC64FADDS
 	OpSPARC64FADDD
 	OpSPARC64FSUBS
 	OpSPARC64FSUBD
 	OpSPARC64FMULS
 	OpSPARC64FMULD
+	OpSPARC64FDIVS
+	OpSPARC64FDIVD
 
 	OpAdd8
 	OpAdd16
@@ -17637,6 +17641,34 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
+		name:   "SDIVD",
+		argLen: 2,
+		asm:    sparc64.ASDIVD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+				{1, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "UDIVD",
+		argLen: 2,
+		asm:    sparc64.AUDIVD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+				{1, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
 		name:        "FADDS",
 		argLen:      2,
 		commutative: true,
@@ -17714,6 +17746,34 @@ var opcodeTable = [...]opInfo{
 		argLen:      2,
 		commutative: true,
 		asm:         sparc64.AFMULD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 4294705152}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+				{1, 4294705152}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+			outputs: []outputInfo{
+				{0, 4294705152}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+		},
+	},
+	{
+		name:   "FDIVS",
+		argLen: 2,
+		asm:    sparc64.AFDIVS,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 4294705152}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+				{1, 4294705152}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+			outputs: []outputInfo{
+				{0, 4294705152}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+		},
+	},
+	{
+		name:   "FDIVD",
+		argLen: 2,
+		asm:    sparc64.AFDIVD,
 		reg: regInfo{
 			inputs: []inputInfo{
 				{0, 4294705152}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
