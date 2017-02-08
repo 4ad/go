@@ -18,3 +18,10 @@
 (Sub8 x y) -> (SUB x y)
 (Sub32F x y) -> (FSUBS x y)
 (Sub64F x y) -> (FSUBD x y)
+
+(Mul64 x y) -> (MULD x y)
+(Mul32 x y) -> (MULD x y)
+(Mul16 x y) -> (MULD x y)
+(Mul8 x y) -> (MULD x y)
+(Mul32F x y) -> (FMULS x y)
+(Mul64F x y) -> (FMULD x y)

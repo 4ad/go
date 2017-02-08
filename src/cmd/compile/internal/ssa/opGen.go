@@ -1439,10 +1439,13 @@ const (
 	OpSPARC64ADDconst
 	OpSPARC64SUB
 	OpSPARC64SUBconst
+	OpSPARC64MULD
 	OpSPARC64FADDS
 	OpSPARC64FADDD
 	OpSPARC64FSUBS
 	OpSPARC64FSUBD
+	OpSPARC64FMULS
+	OpSPARC64FMULD
 
 	OpAdd8
 	OpAdd16
@@ -17619,6 +17622,21 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
+		name:        "MULD",
+		argLen:      2,
+		commutative: true,
+		asm:         sparc64.AMULD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+				{1, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
 		name:        "FADDS",
 		argLen:      2,
 		commutative: true,
@@ -17666,6 +17684,36 @@ var opcodeTable = [...]opInfo{
 		name:   "FSUBD",
 		argLen: 2,
 		asm:    sparc64.AFSUBD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 4294705152}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+				{1, 4294705152}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+			outputs: []outputInfo{
+				{0, 4294705152}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+		},
+	},
+	{
+		name:        "FMULS",
+		argLen:      2,
+		commutative: true,
+		asm:         sparc64.AFMULS,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 4294705152}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+				{1, 4294705152}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+			outputs: []outputInfo{
+				{0, 4294705152}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+		},
+	},
+	{
+		name:        "FMULD",
+		argLen:      2,
+		commutative: true,
+		asm:         sparc64.AFMULD,
 		reg: regInfo{
 			inputs: []inputInfo{
 				{0, 4294705152}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13

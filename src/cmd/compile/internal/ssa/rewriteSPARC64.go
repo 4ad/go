@@ -22,6 +22,18 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpAdd8(v, config)
 	case OpAddPtr:
 		return rewriteValueSPARC64_OpAddPtr(v, config)
+	case OpMul16:
+		return rewriteValueSPARC64_OpMul16(v, config)
+	case OpMul32:
+		return rewriteValueSPARC64_OpMul32(v, config)
+	case OpMul32F:
+		return rewriteValueSPARC64_OpMul32F(v, config)
+	case OpMul64:
+		return rewriteValueSPARC64_OpMul64(v, config)
+	case OpMul64F:
+		return rewriteValueSPARC64_OpMul64F(v, config)
+	case OpMul8:
+		return rewriteValueSPARC64_OpMul8(v, config)
 	case OpSub16:
 		return rewriteValueSPARC64_OpSub16(v, config)
 	case OpSub32:
@@ -139,6 +151,96 @@ func rewriteValueSPARC64_OpAddPtr(v *Value, config *Config) bool {
 		x := v.Args[0]
 		y := v.Args[1]
 		v.reset(OpSPARC64ADD)
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpMul16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Mul16 x y)
+	// cond:
+	// result: (MULD x y)
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64MULD)
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpMul32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Mul32 x y)
+	// cond:
+	// result: (MULD x y)
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64MULD)
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpMul32F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Mul32F x y)
+	// cond:
+	// result: (FMULS x y)
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64FMULS)
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpMul64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Mul64 x y)
+	// cond:
+	// result: (MULD x y)
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64MULD)
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpMul64F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Mul64F x y)
+	// cond:
+	// result: (FMULD x y)
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64FMULD)
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpMul8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Mul8 x y)
+	// cond:
+	// result: (MULD x y)
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64MULD)
 		v.AddArg(x)
 		v.AddArg(y)
 		return true

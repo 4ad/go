@@ -186,10 +186,13 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 
 	case ssa.OpSPARC64ADD,
 		ssa.OpSPARC64SUB,
+		ssa.OpSPARC64MULD,
 		ssa.OpSPARC64FADDS,
 		ssa.OpSPARC64FADDD,
 		ssa.OpSPARC64FSUBS,
-		ssa.OpSPARC64FSUBD:
+		ssa.OpSPARC64FSUBD,
+		ssa.OpSPARC64FMULS,
+		ssa.OpSPARC64FMULD:
 
 		r := gc.SSARegNum(v)
 		r1 := gc.SSARegNum(v.Args[0])
