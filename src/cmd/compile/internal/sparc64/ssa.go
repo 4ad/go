@@ -61,6 +61,8 @@ var ssaRegToReg = []int16{
 	sparc64.REG_Y13,
 	// sparc64.REG_YTWO, // uncertain if used
 	// sparc64.REG_YTMP, // uncertain if used
+
+	0, // SB isn't a real register.  We fill an Addr.Reg field with 0 in this case.
 }
 
 // Smallest possible faulting page at address zero,

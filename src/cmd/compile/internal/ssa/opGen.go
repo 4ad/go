@@ -19617,8 +19617,6 @@ var registersSPARC64 = [...]Register{
 	{30, "Y12"},
 	{31, "Y13"},
 	{32, "SB"},
-	{33, "SP"},
-	{34, "FP"},
 }
 var gpRegMaskSPARC64 = regMask(130032)
 var fpRegMaskSPARC64 = regMask(4294705152)
