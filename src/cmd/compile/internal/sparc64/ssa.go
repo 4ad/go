@@ -12,11 +12,11 @@ import (
 )
 
 var ssaRegToReg = []int16{
-	// sparc64.REG_ZR,   // zero register, not used by regalloc
-	// sparc64.REG_RT1,  // reserved for runtime, linblink and duff device
-	// sparc64.REG_CTXT, // environment for closures
-	// sparc64.REG_G,    // g register
-	// sparc64.REG_RT2,  // reserved for runtime, linblink and duff device
+	// sparc64.REG_ZR,   // zero register, not used by the compiler
+	sparc64.REG_RT1,  // for runtime, linblink and duff device
+	sparc64.REG_CTXT, // environment for closures
+	sparc64.REG_G,    // g register
+	sparc64.REG_RT2,  // for runtime, linblink and duff device
 	// sparc64.REG_TMP,  // reserved for runtime and linblink
 	// sparc64.REG_G6,   // reserved for the operating system
 	// sparc64.REG_TLS,  // reserved for the operating system
@@ -26,7 +26,7 @@ var ssaRegToReg = []int16{
 	sparc64.REG_O3,
 	sparc64.REG_O4,
 	sparc64.REG_O5,
-	// sparc64.REG_RSP,  // stack pointer
+	sparc64.REG_RSP,  // machine stack pointer
 	// sparc64.REG_OLR,  // the output link register
 	// sparc64.REG_TMP2, // reserved for runtime and linblink
 	sparc64.REG_L1,
@@ -42,7 +42,7 @@ var ssaRegToReg = []int16{
 	// sparc64.REG_I3,  // unused to debug register windows
 	// sparc64.REG_I4,  // unused to debug register windows
 	// sparc64.REG_I5,  // unused to debug register windows
-	// sparc64.REG_RFP, // frame pointer
+	sparc64.REG_RFP, // frame pointer
 	// sparc64.REG_ILR, // the input link register
 
 	sparc64.REG_Y0,
