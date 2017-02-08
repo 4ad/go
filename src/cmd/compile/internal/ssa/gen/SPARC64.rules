@@ -36,3 +36,12 @@
 (Div8u x y) -> (UDIVD x y)
 (Div32F x y) -> (FDIVS x y)
 (Div64F x y) -> (FDIVD x y)
+
+(Mod8 x y) -> (Mod64 (SignExt8to64 x) (SignExt8to64 y))
+(Mod8u x y) -> (Mod64u (ZeroExt8to64 x) (ZeroExt8to64 y))
+(Mod16 x y) -> (Mod64 (SignExt16to64 x) (SignExt16to64 y))
+(Mod16u x y) -> (Mod64u (ZeroExt16to64 x) (ZeroExt16to64 y))
+(Mod32 x y) -> (Mod64 (SignExt32to64 x) (SignExt32to64 y))
+(Mod32u x y) -> (Mod64u (ZeroExt32to64 x) (ZeroExt32to64 y))
+(Mod64 x y) -> (SUB x (MULD y (SDIVD x y)))
+(Mod64u x y) -> (SUB x (MULD y (UDIVD x y)))

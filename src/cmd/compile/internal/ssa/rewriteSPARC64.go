@@ -42,6 +42,22 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpDiv8(v, config)
 	case OpDiv8u:
 		return rewriteValueSPARC64_OpDiv8u(v, config)
+	case OpMod16:
+		return rewriteValueSPARC64_OpMod16(v, config)
+	case OpMod16u:
+		return rewriteValueSPARC64_OpMod16u(v, config)
+	case OpMod32:
+		return rewriteValueSPARC64_OpMod32(v, config)
+	case OpMod32u:
+		return rewriteValueSPARC64_OpMod32u(v, config)
+	case OpMod64:
+		return rewriteValueSPARC64_OpMod64(v, config)
+	case OpMod64u:
+		return rewriteValueSPARC64_OpMod64u(v, config)
+	case OpMod8:
+		return rewriteValueSPARC64_OpMod8(v, config)
+	case OpMod8u:
+		return rewriteValueSPARC64_OpMod8u(v, config)
 	case OpMul16:
 		return rewriteValueSPARC64_OpMul16(v, config)
 	case OpMul32:
@@ -323,6 +339,162 @@ func rewriteValueSPARC64_OpDiv8u(v *Value, config *Config) bool {
 		v.reset(OpSPARC64UDIVD)
 		v.AddArg(x)
 		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpMod16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Mod16 x y)
+	// cond:
+	// result: (Mod64 (SignExt16to64 x) (SignExt16to64 y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpMod64)
+		v0 := b.NewValue0(v.Line, OpSignExt16to64, config.fe.TypeInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpSignExt16to64, config.fe.TypeInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpMod16u(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Mod16u x y)
+	// cond:
+	// result: (Mod64u (ZeroExt16to64 x) (ZeroExt16to64 y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpMod64u)
+		v0 := b.NewValue0(v.Line, OpZeroExt16to64, config.fe.TypeUInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpZeroExt16to64, config.fe.TypeUInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpMod32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Mod32 x y)
+	// cond:
+	// result: (Mod64 (SignExt32to64 x) (SignExt32to64 y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpMod64)
+		v0 := b.NewValue0(v.Line, OpSignExt32to64, config.fe.TypeInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpSignExt32to64, config.fe.TypeInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpMod32u(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Mod32u x y)
+	// cond:
+	// result: (Mod64u (ZeroExt32to64 x) (ZeroExt32to64 y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpMod64u)
+		v0 := b.NewValue0(v.Line, OpZeroExt32to64, config.fe.TypeUInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpZeroExt32to64, config.fe.TypeUInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpMod64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Mod64 x y)
+	// cond:
+	// result: (SUB x (MULD y (SDIVD x y)))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SUB)
+		v.AddArg(x)
+		v0 := b.NewValue0(v.Line, OpSPARC64MULD, config.fe.TypeInt64())
+		v0.AddArg(y)
+		v1 := b.NewValue0(v.Line, OpSPARC64SDIVD, config.fe.TypeInt64())
+		v1.AddArg(x)
+		v1.AddArg(y)
+		v0.AddArg(v1)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpMod64u(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Mod64u x y)
+	// cond:
+	// result: (SUB x (MULD y (UDIVD x y)))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SUB)
+		v.AddArg(x)
+		v0 := b.NewValue0(v.Line, OpSPARC64MULD, config.fe.TypeInt64())
+		v0.AddArg(y)
+		v1 := b.NewValue0(v.Line, OpSPARC64UDIVD, config.fe.TypeUInt64())
+		v1.AddArg(x)
+		v1.AddArg(y)
+		v0.AddArg(v1)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpMod8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Mod8 x y)
+	// cond:
+	// result: (Mod64 (SignExt8to64 x) (SignExt8to64 y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpMod64)
+		v0 := b.NewValue0(v.Line, OpSignExt8to64, config.fe.TypeInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpSignExt8to64, config.fe.TypeInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpMod8u(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Mod8u x y)
+	// cond:
+	// result: (Mod64u (ZeroExt8to64 x) (ZeroExt8to64 y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpMod64u)
+		v0 := b.NewValue0(v.Line, OpZeroExt8to64, config.fe.TypeUInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpZeroExt8to64, config.fe.TypeUInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
 		return true
 	}
 }

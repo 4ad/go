@@ -88,9 +88,9 @@ func init() {
 		{name: "ADDconst", argLength: 1, reg: gp11, asm: "ADD", aux: "Int64"}, // arg0 + auxInt
 		{name: "SUB", argLength: 2, reg: gp21, asm: "SUB"}, // arg0 - arg1
 		{name: "SUBconst", argLength: 1, reg: gp11, asm: "SUB", aux: "Int64"}, // arg0 - auxInt
-		{name: "MULD", argLength: 2, reg: gp21, asm: "MULD", commutative: true},     // arg0 * arg1
-		{name: "SDIVD", argLength: 2, reg: gp21, asm: "SDIVD"},                       // arg0 / arg1, signed
-		{name: "UDIVD", argLength: 2, reg: gp21, asm: "UDIVD"},                       // arg0 / arg1, unsigned
+		{name: "MULD", argLength: 2, reg: gp21, typ: "Int64", asm: "MULD", commutative: true},     // arg0 * arg1
+		{name: "SDIVD", argLength: 2, reg: gp21, typ: "Int64", asm: "SDIVD"},                       // arg0 / arg1, signed
+		{name: "UDIVD", argLength: 2, reg: gp21, typ: "UInt64", asm: "UDIVD"},                       // arg0 / arg1, unsigned
 
 		{name: "FADDS", argLength: 2, reg: fp21, asm: "FADDS", commutative: true}, // arg0 + arg1
 		{name: "FADDD", argLength: 2, reg: fp21, asm: "FADDD", commutative: true}, // arg0 + arg1
