@@ -182,6 +182,25 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 	case ssa.OpPhi:
 		gc.CheckLoweredPhi(v)
 
+	case ssa.OpSPARC64ADD:
+		r := gc.SSARegNum(v)
+		r1 := gc.SSARegNum(v.Args[0])
+		r2 := gc.SSARegNum(v.Args[1])
+		p := gc.Prog(v.Op.Asm())
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = r2
+		p.Reg = r1
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = r
+
+	case ssa.OpSPARC64ADDconst:
+		p := gc.Prog(v.Op.Asm())
+		p.From.Type = obj.TYPE_CONST
+		p.From.Offset = v.AuxInt
+		p.Reg = gc.SSARegNum(v.Args[0])
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = gc.SSARegNum(v)
+
 	default:
 		v.Unimplementedf("genValue not implemented: %s", v.LongString())
 	}

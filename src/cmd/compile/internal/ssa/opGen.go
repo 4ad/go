@@ -10,6 +10,7 @@ import (
 	"cmd/internal/obj/mips"
 	"cmd/internal/obj/ppc64"
 	"cmd/internal/obj/s390x"
+	"cmd/internal/obj/sparc64"
 	"cmd/internal/obj/x86"
 )
 
@@ -96,6 +97,22 @@ const (
 	BlockS390XGE
 	BlockS390XGTF
 	BlockS390XGEF
+
+	BlockSPARC64N
+	BlockSPARC64NE
+	BlockSPARC64E
+	BlockSPARC64G
+	BlockSPARC64LE
+	BlockSPARC64GE
+	BlockSPARC64L
+	BlockSPARC64GU
+	BlockSPARC64LEU
+	BlockSPARC64CC
+	BlockSPARC64CS
+	BlockSPARC64POS
+	BlockSPARC64NEG
+	BlockSPARC64VC
+	BlockSPARC64VS
 
 	BlockPlain
 	BlockIf
@@ -190,6 +207,22 @@ var blockString = [...]string{
 	BlockS390XGE:  "GE",
 	BlockS390XGTF: "GTF",
 	BlockS390XGEF: "GEF",
+
+	BlockSPARC64N:   "N",
+	BlockSPARC64NE:  "NE",
+	BlockSPARC64E:   "E",
+	BlockSPARC64G:   "G",
+	BlockSPARC64LE:  "LE",
+	BlockSPARC64GE:  "GE",
+	BlockSPARC64L:   "L",
+	BlockSPARC64GU:  "GU",
+	BlockSPARC64LEU: "LEU",
+	BlockSPARC64CC:  "CC",
+	BlockSPARC64CS:  "CS",
+	BlockSPARC64POS: "POS",
+	BlockSPARC64NEG: "NEG",
+	BlockSPARC64VC:  "VC",
+	BlockSPARC64VS:  "VS",
 
 	BlockPlain:  "Plain",
 	BlockIf:     "If",
@@ -1401,6 +1434,9 @@ const (
 	OpS390XSTM4
 	OpS390XLoweredMove
 	OpS390XLoweredZero
+
+	OpSPARC64ADD
+	OpSPARC64ADDconst
 
 	OpAdd8
 	OpAdd16
@@ -17520,6 +17556,36 @@ var opcodeTable = [...]opInfo{
 	},
 
 	{
+		name:        "ADD",
+		argLen:      2,
+		commutative: true,
+		asm:         sparc64.AADD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+				{1, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:    "ADDconst",
+		auxType: auxInt64,
+		argLen:  1,
+		asm:     sparc64.AADD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+
+	{
 		name:        "Add8",
 		argLen:      2,
 		commutative: true,
@@ -19517,3 +19583,44 @@ var gpRegMaskS390X = regMask(5119)
 var fpRegMaskS390X = regMask(4294901760)
 var specialRegMaskS390X = regMask(0)
 var framepointerRegS390X = int8(-1)
+var registersSPARC64 = [...]Register{
+	{0, "RT1"},
+	{1, "CTXT"},
+	{2, "G"},
+	{3, "RT2"},
+	{4, "O0"},
+	{5, "O1"},
+	{6, "O2"},
+	{7, "O3"},
+	{8, "O4"},
+	{9, "O5"},
+	{10, "RSP"},
+	{11, "L1"},
+	{12, "L2"},
+	{13, "L3"},
+	{14, "L4"},
+	{15, "L5"},
+	{16, "L6"},
+	{17, "RFP"},
+	{18, "Y0"},
+	{19, "Y1"},
+	{20, "Y2"},
+	{21, "Y3"},
+	{22, "Y4"},
+	{23, "Y5"},
+	{24, "Y6"},
+	{25, "Y7"},
+	{26, "Y8"},
+	{27, "Y9"},
+	{28, "Y10"},
+	{29, "Y11"},
+	{30, "Y12"},
+	{31, "Y13"},
+	{32, "SB"},
+	{33, "SP"},
+	{34, "FP"},
+}
+var gpRegMaskSPARC64 = regMask(130032)
+var fpRegMaskSPARC64 = regMask(4294705152)
+var specialRegMaskSPARC64 = regMask(0)
+var framepointerRegSPARC64 = int8(17)
