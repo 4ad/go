@@ -22,6 +22,20 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpAdd8(v, config)
 	case OpAddPtr:
 		return rewriteValueSPARC64_OpAddPtr(v, config)
+	case OpSub16:
+		return rewriteValueSPARC64_OpSub16(v, config)
+	case OpSub32:
+		return rewriteValueSPARC64_OpSub32(v, config)
+	case OpSub32F:
+		return rewriteValueSPARC64_OpSub32F(v, config)
+	case OpSub64:
+		return rewriteValueSPARC64_OpSub64(v, config)
+	case OpSub64F:
+		return rewriteValueSPARC64_OpSub64F(v, config)
+	case OpSub8:
+		return rewriteValueSPARC64_OpSub8(v, config)
+	case OpSubPtr:
+		return rewriteValueSPARC64_OpSubPtr(v, config)
 	}
 	return false
 }
@@ -125,6 +139,111 @@ func rewriteValueSPARC64_OpAddPtr(v *Value, config *Config) bool {
 		x := v.Args[0]
 		y := v.Args[1]
 		v.reset(OpSPARC64ADD)
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpSub16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Sub16 x y)
+	// cond:
+	// result: (SUB x y)
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SUB)
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpSub32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Sub32 x y)
+	// cond:
+	// result: (SUB x y)
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SUB)
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpSub32F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Sub32F x y)
+	// cond:
+	// result: (FSUBS x y)
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64FSUBS)
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpSub64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Sub64 x y)
+	// cond:
+	// result: (SUB x y)
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SUB)
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpSub64F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Sub64F x y)
+	// cond:
+	// result: (FSUBD x y)
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64FSUBD)
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpSub8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Sub8 x y)
+	// cond:
+	// result: (SUB x y)
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SUB)
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpSubPtr(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (SubPtr x y)
+	// cond:
+	// result: (SUB x y)
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SUB)
 		v.AddArg(x)
 		v.AddArg(y)
 		return true

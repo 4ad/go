@@ -185,8 +185,12 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		gc.CheckLoweredPhi(v)
 
 	case ssa.OpSPARC64ADD,
+		ssa.OpSPARC64SUB,
 		ssa.OpSPARC64FADDS,
-		ssa.OpSPARC64FADDD:
+		ssa.OpSPARC64FADDD,
+		ssa.OpSPARC64FSUBS,
+		ssa.OpSPARC64FSUBD:
+
 		r := gc.SSARegNum(v)
 		r1 := gc.SSARegNum(v.Args[0])
 		r2 := gc.SSARegNum(v.Args[1])
@@ -197,7 +201,9 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = r
 
-	case ssa.OpSPARC64ADDconst:
+	case ssa.OpSPARC64ADDconst,
+		ssa.OpSPARC64SUBconst:
+
 		p := gc.Prog(v.Op.Asm())
 		p.From.Type = obj.TYPE_CONST
 		p.From.Offset = v.AuxInt
