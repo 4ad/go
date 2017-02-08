@@ -8,3 +8,5 @@
 (Add32  x y) -> (ADD x y)
 (Add16  x y) -> (ADD x y)
 (Add8   x y) -> (ADD x y)
+(Add32F x y) -> (FADDS x y)
+(Add64F x y) -> (FADDD x y)

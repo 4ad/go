@@ -81,10 +81,14 @@ func init() {
 
 		gp11 = regInfo{inputs: []regMask{gp}, outputs: []regMask{gp}}
 		gp21 = regInfo{inputs: []regMask{gp, gp}, outputs: []regMask{gp}}
+		fp21 = regInfo{inputs: []regMask{fp, fp}, outputs: []regMask{fp}}
 	)
 	ops := []opData{
 		{name: "ADD", argLength: 2, reg: gp21, asm: "ADD", commutative: true}, // arg0 + arg1
 		{name: "ADDconst", argLength: 1, reg: gp11, asm: "ADD", aux: "Int64"}, // arg0 + auxInt
+
+		{name: "FADDS", argLength: 2, reg: fp21, asm: "FADDS", commutative: true}, // arg0 + arg1
+		{name: "FADDD", argLength: 2, reg: fp21, asm: "FADDD", commutative: true}, // arg0 + arg1
 	}
 
 	blocks := []blockData{

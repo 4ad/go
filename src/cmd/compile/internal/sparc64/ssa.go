@@ -184,7 +184,9 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 	case ssa.OpPhi:
 		gc.CheckLoweredPhi(v)
 
-	case ssa.OpSPARC64ADD:
+	case ssa.OpSPARC64ADD,
+		ssa.OpSPARC64FADDS,
+		ssa.OpSPARC64FADDD:
 		r := gc.SSARegNum(v)
 		r1 := gc.SSARegNum(v.Args[0])
 		r2 := gc.SSARegNum(v.Args[1])

@@ -12,8 +12,12 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpAdd16(v, config)
 	case OpAdd32:
 		return rewriteValueSPARC64_OpAdd32(v, config)
+	case OpAdd32F:
+		return rewriteValueSPARC64_OpAdd32F(v, config)
 	case OpAdd64:
 		return rewriteValueSPARC64_OpAdd64(v, config)
+	case OpAdd64F:
+		return rewriteValueSPARC64_OpAdd64F(v, config)
 	case OpAdd8:
 		return rewriteValueSPARC64_OpAdd8(v, config)
 	case OpAddPtr:
@@ -51,6 +55,21 @@ func rewriteValueSPARC64_OpAdd32(v *Value, config *Config) bool {
 		return true
 	}
 }
+func rewriteValueSPARC64_OpAdd32F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Add32F x y)
+	// cond:
+	// result: (FADDS x y)
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64FADDS)
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
 func rewriteValueSPARC64_OpAdd64(v *Value, config *Config) bool {
 	b := v.Block
 	_ = b
@@ -61,6 +80,21 @@ func rewriteValueSPARC64_OpAdd64(v *Value, config *Config) bool {
 		x := v.Args[0]
 		y := v.Args[1]
 		v.reset(OpSPARC64ADD)
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpAdd64F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Add64F x y)
+	// cond:
+	// result: (FADDD x y)
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64FADDD)
 		v.AddArg(x)
 		v.AddArg(y)
 		return true
