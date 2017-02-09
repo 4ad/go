@@ -79,6 +79,7 @@ func init() {
 		gp = buildReg("O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6")
 		fp = buildReg("Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13")
 
+		gp01 = regInfo{inputs: nil, outputs: []regMask{gp}}
 		gp11 = regInfo{inputs: []regMask{gp}, outputs: []regMask{gp}}
 		gp21 = regInfo{inputs: []regMask{gp, gp}, outputs: []regMask{gp}}
 		fp11 = regInfo{inputs: []regMask{fp}, outputs: []regMask{fp}}
@@ -116,6 +117,9 @@ func init() {
 		{name: "FNEGS", argLength: 1, reg: fp11, asm: "FNEGS"},   // -arg0, float32
 		{name: "FNEGD", argLength: 1, reg: fp11, asm: "FNEGD"},   // -arg0, float64
 		{name: "FSQRTD", argLength: 1, reg: fp11, asm: "FSQRTD"}, // sqrt(arg0), float64
+		// moves
+		{name: "MOVDconst", argLength: 0, reg: gp01, aux: "Int64", asm: "MOVD", rematerializeable: true},
+		{name: "MOVWconst", argLength: 0, reg: gp01, aux: "Int32", asm: "MOVW", rematerializeable: true},     // 32 low bits of auxint
 	}
 
 	blocks := []blockData{

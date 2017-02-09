@@ -70,3 +70,8 @@
 (Neg64F x) -> (FNEGD x)
 
 (Sqrt x) -> (FSQRTD x)
+
+// Lowering boolean ops
+(AndB x y) -> (AND x y)
+(OrB x y) -> (OR x y)
+(Not x) -> (XORconst [1] x)

@@ -30,6 +30,8 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpAnd64(v, config)
 	case OpAnd8:
 		return rewriteValueSPARC64_OpAnd8(v, config)
+	case OpAndB:
+		return rewriteValueSPARC64_OpAndB(v, config)
 	case OpDiv16:
 		return rewriteValueSPARC64_OpDiv16(v, config)
 	case OpDiv16u:
@@ -90,6 +92,8 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpNeg64F(v, config)
 	case OpNeg8:
 		return rewriteValueSPARC64_OpNeg8(v, config)
+	case OpNot:
+		return rewriteValueSPARC64_OpNot(v, config)
 	case OpOr16:
 		return rewriteValueSPARC64_OpOr16(v, config)
 	case OpOr32:
@@ -98,6 +102,8 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpOr64(v, config)
 	case OpOr8:
 		return rewriteValueSPARC64_OpOr8(v, config)
+	case OpOrB:
+		return rewriteValueSPARC64_OpOrB(v, config)
 	case OpSqrt:
 		return rewriteValueSPARC64_OpSqrt(v, config)
 	case OpSub16:
@@ -279,6 +285,21 @@ func rewriteValueSPARC64_OpAnd8(v *Value, config *Config) bool {
 	b := v.Block
 	_ = b
 	// match: (And8 x y)
+	// cond:
+	// result: (AND x y)
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64AND)
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpAndB(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (AndB x y)
 	// cond:
 	// result: (AND x y)
 	for {
@@ -764,6 +785,20 @@ func rewriteValueSPARC64_OpNeg8(v *Value, config *Config) bool {
 		return true
 	}
 }
+func rewriteValueSPARC64_OpNot(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Not x)
+	// cond:
+	// result: (XORconst [1] x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64XORconst)
+		v.AuxInt = 1
+		v.AddArg(x)
+		return true
+	}
+}
 func rewriteValueSPARC64_OpOr16(v *Value, config *Config) bool {
 	b := v.Block
 	_ = b
@@ -813,6 +848,21 @@ func rewriteValueSPARC64_OpOr8(v *Value, config *Config) bool {
 	b := v.Block
 	_ = b
 	// match: (Or8 x y)
+	// cond:
+	// result: (OR x y)
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64OR)
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpOrB(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (OrB x y)
 	// cond:
 	// result: (OR x y)
 	for {

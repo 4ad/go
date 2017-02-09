@@ -1460,6 +1460,8 @@ const (
 	OpSPARC64FNEGS
 	OpSPARC64FNEGD
 	OpSPARC64FSQRTD
+	OpSPARC64MOVDconst
+	OpSPARC64MOVWconst
 
 	OpAdd8
 	OpAdd16
@@ -17930,6 +17932,30 @@ var opcodeTable = [...]opInfo{
 			},
 			outputs: []outputInfo{
 				{0, 4294705152}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+		},
+	},
+	{
+		name:              "MOVDconst",
+		auxType:           auxInt64,
+		argLen:            0,
+		rematerializeable: true,
+		asm:               sparc64.AMOVD,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:              "MOVWconst",
+		auxType:           auxInt32,
+		argLen:            0,
+		rematerializeable: true,
+		asm:               sparc64.AMOVW,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
 			},
 		},
 	},
