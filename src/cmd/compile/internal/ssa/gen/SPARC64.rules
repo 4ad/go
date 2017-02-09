@@ -75,3 +75,12 @@
 (AndB x y) -> (AND x y)
 (OrB x y) -> (OR x y)
 (Not x) -> (XORconst [1] x)
+
+// truncations
+// Because we ignore high parts of registers, truncates are just copies.
+(Trunc16to8 x) -> x
+(Trunc32to8 x) -> x
+(Trunc32to16 x) -> x
+(Trunc64to8 x) -> x
+(Trunc64to16 x) -> x
+(Trunc64to32 x) -> x

@@ -120,6 +120,18 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpSub8(v, config)
 	case OpSubPtr:
 		return rewriteValueSPARC64_OpSubPtr(v, config)
+	case OpTrunc16to8:
+		return rewriteValueSPARC64_OpTrunc16to8(v, config)
+	case OpTrunc32to16:
+		return rewriteValueSPARC64_OpTrunc32to16(v, config)
+	case OpTrunc32to8:
+		return rewriteValueSPARC64_OpTrunc32to8(v, config)
+	case OpTrunc64to16:
+		return rewriteValueSPARC64_OpTrunc64to16(v, config)
+	case OpTrunc64to32:
+		return rewriteValueSPARC64_OpTrunc64to32(v, config)
+	case OpTrunc64to8:
+		return rewriteValueSPARC64_OpTrunc64to8(v, config)
 	case OpXor16:
 		return rewriteValueSPARC64_OpXor16(v, config)
 	case OpXor32:
@@ -989,6 +1001,90 @@ func rewriteValueSPARC64_OpSubPtr(v *Value, config *Config) bool {
 		v.reset(OpSPARC64SUB)
 		v.AddArg(x)
 		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpTrunc16to8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Trunc16to8 x)
+	// cond:
+	// result: x
+	for {
+		x := v.Args[0]
+		v.reset(OpCopy)
+		v.Type = x.Type
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpTrunc32to16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Trunc32to16 x)
+	// cond:
+	// result: x
+	for {
+		x := v.Args[0]
+		v.reset(OpCopy)
+		v.Type = x.Type
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpTrunc32to8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Trunc32to8 x)
+	// cond:
+	// result: x
+	for {
+		x := v.Args[0]
+		v.reset(OpCopy)
+		v.Type = x.Type
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpTrunc64to16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Trunc64to16 x)
+	// cond:
+	// result: x
+	for {
+		x := v.Args[0]
+		v.reset(OpCopy)
+		v.Type = x.Type
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpTrunc64to32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Trunc64to32 x)
+	// cond:
+	// result: x
+	for {
+		x := v.Args[0]
+		v.reset(OpCopy)
+		v.Type = x.Type
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpTrunc64to8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Trunc64to8 x)
+	// cond:
+	// result: x
+	for {
+		x := v.Args[0]
+		v.reset(OpCopy)
+		v.Type = x.Type
+		v.AddArg(x)
 		return true
 	}
 }
