@@ -1436,9 +1436,15 @@ const (
 	OpS390XLoweredZero
 
 	OpSPARC64ADD
-	OpSPARC64ADDconst
 	OpSPARC64SUB
+	OpSPARC64AND
+	OpSPARC64OR
+	OpSPARC64XOR
+	OpSPARC64ADDconst
 	OpSPARC64SUBconst
+	OpSPARC64ANDconst
+	OpSPARC64ORconst
+	OpSPARC64XORconst
 	OpSPARC64MULD
 	OpSPARC64SDIVD
 	OpSPARC64UDIVD
@@ -17584,20 +17590,6 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
-		name:    "ADDconst",
-		auxType: auxInt64,
-		argLen:  1,
-		asm:     sparc64.AADD,
-		reg: regInfo{
-			inputs: []inputInfo{
-				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
-			},
-			outputs: []outputInfo{
-				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
-			},
-		},
-	},
-	{
 		name:   "SUB",
 		argLen: 2,
 		asm:    sparc64.ASUB,
@@ -17612,10 +17604,111 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
+		name:        "AND",
+		argLen:      2,
+		commutative: true,
+		asm:         sparc64.AAND,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+				{1, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:        "OR",
+		argLen:      2,
+		commutative: true,
+		asm:         sparc64.AOR,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+				{1, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:        "XOR",
+		argLen:      2,
+		commutative: true,
+		asm:         sparc64.AXOR,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+				{1, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:    "ADDconst",
+		auxType: auxInt64,
+		argLen:  1,
+		asm:     sparc64.AADD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
 		name:    "SUBconst",
 		auxType: auxInt64,
 		argLen:  1,
 		asm:     sparc64.ASUB,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:    "ANDconst",
+		auxType: auxInt64,
+		argLen:  1,
+		asm:     sparc64.AAND,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:    "ORconst",
+		auxType: auxInt64,
+		argLen:  1,
+		asm:     sparc64.AOR,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:    "XORconst",
+		auxType: auxInt64,
+		argLen:  1,
+		asm:     sparc64.AXOR,
 		reg: regInfo{
 			inputs: []inputInfo{
 				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6

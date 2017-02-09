@@ -186,6 +186,9 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 
 	case ssa.OpSPARC64ADD,
 		ssa.OpSPARC64SUB,
+		ssa.OpSPARC64AND,
+		ssa.OpSPARC64OR,
+		ssa.OpSPARC64XOR,
 		ssa.OpSPARC64MULD,
 		ssa.OpSPARC64SDIVD,
 		ssa.OpSPARC64UDIVD,
@@ -209,7 +212,10 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p.To.Reg = r
 
 	case ssa.OpSPARC64ADDconst,
-		ssa.OpSPARC64SUBconst:
+		ssa.OpSPARC64SUBconst,
+		ssa.OpSPARC64ANDconst,
+		ssa.OpSPARC64ORconst,
+		ssa.OpSPARC64XORconst:
 
 		p := gc.Prog(v.Op.Asm())
 		p.From.Type = obj.TYPE_CONST

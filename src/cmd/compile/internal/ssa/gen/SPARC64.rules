@@ -45,3 +45,18 @@
 (Mod32u x y) -> (Mod64u (ZeroExt32to64 x) (ZeroExt32to64 y))
 (Mod64 x y) -> (SUB x (MULD y (SDIVD x y)))
 (Mod64u x y) -> (SUB x (MULD y (UDIVD x y)))
+
+(And64 x y) -> (AND x y)
+(And32 x y) -> (AND x y)
+(And16 x y) -> (AND x y)
+(And8 x y) -> (AND x y)
+
+(Or64 x y) -> (OR x y)
+(Or32 x y) -> (OR x y)
+(Or16 x y) -> (OR x y)
+(Or8 x y) -> (OR x y)
+
+(Xor64 x y) -> (XOR x y)
+(Xor32 x y) -> (XOR x y)
+(Xor16 x y) -> (XOR x y)
+(Xor8 x y) -> (XOR x y)
