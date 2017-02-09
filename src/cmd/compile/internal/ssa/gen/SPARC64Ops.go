@@ -115,6 +115,7 @@ func init() {
 		{name: "NEG", argLength: 1, reg: gp11, asm: "NEG"},       // -arg0
 		{name: "FNEGS", argLength: 1, reg: fp11, asm: "FNEGS"},   // -arg0, float32
 		{name: "FNEGD", argLength: 1, reg: fp11, asm: "FNEGD"},   // -arg0, float64
+		{name: "FSQRTD", argLength: 1, reg: fp11, asm: "FSQRTD"}, // sqrt(arg0), float64
 	}
 
 	blocks := []blockData{

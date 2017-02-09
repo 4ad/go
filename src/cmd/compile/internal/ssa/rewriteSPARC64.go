@@ -98,6 +98,8 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpOr64(v, config)
 	case OpOr8:
 		return rewriteValueSPARC64_OpOr8(v, config)
+	case OpSqrt:
+		return rewriteValueSPARC64_OpSqrt(v, config)
 	case OpSub16:
 		return rewriteValueSPARC64_OpSub16(v, config)
 	case OpSub32:
@@ -819,6 +821,19 @@ func rewriteValueSPARC64_OpOr8(v *Value, config *Config) bool {
 		v.reset(OpSPARC64OR)
 		v.AddArg(x)
 		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpSqrt(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Sqrt x)
+	// cond:
+	// result: (FSQRTD x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64FSQRTD)
+		v.AddArg(x)
 		return true
 	}
 }

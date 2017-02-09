@@ -1459,6 +1459,7 @@ const (
 	OpSPARC64NEG
 	OpSPARC64FNEGS
 	OpSPARC64FNEGD
+	OpSPARC64FSQRTD
 
 	OpAdd8
 	OpAdd16
@@ -17910,6 +17911,19 @@ var opcodeTable = [...]opInfo{
 		name:   "FNEGD",
 		argLen: 1,
 		asm:    sparc64.AFNEGD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 4294705152}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+			outputs: []outputInfo{
+				{0, 4294705152}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+		},
+	},
+	{
+		name:   "FSQRTD",
+		argLen: 1,
+		asm:    sparc64.AFSQRTD,
 		reg: regInfo{
 			inputs: []inputInfo{
 				{0, 4294705152}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13

@@ -68,3 +68,5 @@
 (Neg8 x) -> (NEG x)
 (Neg32F x) -> (FNEGS x)
 (Neg64F x) -> (FNEGD x)
+
+(Sqrt x) -> (FSQRTD x)
