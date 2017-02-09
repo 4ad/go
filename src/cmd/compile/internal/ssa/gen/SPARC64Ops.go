@@ -81,6 +81,7 @@ func init() {
 
 		gp11 = regInfo{inputs: []regMask{gp}, outputs: []regMask{gp}}
 		gp21 = regInfo{inputs: []regMask{gp, gp}, outputs: []regMask{gp}}
+		fp11 = regInfo{inputs: []regMask{fp}, outputs: []regMask{fp}}
 		fp21 = regInfo{inputs: []regMask{fp, fp}, outputs: []regMask{fp}}
 	)
 	ops := []opData{
@@ -109,6 +110,11 @@ func init() {
 		{name: "FMULD", argLength: 2, reg: fp21, asm: "FMULD", commutative: true}, // arg0 * arg1
 		{name: "FDIVS", argLength: 2, reg: fp21, asm: "FDIVS"},                    // arg0 / arg1
 		{name: "FDIVD", argLength: 2, reg: fp21, asm: "FDIVD"},                    // arg0 / arg1
+
+		// unary ops
+		{name: "NEG", argLength: 1, reg: gp11, asm: "NEG"},       // -arg0
+		{name: "FNEGS", argLength: 1, reg: fp11, asm: "FNEGS"},   // -arg0, float32
+		{name: "FNEGD", argLength: 1, reg: fp11, asm: "FNEGD"},   // -arg0, float64
 	}
 
 	blocks := []blockData{

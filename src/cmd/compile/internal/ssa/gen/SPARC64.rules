@@ -60,3 +60,11 @@
 (Xor32 x y) -> (XOR x y)
 (Xor16 x y) -> (XOR x y)
 (Xor8 x y) -> (XOR x y)
+
+// unary ops
+(Neg64 x) -> (NEG x)
+(Neg32 x) -> (NEG x)
+(Neg16 x) -> (NEG x)
+(Neg8 x) -> (NEG x)
+(Neg32F x) -> (FNEGS x)
+(Neg64F x) -> (FNEGD x)

@@ -78,6 +78,18 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpMul64F(v, config)
 	case OpMul8:
 		return rewriteValueSPARC64_OpMul8(v, config)
+	case OpNeg16:
+		return rewriteValueSPARC64_OpNeg16(v, config)
+	case OpNeg32:
+		return rewriteValueSPARC64_OpNeg32(v, config)
+	case OpNeg32F:
+		return rewriteValueSPARC64_OpNeg32F(v, config)
+	case OpNeg64:
+		return rewriteValueSPARC64_OpNeg64(v, config)
+	case OpNeg64F:
+		return rewriteValueSPARC64_OpNeg64F(v, config)
+	case OpNeg8:
+		return rewriteValueSPARC64_OpNeg8(v, config)
 	case OpOr16:
 		return rewriteValueSPARC64_OpOr16(v, config)
 	case OpOr32:
@@ -669,6 +681,84 @@ func rewriteValueSPARC64_OpMul8(v *Value, config *Config) bool {
 		v.reset(OpSPARC64MULD)
 		v.AddArg(x)
 		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpNeg16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Neg16 x)
+	// cond:
+	// result: (NEG x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64NEG)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpNeg32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Neg32 x)
+	// cond:
+	// result: (NEG x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64NEG)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpNeg32F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Neg32F x)
+	// cond:
+	// result: (FNEGS x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64FNEGS)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpNeg64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Neg64 x)
+	// cond:
+	// result: (NEG x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64NEG)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpNeg64F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Neg64F x)
+	// cond:
+	// result: (FNEGD x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64FNEGD)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpNeg8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Neg8 x)
+	// cond:
+	// result: (NEG x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64NEG)
+		v.AddArg(x)
 		return true
 	}
 }
