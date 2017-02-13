@@ -9,6 +9,7 @@ import (
 	"cmd/compile/internal/ssa"
 	"cmd/internal/obj"
 	"cmd/internal/obj/sparc64"
+	"math"
 )
 
 var ssaRegToReg = []int16{
