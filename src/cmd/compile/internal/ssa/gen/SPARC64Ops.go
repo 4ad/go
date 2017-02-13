@@ -120,6 +120,15 @@ func init() {
 		// moves
 		{name: "MOVDconst", argLength: 0, reg: gp01, aux: "Int64", asm: "MOVD", rematerializeable: true},
 		{name: "MOVWconst", argLength: 0, reg: gp01, aux: "Int32", asm: "MOVW", rematerializeable: true},     // 32 low bits of auxint
+
+		// conversions
+		{name: "MOVBreg", argLength: 1, reg: gp11, asm: "MOVB"},   // move from arg0, sign-extended from byte
+		{name: "MOVUBreg", argLength: 1, reg: gp11, asm: "MOVUB"}, // move from arg0, unsign-extended from byte
+		{name: "MOVHreg", argLength: 1, reg: gp11, asm: "MOVH"},   // move from arg0, sign-extended from half
+		{name: "MOVUHreg", argLength: 1, reg: gp11, asm: "MOVUH"}, // move from arg0, unsign-extended from half
+		{name: "MOVWreg", argLength: 1, reg: gp11, asm: "MOVW"},   // move from arg0, sign-extended from word
+		{name: "MOVUWreg", argLength: 1, reg: gp11, asm: "MOVUW"}, // move from arg0, unsign-extended from word
+		{name: "MOVDreg", argLength: 1, reg: gp11, asm: "MOVD"},   // move from arg0
 	}
 
 	blocks := []blockData{

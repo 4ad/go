@@ -104,6 +104,18 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpOr8(v, config)
 	case OpOrB:
 		return rewriteValueSPARC64_OpOrB(v, config)
+	case OpSignExt16to32:
+		return rewriteValueSPARC64_OpSignExt16to32(v, config)
+	case OpSignExt16to64:
+		return rewriteValueSPARC64_OpSignExt16to64(v, config)
+	case OpSignExt32to64:
+		return rewriteValueSPARC64_OpSignExt32to64(v, config)
+	case OpSignExt8to16:
+		return rewriteValueSPARC64_OpSignExt8to16(v, config)
+	case OpSignExt8to32:
+		return rewriteValueSPARC64_OpSignExt8to32(v, config)
+	case OpSignExt8to64:
+		return rewriteValueSPARC64_OpSignExt8to64(v, config)
 	case OpSqrt:
 		return rewriteValueSPARC64_OpSqrt(v, config)
 	case OpSub16:
@@ -140,6 +152,18 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpXor64(v, config)
 	case OpXor8:
 		return rewriteValueSPARC64_OpXor8(v, config)
+	case OpZeroExt16to32:
+		return rewriteValueSPARC64_OpZeroExt16to32(v, config)
+	case OpZeroExt16to64:
+		return rewriteValueSPARC64_OpZeroExt16to64(v, config)
+	case OpZeroExt32to64:
+		return rewriteValueSPARC64_OpZeroExt32to64(v, config)
+	case OpZeroExt8to16:
+		return rewriteValueSPARC64_OpZeroExt8to16(v, config)
+	case OpZeroExt8to32:
+		return rewriteValueSPARC64_OpZeroExt8to32(v, config)
+	case OpZeroExt8to64:
+		return rewriteValueSPARC64_OpZeroExt8to64(v, config)
 	}
 	return false
 }
@@ -886,6 +910,84 @@ func rewriteValueSPARC64_OpOrB(v *Value, config *Config) bool {
 		return true
 	}
 }
+func rewriteValueSPARC64_OpSignExt16to32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (SignExt16to32 x)
+	// cond:
+	// result: (MOVHreg x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64MOVHreg)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpSignExt16to64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (SignExt16to64 x)
+	// cond:
+	// result: (MOVHreg x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64MOVHreg)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpSignExt32to64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (SignExt32to64 x)
+	// cond:
+	// result: (MOVWreg x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64MOVWreg)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpSignExt8to16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (SignExt8to16  x)
+	// cond:
+	// result: (MOVBreg x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64MOVBreg)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpSignExt8to32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (SignExt8to32  x)
+	// cond:
+	// result: (MOVBreg x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64MOVBreg)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpSignExt8to64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (SignExt8to64  x)
+	// cond:
+	// result: (MOVBreg x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64MOVBreg)
+		v.AddArg(x)
+		return true
+	}
+}
 func rewriteValueSPARC64_OpSqrt(v *Value, config *Config) bool {
 	b := v.Block
 	_ = b
@@ -1007,13 +1109,12 @@ func rewriteValueSPARC64_OpSubPtr(v *Value, config *Config) bool {
 func rewriteValueSPARC64_OpTrunc16to8(v *Value, config *Config) bool {
 	b := v.Block
 	_ = b
-	// match: (Trunc16to8 x)
+	// match: (Trunc16to8  x)
 	// cond:
-	// result: x
+	// result: (MOVBreg x)
 	for {
 		x := v.Args[0]
-		v.reset(OpCopy)
-		v.Type = x.Type
+		v.reset(OpSPARC64MOVBreg)
 		v.AddArg(x)
 		return true
 	}
@@ -1023,11 +1124,10 @@ func rewriteValueSPARC64_OpTrunc32to16(v *Value, config *Config) bool {
 	_ = b
 	// match: (Trunc32to16 x)
 	// cond:
-	// result: x
+	// result: (MOVHreg x)
 	for {
 		x := v.Args[0]
-		v.reset(OpCopy)
-		v.Type = x.Type
+		v.reset(OpSPARC64MOVHreg)
 		v.AddArg(x)
 		return true
 	}
@@ -1035,13 +1135,12 @@ func rewriteValueSPARC64_OpTrunc32to16(v *Value, config *Config) bool {
 func rewriteValueSPARC64_OpTrunc32to8(v *Value, config *Config) bool {
 	b := v.Block
 	_ = b
-	// match: (Trunc32to8 x)
+	// match: (Trunc32to8  x)
 	// cond:
-	// result: x
+	// result: (MOVBreg x)
 	for {
 		x := v.Args[0]
-		v.reset(OpCopy)
-		v.Type = x.Type
+		v.reset(OpSPARC64MOVBreg)
 		v.AddArg(x)
 		return true
 	}
@@ -1051,11 +1150,10 @@ func rewriteValueSPARC64_OpTrunc64to16(v *Value, config *Config) bool {
 	_ = b
 	// match: (Trunc64to16 x)
 	// cond:
-	// result: x
+	// result: (MOVHreg x)
 	for {
 		x := v.Args[0]
-		v.reset(OpCopy)
-		v.Type = x.Type
+		v.reset(OpSPARC64MOVHreg)
 		v.AddArg(x)
 		return true
 	}
@@ -1065,11 +1163,10 @@ func rewriteValueSPARC64_OpTrunc64to32(v *Value, config *Config) bool {
 	_ = b
 	// match: (Trunc64to32 x)
 	// cond:
-	// result: x
+	// result: (MOVWreg x)
 	for {
 		x := v.Args[0]
-		v.reset(OpCopy)
-		v.Type = x.Type
+		v.reset(OpSPARC64MOVWreg)
 		v.AddArg(x)
 		return true
 	}
@@ -1077,13 +1174,12 @@ func rewriteValueSPARC64_OpTrunc64to32(v *Value, config *Config) bool {
 func rewriteValueSPARC64_OpTrunc64to8(v *Value, config *Config) bool {
 	b := v.Block
 	_ = b
-	// match: (Trunc64to8 x)
+	// match: (Trunc64to8  x)
 	// cond:
-	// result: x
+	// result: (MOVBreg x)
 	for {
 		x := v.Args[0]
-		v.reset(OpCopy)
-		v.Type = x.Type
+		v.reset(OpSPARC64MOVBreg)
 		v.AddArg(x)
 		return true
 	}
@@ -1145,6 +1241,84 @@ func rewriteValueSPARC64_OpXor8(v *Value, config *Config) bool {
 		v.reset(OpSPARC64XOR)
 		v.AddArg(x)
 		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpZeroExt16to32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (ZeroExt16to32 x)
+	// cond:
+	// result: (MOVUHreg x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64MOVUHreg)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpZeroExt16to64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (ZeroExt16to64 x)
+	// cond:
+	// result: (MOVUHreg x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64MOVUHreg)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpZeroExt32to64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (ZeroExt32to64 x)
+	// cond:
+	// result: (MOVUWreg x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64MOVUWreg)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpZeroExt8to16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (ZeroExt8to16  x)
+	// cond:
+	// result: (MOVUBreg x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64MOVUBreg)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpZeroExt8to32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (ZeroExt8to32  x)
+	// cond:
+	// result: (MOVUBreg x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64MOVUBreg)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpZeroExt8to64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (ZeroExt8to64  x)
+	// cond:
+	// result: (MOVUBreg x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64MOVUBreg)
+		v.AddArg(x)
 		return true
 	}
 }

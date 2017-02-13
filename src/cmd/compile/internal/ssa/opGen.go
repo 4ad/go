@@ -1462,6 +1462,13 @@ const (
 	OpSPARC64FSQRTD
 	OpSPARC64MOVDconst
 	OpSPARC64MOVWconst
+	OpSPARC64MOVBreg
+	OpSPARC64MOVUBreg
+	OpSPARC64MOVHreg
+	OpSPARC64MOVUHreg
+	OpSPARC64MOVWreg
+	OpSPARC64MOVUWreg
+	OpSPARC64MOVDreg
 
 	OpAdd8
 	OpAdd16
@@ -17954,6 +17961,97 @@ var opcodeTable = [...]opInfo{
 		rematerializeable: true,
 		asm:               sparc64.AMOVW,
 		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "MOVBreg",
+		argLen: 1,
+		asm:    sparc64.AMOVB,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "MOVUBreg",
+		argLen: 1,
+		asm:    sparc64.AMOVUB,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "MOVHreg",
+		argLen: 1,
+		asm:    sparc64.AMOVH,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "MOVUHreg",
+		argLen: 1,
+		asm:    sparc64.AMOVUH,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "MOVWreg",
+		argLen: 1,
+		asm:    sparc64.AMOVW,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "MOVUWreg",
+		argLen: 1,
+		asm:    sparc64.AMOVUW,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "MOVDreg",
+		argLen: 1,
+		asm:    sparc64.AMOVD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
 			outputs: []outputInfo{
 				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
 			},

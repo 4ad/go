@@ -76,11 +76,25 @@
 (OrB x y) -> (OR x y)
 (Not x) -> (XORconst [1] x)
 
-// truncations
-// Because we ignore high parts of registers, truncates are just copies.
-(Trunc16to8 x) -> x
-(Trunc32to8 x) -> x
-(Trunc32to16 x) -> x
-(Trunc64to8 x) -> x
-(Trunc64to16 x) -> x
-(Trunc64to32 x) -> x
+// Lowering extension
+// Note: we always extend to 64 bits even though some ops don't need that many result bits.
+(SignExt8to16  x) -> (MOVBreg x)
+(SignExt8to32  x) -> (MOVBreg x)
+(SignExt8to64  x) -> (MOVBreg x)
+(SignExt16to32 x) -> (MOVHreg x)
+(SignExt16to64 x) -> (MOVHreg x)
+(SignExt32to64 x) -> (MOVWreg x)
+
+(ZeroExt8to16  x) -> (MOVUBreg x)
+(ZeroExt8to32  x) -> (MOVUBreg x)
+(ZeroExt8to64  x) -> (MOVUBreg x)
+(ZeroExt16to32 x) -> (MOVUHreg x)
+(ZeroExt16to64 x) -> (MOVUHreg x)
+(ZeroExt32to64 x) -> (MOVUWreg x)
+
+(Trunc16to8  x) -> (MOVBreg x)
+(Trunc32to8  x) -> (MOVBreg x)
+(Trunc32to16 x) -> (MOVHreg x)
+(Trunc64to8  x) -> (MOVBreg x)
+(Trunc64to16 x) -> (MOVHreg x)
+(Trunc64to32 x) -> (MOVWreg x)
