@@ -82,6 +82,7 @@ func init() {
 		gp01 = regInfo{inputs: nil, outputs: []regMask{gp}}
 		gp11 = regInfo{inputs: []regMask{gp}, outputs: []regMask{gp}}
 		gp21 = regInfo{inputs: []regMask{gp, gp}, outputs: []regMask{gp}}
+		fp01        = regInfo{inputs: nil, outputs: []regMask{fp}}
 		fp11 = regInfo{inputs: []regMask{fp}, outputs: []regMask{fp}}
 		fp21 = regInfo{inputs: []regMask{fp, fp}, outputs: []regMask{fp}}
 	)
@@ -120,6 +121,8 @@ func init() {
 		// moves
 		{name: "MOVDconst", argLength: 0, reg: gp01, aux: "Int64", asm: "MOVD", rematerializeable: true},
 		{name: "MOVWconst", argLength: 0, reg: gp01, aux: "Int32", asm: "MOVW", rematerializeable: true},     // 32 low bits of auxint
+		{name: "FMOVDconst", argLength: 0, reg: fp01, aux: "Float64", asm: "FMOVD", rematerializeable: true},
+		{name: "FMOVSconst", argLength: 0, reg: fp01, aux: "Float32", asm: "FMOVS", rematerializeable: true},
 
 		// conversions
 		{name: "MOVBreg", argLength: 1, reg: gp11, asm: "MOVB"},   // move from arg0, sign-extended from byte

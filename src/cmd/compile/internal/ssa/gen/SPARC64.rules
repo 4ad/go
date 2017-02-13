@@ -98,3 +98,13 @@
 (Trunc64to8  x) -> (MOVBreg x)
 (Trunc64to16 x) -> (MOVHreg x)
 (Trunc64to32 x) -> (MOVWreg x)
+
+// Lowering constants
+(Const8   [val]) -> (MOVWconst [val])
+(Const16  [val]) -> (MOVWconst [val])
+(Const32  [val]) -> (MOVWconst [val])
+(Const64  [val]) -> (MOVDconst [val])
+(Const32F [val]) -> (FMOVSconst [val])
+(Const64F [val]) -> (FMOVDconst [val])
+(ConstNil) -> (MOVDconst [0])
+(ConstBool [b]) -> (MOVWconst [b])

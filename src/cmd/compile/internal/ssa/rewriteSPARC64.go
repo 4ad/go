@@ -32,6 +32,22 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpAnd8(v, config)
 	case OpAndB:
 		return rewriteValueSPARC64_OpAndB(v, config)
+	case OpConst16:
+		return rewriteValueSPARC64_OpConst16(v, config)
+	case OpConst32:
+		return rewriteValueSPARC64_OpConst32(v, config)
+	case OpConst32F:
+		return rewriteValueSPARC64_OpConst32F(v, config)
+	case OpConst64:
+		return rewriteValueSPARC64_OpConst64(v, config)
+	case OpConst64F:
+		return rewriteValueSPARC64_OpConst64F(v, config)
+	case OpConst8:
+		return rewriteValueSPARC64_OpConst8(v, config)
+	case OpConstBool:
+		return rewriteValueSPARC64_OpConstBool(v, config)
+	case OpConstNil:
+		return rewriteValueSPARC64_OpConstNil(v, config)
 	case OpDiv16:
 		return rewriteValueSPARC64_OpDiv16(v, config)
 	case OpDiv16u:
@@ -344,6 +360,109 @@ func rewriteValueSPARC64_OpAndB(v *Value, config *Config) bool {
 		v.reset(OpSPARC64AND)
 		v.AddArg(x)
 		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpConst16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Const16  [val])
+	// cond:
+	// result: (MOVWconst [val])
+	for {
+		val := v.AuxInt
+		v.reset(OpSPARC64MOVWconst)
+		v.AuxInt = val
+		return true
+	}
+}
+func rewriteValueSPARC64_OpConst32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Const32  [val])
+	// cond:
+	// result: (MOVWconst [val])
+	for {
+		val := v.AuxInt
+		v.reset(OpSPARC64MOVWconst)
+		v.AuxInt = val
+		return true
+	}
+}
+func rewriteValueSPARC64_OpConst32F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Const32F [val])
+	// cond:
+	// result: (FMOVSconst [val])
+	for {
+		val := v.AuxInt
+		v.reset(OpSPARC64FMOVSconst)
+		v.AuxInt = val
+		return true
+	}
+}
+func rewriteValueSPARC64_OpConst64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Const64  [val])
+	// cond:
+	// result: (MOVDconst [val])
+	for {
+		val := v.AuxInt
+		v.reset(OpSPARC64MOVDconst)
+		v.AuxInt = val
+		return true
+	}
+}
+func rewriteValueSPARC64_OpConst64F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Const64F [val])
+	// cond:
+	// result: (FMOVDconst [val])
+	for {
+		val := v.AuxInt
+		v.reset(OpSPARC64FMOVDconst)
+		v.AuxInt = val
+		return true
+	}
+}
+func rewriteValueSPARC64_OpConst8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Const8   [val])
+	// cond:
+	// result: (MOVWconst [val])
+	for {
+		val := v.AuxInt
+		v.reset(OpSPARC64MOVWconst)
+		v.AuxInt = val
+		return true
+	}
+}
+func rewriteValueSPARC64_OpConstBool(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (ConstBool [b])
+	// cond:
+	// result: (MOVWconst [b])
+	for {
+		b := v.AuxInt
+		v.reset(OpSPARC64MOVWconst)
+		v.AuxInt = b
+		return true
+	}
+}
+func rewriteValueSPARC64_OpConstNil(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (ConstNil)
+	// cond:
+	// result: (MOVDconst [0])
+	for {
+		v.reset(OpSPARC64MOVDconst)
+		v.AuxInt = 0
 		return true
 	}
 }

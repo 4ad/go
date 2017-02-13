@@ -251,6 +251,15 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = gc.SSARegNum(v)
 
+	case ssa.OpSPARC64FMOVDconst,
+		ssa.OpSPARC64FMOVSconst:
+
+		p := gc.Prog(v.Op.Asm())
+		p.From.Type = obj.TYPE_FCONST
+		p.From.Val = math.Float64frombits(uint64(v.AuxInt))
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = gc.SSARegNum(v)
+
 	default:
 		v.Unimplementedf("genValue not implemented: %s", v.LongString())
 	}
