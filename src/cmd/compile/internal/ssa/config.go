@@ -217,6 +217,17 @@ func NewConfig(arch string, fe Frontend, ctxt *obj.Link, optimize bool) *Config 
 		c.FPReg = framepointerRegS390X
 		c.hasGReg = true
 		c.noDuffDevice = true
+	case "sparc64":
+		c.IntSize = 8
+		c.PtrSize = 8
+		c.lowerBlock = rewriteBlockSPARC64
+		c.lowerValue = rewriteValueSPARC64
+		c.registers = registersSPARC64[:]
+		c.gpRegMask = gpRegMaskSPARC64
+		c.fpRegMask = fpRegMaskSPARC64
+		c.FPReg = framepointerRegSPARC64
+		c.hasGReg = true
+		c.noDuffDevice = true
 	default:
 		fe.Unimplementedf(0, "arch %s not implemented", arch)
 	}
