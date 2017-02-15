@@ -52,6 +52,8 @@ var regNamesSPARC64 = []string{
 
 	// pseudo-registers
 	"SB",
+	"SP",
+	"FP",
 }
 
 func init() {
