@@ -19,7 +19,7 @@ import "strings"
 var regNamesSPARC64 = []string{
 	"RT1",
 	"CTXT",
-	"G",
+	"g",
 	"RT2",
 	"O0",
 	"O1",

@@ -20085,7 +20085,7 @@ var framepointerRegS390X = int8(-1)
 var registersSPARC64 = [...]Register{
 	{0, "RT1"},
 	{1, "CTXT"},
-	{2, "G"},
+	{2, "g"},
 	{3, "RT2"},
 	{4, "O0"},
 	{5, "O1"},
