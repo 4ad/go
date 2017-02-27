@@ -1460,6 +1460,8 @@ const (
 	OpSPARC64FNEGS
 	OpSPARC64FNEGD
 	OpSPARC64FSQRTD
+	OpSPARC64MOVDaddr
+	OpSPARC64MOVDstore
 	OpSPARC64MOVDconst
 	OpSPARC64MOVWconst
 	OpSPARC64FMOVDconst
@@ -17941,6 +17943,33 @@ var opcodeTable = [...]opInfo{
 			},
 			outputs: []outputInfo{
 				{0, 4294705152}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+		},
+	},
+	{
+		name:              "MOVDaddr",
+		auxType:           auxSymOff,
+		argLen:            1,
+		rematerializeable: true,
+		asm:               sparc64.AMOVD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 12884901888}, // SB SP
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:    "MOVDstore",
+		auxType: auxSymOff,
+		argLen:  3,
+		asm:     sparc64.AMOVD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 12885031920}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 SB SP
+				{1, 12885031920}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 SB SP
 			},
 		},
 	},

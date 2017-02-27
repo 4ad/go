@@ -22,6 +22,8 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpAdd8(v, config)
 	case OpAddPtr:
 		return rewriteValueSPARC64_OpAddPtr(v, config)
+	case OpAddr:
+		return rewriteValueSPARC64_OpAddr(v, config)
 	case OpAnd16:
 		return rewriteValueSPARC64_OpAnd16(v, config)
 	case OpAnd32:
@@ -285,6 +287,21 @@ func rewriteValueSPARC64_OpAddPtr(v *Value, config *Config) bool {
 		v.reset(OpSPARC64ADD)
 		v.AddArg(x)
 		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpAddr(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Addr {sym} base)
+	// cond:
+	// result: (MOVDaddr {sym} base)
+	for {
+		sym := v.Aux
+		base := v.Args[0]
+		v.reset(OpSPARC64MOVDaddr)
+		v.Aux = sym
+		v.AddArg(base)
 		return true
 	}
 }

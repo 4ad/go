@@ -108,3 +108,7 @@
 (Const64F [val]) -> (FMOVDconst [val])
 (ConstNil) -> (MOVDconst [0])
 (ConstBool [b]) -> (MOVWconst [b])
+
+(Addr {sym} base) -> (MOVDaddr {sym} base)
+
+(Store [8] ptr val mem) -> (MOVDstore ptr val mem)

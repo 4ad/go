@@ -245,6 +245,27 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = gc.SSARegNum(v)
 
+	case ssa.OpSPARC64MOVDaddr:
+		p := gc.Prog(sparc64.AMOVD)
+		p.From.Type = obj.TYPE_ADDR
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = gc.SSARegNum(v)
+
+		var wantreg string
+		switch v.Aux.(type) {
+		default:
+			v.Fatalf("aux is of unknown type %T", v.Aux)
+		case *ssa.ExternSymbol:
+			wantreg = "SB"
+			gc.AddAux(&p.From, v)
+		case *ssa.ArgSymbol, *ssa.AutoSymbol:
+			wantreg = "SP"
+			gc.AddAux(&p.From, v)
+		}
+		if reg := gc.SSAReg(v.Args[0]); reg.Name() != wantreg {
+			v.Fatalf("bad reg %s for symbol type %T, want %s", reg.Name(), v.Aux, wantreg)
+		}
+
 	case ssa.OpSPARC64MOVDconst,
 		ssa.OpSPARC64MOVWconst:
 
