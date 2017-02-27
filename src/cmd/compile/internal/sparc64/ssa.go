@@ -284,6 +284,15 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = gc.SSARegNum(v)
 
+	case ssa.OpSPARC64MOVDstore, ssa.OpSPARC64MOVWstore, ssa.OpSPARC64MOVHstore, ssa.OpSPARC64MOVBstore:
+
+		p := gc.Prog(v.Op.Asm())
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = gc.SSARegNum(v.Args[1])
+		p.To.Type = obj.TYPE_MEM
+		p.To.Reg = gc.SSARegNum(v.Args[0])
+		gc.AddAux(&p.To, v)
+
 	default:
 		v.Unimplementedf("genValue not implemented: %s", v.LongString())
 	}
