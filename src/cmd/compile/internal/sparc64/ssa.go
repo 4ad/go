@@ -261,6 +261,11 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		case *ssa.ArgSymbol, *ssa.AutoSymbol:
 			wantreg = "SP"
 			gc.AddAux(&p.From, v)
+		case nil:
+			// No sym, just MOVD $off(SP), R
+			wantreg = "SP"
+			p.From.Reg = sparc64.REG_RSP
+			p.From.Offset = v.AuxInt
 		}
 		if reg := gc.SSAReg(v.Args[0]); reg.Name() != wantreg {
 			v.Fatalf("bad reg %s for symbol type %T, want %s", reg.Name(), v.Aux, wantreg)

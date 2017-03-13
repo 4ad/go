@@ -109,6 +109,9 @@
 (ConstNil) -> (MOVDconst [0])
 (ConstBool [b]) -> (MOVWconst [b])
 
+(OffPtr [off] ptr:(SP)) -> (MOVDaddr [off] ptr)
+(OffPtr [off] ptr) -> (ADDconst [off] ptr)
+
 (Addr {sym} base) -> (MOVDaddr {sym} base)
 
 (Store [8] ptr val mem) -> (MOVDstore ptr val mem)

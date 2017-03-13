@@ -112,6 +112,8 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpNeg8(v, config)
 	case OpNot:
 		return rewriteValueSPARC64_OpNot(v, config)
+	case OpOffPtr:
+		return rewriteValueSPARC64_OpOffPtr(v, config)
 	case OpOr16:
 		return rewriteValueSPARC64_OpOr16(v, config)
 	case OpOr32:
@@ -972,6 +974,35 @@ func rewriteValueSPARC64_OpNot(v *Value, config *Config) bool {
 		v.reset(OpSPARC64XORconst)
 		v.AuxInt = 1
 		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpOffPtr(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (OffPtr [off] ptr:(SP))
+	// cond:
+	// result: (MOVDaddr [off] ptr)
+	for {
+		off := v.AuxInt
+		ptr := v.Args[0]
+		if ptr.Op != OpSP {
+			break
+		}
+		v.reset(OpSPARC64MOVDaddr)
+		v.AuxInt = off
+		v.AddArg(ptr)
+		return true
+	}
+	// match: (OffPtr [off] ptr)
+	// cond:
+	// result: (ADDconst [off] ptr)
+	for {
+		off := v.AuxInt
+		ptr := v.Args[0]
+		v.reset(OpSPARC64ADDconst)
+		v.AuxInt = off
+		v.AddArg(ptr)
 		return true
 	}
 }
