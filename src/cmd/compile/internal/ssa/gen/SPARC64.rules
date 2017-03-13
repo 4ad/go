@@ -112,3 +112,6 @@
 (Addr {sym} base) -> (MOVDaddr {sym} base)
 
 (Store [8] ptr val mem) -> (MOVDstore ptr val mem)
+
+// calls
+(StaticCall [argwid] {target} mem) -> (CALLstatic [argwid] {target} mem)

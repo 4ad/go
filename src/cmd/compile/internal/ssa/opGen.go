@@ -1476,6 +1476,7 @@ const (
 	OpSPARC64MOVWreg
 	OpSPARC64MOVUWreg
 	OpSPARC64MOVDreg
+	OpSPARC64CALLstatic
 
 	OpAdd8
 	OpAdd16
@@ -18149,6 +18150,16 @@ var opcodeTable = [...]opInfo{
 			outputs: []outputInfo{
 				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
 			},
+		},
+	},
+	{
+		name:         "CALLstatic",
+		auxType:      auxSymOff,
+		argLen:       1,
+		clobberFlags: true,
+		call:         true,
+		reg: regInfo{
+			clobbers: 4294835188, // g O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
 		},
 	},
 

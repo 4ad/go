@@ -77,6 +77,7 @@ func init() {
 		return m
 	}
 
+	// Common individual register masks
 	var (
 		gp = buildReg("O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6")
 		fp = buildReg("Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13")
@@ -90,6 +91,7 @@ func init() {
 		fp01        = regInfo{inputs: nil, outputs: []regMask{fp}}
 		fp11 = regInfo{inputs: []regMask{fp}, outputs: []regMask{fp}}
 		fp21 = regInfo{inputs: []regMask{fp, fp}, outputs: []regMask{fp}}
+		callerSave = gp | fp | buildReg("g") // runtime.setg (and anything calling it) may clobber g
 	)
 	ops := []opData{
 		{name: "ADD", argLength: 2, reg: gp21, asm: "ADD", commutative: true}, // arg0 + arg1
@@ -144,6 +146,9 @@ func init() {
 		{name: "MOVWreg", argLength: 1, reg: gp11, asm: "MOVW"},   // move from arg0, sign-extended from word
 		{name: "MOVUWreg", argLength: 1, reg: gp11, asm: "MOVUW"}, // move from arg0, unsign-extended from word
 		{name: "MOVDreg", argLength: 1, reg: gp11, asm: "MOVD"},   // move from arg0
+
+		// function calls
+		{name: "CALLstatic", argLength: 1, reg: regInfo{clobbers: callerSave}, aux: "SymOff", clobberFlags: true, call: true},                                              // call static function aux.(*gc.Sym).  arg0=mem, auxint=argsize, returns mem
 	}
 
 	blocks := []blockData{

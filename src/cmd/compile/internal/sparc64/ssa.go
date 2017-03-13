@@ -293,6 +293,27 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p.To.Reg = gc.SSARegNum(v.Args[0])
 		gc.AddAux(&p.To, v)
 
+	case ssa.OpSPARC64CALLstatic:
+		if v.Aux.(*gc.Sym) == gc.Deferreturn.Sym {
+			// TODO(shawn): is this true on sparc due to pc/npc difference?
+			// Deferred calls will appear to be returning to
+			// the CALL deferreturn(SB) that we are about to emit.
+			// However, the stack trace code will show the line
+			// of the instruction byte before the return PC.
+			// To avoid that being an unrelated instruction,
+			// insert an actual hardware NOP that will have the right line number.
+			// This is different from obj.ANOP, which is a virtual no-op
+			// that doesn't make it into the instruction stream.
+			ginsnop()
+		}
+		p := gc.Prog(obj.ACALL)
+		p.To.Type = obj.TYPE_MEM
+		p.To.Name = obj.NAME_EXTERN
+		p.To.Sym = gc.Linksym(v.Aux.(*gc.Sym))
+		if gc.Maxarg < v.AuxInt {
+			gc.Maxarg = v.AuxInt
+		}
+
 	default:
 		v.Unimplementedf("genValue not implemented: %s", v.LongString())
 	}
