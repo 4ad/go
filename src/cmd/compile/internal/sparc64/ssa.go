@@ -14,7 +14,7 @@ import (
 
 var ssaRegToReg = []int16{
 	// sparc64.REG_ZR,   // zero register, not used by the compiler
-	sparc64.REG_RT1,  // for runtime, linblink and duff device
+	sparc64.REG_RT1,  // for runtime, liblink and duff device
 	sparc64.REG_CTXT, // environment for closures
 	sparc64.REG_G,    // g register
 	sparc64.REG_RT2,  // for runtime, linblink and duff device
@@ -289,6 +289,20 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = gc.SSARegNum(v)
 
+	case ssa.OpSPARC64MOVBload,
+		ssa.OpSPARC64MOVUBload,
+		ssa.OpSPARC64MOVHload,
+		ssa.OpSPARC64MOVUHload,
+		ssa.OpSPARC64MOVWload,
+		ssa.OpSPARC64MOVUWload,
+		ssa.OpSPARC64MOVDload:
+		p := gc.Prog(v.Op.Asm())
+		p.From.Type = obj.TYPE_MEM
+		p.From.Reg = gc.SSARegNum(v.Args[0])
+		gc.AddAux(&p.From, v)
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = gc.SSARegNum(v)
+
 	case ssa.OpSPARC64MOVDstore, ssa.OpSPARC64MOVWstore, ssa.OpSPARC64MOVHstore, ssa.OpSPARC64MOVBstore:
 
 		p := gc.Prog(v.Op.Asm())
@@ -318,6 +332,14 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		if gc.Maxarg < v.AuxInt {
 			gc.Maxarg = v.AuxInt
 		}
+	case ssa.OpSPARC64CALLdefer:
+		p := gc.Prog(obj.ACALL)
+		p.To.Type = obj.TYPE_MEM
+		p.To.Name = obj.NAME_EXTERN
+		p.To.Sym = gc.Linksym(gc.Deferproc.Sym)
+		if gc.Maxarg < v.AuxInt {
+			gc.Maxarg = v.AuxInt
+		}
 
 	default:
 		v.Unimplementedf("genValue not implemented: %s", v.LongString())
@@ -329,6 +351,22 @@ func ssaGenBlock(s *gc.SSAGenState, b, next *ssa.Block) {
 
 	switch b.Kind {
 	case ssa.BlockPlain, ssa.BlockCheck:
+		if b.Succs[0].Block() != next {
+			p := gc.Prog(obj.AJMP)
+			p.To.Type = obj.TYPE_BRANCH
+			s.Branches = append(s.Branches, gc.Branch{P: p, B: b.Succs[0].Block()})
+		}
+	case ssa.BlockDefer:
+		// defer returns in RT1:
+		// 0 if we should continue executing
+		// 1 if we should jump to deferreturn call
+		p := gc.Prog(sparc64.ACMP)
+		p.From.Type = obj.TYPE_CONST
+		p.From.Offset = 0
+		p.Reg = sparc64.REG_RT1
+		p = gc.Prog(sparc64.ABNEW)
+		p.To.Type = obj.TYPE_BRANCH
+		s.Branches = append(s.Branches, gc.Branch{P: p, B: b.Succs[1].Block()})
 		if b.Succs[0].Block() != next {
 			p := gc.Prog(obj.AJMP)
 			p.To.Type = obj.TYPE_BRANCH

@@ -50,6 +50,8 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpConstBool(v, config)
 	case OpConstNil:
 		return rewriteValueSPARC64_OpConstNil(v, config)
+	case OpDeferCall:
+		return rewriteValueSPARC64_OpDeferCall(v, config)
 	case OpDiv16:
 		return rewriteValueSPARC64_OpDiv16(v, config)
 	case OpDiv16u:
@@ -70,6 +72,8 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpDiv8(v, config)
 	case OpDiv8u:
 		return rewriteValueSPARC64_OpDiv8u(v, config)
+	case OpLoad:
+		return rewriteValueSPARC64_OpLoad(v, config)
 	case OpMod16:
 		return rewriteValueSPARC64_OpMod16(v, config)
 	case OpMod16u:
@@ -176,6 +180,8 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpXor64(v, config)
 	case OpXor8:
 		return rewriteValueSPARC64_OpXor8(v, config)
+	case OpZero:
+		return rewriteValueSPARC64_OpZero(v, config)
 	case OpZeroExt16to32:
 		return rewriteValueSPARC64_OpZeroExt16to32(v, config)
 	case OpZeroExt16to64:
@@ -489,6 +495,21 @@ func rewriteValueSPARC64_OpConstNil(v *Value, config *Config) bool {
 		return true
 	}
 }
+func rewriteValueSPARC64_OpDeferCall(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (DeferCall [argwid] mem)
+	// cond:
+	// result: (CALLdefer [argwid] mem)
+	for {
+		argwid := v.AuxInt
+		mem := v.Args[0]
+		v.reset(OpSPARC64CALLdefer)
+		v.AuxInt = argwid
+		v.AddArg(mem)
+		return true
+	}
+}
 func rewriteValueSPARC64_OpDiv16(v *Value, config *Config) bool {
 	b := v.Block
 	_ = b
@@ -638,6 +659,131 @@ func rewriteValueSPARC64_OpDiv8u(v *Value, config *Config) bool {
 		v.AddArg(y)
 		return true
 	}
+}
+func rewriteValueSPARC64_OpLoad(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Load <t> ptr mem)
+	// cond: t.IsBoolean()
+	// result: (MOVUBload ptr mem)
+	for {
+		t := v.Type
+		ptr := v.Args[0]
+		mem := v.Args[1]
+		if !(t.IsBoolean()) {
+			break
+		}
+		v.reset(OpSPARC64MOVUBload)
+		v.AddArg(ptr)
+		v.AddArg(mem)
+		return true
+	}
+	// match: (Load <t> ptr mem)
+	// cond: (is8BitInt(t) && isSigned(t))
+	// result: (MOVBload ptr mem)
+	for {
+		t := v.Type
+		ptr := v.Args[0]
+		mem := v.Args[1]
+		if !(is8BitInt(t) && isSigned(t)) {
+			break
+		}
+		v.reset(OpSPARC64MOVBload)
+		v.AddArg(ptr)
+		v.AddArg(mem)
+		return true
+	}
+	// match: (Load <t> ptr mem)
+	// cond: (is8BitInt(t) && !isSigned(t))
+	// result: (MOVUBload ptr mem)
+	for {
+		t := v.Type
+		ptr := v.Args[0]
+		mem := v.Args[1]
+		if !(is8BitInt(t) && !isSigned(t)) {
+			break
+		}
+		v.reset(OpSPARC64MOVUBload)
+		v.AddArg(ptr)
+		v.AddArg(mem)
+		return true
+	}
+	// match: (Load <t> ptr mem)
+	// cond: (is16BitInt(t) && isSigned(t))
+	// result: (MOVHload ptr mem)
+	for {
+		t := v.Type
+		ptr := v.Args[0]
+		mem := v.Args[1]
+		if !(is16BitInt(t) && isSigned(t)) {
+			break
+		}
+		v.reset(OpSPARC64MOVHload)
+		v.AddArg(ptr)
+		v.AddArg(mem)
+		return true
+	}
+	// match: (Load <t> ptr mem)
+	// cond: (is16BitInt(t) && !isSigned(t))
+	// result: (MOVUHload ptr mem)
+	for {
+		t := v.Type
+		ptr := v.Args[0]
+		mem := v.Args[1]
+		if !(is16BitInt(t) && !isSigned(t)) {
+			break
+		}
+		v.reset(OpSPARC64MOVUHload)
+		v.AddArg(ptr)
+		v.AddArg(mem)
+		return true
+	}
+	// match: (Load <t> ptr mem)
+	// cond: (is32BitInt(t) && isSigned(t))
+	// result: (MOVWload ptr mem)
+	for {
+		t := v.Type
+		ptr := v.Args[0]
+		mem := v.Args[1]
+		if !(is32BitInt(t) && isSigned(t)) {
+			break
+		}
+		v.reset(OpSPARC64MOVWload)
+		v.AddArg(ptr)
+		v.AddArg(mem)
+		return true
+	}
+	// match: (Load <t> ptr mem)
+	// cond: (is32BitInt(t) && !isSigned(t))
+	// result: (MOVUWload ptr mem)
+	for {
+		t := v.Type
+		ptr := v.Args[0]
+		mem := v.Args[1]
+		if !(is32BitInt(t) && !isSigned(t)) {
+			break
+		}
+		v.reset(OpSPARC64MOVUWload)
+		v.AddArg(ptr)
+		v.AddArg(mem)
+		return true
+	}
+	// match: (Load <t> ptr mem)
+	// cond: (is64BitInt(t) || isPtr(t))
+	// result: (MOVDload ptr mem)
+	for {
+		t := v.Type
+		ptr := v.Args[0]
+		mem := v.Args[1]
+		if !(is64BitInt(t) || isPtr(t)) {
+			break
+		}
+		v.reset(OpSPARC64MOVDload)
+		v.AddArg(ptr)
+		v.AddArg(mem)
+		return true
+	}
+	return false
 }
 func rewriteValueSPARC64_OpMod16(v *Value, config *Config) bool {
 	b := v.Block
@@ -1208,6 +1354,76 @@ func rewriteValueSPARC64_OpStore(v *Value, config *Config) bool {
 		v.AddArg(mem)
 		return true
 	}
+	// match: (Store [1] ptr val mem)
+	// cond:
+	// result: (MOVBstore ptr val mem)
+	for {
+		if v.AuxInt != 1 {
+			break
+		}
+		ptr := v.Args[0]
+		val := v.Args[1]
+		mem := v.Args[2]
+		v.reset(OpSPARC64MOVBstore)
+		v.AddArg(ptr)
+		v.AddArg(val)
+		v.AddArg(mem)
+		return true
+	}
+	// match: (Store [2] ptr val mem)
+	// cond:
+	// result: (MOVHstore ptr val mem)
+	for {
+		if v.AuxInt != 2 {
+			break
+		}
+		ptr := v.Args[0]
+		val := v.Args[1]
+		mem := v.Args[2]
+		v.reset(OpSPARC64MOVHstore)
+		v.AddArg(ptr)
+		v.AddArg(val)
+		v.AddArg(mem)
+		return true
+	}
+	// match: (Store [4] ptr val mem)
+	// cond: !is32BitFloat(val.Type)
+	// result: (MOVWstore ptr val mem)
+	for {
+		if v.AuxInt != 4 {
+			break
+		}
+		ptr := v.Args[0]
+		val := v.Args[1]
+		mem := v.Args[2]
+		if !(!is32BitFloat(val.Type)) {
+			break
+		}
+		v.reset(OpSPARC64MOVWstore)
+		v.AddArg(ptr)
+		v.AddArg(val)
+		v.AddArg(mem)
+		return true
+	}
+	// match: (Store [8] ptr val mem)
+	// cond: !is64BitFloat(val.Type)
+	// result: (MOVDstore ptr val mem)
+	for {
+		if v.AuxInt != 8 {
+			break
+		}
+		ptr := v.Args[0]
+		val := v.Args[1]
+		mem := v.Args[2]
+		if !(!is64BitFloat(val.Type)) {
+			break
+		}
+		v.reset(OpSPARC64MOVDstore)
+		v.AddArg(ptr)
+		v.AddArg(val)
+		v.AddArg(mem)
+		return true
+	}
 	return false
 }
 func rewriteValueSPARC64_OpSub16(v *Value, config *Config) bool {
@@ -1452,6 +1668,97 @@ func rewriteValueSPARC64_OpXor8(v *Value, config *Config) bool {
 		v.AddArg(y)
 		return true
 	}
+}
+func rewriteValueSPARC64_OpZero(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Zero [s] _ mem)
+	// cond: SizeAndAlign(s).Size() == 0
+	// result: mem
+	for {
+		s := v.AuxInt
+		mem := v.Args[1]
+		if !(SizeAndAlign(s).Size() == 0) {
+			break
+		}
+		v.reset(OpCopy)
+		v.Type = mem.Type
+		v.AddArg(mem)
+		return true
+	}
+	// match: (Zero [s] ptr mem)
+	// cond: SizeAndAlign(s).Size() == 1
+	// result: (MOVBstore ptr (MOVDconst [0]) mem)
+	for {
+		s := v.AuxInt
+		ptr := v.Args[0]
+		mem := v.Args[1]
+		if !(SizeAndAlign(s).Size() == 1) {
+			break
+		}
+		v.reset(OpSPARC64MOVBstore)
+		v.AddArg(ptr)
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v0.AuxInt = 0
+		v.AddArg(v0)
+		v.AddArg(mem)
+		return true
+	}
+	// match: (Zero [s] ptr mem)
+	// cond: SizeAndAlign(s).Size() == 2
+	// result: (MOVHstore ptr (MOVDconst [0]) mem)
+	for {
+		s := v.AuxInt
+		ptr := v.Args[0]
+		mem := v.Args[1]
+		if !(SizeAndAlign(s).Size() == 2) {
+			break
+		}
+		v.reset(OpSPARC64MOVHstore)
+		v.AddArg(ptr)
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v0.AuxInt = 0
+		v.AddArg(v0)
+		v.AddArg(mem)
+		return true
+	}
+	// match: (Zero [s] ptr mem)
+	// cond: SizeAndAlign(s).Size() == 4
+	// result: (MOVWstore ptr (MOVDconst [0]) mem)
+	for {
+		s := v.AuxInt
+		ptr := v.Args[0]
+		mem := v.Args[1]
+		if !(SizeAndAlign(s).Size() == 4) {
+			break
+		}
+		v.reset(OpSPARC64MOVWstore)
+		v.AddArg(ptr)
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v0.AuxInt = 0
+		v.AddArg(v0)
+		v.AddArg(mem)
+		return true
+	}
+	// match: (Zero [s] ptr mem)
+	// cond: SizeAndAlign(s).Size() == 8
+	// result: (MOVDstore ptr (MOVDconst [0]) mem)
+	for {
+		s := v.AuxInt
+		ptr := v.Args[0]
+		mem := v.Args[1]
+		if !(SizeAndAlign(s).Size() == 8) {
+			break
+		}
+		v.reset(OpSPARC64MOVDstore)
+		v.AddArg(ptr)
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v0.AuxInt = 0
+		v.AddArg(v0)
+		v.AddArg(mem)
+		return true
+	}
+	return false
 }
 func rewriteValueSPARC64_OpZeroExt16to32(v *Value, config *Config) bool {
 	b := v.Block

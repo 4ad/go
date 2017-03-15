@@ -118,3 +118,27 @@
 
 // calls
 (StaticCall [argwid] {target} mem) -> (CALLstatic [argwid] {target} mem)
+(DeferCall [argwid] mem) -> (CALLdefer [argwid] mem)
+
+// loads
+(Load <t> ptr mem) && t.IsBoolean() -> (MOVUBload ptr mem)
+(Load <t> ptr mem) && (is8BitInt(t) && isSigned(t)) -> (MOVBload ptr mem)
+(Load <t> ptr mem) && (is8BitInt(t) && !isSigned(t)) -> (MOVUBload ptr mem)
+(Load <t> ptr mem) && (is16BitInt(t) && isSigned(t)) -> (MOVHload ptr mem)
+(Load <t> ptr mem) && (is16BitInt(t) && !isSigned(t)) -> (MOVUHload ptr mem)
+(Load <t> ptr mem) && (is32BitInt(t) && isSigned(t)) -> (MOVWload ptr mem)
+(Load <t> ptr mem) && (is32BitInt(t) && !isSigned(t)) -> (MOVUWload ptr mem)
+(Load <t> ptr mem) && (is64BitInt(t) || isPtr(t)) -> (MOVDload ptr mem)
+
+// stores
+(Store [1] ptr val mem) -> (MOVBstore ptr val mem)
+(Store [2] ptr val mem) -> (MOVHstore ptr val mem)
+(Store [4] ptr val mem) && !is32BitFloat(val.Type) -> (MOVWstore ptr val mem)
+(Store [8] ptr val mem) && !is64BitFloat(val.Type) -> (MOVDstore ptr val mem)
+
+// zeroing
+(Zero [s] _ mem) && SizeAndAlign(s).Size() == 0 -> mem
+(Zero [s] ptr mem) && SizeAndAlign(s).Size() == 1 -> (MOVBstore ptr (MOVDconst [0]) mem)
+(Zero [s] ptr mem) && SizeAndAlign(s).Size() == 2 -> (MOVHstore ptr (MOVDconst [0]) mem)
+(Zero [s] ptr mem) && SizeAndAlign(s).Size() == 4 -> (MOVWstore ptr (MOVDconst [0]) mem)
+(Zero [s] ptr mem) && SizeAndAlign(s).Size() == 8 -> (MOVDstore ptr (MOVDconst [0]) mem)

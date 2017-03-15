@@ -1461,6 +1461,13 @@ const (
 	OpSPARC64FNEGD
 	OpSPARC64FSQRTD
 	OpSPARC64MOVDaddr
+	OpSPARC64MOVBload
+	OpSPARC64MOVUBload
+	OpSPARC64MOVHload
+	OpSPARC64MOVUHload
+	OpSPARC64MOVWload
+	OpSPARC64MOVUWload
+	OpSPARC64MOVDload
 	OpSPARC64MOVDstore
 	OpSPARC64MOVWstore
 	OpSPARC64MOVHstore
@@ -1477,6 +1484,7 @@ const (
 	OpSPARC64MOVUWreg
 	OpSPARC64MOVDreg
 	OpSPARC64CALLstatic
+	OpSPARC64CALLdefer
 
 	OpAdd8
 	OpAdd16
@@ -17966,6 +17974,104 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
+		name:    "MOVBload",
+		auxType: auxSymOff,
+		argLen:  2,
+		asm:     sparc64.AMOVB,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 12885031920}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 SB SP
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:    "MOVUBload",
+		auxType: auxSymOff,
+		argLen:  2,
+		asm:     sparc64.AMOVUB,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 12885031920}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 SB SP
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:    "MOVHload",
+		auxType: auxSymOff,
+		argLen:  2,
+		asm:     sparc64.AMOVH,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 12885031920}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 SB SP
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:    "MOVUHload",
+		auxType: auxSymOff,
+		argLen:  2,
+		asm:     sparc64.AMOVUH,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 12885031920}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 SB SP
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:    "MOVWload",
+		auxType: auxSymOff,
+		argLen:  2,
+		asm:     sparc64.AMOVW,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 12885031920}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 SB SP
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:    "MOVUWload",
+		auxType: auxSymOff,
+		argLen:  2,
+		asm:     sparc64.AMOVUW,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 12885031920}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 SB SP
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:    "MOVDload",
+		auxType: auxSymOff,
+		argLen:  2,
+		asm:     sparc64.AMOVD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 12885031920}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 SB SP
+			},
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
 		name:    "MOVDstore",
 		auxType: auxSymOff,
 		argLen:  3,
@@ -18155,6 +18261,16 @@ var opcodeTable = [...]opInfo{
 	{
 		name:         "CALLstatic",
 		auxType:      auxSymOff,
+		argLen:       1,
+		clobberFlags: true,
+		call:         true,
+		reg: regInfo{
+			clobbers: 4294835188, // g O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+		},
+	},
+	{
+		name:         "CALLdefer",
+		auxType:      auxInt64,
 		argLen:       1,
 		clobberFlags: true,
 		call:         true,
