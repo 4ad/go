@@ -72,6 +72,80 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpDiv8(v, config)
 	case OpDiv8u:
 		return rewriteValueSPARC64_OpDiv8u(v, config)
+	case OpEq16:
+		return rewriteValueSPARC64_OpEq16(v, config)
+	case OpEq32:
+		return rewriteValueSPARC64_OpEq32(v, config)
+	case OpEq64:
+		return rewriteValueSPARC64_OpEq64(v, config)
+	case OpEq8:
+		return rewriteValueSPARC64_OpEq8(v, config)
+	case OpEqPtr:
+		return rewriteValueSPARC64_OpEqPtr(v, config)
+	case OpGeq16:
+		return rewriteValueSPARC64_OpGeq16(v, config)
+	case OpGeq16U:
+		return rewriteValueSPARC64_OpGeq16U(v, config)
+	case OpGeq32:
+		return rewriteValueSPARC64_OpGeq32(v, config)
+	case OpGeq32U:
+		return rewriteValueSPARC64_OpGeq32U(v, config)
+	case OpGeq64:
+		return rewriteValueSPARC64_OpGeq64(v, config)
+	case OpGeq64U:
+		return rewriteValueSPARC64_OpGeq64U(v, config)
+	case OpGeq8:
+		return rewriteValueSPARC64_OpGeq8(v, config)
+	case OpGeq8U:
+		return rewriteValueSPARC64_OpGeq8U(v, config)
+	case OpGreater16:
+		return rewriteValueSPARC64_OpGreater16(v, config)
+	case OpGreater16U:
+		return rewriteValueSPARC64_OpGreater16U(v, config)
+	case OpGreater32:
+		return rewriteValueSPARC64_OpGreater32(v, config)
+	case OpGreater32U:
+		return rewriteValueSPARC64_OpGreater32U(v, config)
+	case OpGreater64:
+		return rewriteValueSPARC64_OpGreater64(v, config)
+	case OpGreater64U:
+		return rewriteValueSPARC64_OpGreater64U(v, config)
+	case OpGreater8:
+		return rewriteValueSPARC64_OpGreater8(v, config)
+	case OpGreater8U:
+		return rewriteValueSPARC64_OpGreater8U(v, config)
+	case OpLeq16:
+		return rewriteValueSPARC64_OpLeq16(v, config)
+	case OpLeq16U:
+		return rewriteValueSPARC64_OpLeq16U(v, config)
+	case OpLeq32:
+		return rewriteValueSPARC64_OpLeq32(v, config)
+	case OpLeq32U:
+		return rewriteValueSPARC64_OpLeq32U(v, config)
+	case OpLeq64:
+		return rewriteValueSPARC64_OpLeq64(v, config)
+	case OpLeq64U:
+		return rewriteValueSPARC64_OpLeq64U(v, config)
+	case OpLeq8:
+		return rewriteValueSPARC64_OpLeq8(v, config)
+	case OpLeq8U:
+		return rewriteValueSPARC64_OpLeq8U(v, config)
+	case OpLess16:
+		return rewriteValueSPARC64_OpLess16(v, config)
+	case OpLess16U:
+		return rewriteValueSPARC64_OpLess16U(v, config)
+	case OpLess32:
+		return rewriteValueSPARC64_OpLess32(v, config)
+	case OpLess32U:
+		return rewriteValueSPARC64_OpLess32U(v, config)
+	case OpLess64:
+		return rewriteValueSPARC64_OpLess64(v, config)
+	case OpLess64U:
+		return rewriteValueSPARC64_OpLess64U(v, config)
+	case OpLess8:
+		return rewriteValueSPARC64_OpLess8(v, config)
+	case OpLess8U:
+		return rewriteValueSPARC64_OpLess8U(v, config)
 	case OpLoad:
 		return rewriteValueSPARC64_OpLoad(v, config)
 	case OpMod16:
@@ -114,6 +188,16 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpNeg64F(v, config)
 	case OpNeg8:
 		return rewriteValueSPARC64_OpNeg8(v, config)
+	case OpNeq16:
+		return rewriteValueSPARC64_OpNeq16(v, config)
+	case OpNeq32:
+		return rewriteValueSPARC64_OpNeq32(v, config)
+	case OpNeq64:
+		return rewriteValueSPARC64_OpNeq64(v, config)
+	case OpNeq8:
+		return rewriteValueSPARC64_OpNeq8(v, config)
+	case OpNeqPtr:
+		return rewriteValueSPARC64_OpNeqPtr(v, config)
 	case OpNot:
 		return rewriteValueSPARC64_OpNot(v, config)
 	case OpOffPtr:
@@ -660,6 +744,707 @@ func rewriteValueSPARC64_OpDiv8u(v *Value, config *Config) bool {
 		return true
 	}
 }
+func rewriteValueSPARC64_OpEq16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Eq16 x y)
+	// cond:
+	// result: (Equal32 (CMP (ZeroExt16to32 x) (ZeroExt16to32 y)))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64Equal32)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v1 := b.NewValue0(v.Line, OpZeroExt16to32, config.fe.TypeUInt32())
+		v1.AddArg(x)
+		v0.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpZeroExt16to32, config.fe.TypeUInt32())
+		v2.AddArg(y)
+		v0.AddArg(v2)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpEq32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Eq32 x y)
+	// cond:
+	// result: (Equal32 (CMP x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64Equal32)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpEq64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Eq64 x y)
+	// cond:
+	// result: (Equal64 (CMP x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64Equal64)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpEq8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Eq8 x y)
+	// cond:
+	// result: (Equal32 (CMP (ZeroExt8to32 x) (ZeroExt8to32 y)))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64Equal32)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v1 := b.NewValue0(v.Line, OpZeroExt8to32, config.fe.TypeUInt32())
+		v1.AddArg(x)
+		v0.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpZeroExt8to32, config.fe.TypeUInt32())
+		v2.AddArg(y)
+		v0.AddArg(v2)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpEqPtr(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (EqPtr x y)
+	// cond:
+	// result: (Equal64 (CMP x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64Equal64)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpGeq16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Geq16 x y)
+	// cond:
+	// result: (GreaterEqual32 (CMP (SignExt16to32 x) (SignExt16to32 y)))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64GreaterEqual32)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v1 := b.NewValue0(v.Line, OpSignExt16to32, config.fe.TypeInt32())
+		v1.AddArg(x)
+		v0.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpSignExt16to32, config.fe.TypeInt32())
+		v2.AddArg(y)
+		v0.AddArg(v2)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpGeq16U(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Geq16U x y)
+	// cond:
+	// result: (GreaterEqual32U (CMP (ZeroExt16to32 x) (ZeroExt16to32 y)))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64GreaterEqual32U)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v1 := b.NewValue0(v.Line, OpZeroExt16to32, config.fe.TypeUInt32())
+		v1.AddArg(x)
+		v0.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpZeroExt16to32, config.fe.TypeUInt32())
+		v2.AddArg(y)
+		v0.AddArg(v2)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpGeq32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Geq32 x y)
+	// cond:
+	// result: (GreaterEqual32 (CMP x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64GreaterEqual32)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpGeq32U(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Geq32U x y)
+	// cond:
+	// result: (GreaterEqual32U (CMP x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64GreaterEqual32U)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpGeq64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Geq64 x y)
+	// cond:
+	// result: (GreaterEqual64 (CMP x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64GreaterEqual64)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpGeq64U(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Geq64U x y)
+	// cond:
+	// result: (GreaterEqual64U (CMP x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64GreaterEqual64U)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpGeq8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Geq8 x y)
+	// cond:
+	// result: (GreaterEqual32 (CMP (SignExt8to32 x) (SignExt8to32 y)))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64GreaterEqual32)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v1 := b.NewValue0(v.Line, OpSignExt8to32, config.fe.TypeInt32())
+		v1.AddArg(x)
+		v0.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpSignExt8to32, config.fe.TypeInt32())
+		v2.AddArg(y)
+		v0.AddArg(v2)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpGeq8U(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Geq8U x y)
+	// cond:
+	// result: (GreaterEqual32U (CMP (ZeroExt8to32 x) (ZeroExt8to32 y)))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64GreaterEqual32U)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v1 := b.NewValue0(v.Line, OpZeroExt8to32, config.fe.TypeUInt32())
+		v1.AddArg(x)
+		v0.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpZeroExt8to32, config.fe.TypeUInt32())
+		v2.AddArg(y)
+		v0.AddArg(v2)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpGreater16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Greater16 x y)
+	// cond:
+	// result: (GreaterThan32 (CMP (SignExt16to32 x) (SignExt16to32 y)))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64GreaterThan32)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v1 := b.NewValue0(v.Line, OpSignExt16to32, config.fe.TypeInt32())
+		v1.AddArg(x)
+		v0.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpSignExt16to32, config.fe.TypeInt32())
+		v2.AddArg(y)
+		v0.AddArg(v2)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpGreater16U(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Greater16U x y)
+	// cond:
+	// result: (GreaterThan32U (CMP (ZeroExt16to32 x) (ZeroExt16to32 y)))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64GreaterThan32U)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v1 := b.NewValue0(v.Line, OpZeroExt16to32, config.fe.TypeUInt32())
+		v1.AddArg(x)
+		v0.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpZeroExt16to32, config.fe.TypeUInt32())
+		v2.AddArg(y)
+		v0.AddArg(v2)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpGreater32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Greater32 x y)
+	// cond:
+	// result: (GreaterThan32 (CMP x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64GreaterThan32)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpGreater32U(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Greater32U x y)
+	// cond:
+	// result: (GreaterThan32U (CMP x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64GreaterThan32U)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpGreater64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Greater64 x y)
+	// cond:
+	// result: (GreaterThan64 (CMP x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64GreaterThan64)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpGreater64U(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Greater64U x y)
+	// cond:
+	// result: (GreaterThan64U (CMP x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64GreaterThan64U)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpGreater8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Greater8 x y)
+	// cond:
+	// result: (GreaterThan32 (CMP (SignExt8to32 x) (SignExt8to32 y)))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64GreaterThan32)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v1 := b.NewValue0(v.Line, OpSignExt8to32, config.fe.TypeInt32())
+		v1.AddArg(x)
+		v0.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpSignExt8to32, config.fe.TypeInt32())
+		v2.AddArg(y)
+		v0.AddArg(v2)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpGreater8U(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Greater8U x y)
+	// cond:
+	// result: (GreaterThan32U (CMP (ZeroExt8to32 x) (ZeroExt8to32 y)))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64GreaterThan32U)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v1 := b.NewValue0(v.Line, OpZeroExt8to32, config.fe.TypeUInt32())
+		v1.AddArg(x)
+		v0.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpZeroExt8to32, config.fe.TypeUInt32())
+		v2.AddArg(y)
+		v0.AddArg(v2)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLeq16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Leq16 x y)
+	// cond:
+	// result: (LessEqual32 (CMP (SignExt16to32 x) (SignExt16to32 y)))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64LessEqual32)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v1 := b.NewValue0(v.Line, OpSignExt16to32, config.fe.TypeInt32())
+		v1.AddArg(x)
+		v0.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpSignExt16to32, config.fe.TypeInt32())
+		v2.AddArg(y)
+		v0.AddArg(v2)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLeq16U(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Leq16U x y)
+	// cond:
+	// result: (LessEqual32U (CMP (ZeroExt16to32 x) (ZeroExt16to32 y)))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64LessEqual32U)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v1 := b.NewValue0(v.Line, OpZeroExt16to32, config.fe.TypeUInt32())
+		v1.AddArg(x)
+		v0.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpZeroExt16to32, config.fe.TypeUInt32())
+		v2.AddArg(y)
+		v0.AddArg(v2)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLeq32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Leq32 x y)
+	// cond:
+	// result: (LessEqual32 (CMP x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64LessEqual32)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLeq32U(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Leq32U x y)
+	// cond:
+	// result: (LessEqual32U (CMP x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64LessEqual32U)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLeq64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Leq64 x y)
+	// cond:
+	// result: (LessEqual64 (CMP x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64LessEqual64)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLeq64U(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Leq64U x y)
+	// cond:
+	// result: (LessEqual64U (CMP x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64LessEqual64U)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLeq8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Leq8 x y)
+	// cond:
+	// result: (LessEqual32 (CMP (SignExt8to32 x) (SignExt8to32 y)))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64LessEqual32)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v1 := b.NewValue0(v.Line, OpSignExt8to32, config.fe.TypeInt32())
+		v1.AddArg(x)
+		v0.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpSignExt8to32, config.fe.TypeInt32())
+		v2.AddArg(y)
+		v0.AddArg(v2)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLeq8U(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Leq8U x y)
+	// cond:
+	// result: (LessEqual32U (CMP (ZeroExt8to32 x) (ZeroExt8to32 y)))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64LessEqual32U)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v1 := b.NewValue0(v.Line, OpZeroExt8to32, config.fe.TypeUInt32())
+		v1.AddArg(x)
+		v0.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpZeroExt8to32, config.fe.TypeUInt32())
+		v2.AddArg(y)
+		v0.AddArg(v2)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLess16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Less16 x y)
+	// cond:
+	// result: (LessThan32 (CMP (SignExt16to32 x) (SignExt16to32 y)))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64LessThan32)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v1 := b.NewValue0(v.Line, OpSignExt16to32, config.fe.TypeInt32())
+		v1.AddArg(x)
+		v0.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpSignExt16to32, config.fe.TypeInt32())
+		v2.AddArg(y)
+		v0.AddArg(v2)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLess16U(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Less16U x y)
+	// cond:
+	// result: (LessThan32U (CMP (ZeroExt16to32 x) (ZeroExt16to32 y)))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64LessThan32U)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v1 := b.NewValue0(v.Line, OpZeroExt16to32, config.fe.TypeUInt32())
+		v1.AddArg(x)
+		v0.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpZeroExt16to32, config.fe.TypeUInt32())
+		v2.AddArg(y)
+		v0.AddArg(v2)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLess32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Less32 x y)
+	// cond:
+	// result: (LessThan32 (CMP x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64LessThan32)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLess32U(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Less32U x y)
+	// cond:
+	// result: (LessThan32U (CMP x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64LessThan32U)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLess64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Less64 x y)
+	// cond:
+	// result: (LessThan64 (CMP x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64LessThan64)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLess64U(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Less64U x y)
+	// cond:
+	// result: (LessThan64U (CMP x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64LessThan64U)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLess8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Less8 x y)
+	// cond:
+	// result: (LessThan32 (CMP (SignExt8to32 x) (SignExt8to32 y)))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64LessThan32)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v1 := b.NewValue0(v.Line, OpSignExt8to32, config.fe.TypeInt32())
+		v1.AddArg(x)
+		v0.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpSignExt8to32, config.fe.TypeInt32())
+		v2.AddArg(y)
+		v0.AddArg(v2)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLess8U(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Less8U x y)
+	// cond:
+	// result: (LessThan32U (CMP (ZeroExt8to32 x) (ZeroExt8to32 y)))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64LessThan32U)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v1 := b.NewValue0(v.Line, OpZeroExt8to32, config.fe.TypeUInt32())
+		v1.AddArg(x)
+		v0.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpZeroExt8to32, config.fe.TypeUInt32())
+		v2.AddArg(y)
+		v0.AddArg(v2)
+		v.AddArg(v0)
+		return true
+	}
+}
 func rewriteValueSPARC64_OpLoad(v *Value, config *Config) bool {
 	b := v.Block
 	_ = b
@@ -1106,6 +1891,99 @@ func rewriteValueSPARC64_OpNeg8(v *Value, config *Config) bool {
 		x := v.Args[0]
 		v.reset(OpSPARC64NEG)
 		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpNeq16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Neq16 x y)
+	// cond:
+	// result: (NotEqual32 (CMP (ZeroExt16to32 x) (ZeroExt16to32 y)))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64NotEqual32)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v1 := b.NewValue0(v.Line, OpZeroExt16to32, config.fe.TypeUInt32())
+		v1.AddArg(x)
+		v0.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpZeroExt16to32, config.fe.TypeUInt32())
+		v2.AddArg(y)
+		v0.AddArg(v2)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpNeq32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Neq32 x y)
+	// cond:
+	// result: (NotEqual32 (CMP x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64NotEqual32)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpNeq64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Neq64 x y)
+	// cond:
+	// result: (NotEqual64 (CMP x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64NotEqual64)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpNeq8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Neq8 x y)
+	// cond:
+	// result: (NotEqual32 (CMP (ZeroExt8to32 x) (ZeroExt8to32 y)))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64NotEqual32)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v1 := b.NewValue0(v.Line, OpZeroExt8to32, config.fe.TypeUInt32())
+		v1.AddArg(x)
+		v0.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpZeroExt8to32, config.fe.TypeUInt32())
+		v2.AddArg(y)
+		v0.AddArg(v2)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpNeqPtr(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (NeqPtr x y)
+	// cond:
+	// result: (NotEqual64 (CMP x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64NotEqual64)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
 		return true
 	}
 }

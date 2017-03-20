@@ -303,7 +303,10 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = gc.SSARegNum(v)
 
-	case ssa.OpSPARC64MOVDstore, ssa.OpSPARC64MOVWstore, ssa.OpSPARC64MOVHstore, ssa.OpSPARC64MOVBstore:
+	case ssa.OpSPARC64MOVDstore,
+		ssa.OpSPARC64MOVWstore,
+		ssa.OpSPARC64MOVHstore,
+		ssa.OpSPARC64MOVBstore:
 
 		p := gc.Prog(v.Op.Asm())
 		p.From.Type = obj.TYPE_REG
@@ -341,9 +344,92 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 			gc.Maxarg = v.AuxInt
 		}
 
+	case ssa.OpSPARC64Equal32,
+		ssa.OpSPARC64Equal64,
+		ssa.OpSPARC64NotEqual32,
+		ssa.OpSPARC64NotEqual64,
+		ssa.OpSPARC64LessThan32,
+		ssa.OpSPARC64LessThan32U,
+		ssa.OpSPARC64LessThan64,
+		ssa.OpSPARC64LessThan64U,
+		ssa.OpSPARC64LessEqual32,
+		ssa.OpSPARC64LessEqual32U,
+		ssa.OpSPARC64LessEqual64,
+		ssa.OpSPARC64LessEqual64U,
+		ssa.OpSPARC64GreaterThan32,
+		ssa.OpSPARC64GreaterThan32U,
+		ssa.OpSPARC64GreaterThan64,
+		ssa.OpSPARC64GreaterThan64U,
+		ssa.OpSPARC64GreaterEqual32,
+		ssa.OpSPARC64GreaterEqual32U,
+		ssa.OpSPARC64GreaterEqual64,
+		ssa.OpSPARC64GreaterEqual64U:
+
+		p := gc.Prog(condOps[v.Op])
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = condBits[v.Op]
+		p.From3 = &obj.Addr{}
+		p.From3.Type = obj.TYPE_CONST
+		p.From3.Offset = 1
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = gc.SSARegNum(v)
+
+	case ssa.OpSPARC64CMP:
+		p := gc.Prog(v.Op.Asm())
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = gc.SSARegNum(v.Args[0])
+		p.Reg = gc.SSARegNum(v.Args[1])
+
 	default:
 		v.Unimplementedf("genValue not implemented: %s", v.LongString())
 	}
+}
+
+var condBits = map[ssa.Op]int16{
+	ssa.OpSPARC64Equal32: sparc64.REG_ICC,
+	ssa.OpSPARC64NotEqual32: sparc64.REG_ICC,
+	ssa.OpSPARC64LessThan32: sparc64.REG_ICC,
+	ssa.OpSPARC64LessThan32U: sparc64.REG_ICC,
+	ssa.OpSPARC64LessEqual32: sparc64.REG_ICC,
+	ssa.OpSPARC64LessEqual32U: sparc64.REG_ICC,
+	ssa.OpSPARC64GreaterThan32: sparc64.REG_ICC,
+	ssa.OpSPARC64GreaterThan32U: sparc64.REG_ICC,
+	ssa.OpSPARC64GreaterEqual32: sparc64.REG_ICC,
+	ssa.OpSPARC64GreaterEqual32U: sparc64.REG_ICC,
+
+	ssa.OpSPARC64Equal64: sparc64.REG_XCC,
+	ssa.OpSPARC64NotEqual64: sparc64.REG_XCC,
+	ssa.OpSPARC64LessThan64: sparc64.REG_XCC,
+	ssa.OpSPARC64LessThan64U: sparc64.REG_XCC,
+	ssa.OpSPARC64LessEqual64: sparc64.REG_XCC,
+	ssa.OpSPARC64LessEqual64U: sparc64.REG_XCC,
+	ssa.OpSPARC64GreaterThan64: sparc64.REG_XCC,
+	ssa.OpSPARC64GreaterThan64U: sparc64.REG_XCC,
+	ssa.OpSPARC64GreaterEqual64: sparc64.REG_XCC,
+	ssa.OpSPARC64GreaterEqual64U: sparc64.REG_XCC,
+}
+
+var condOps = map[ssa.Op]obj.As{
+	ssa.OpSPARC64Equal32: sparc64.AMOVE,
+	ssa.OpSPARC64Equal64: sparc64.AMOVE,
+	ssa.OpSPARC64NotEqual32: sparc64.AMOVNE,
+	ssa.OpSPARC64NotEqual64: sparc64.AMOVNE,
+	ssa.OpSPARC64LessThan32: sparc64.AMOVL,
+	ssa.OpSPARC64LessThan64: sparc64.AMOVL,
+	ssa.OpSPARC64LessThan32U: sparc64.AMOVCS,
+	ssa.OpSPARC64LessThan64U: sparc64.AMOVCS,
+	ssa.OpSPARC64LessEqual32: sparc64.AMOVLE,
+	ssa.OpSPARC64LessEqual64: sparc64.AMOVLE,
+	ssa.OpSPARC64LessEqual32U: sparc64.AMOVLEU,
+	ssa.OpSPARC64LessEqual64U: sparc64.AMOVLEU,
+	ssa.OpSPARC64GreaterThan32: sparc64.AMOVG,
+	ssa.OpSPARC64GreaterThan64: sparc64.AMOVG,
+	ssa.OpSPARC64GreaterThan32U: sparc64.AMOVGU,
+	ssa.OpSPARC64GreaterThan64U: sparc64.AMOVGU,
+	ssa.OpSPARC64GreaterEqual32: sparc64.AMOVGE,
+	ssa.OpSPARC64GreaterEqual64: sparc64.AMOVGE,
+	ssa.OpSPARC64GreaterEqual32U: sparc64.AMOVCC,
+	ssa.OpSPARC64GreaterEqual64U: sparc64.AMOVCC,
 }
 
 func ssaGenBlock(s *gc.SSAGenState, b, next *ssa.Block) {

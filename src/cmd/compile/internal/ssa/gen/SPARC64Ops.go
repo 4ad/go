@@ -87,11 +87,13 @@ func init() {
 		gp01 = regInfo{inputs: nil, outputs: []regMask{gp}}
 		gp11 = regInfo{inputs: []regMask{gp}, outputs: []regMask{gp}}
 		gp21 = regInfo{inputs: []regMask{gp, gp}, outputs: []regMask{gp}}
+		gp2flags  = regInfo{inputs: []regMask{gp, gp}}
 		gpload      = regInfo{inputs: []regMask{gp | sp | sb}, outputs: []regMask{gp}}
 		gpstore     = regInfo{inputs: []regMask{gp | sp | sb, gp | sp | sb}}
 		fp01        = regInfo{inputs: nil, outputs: []regMask{fp}}
 		fp11 = regInfo{inputs: []regMask{fp}, outputs: []regMask{fp}}
 		fp21 = regInfo{inputs: []regMask{fp, fp}, outputs: []regMask{fp}}
+		readflags = regInfo{inputs: nil, outputs: []regMask{gp}}
 		callerSave = gp | fp | buildReg("g") // runtime.setg (and anything calling it) may clobber g
 	)
 	ops := []opData{
@@ -146,6 +148,7 @@ func init() {
 		{name: "MOVWconst", argLength: 0, reg: gp01, aux: "Int32", asm: "MOVW", rematerializeable: true},     // 32 low bits of auxint
 		{name: "FMOVDconst", argLength: 0, reg: fp01, aux: "Float64", asm: "FMOVD", typ: "Float64", rematerializeable: true},
 		{name: "FMOVSconst", argLength: 0, reg: fp01, aux: "Float32", asm: "FMOVS", rematerializeable: true},
+		{name: "CMP", argLength: 2, reg: gp2flags, asm: "CMP", typ: "Flags"},                      // arg0 compare to arg1
 
 		// conversions
 		{name: "MOVBreg", argLength: 1, reg: gp11, asm: "MOVB"},   // move from arg0, sign-extended from byte
@@ -159,6 +162,32 @@ func init() {
 		// function calls
 		{name: "CALLstatic", argLength: 1, reg: regInfo{clobbers: callerSave}, aux: "SymOff", clobberFlags: true, call: true},                                              // call static function aux.(*gc.Sym).  arg0=mem, auxint=argsize, returns mem
 		{name: "CALLdefer", argLength: 1, reg: regInfo{clobbers: callerSave}, aux: "Int64", clobberFlags: true, call: true},                                                // call deferproc.  arg0=mem, auxint=argsize, returns mem
+
+		// pseudo-ops
+		{name: "Equal32", argLength: 1, reg: readflags},         // bool, true flags encode x==y false otherwise.
+		{name: "Equal64", argLength: 1, reg: readflags},         // bool, true flags encode x==y false otherwise.
+		{name: "NotEqual32", argLength: 1, reg: readflags},      // bool, true flags encode x!=y false otherwise.
+		{name: "NotEqual64", argLength: 1, reg: readflags},      // bool, true flags encode x!=y false otherwise.
+
+		{name: "LessThan32", argLength: 1, reg: readflags},      // bool, true flags encode  x<y false otherwise.
+		{name: "LessThan64", argLength: 1, reg: readflags},      // bool, true flags encode  x<y false otherwise.
+		{name: "LessThan32U", argLength: 1, reg: readflags},     // bool, true flags encode unsigned x<y false otherwise.
+		{name: "LessThan64U", argLength: 1, reg: readflags},     // bool, true flags encode unsigned x<y false otherwise.
+
+		{name: "LessEqual32", argLength: 1, reg: readflags},     // bool, true flags encode signed x<=y false otherwise.
+		{name: "LessEqual64", argLength: 1, reg: readflags},     // bool, true flags encode signed x<=y false otherwise.
+		{name: "LessEqual32U", argLength: 1, reg: readflags},    // bool, true flags encode unsigned x<=y false otherwise.
+		{name: "LessEqual64U", argLength: 1, reg: readflags},    // bool, true flags encode unsigned x<=y false otherwise.
+
+		{name: "GreaterThan32", argLength: 1, reg: readflags},   // bool, true flags encode signed x>y false otherwise.
+		{name: "GreaterThan64", argLength: 1, reg: readflags},   // bool, true flags encode signed x>y false otherwise.
+		{name: "GreaterThan32U", argLength: 1, reg: readflags},  // bool, true flags encode unsigned x>y false otherwise.
+		{name: "GreaterThan64U", argLength: 1, reg: readflags},  // bool, true flags encode unsigned x>y false otherwise.
+
+		{name: "GreaterEqual32", argLength: 1, reg: readflags},  // bool, true flags encode signed x>=y false otherwise.
+		{name: "GreaterEqual64", argLength: 1, reg: readflags},  // bool, true flags encode signed x>=y false otherwise.
+		{name: "GreaterEqual32U", argLength: 1, reg: readflags}, // bool, true flags encode unsigned x>=y false otherwise.
+		{name: "GreaterEqual64U", argLength: 1, reg: readflags}, // bool, true flags encode unsigned x>=y false otherwise.
 	}
 
 	blocks := []blockData{

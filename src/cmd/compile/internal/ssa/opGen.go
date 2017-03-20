@@ -1476,6 +1476,7 @@ const (
 	OpSPARC64MOVWconst
 	OpSPARC64FMOVDconst
 	OpSPARC64FMOVSconst
+	OpSPARC64CMP
 	OpSPARC64MOVBreg
 	OpSPARC64MOVUBreg
 	OpSPARC64MOVHreg
@@ -1485,6 +1486,26 @@ const (
 	OpSPARC64MOVDreg
 	OpSPARC64CALLstatic
 	OpSPARC64CALLdefer
+	OpSPARC64Equal32
+	OpSPARC64Equal64
+	OpSPARC64NotEqual32
+	OpSPARC64NotEqual64
+	OpSPARC64LessThan32
+	OpSPARC64LessThan64
+	OpSPARC64LessThan32U
+	OpSPARC64LessThan64U
+	OpSPARC64LessEqual32
+	OpSPARC64LessEqual64
+	OpSPARC64LessEqual32U
+	OpSPARC64LessEqual64U
+	OpSPARC64GreaterThan32
+	OpSPARC64GreaterThan64
+	OpSPARC64GreaterThan32U
+	OpSPARC64GreaterThan64U
+	OpSPARC64GreaterEqual32
+	OpSPARC64GreaterEqual64
+	OpSPARC64GreaterEqual32U
+	OpSPARC64GreaterEqual64U
 
 	OpAdd8
 	OpAdd16
@@ -18168,6 +18189,17 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
+		name:   "CMP",
+		argLen: 2,
+		asm:    sparc64.ACMP,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+				{1, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
 		name:   "MOVBreg",
 		argLen: 1,
 		asm:    sparc64.AMOVB,
@@ -18276,6 +18308,186 @@ var opcodeTable = [...]opInfo{
 		call:         true,
 		reg: regInfo{
 			clobbers: 4294835188, // g O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+		},
+	},
+	{
+		name:   "Equal32",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "Equal64",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "NotEqual32",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "NotEqual64",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "LessThan32",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "LessThan64",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "LessThan32U",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "LessThan64U",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "LessEqual32",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "LessEqual64",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "LessEqual32U",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "LessEqual64U",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "GreaterThan32",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "GreaterThan64",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "GreaterThan32U",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "GreaterThan64U",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "GreaterEqual32",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "GreaterEqual64",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "GreaterEqual32U",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
+		},
+	},
+	{
+		name:   "GreaterEqual64U",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 130032}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6
+			},
 		},
 	},
 
