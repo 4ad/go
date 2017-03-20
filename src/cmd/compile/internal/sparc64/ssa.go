@@ -265,7 +265,7 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 			// No sym, just MOVD $off(SP), R
 			wantreg = "SP"
 			p.From.Reg = sparc64.REG_RSP
-			p.From.Offset = v.AuxInt
+			p.From.Offset = v.AuxInt + sparc64.StackBias
 		}
 		if reg := gc.SSAReg(v.Args[0]); reg.Name() != wantreg {
 			v.Fatalf("bad reg %s for symbol type %T, want %s", reg.Name(), v.Aux, wantreg)
