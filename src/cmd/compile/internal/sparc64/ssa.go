@@ -377,8 +377,8 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 	case ssa.OpSPARC64CMP:
 		p := gc.Prog(v.Op.Asm())
 		p.From.Type = obj.TYPE_REG
-		p.From.Reg = gc.SSARegNum(v.Args[0])
-		p.Reg = gc.SSARegNum(v.Args[1])
+		p.From.Reg = gc.SSARegNum(v.Args[1])
+		p.Reg = gc.SSARegNum(v.Args[0])
 
 	default:
 		v.Unimplementedf("genValue not implemented: %s", v.LongString())
