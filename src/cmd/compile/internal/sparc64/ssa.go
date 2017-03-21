@@ -432,6 +432,41 @@ var condOps = map[ssa.Op]obj.As{
 	ssa.OpSPARC64GreaterEqual64U: sparc64.AMOVCC,
 }
 
+var blockJump = map[ssa.BlockKind]struct {
+	asm, invasm obj.As
+}{
+	ssa.BlockSPARC64ND:  {sparc64.ABND, obj.AJMP},
+	ssa.BlockSPARC64NED:  {sparc64.ABNED, sparc64.ABED},
+	ssa.BlockSPARC64ED:  {sparc64.ABED, sparc64.ABNED},
+	ssa.BlockSPARC64GD:  {sparc64.ABGD, sparc64.ABLED},
+	ssa.BlockSPARC64LED:  {sparc64.ABLED, sparc64.ABGD},
+	ssa.BlockSPARC64GED:  {sparc64.ABGED, sparc64.ABLD},
+	ssa.BlockSPARC64LD:  {sparc64.ABLD, sparc64.ABGED},
+	ssa.BlockSPARC64GUD:  {sparc64.ABGUD, sparc64.ABLEUD},
+	ssa.BlockSPARC64LEUD:  {sparc64.ABLEUD, sparc64.ABGUD},
+	ssa.BlockSPARC64CCD:  {sparc64.ABCCD, sparc64.ABCSD},
+	ssa.BlockSPARC64CSD:  {sparc64.ABCSD, sparc64.ABCCD},
+	ssa.BlockSPARC64POSD:  {sparc64.ABPOSD, sparc64.ABNEGD},
+	ssa.BlockSPARC64NEGD:  {sparc64.ABNEGD, sparc64.ABPOSD},
+	ssa.BlockSPARC64VCD:  {sparc64.ABVCD, sparc64.ABVSD},
+	ssa.BlockSPARC64VSD:  {sparc64.ABVSD, sparc64.ABVCD},
+	ssa.BlockSPARC64NW:  {sparc64.ABNW, obj.AJMP},
+	ssa.BlockSPARC64NEW:  {sparc64.ABNEW, sparc64.ABEW},
+	ssa.BlockSPARC64EW:  {sparc64.ABEW, sparc64.ABNEW},
+	ssa.BlockSPARC64GW:  {sparc64.ABGW, sparc64.ABLEW},
+	ssa.BlockSPARC64LEW:  {sparc64.ABLEW, sparc64.ABGW},
+	ssa.BlockSPARC64GEW:  {sparc64.ABGEW, sparc64.ABLW},
+	ssa.BlockSPARC64LW:  {sparc64.ABLW, sparc64.ABGEW},
+	ssa.BlockSPARC64GUW:  {sparc64.ABGUW, sparc64.ABLEUW},
+	ssa.BlockSPARC64LEUW:  {sparc64.ABLEUW, sparc64.ABGUW},
+	ssa.BlockSPARC64CCW:  {sparc64.ABCCW, sparc64.ABCSW},
+	ssa.BlockSPARC64CSW:  {sparc64.ABCSW, sparc64.ABCCW},
+	ssa.BlockSPARC64POSW:  {sparc64.ABPOSW, sparc64.ABNEGW},
+	ssa.BlockSPARC64NEGW:  {sparc64.ABNEGW, sparc64.ABPOSW},
+	ssa.BlockSPARC64VCW:  {sparc64.ABVCW, sparc64.ABVSW},
+	ssa.BlockSPARC64VSW:  {sparc64.ABVSW, sparc64.ABVCW},
+}
+
 func ssaGenBlock(s *gc.SSAGenState, b, next *ssa.Block) {
 	s.SetLineno(b.Line)
 
@@ -467,6 +502,57 @@ func ssaGenBlock(s *gc.SSAGenState, b, next *ssa.Block) {
 		p.To.Type = obj.TYPE_MEM
 		p.To.Name = obj.NAME_EXTERN
 		p.To.Sym = gc.Linksym(b.Aux.(*gc.Sym))
+
+	case ssa.BlockSPARC64ND,
+		ssa.BlockSPARC64NED,
+		ssa.BlockSPARC64ED,
+		ssa.BlockSPARC64GD,
+		ssa.BlockSPARC64LED,
+		ssa.BlockSPARC64GED,
+		ssa.BlockSPARC64LD,
+		ssa.BlockSPARC64GUD,
+		ssa.BlockSPARC64LEUD,
+		ssa.BlockSPARC64CCD,
+		ssa.BlockSPARC64CSD,
+		ssa.BlockSPARC64POSD,
+		ssa.BlockSPARC64NEGD,
+		ssa.BlockSPARC64VCD,
+		ssa.BlockSPARC64VSD,
+		ssa.BlockSPARC64NW,
+		ssa.BlockSPARC64NEW,
+		ssa.BlockSPARC64EW,
+		ssa.BlockSPARC64GW,
+		ssa.BlockSPARC64LEW,
+		ssa.BlockSPARC64GEW,
+		ssa.BlockSPARC64LW,
+		ssa.BlockSPARC64GUW,
+		ssa.BlockSPARC64LEUW,
+		ssa.BlockSPARC64CCW,
+		ssa.BlockSPARC64CSW,
+		ssa.BlockSPARC64POSW,
+		ssa.BlockSPARC64NEGW,
+		ssa.BlockSPARC64VCW,
+		ssa.BlockSPARC64VSW:
+
+		jmp := blockJump[b.Kind]
+		var p *obj.Prog
+		switch next {
+		case b.Succs[0].Block():
+			p = gc.Prog(jmp.invasm)
+			p.To.Type = obj.TYPE_BRANCH
+			s.Branches = append(s.Branches, gc.Branch{P: p, B: b.Succs[1].Block()})
+		case b.Succs[1].Block():
+			p = gc.Prog(jmp.asm)
+			p.To.Type = obj.TYPE_BRANCH
+			s.Branches = append(s.Branches, gc.Branch{P: p, B: b.Succs[0].Block()})
+		default:
+			p = gc.Prog(jmp.asm)
+			p.To.Type = obj.TYPE_BRANCH
+			s.Branches = append(s.Branches, gc.Branch{P: p, B: b.Succs[0].Block()})
+			q := gc.Prog(obj.AJMP)
+			q.To.Type = obj.TYPE_BRANCH
+			s.Branches = append(s.Branches, gc.Branch{P: q, B: b.Succs[1].Block()})
+		}
 
 	default:
 		b.Unimplementedf("branch not implemented: %s. Control: %s", b.LongString(), b.Control.LongString())
