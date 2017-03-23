@@ -119,6 +119,7 @@
 // calls
 (StaticCall [argwid] {target} mem) -> (CALLstatic [argwid] {target} mem)
 (DeferCall [argwid] mem) -> (CALLdefer [argwid] mem)
+(GoCall [argwid] mem) -> (CALLgo [argwid] mem)
 
 // loads
 (Load <t> ptr mem) && t.IsBoolean() -> (MOVUBload ptr mem)
