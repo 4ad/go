@@ -144,6 +144,92 @@
 (Zero [s] ptr mem) && SizeAndAlign(s).Size() == 4 -> (MOVWstore ptr (MOVDconst [0]) mem)
 (Zero [s] ptr mem) && SizeAndAlign(s).Size() == 8 -> (MOVDstore ptr (MOVDconst [0]) mem)
 
+(Zero [s] ptr mem) && SizeAndAlign(s).Size() == 3 ->
+	(MOVBstore [2] ptr (MOVDconst [0])
+		(MOVHstore ptr (MOVDconst [0]) mem))
+(Zero [s] ptr mem) && SizeAndAlign(s).Size() == 5 ->
+	(MOVBstore [4] ptr (MOVDconst [0])
+		(MOVWstore ptr (MOVDconst [0]) mem))
+(Zero [s] ptr mem) && SizeAndAlign(s).Size() == 6 ->
+	(MOVHstore [4] ptr (MOVDconst [0])
+		(MOVWstore ptr (MOVDconst [0]) mem))
+(Zero [s] ptr mem) && SizeAndAlign(s).Size() == 7 ->
+	(MOVBstore [6] ptr (MOVDconst [0])
+		(MOVHstore [4] ptr (MOVDconst [0])
+			(MOVWstore ptr (MOVDconst [0]) mem)))
+(Zero [s] ptr mem) && SizeAndAlign(s).Size() == 12 ->
+	(MOVWstore [8] ptr (MOVDconst [0])
+		(MOVDstore ptr (MOVDconst [0]) mem))
+(Zero [s] ptr mem) && SizeAndAlign(s).Size() == 16 ->
+	(MOVDstore [8] ptr (MOVDconst [0])
+		(MOVDstore ptr (MOVDconst [0]) mem))
+(Zero [s] ptr mem) && SizeAndAlign(s).Size() == 24 ->
+	(MOVDstore [16] ptr (MOVDconst [0])
+		(MOVDstore [8] ptr (MOVDconst [0])
+			(MOVDstore ptr (MOVDconst [0]) mem)))
+
+// strip off fractional word zeroing
+(Zero [s] ptr mem) && SizeAndAlign(s).Size()%8 != 0 && SizeAndAlign(s).Size() > 8 ->
+	(Zero [MakeSizeAndAlign(SizeAndAlign(s).Size()%8, 1).Int64()]
+		(OffPtr <ptr.Type> ptr [SizeAndAlign(s).Size()-SizeAndAlign(s).Size()%8])
+		(Zero [MakeSizeAndAlign(SizeAndAlign(s).Size()-SizeAndAlign(s).Size()%8, 1).Int64()] ptr mem))
+
+// medium and large zeroing uses a loop; no duff's device implemented yet
+(Zero [s] ptr mem)
+	&& SizeAndAlign(s).Size()%8 == 0 && (SizeAndAlign(s).Size() > 24 || config.noDuffDevice) ->
+	(LoweredZero
+		ptr
+		(ADDconst <ptr.Type> [SizeAndAlign(s).Size()-moveSize(SizeAndAlign(s).Align(), config)] ptr)
+		mem)
+
+// moves
+(Move [s] _ _ mem) && SizeAndAlign(s).Size() == 0 -> mem
+(Move [s] dst src mem) && SizeAndAlign(s).Size() == 1 -> (MOVBstore dst (MOVUBload src mem) mem)
+(Move [s] dst src mem) && SizeAndAlign(s).Size() == 2 -> (MOVHstore dst (MOVUHload src mem) mem)
+(Move [s] dst src mem) && SizeAndAlign(s).Size() == 4 -> (MOVWstore dst (MOVUWload src mem) mem)
+(Move [s] dst src mem) && SizeAndAlign(s).Size() == 8 -> (MOVDstore dst (MOVDload src mem) mem)
+
+(Move [s] dst src mem) && SizeAndAlign(s).Size() == 3 ->
+	(MOVBstore [2] dst (MOVUBload [2] src mem)
+		(MOVHstore dst (MOVUHload src mem) mem))
+(Move [s] dst src mem) && SizeAndAlign(s).Size() == 5 ->
+	(MOVBstore [4] dst (MOVUBload [4] src mem)
+		(MOVWstore dst (MOVUWload src mem) mem))
+(Move [s] dst src mem) && SizeAndAlign(s).Size() == 6 ->
+	(MOVHstore [4] dst (MOVUHload [4] src mem)
+		(MOVWstore dst (MOVUWload src mem) mem))
+(Move [s] dst src mem) && SizeAndAlign(s).Size() == 7 ->
+	(MOVBstore [6] dst (MOVUBload [6] src mem)
+		(MOVHstore [4] dst (MOVUHload [4] src mem)
+			(MOVWstore dst (MOVUWload src mem) mem)))
+(Move [s] dst src mem) && SizeAndAlign(s).Size() == 12 ->
+	(MOVWstore [8] dst (MOVUWload [8] src mem)
+		(MOVDstore dst (MOVDload src mem) mem))
+(Move [s] dst src mem) && SizeAndAlign(s).Size() == 16 ->
+	(MOVDstore [8] dst (MOVDload [8] src mem)
+		(MOVDstore dst (MOVDload src mem) mem))
+(Move [s] dst src mem) && SizeAndAlign(s).Size() == 24 ->
+	(MOVDstore [16] dst (MOVDload [16] src mem)
+		(MOVDstore [8] dst (MOVDload [8] src mem)
+			(MOVDstore dst (MOVDload src mem) mem)))
+
+// strip off fractional word move
+(Move [s] dst src mem) && SizeAndAlign(s).Size()%8 != 0 && SizeAndAlign(s).Size() > 8 ->
+	(Move [MakeSizeAndAlign(SizeAndAlign(s).Size()%8, 1).Int64()]
+		(OffPtr <dst.Type> dst [SizeAndAlign(s).Size()-SizeAndAlign(s).Size()%8])
+		(OffPtr <src.Type> src [SizeAndAlign(s).Size()-SizeAndAlign(s).Size()%8])
+		(Move [MakeSizeAndAlign(SizeAndAlign(s).Size()-SizeAndAlign(s).Size()%8, 1).Int64()] dst src mem))
+
+// large move uses a loop
+// DUFFCOPY is not implemented on SPARC64 (TODO)
+(Move [s] dst src mem)
+	&& SizeAndAlign(s).Size() > 24 && SizeAndAlign(s).Size()%8 == 0 ->
+	(LoweredMove
+		dst
+		src
+		(ADDconst <src.Type> src [SizeAndAlign(s).Size()-moveSize(SizeAndAlign(s).Align(), config)])
+		mem)
+
 // comparisons
 (Eq8 x y)  -> (Equal32 (CMP (ZeroExt8to32 x) (ZeroExt8to32 y)))
 (Eq16 x y) -> (Equal32 (CMP (ZeroExt16to32 x) (ZeroExt16to32 y)))

@@ -21,6 +21,7 @@ var regNamesSPARC64 = []string{
 	"CTXT",
 	"g",
 	"RT2",
+	"TMP",
 	"O0",
 	"O1",
 	"O2",
@@ -28,12 +29,20 @@ var regNamesSPARC64 = []string{
 	"O4",
 	"O5",
 	"RSP",
+	"TMP2",
 	"L1",
 	"L2",
 	"L3",
 	"L4",
 	"L5",
 	"L6",
+	"L7",
+	"I0",
+	"I1",
+	"I2",
+	"I3",
+	"I4",
+	"I5",
 	"RFP",
 	"Y0",
 	"Y1",
@@ -79,7 +88,7 @@ func init() {
 
 	// Common individual register masks
 	var (
-		gp = buildReg("O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6")
+		gp = buildReg("O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5")
 		fp = buildReg("Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13")
 		sp = buildReg("SP")
 		sb = buildReg("SB")
@@ -189,6 +198,41 @@ func init() {
 		{name: "GreaterEqual64", argLength: 1, reg: readflags},  // bool, true flags encode signed x>=y false otherwise.
 		{name: "GreaterEqual32U", argLength: 1, reg: readflags}, // bool, true flags encode unsigned x>=y false otherwise.
 		{name: "GreaterEqual64U", argLength: 1, reg: readflags}, // bool, true flags encode unsigned x>=y false otherwise.
+
+		// large zeroing
+		// arg0 = address of memory to zero (in REG_RT1, changed as side effect)
+		// arg1 = address of the last element to zero
+		// arg2 = mem
+		// returns mem
+		// Note: the-end-of-the-memory may be not a valid pointer. it's a problem if it is spilled.
+		// the-end-of-the-memory - 8 is with the area to zero, ok to spill.
+		{
+			name:      "LoweredZero",
+			argLength: 3,
+			reg: regInfo{
+				inputs:   []regMask{buildReg("RT1"), gp},
+				clobbers: buildReg("RT1"),
+			},
+			clobberFlags: true,
+		},
+
+		// large move
+		// arg0 = address of dst memory (in REG_RT2, changed as side effect)
+		// arg1 = address of src memory (in REG_RT1, changed as side effect)
+		// arg2 = address of the last element of src
+		// arg3 = mem
+		// returns mem
+		// Note: the-end-of-src may be not a valid pointer. it's a problem if it is spilled.
+		// the-end-of-src - 8 is within the area to copy, ok to spill.
+		{
+			name:      "LoweredMove",
+			argLength: 4,
+			reg: regInfo{
+				inputs:   []regMask{buildReg("RT2"), buildReg("RT1"), gp},
+				clobbers: buildReg("RT1 RT2 TMP TMP2"),
+			},
+			clobberFlags: true,
+		},
 	}
 
 	blocks := []blockData{

@@ -166,6 +166,8 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpMod8(v, config)
 	case OpMod8u:
 		return rewriteValueSPARC64_OpMod8u(v, config)
+	case OpMove:
+		return rewriteValueSPARC64_OpMove(v, config)
 	case OpMul16:
 		return rewriteValueSPARC64_OpMul16(v, config)
 	case OpMul32:
@@ -1743,6 +1745,376 @@ func rewriteValueSPARC64_OpMod8u(v *Value, config *Config) bool {
 		return true
 	}
 }
+func rewriteValueSPARC64_OpMove(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Move [s] _ _ mem)
+	// cond: SizeAndAlign(s).Size() == 0
+	// result: mem
+	for {
+		s := v.AuxInt
+		mem := v.Args[2]
+		if !(SizeAndAlign(s).Size() == 0) {
+			break
+		}
+		v.reset(OpCopy)
+		v.Type = mem.Type
+		v.AddArg(mem)
+		return true
+	}
+	// match: (Move [s] dst src mem)
+	// cond: SizeAndAlign(s).Size() == 1
+	// result: (MOVBstore dst (MOVUBload src mem) mem)
+	for {
+		s := v.AuxInt
+		dst := v.Args[0]
+		src := v.Args[1]
+		mem := v.Args[2]
+		if !(SizeAndAlign(s).Size() == 1) {
+			break
+		}
+		v.reset(OpSPARC64MOVBstore)
+		v.AddArg(dst)
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVUBload, config.fe.TypeUInt8())
+		v0.AddArg(src)
+		v0.AddArg(mem)
+		v.AddArg(v0)
+		v.AddArg(mem)
+		return true
+	}
+	// match: (Move [s] dst src mem)
+	// cond: SizeAndAlign(s).Size() == 2
+	// result: (MOVHstore dst (MOVUHload src mem) mem)
+	for {
+		s := v.AuxInt
+		dst := v.Args[0]
+		src := v.Args[1]
+		mem := v.Args[2]
+		if !(SizeAndAlign(s).Size() == 2) {
+			break
+		}
+		v.reset(OpSPARC64MOVHstore)
+		v.AddArg(dst)
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVUHload, config.fe.TypeUInt16())
+		v0.AddArg(src)
+		v0.AddArg(mem)
+		v.AddArg(v0)
+		v.AddArg(mem)
+		return true
+	}
+	// match: (Move [s] dst src mem)
+	// cond: SizeAndAlign(s).Size() == 4
+	// result: (MOVWstore dst (MOVUWload src mem) mem)
+	for {
+		s := v.AuxInt
+		dst := v.Args[0]
+		src := v.Args[1]
+		mem := v.Args[2]
+		if !(SizeAndAlign(s).Size() == 4) {
+			break
+		}
+		v.reset(OpSPARC64MOVWstore)
+		v.AddArg(dst)
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVUWload, config.fe.TypeUInt32())
+		v0.AddArg(src)
+		v0.AddArg(mem)
+		v.AddArg(v0)
+		v.AddArg(mem)
+		return true
+	}
+	// match: (Move [s] dst src mem)
+	// cond: SizeAndAlign(s).Size() == 8
+	// result: (MOVDstore dst (MOVDload src mem) mem)
+	for {
+		s := v.AuxInt
+		dst := v.Args[0]
+		src := v.Args[1]
+		mem := v.Args[2]
+		if !(SizeAndAlign(s).Size() == 8) {
+			break
+		}
+		v.reset(OpSPARC64MOVDstore)
+		v.AddArg(dst)
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVDload, config.fe.TypeUInt64())
+		v0.AddArg(src)
+		v0.AddArg(mem)
+		v.AddArg(v0)
+		v.AddArg(mem)
+		return true
+	}
+	// match: (Move [s] dst src mem)
+	// cond: SizeAndAlign(s).Size() == 3
+	// result: (MOVBstore [2] dst (MOVUBload [2] src mem) 		(MOVHstore dst (MOVUHload src mem) mem))
+	for {
+		s := v.AuxInt
+		dst := v.Args[0]
+		src := v.Args[1]
+		mem := v.Args[2]
+		if !(SizeAndAlign(s).Size() == 3) {
+			break
+		}
+		v.reset(OpSPARC64MOVBstore)
+		v.AuxInt = 2
+		v.AddArg(dst)
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVUBload, config.fe.TypeUInt8())
+		v0.AuxInt = 2
+		v0.AddArg(src)
+		v0.AddArg(mem)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpSPARC64MOVHstore, TypeMem)
+		v1.AddArg(dst)
+		v2 := b.NewValue0(v.Line, OpSPARC64MOVUHload, config.fe.TypeUInt16())
+		v2.AddArg(src)
+		v2.AddArg(mem)
+		v1.AddArg(v2)
+		v1.AddArg(mem)
+		v.AddArg(v1)
+		return true
+	}
+	// match: (Move [s] dst src mem)
+	// cond: SizeAndAlign(s).Size() == 5
+	// result: (MOVBstore [4] dst (MOVUBload [4] src mem) 		(MOVWstore dst (MOVUWload src mem) mem))
+	for {
+		s := v.AuxInt
+		dst := v.Args[0]
+		src := v.Args[1]
+		mem := v.Args[2]
+		if !(SizeAndAlign(s).Size() == 5) {
+			break
+		}
+		v.reset(OpSPARC64MOVBstore)
+		v.AuxInt = 4
+		v.AddArg(dst)
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVUBload, config.fe.TypeUInt8())
+		v0.AuxInt = 4
+		v0.AddArg(src)
+		v0.AddArg(mem)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpSPARC64MOVWstore, TypeMem)
+		v1.AddArg(dst)
+		v2 := b.NewValue0(v.Line, OpSPARC64MOVUWload, config.fe.TypeUInt32())
+		v2.AddArg(src)
+		v2.AddArg(mem)
+		v1.AddArg(v2)
+		v1.AddArg(mem)
+		v.AddArg(v1)
+		return true
+	}
+	// match: (Move [s] dst src mem)
+	// cond: SizeAndAlign(s).Size() == 6
+	// result: (MOVHstore [4] dst (MOVUHload [4] src mem) 		(MOVWstore dst (MOVUWload src mem) mem))
+	for {
+		s := v.AuxInt
+		dst := v.Args[0]
+		src := v.Args[1]
+		mem := v.Args[2]
+		if !(SizeAndAlign(s).Size() == 6) {
+			break
+		}
+		v.reset(OpSPARC64MOVHstore)
+		v.AuxInt = 4
+		v.AddArg(dst)
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVUHload, config.fe.TypeUInt16())
+		v0.AuxInt = 4
+		v0.AddArg(src)
+		v0.AddArg(mem)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpSPARC64MOVWstore, TypeMem)
+		v1.AddArg(dst)
+		v2 := b.NewValue0(v.Line, OpSPARC64MOVUWload, config.fe.TypeUInt32())
+		v2.AddArg(src)
+		v2.AddArg(mem)
+		v1.AddArg(v2)
+		v1.AddArg(mem)
+		v.AddArg(v1)
+		return true
+	}
+	// match: (Move [s] dst src mem)
+	// cond: SizeAndAlign(s).Size() == 7
+	// result: (MOVBstore [6] dst (MOVUBload [6] src mem) 		(MOVHstore [4] dst (MOVUHload [4] src mem) 			(MOVWstore dst (MOVUWload src mem) mem)))
+	for {
+		s := v.AuxInt
+		dst := v.Args[0]
+		src := v.Args[1]
+		mem := v.Args[2]
+		if !(SizeAndAlign(s).Size() == 7) {
+			break
+		}
+		v.reset(OpSPARC64MOVBstore)
+		v.AuxInt = 6
+		v.AddArg(dst)
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVUBload, config.fe.TypeUInt8())
+		v0.AuxInt = 6
+		v0.AddArg(src)
+		v0.AddArg(mem)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpSPARC64MOVHstore, TypeMem)
+		v1.AuxInt = 4
+		v1.AddArg(dst)
+		v2 := b.NewValue0(v.Line, OpSPARC64MOVUHload, config.fe.TypeUInt16())
+		v2.AuxInt = 4
+		v2.AddArg(src)
+		v2.AddArg(mem)
+		v1.AddArg(v2)
+		v3 := b.NewValue0(v.Line, OpSPARC64MOVWstore, TypeMem)
+		v3.AddArg(dst)
+		v4 := b.NewValue0(v.Line, OpSPARC64MOVUWload, config.fe.TypeUInt32())
+		v4.AddArg(src)
+		v4.AddArg(mem)
+		v3.AddArg(v4)
+		v3.AddArg(mem)
+		v1.AddArg(v3)
+		v.AddArg(v1)
+		return true
+	}
+	// match: (Move [s] dst src mem)
+	// cond: SizeAndAlign(s).Size() == 12
+	// result: (MOVWstore [8] dst (MOVUWload [8] src mem) 		(MOVDstore dst (MOVDload src mem) mem))
+	for {
+		s := v.AuxInt
+		dst := v.Args[0]
+		src := v.Args[1]
+		mem := v.Args[2]
+		if !(SizeAndAlign(s).Size() == 12) {
+			break
+		}
+		v.reset(OpSPARC64MOVWstore)
+		v.AuxInt = 8
+		v.AddArg(dst)
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVUWload, config.fe.TypeUInt32())
+		v0.AuxInt = 8
+		v0.AddArg(src)
+		v0.AddArg(mem)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpSPARC64MOVDstore, TypeMem)
+		v1.AddArg(dst)
+		v2 := b.NewValue0(v.Line, OpSPARC64MOVDload, config.fe.TypeUInt64())
+		v2.AddArg(src)
+		v2.AddArg(mem)
+		v1.AddArg(v2)
+		v1.AddArg(mem)
+		v.AddArg(v1)
+		return true
+	}
+	// match: (Move [s] dst src mem)
+	// cond: SizeAndAlign(s).Size() == 16
+	// result: (MOVDstore [8] dst (MOVDload [8] src mem) 		(MOVDstore dst (MOVDload src mem) mem))
+	for {
+		s := v.AuxInt
+		dst := v.Args[0]
+		src := v.Args[1]
+		mem := v.Args[2]
+		if !(SizeAndAlign(s).Size() == 16) {
+			break
+		}
+		v.reset(OpSPARC64MOVDstore)
+		v.AuxInt = 8
+		v.AddArg(dst)
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVDload, config.fe.TypeUInt64())
+		v0.AuxInt = 8
+		v0.AddArg(src)
+		v0.AddArg(mem)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpSPARC64MOVDstore, TypeMem)
+		v1.AddArg(dst)
+		v2 := b.NewValue0(v.Line, OpSPARC64MOVDload, config.fe.TypeUInt64())
+		v2.AddArg(src)
+		v2.AddArg(mem)
+		v1.AddArg(v2)
+		v1.AddArg(mem)
+		v.AddArg(v1)
+		return true
+	}
+	// match: (Move [s] dst src mem)
+	// cond: SizeAndAlign(s).Size() == 24
+	// result: (MOVDstore [16] dst (MOVDload [16] src mem) 		(MOVDstore [8] dst (MOVDload [8] src mem) 			(MOVDstore dst (MOVDload src mem) mem)))
+	for {
+		s := v.AuxInt
+		dst := v.Args[0]
+		src := v.Args[1]
+		mem := v.Args[2]
+		if !(SizeAndAlign(s).Size() == 24) {
+			break
+		}
+		v.reset(OpSPARC64MOVDstore)
+		v.AuxInt = 16
+		v.AddArg(dst)
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVDload, config.fe.TypeUInt64())
+		v0.AuxInt = 16
+		v0.AddArg(src)
+		v0.AddArg(mem)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpSPARC64MOVDstore, TypeMem)
+		v1.AuxInt = 8
+		v1.AddArg(dst)
+		v2 := b.NewValue0(v.Line, OpSPARC64MOVDload, config.fe.TypeUInt64())
+		v2.AuxInt = 8
+		v2.AddArg(src)
+		v2.AddArg(mem)
+		v1.AddArg(v2)
+		v3 := b.NewValue0(v.Line, OpSPARC64MOVDstore, TypeMem)
+		v3.AddArg(dst)
+		v4 := b.NewValue0(v.Line, OpSPARC64MOVDload, config.fe.TypeUInt64())
+		v4.AddArg(src)
+		v4.AddArg(mem)
+		v3.AddArg(v4)
+		v3.AddArg(mem)
+		v1.AddArg(v3)
+		v.AddArg(v1)
+		return true
+	}
+	// match: (Move [s] dst src mem)
+	// cond: SizeAndAlign(s).Size()%8 != 0 && SizeAndAlign(s).Size() > 8
+	// result: (Move [MakeSizeAndAlign(SizeAndAlign(s).Size()%8, 1).Int64()] 		(OffPtr <dst.Type> dst [SizeAndAlign(s).Size()-SizeAndAlign(s).Size()%8]) 		(OffPtr <src.Type> src [SizeAndAlign(s).Size()-SizeAndAlign(s).Size()%8]) 		(Move [MakeSizeAndAlign(SizeAndAlign(s).Size()-SizeAndAlign(s).Size()%8, 1).Int64()] dst src mem))
+	for {
+		s := v.AuxInt
+		dst := v.Args[0]
+		src := v.Args[1]
+		mem := v.Args[2]
+		if !(SizeAndAlign(s).Size()%8 != 0 && SizeAndAlign(s).Size() > 8) {
+			break
+		}
+		v.reset(OpMove)
+		v.AuxInt = MakeSizeAndAlign(SizeAndAlign(s).Size()%8, 1).Int64()
+		v0 := b.NewValue0(v.Line, OpOffPtr, dst.Type)
+		v0.AuxInt = SizeAndAlign(s).Size() - SizeAndAlign(s).Size()%8
+		v0.AddArg(dst)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpOffPtr, src.Type)
+		v1.AuxInt = SizeAndAlign(s).Size() - SizeAndAlign(s).Size()%8
+		v1.AddArg(src)
+		v.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpMove, TypeMem)
+		v2.AuxInt = MakeSizeAndAlign(SizeAndAlign(s).Size()-SizeAndAlign(s).Size()%8, 1).Int64()
+		v2.AddArg(dst)
+		v2.AddArg(src)
+		v2.AddArg(mem)
+		v.AddArg(v2)
+		return true
+	}
+	// match: (Move [s] dst src mem)
+	// cond: SizeAndAlign(s).Size() > 24 && SizeAndAlign(s).Size()%8 == 0
+	// result: (LoweredMove 		dst 		src 		(ADDconst <src.Type> src [SizeAndAlign(s).Size()-moveSize(SizeAndAlign(s).Align(), config)]) 		mem)
+	for {
+		s := v.AuxInt
+		dst := v.Args[0]
+		src := v.Args[1]
+		mem := v.Args[2]
+		if !(SizeAndAlign(s).Size() > 24 && SizeAndAlign(s).Size()%8 == 0) {
+			break
+		}
+		v.reset(OpSPARC64LoweredMove)
+		v.AddArg(dst)
+		v.AddArg(src)
+		v0 := b.NewValue0(v.Line, OpSPARC64ADDconst, src.Type)
+		v0.AuxInt = SizeAndAlign(s).Size() - moveSize(SizeAndAlign(s).Align(), config)
+		v0.AddArg(src)
+		v.AddArg(v0)
+		v.AddArg(mem)
+		return true
+	}
+	return false
+}
 func rewriteValueSPARC64_OpMul16(v *Value, config *Config) bool {
 	b := v.Block
 	_ = b
@@ -2649,6 +3021,237 @@ func rewriteValueSPARC64_OpZero(v *Value, config *Config) bool {
 		v.AddArg(ptr)
 		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
 		v0.AuxInt = 0
+		v.AddArg(v0)
+		v.AddArg(mem)
+		return true
+	}
+	// match: (Zero [s] ptr mem)
+	// cond: SizeAndAlign(s).Size() == 3
+	// result: (MOVBstore [2] ptr (MOVDconst [0]) 		(MOVHstore ptr (MOVDconst [0]) mem))
+	for {
+		s := v.AuxInt
+		ptr := v.Args[0]
+		mem := v.Args[1]
+		if !(SizeAndAlign(s).Size() == 3) {
+			break
+		}
+		v.reset(OpSPARC64MOVBstore)
+		v.AuxInt = 2
+		v.AddArg(ptr)
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v0.AuxInt = 0
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpSPARC64MOVHstore, TypeMem)
+		v1.AddArg(ptr)
+		v2 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v2.AuxInt = 0
+		v1.AddArg(v2)
+		v1.AddArg(mem)
+		v.AddArg(v1)
+		return true
+	}
+	// match: (Zero [s] ptr mem)
+	// cond: SizeAndAlign(s).Size() == 5
+	// result: (MOVBstore [4] ptr (MOVDconst [0]) 		(MOVWstore ptr (MOVDconst [0]) mem))
+	for {
+		s := v.AuxInt
+		ptr := v.Args[0]
+		mem := v.Args[1]
+		if !(SizeAndAlign(s).Size() == 5) {
+			break
+		}
+		v.reset(OpSPARC64MOVBstore)
+		v.AuxInt = 4
+		v.AddArg(ptr)
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v0.AuxInt = 0
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpSPARC64MOVWstore, TypeMem)
+		v1.AddArg(ptr)
+		v2 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v2.AuxInt = 0
+		v1.AddArg(v2)
+		v1.AddArg(mem)
+		v.AddArg(v1)
+		return true
+	}
+	// match: (Zero [s] ptr mem)
+	// cond: SizeAndAlign(s).Size() == 6
+	// result: (MOVHstore [4] ptr (MOVDconst [0]) 		(MOVWstore ptr (MOVDconst [0]) mem))
+	for {
+		s := v.AuxInt
+		ptr := v.Args[0]
+		mem := v.Args[1]
+		if !(SizeAndAlign(s).Size() == 6) {
+			break
+		}
+		v.reset(OpSPARC64MOVHstore)
+		v.AuxInt = 4
+		v.AddArg(ptr)
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v0.AuxInt = 0
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpSPARC64MOVWstore, TypeMem)
+		v1.AddArg(ptr)
+		v2 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v2.AuxInt = 0
+		v1.AddArg(v2)
+		v1.AddArg(mem)
+		v.AddArg(v1)
+		return true
+	}
+	// match: (Zero [s] ptr mem)
+	// cond: SizeAndAlign(s).Size() == 7
+	// result: (MOVBstore [6] ptr (MOVDconst [0]) 		(MOVHstore [4] ptr (MOVDconst [0]) 			(MOVWstore ptr (MOVDconst [0]) mem)))
+	for {
+		s := v.AuxInt
+		ptr := v.Args[0]
+		mem := v.Args[1]
+		if !(SizeAndAlign(s).Size() == 7) {
+			break
+		}
+		v.reset(OpSPARC64MOVBstore)
+		v.AuxInt = 6
+		v.AddArg(ptr)
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v0.AuxInt = 0
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpSPARC64MOVHstore, TypeMem)
+		v1.AuxInt = 4
+		v1.AddArg(ptr)
+		v2 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v2.AuxInt = 0
+		v1.AddArg(v2)
+		v3 := b.NewValue0(v.Line, OpSPARC64MOVWstore, TypeMem)
+		v3.AddArg(ptr)
+		v4 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v4.AuxInt = 0
+		v3.AddArg(v4)
+		v3.AddArg(mem)
+		v1.AddArg(v3)
+		v.AddArg(v1)
+		return true
+	}
+	// match: (Zero [s] ptr mem)
+	// cond: SizeAndAlign(s).Size() == 12
+	// result: (MOVWstore [8] ptr (MOVDconst [0]) 		(MOVDstore ptr (MOVDconst [0]) mem))
+	for {
+		s := v.AuxInt
+		ptr := v.Args[0]
+		mem := v.Args[1]
+		if !(SizeAndAlign(s).Size() == 12) {
+			break
+		}
+		v.reset(OpSPARC64MOVWstore)
+		v.AuxInt = 8
+		v.AddArg(ptr)
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v0.AuxInt = 0
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpSPARC64MOVDstore, TypeMem)
+		v1.AddArg(ptr)
+		v2 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v2.AuxInt = 0
+		v1.AddArg(v2)
+		v1.AddArg(mem)
+		v.AddArg(v1)
+		return true
+	}
+	// match: (Zero [s] ptr mem)
+	// cond: SizeAndAlign(s).Size() == 16
+	// result: (MOVDstore [8] ptr (MOVDconst [0]) 		(MOVDstore ptr (MOVDconst [0]) mem))
+	for {
+		s := v.AuxInt
+		ptr := v.Args[0]
+		mem := v.Args[1]
+		if !(SizeAndAlign(s).Size() == 16) {
+			break
+		}
+		v.reset(OpSPARC64MOVDstore)
+		v.AuxInt = 8
+		v.AddArg(ptr)
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v0.AuxInt = 0
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpSPARC64MOVDstore, TypeMem)
+		v1.AddArg(ptr)
+		v2 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v2.AuxInt = 0
+		v1.AddArg(v2)
+		v1.AddArg(mem)
+		v.AddArg(v1)
+		return true
+	}
+	// match: (Zero [s] ptr mem)
+	// cond: SizeAndAlign(s).Size() == 24
+	// result: (MOVDstore [16] ptr (MOVDconst [0]) 		(MOVDstore [8] ptr (MOVDconst [0]) 			(MOVDstore ptr (MOVDconst [0]) mem)))
+	for {
+		s := v.AuxInt
+		ptr := v.Args[0]
+		mem := v.Args[1]
+		if !(SizeAndAlign(s).Size() == 24) {
+			break
+		}
+		v.reset(OpSPARC64MOVDstore)
+		v.AuxInt = 16
+		v.AddArg(ptr)
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v0.AuxInt = 0
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpSPARC64MOVDstore, TypeMem)
+		v1.AuxInt = 8
+		v1.AddArg(ptr)
+		v2 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v2.AuxInt = 0
+		v1.AddArg(v2)
+		v3 := b.NewValue0(v.Line, OpSPARC64MOVDstore, TypeMem)
+		v3.AddArg(ptr)
+		v4 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v4.AuxInt = 0
+		v3.AddArg(v4)
+		v3.AddArg(mem)
+		v1.AddArg(v3)
+		v.AddArg(v1)
+		return true
+	}
+	// match: (Zero [s] ptr mem)
+	// cond: SizeAndAlign(s).Size()%8 != 0 && SizeAndAlign(s).Size() > 8
+	// result: (Zero [MakeSizeAndAlign(SizeAndAlign(s).Size()%8, 1).Int64()] 		(OffPtr <ptr.Type> ptr [SizeAndAlign(s).Size()-SizeAndAlign(s).Size()%8]) 		(Zero [MakeSizeAndAlign(SizeAndAlign(s).Size()-SizeAndAlign(s).Size()%8, 1).Int64()] ptr mem))
+	for {
+		s := v.AuxInt
+		ptr := v.Args[0]
+		mem := v.Args[1]
+		if !(SizeAndAlign(s).Size()%8 != 0 && SizeAndAlign(s).Size() > 8) {
+			break
+		}
+		v.reset(OpZero)
+		v.AuxInt = MakeSizeAndAlign(SizeAndAlign(s).Size()%8, 1).Int64()
+		v0 := b.NewValue0(v.Line, OpOffPtr, ptr.Type)
+		v0.AuxInt = SizeAndAlign(s).Size() - SizeAndAlign(s).Size()%8
+		v0.AddArg(ptr)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpZero, TypeMem)
+		v1.AuxInt = MakeSizeAndAlign(SizeAndAlign(s).Size()-SizeAndAlign(s).Size()%8, 1).Int64()
+		v1.AddArg(ptr)
+		v1.AddArg(mem)
+		v.AddArg(v1)
+		return true
+	}
+	// match: (Zero [s] ptr mem)
+	// cond: SizeAndAlign(s).Size()%8 == 0 && (SizeAndAlign(s).Size() > 24 || config.noDuffDevice)
+	// result: (LoweredZero 		ptr 		(ADDconst <ptr.Type> [SizeAndAlign(s).Size()-moveSize(SizeAndAlign(s).Align(), config)] ptr) 		mem)
+	for {
+		s := v.AuxInt
+		ptr := v.Args[0]
+		mem := v.Args[1]
+		if !(SizeAndAlign(s).Size()%8 == 0 && (SizeAndAlign(s).Size() > 24 || config.noDuffDevice)) {
+			break
+		}
+		v.reset(OpSPARC64LoweredZero)
+		v.AddArg(ptr)
+		v0 := b.NewValue0(v.Line, OpSPARC64ADDconst, ptr.Type)
+		v0.AuxInt = SizeAndAlign(s).Size() - moveSize(SizeAndAlign(s).Align(), config)
+		v0.AddArg(ptr)
 		v.AddArg(v0)
 		v.AddArg(mem)
 		return true

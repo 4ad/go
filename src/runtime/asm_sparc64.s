@@ -143,14 +143,14 @@ TEXT runtime·gogo(SB), NOSPLIT|NOFRAME, $0-8
 	ADD	$STACK_BIAS, O2
 	MOVD	O2, BFP
 	MOVD	ZR, O2
-	JMPL	O5, L7
+	JMPL	O5, ZR
 
 nottop:
 	MOVD	O2, BFP
 	SUB	$STACK_BIAS, O2
 	MOVD	O2, 112(BSP)
 	MOVD	ZR, O2
-	JMPL	O5, L7
+	JMPL	O5, ZR
 
 
 // void mcall(fn func(*g))
@@ -400,7 +400,7 @@ TEXT runtime·stackBarrier(SB),NOSPLIT|NOFRAME,$0
 	// Record that this stack barrier was hit.
 	MOVD	$1(L2), g_stkbarPos(g)
 	// Jump to the original return PC.
-	JMPL	$8(OLR), L7
+	JMPL	$8(OLR), ZR
 
 // reflectcall: call a function with the given argument list
 // func call(argtype *_type, f *FuncVal, arg *byte, argsize, retoffset uint32).
@@ -413,7 +413,7 @@ TEXT runtime·stackBarrier(SB),NOSPLIT|NOFRAME,$0
 	CMP	TMP, RT1;		\
 	BGD	3(PC);			\
 	MOVD	$NAME(SB), RT1;	\
-	JMPL	RT1, L7
+	JMPL	RT1, ZR
 // Note: can't just "B NAME(SB)" - bad inlining results.
 
 TEXT reflect·call(SB), NOSPLIT|NOFRAME, $0-0
@@ -450,7 +450,7 @@ TEXT ·reflectcall(SB), NOSPLIT|NOFRAME, $0-32
 	DISPATCH(runtime·call536870912, 536870912)
 	DISPATCH(runtime·call1073741824, 1073741824)
 	MOVD	$runtime·badreflectcall(SB), I3
-	JMPL	I3, L7
+	JMPL	I3, ZR
 
 #define CALLFN(NAME,MAXSIZE)			\
 TEXT NAME(SB), WRAPPER, $MAXSIZE-24;		\
@@ -589,7 +589,7 @@ TEXT runtime·jmpdefer(SB), NOSPLIT|NOFRAME, $0-16
 
 	// call deferred function
 	MOVD	0(CTXT), TMP
-	JMPL	TMP, L7
+	JMPL	TMP, ZR
 
 // Save state of caller into g->sched.
 TEXT gosave<>(SB),NOSPLIT|NOFRAME,$0

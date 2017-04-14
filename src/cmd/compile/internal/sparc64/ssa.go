@@ -17,8 +17,8 @@ var ssaRegToReg = []int16{
 	sparc64.REG_RT1,  // for runtime, liblink and duff device
 	sparc64.REG_CTXT, // environment for closures
 	sparc64.REG_G,    // g register
-	sparc64.REG_RT2,  // for runtime, linblink and duff device
-	// sparc64.REG_TMP,  // reserved for runtime and linblink
+	sparc64.REG_RT2,  // for runtime, liblink and duff device
+	// sparc64.REG_TMP,  // reserved for runtime and liblink
 	// sparc64.REG_G6,   // reserved for the operating system
 	// sparc64.REG_TLS,  // reserved for the operating system
 	sparc64.REG_O0,
@@ -29,20 +29,20 @@ var ssaRegToReg = []int16{
 	sparc64.REG_O5,
 	sparc64.REG_RSP,  // machine stack pointer
 	// sparc64.REG_OLR,  // the output link register
-	// sparc64.REG_TMP2, // reserved for runtime and linblink
+	// sparc64.REG_TMP2, // reserved for runtime and liblink
 	sparc64.REG_L1,
 	sparc64.REG_L2,
 	sparc64.REG_L3,
 	sparc64.REG_L4,
 	sparc64.REG_L5,
 	sparc64.REG_L6,
-	// sparc64.REG_L7,  // reserved for runtime, to debug register windows
-	// sparc64.REG_I0,  // unused to debug register windows
-	// sparc64.REG_I1,  // unused to debug register windows
-	// sparc64.REG_I2,  // unused to debug register windows
-	// sparc64.REG_I3,  // unused to debug register windows
-	// sparc64.REG_I4,  // unused to debug register windows
-	// sparc64.REG_I5,  // unused to debug register windows
+	sparc64.REG_L7,
+	sparc64.REG_I0,
+	sparc64.REG_I1,
+	sparc64.REG_I2,
+	sparc64.REG_I3,
+	sparc64.REG_I4,
+	sparc64.REG_I5,
 	sparc64.REG_RFP, // frame pointer
 	// sparc64.REG_ILR, // the input link register
 
@@ -314,6 +314,69 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p.To.Type = obj.TYPE_MEM
 		p.To.Reg = gc.SSARegNum(v.Args[0])
 		gc.AddAux(&p.To, v)
+
+	case ssa.OpSPARC64LoweredZero:
+		// loop:
+		// 	MOVD	ZR, (RT1)
+		// 	ADD	$8, RT1
+		// 	CMP	Rarg1, RT1
+		// 	BLED	loop
+		// arg1 is the address of the last element to zero
+		p := gc.Prog(sparc64.AMOVD)
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = sparc64.REG_ZR
+		p.To.Type = obj.TYPE_MEM
+		p.To.Reg = sparc64.REG_RT1
+		p2 := gc.Prog(sparc64.AADD)
+		p2.From.Type = obj.TYPE_CONST
+		p2.From.Offset = 8
+		p2.To.Type = obj.TYPE_REG
+		p2.To.Reg = sparc64.REG_RT1
+		p2.Reg = sparc64.REG_RT1
+		p3 := gc.Prog(sparc64.ACMP)
+		p3.From.Type = obj.TYPE_REG
+		p3.From.Reg = gc.SSARegNum(v.Args[1])
+		p3.Reg = sparc64.REG_RT1
+		p4 := gc.Prog(sparc64.ABLED)
+		p4.To.Type = obj.TYPE_BRANCH
+		gc.Patch(p4, p)
+
+	case ssa.OpSPARC64LoweredMove:
+		// loop:
+		// 	MOVD	(RT1), TMP
+		// 	ADD	$8, RT1
+		//	MOVD	TMP, (RT2)
+		//	ADD	$8, RT2
+		// 	CMP	Rarg2, RT1
+		// 	BLED	loop
+		// arg2 is the address of the last element of src
+		p := gc.Prog(sparc64.AMOVD)
+		p.From.Type = obj.TYPE_MEM
+		p.From.Reg = sparc64.REG_RT1
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_TMP
+		p2 := gc.Prog(sparc64.AADD)
+		p2.From.Type = obj.TYPE_CONST
+		p2.From.Offset = 8
+		p2.To.Type = obj.TYPE_REG
+		p2.To.Reg = sparc64.REG_RT1
+		p3 := gc.Prog(sparc64.AMOVD)
+		p3.From.Type = obj.TYPE_REG
+		p3.From.Reg = sparc64.REG_TMP
+		p3.To.Type = obj.TYPE_MEM
+		p3.To.Reg = sparc64.REG_RT2
+		p4 := gc.Prog(sparc64.AADD)
+		p4.From.Type = obj.TYPE_CONST
+		p4.From.Offset = 8
+		p4.To.Type = obj.TYPE_REG
+		p4.To.Reg = sparc64.REG_RT2
+		p5 := gc.Prog(sparc64.ACMP)
+		p5.From.Type = obj.TYPE_REG
+		p5.From.Reg = gc.SSARegNum(v.Args[2])
+		p5.Reg = sparc64.REG_RT1
+		p6 := gc.Prog(sparc64.ABLED)
+		p6.To.Type = obj.TYPE_BRANCH
+		gc.Patch(p6, p)
 
 	case ssa.OpSPARC64CALLstatic:
 		if v.Aux.(*gc.Sym) == gc.Deferreturn.Sym {
