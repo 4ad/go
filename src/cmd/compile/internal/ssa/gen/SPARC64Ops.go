@@ -16,12 +16,18 @@ import "strings"
 //    In this case the assembler expands to multiple instructions and uses TMP
 //    register.
 
+// Note: registers not used in regalloc are not included in this list,
+// so that regmask stays within int64
+// Be careful when hand coding regmasks.
 var regNamesSPARC64 = []string{
+	// "G0", zero register, not used in regalloc
 	"RT1",
 	"CTXT",
 	"g",
 	"RT2",
-	"TMP",
+	// "TMP", not used in regalloc
+	// "G6", reserved for the operating system
+	// "TLS", reserved for the operating system
 	"O0",
 	"O1",
 	"O2",
@@ -29,7 +35,8 @@ var regNamesSPARC64 = []string{
 	"O4",
 	"O5",
 	"RSP",
-	"TMP2",
+	// "OLR", output link register, not used in regalloc
+	// "TMP2", not used in regalloc
 	"L1",
 	"L2",
 	"L3",
@@ -44,6 +51,8 @@ var regNamesSPARC64 = []string{
 	"I4",
 	"I5",
 	"RFP",
+	// "ILR", input link register, not used in regalloc
+
 	"Y0",
 	"Y1",
 	"Y2",
@@ -58,6 +67,8 @@ var regNamesSPARC64 = []string{
 	"Y11",
 	"Y12",
 	"Y13",
+	// "YTWO", not used in regalloc
+	// "YTMP", not used in regalloc
 
 	// pseudo-registers
 	"SB",
@@ -89,6 +100,7 @@ func init() {
 	// Common individual register masks
 	var (
 		gp = buildReg("O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5")
+		gprt = buildReg("RT1 RT2")
 		fp = buildReg("Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13")
 		sp = buildReg("SP")
 		sb = buildReg("SB")
@@ -229,7 +241,7 @@ func init() {
 			argLength: 4,
 			reg: regInfo{
 				inputs:   []regMask{buildReg("RT2"), buildReg("RT1"), gp},
-				clobbers: buildReg("RT1 RT2 TMP TMP2"),
+				clobbers: buildReg("RT1 RT2"),
 			},
 			clobberFlags: true,
 		},
@@ -276,7 +288,7 @@ func init() {
 		ops:             ops,
 		blocks:          blocks,
 		regnames:        regNamesSPARC64,
-		gpregmask:       gp,
+		gpregmask:       gp | gprt,
 		fpregmask:       fp,
 		framepointerreg: int8(num["RFP"]),
 	})

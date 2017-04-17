@@ -63,9 +63,9 @@ var ssaRegToReg = []int16{
 	// sparc64.REG_YTWO, // uncertain if used
 	// sparc64.REG_YTMP, // uncertain if used
 
-	0, // SB, pseudo
-	1, // SP, pseudo
-	2, // FP, pseudo
+	0, // SB, pseudo symbol address
+	1, // SP, pseudo stack pointer
+	2, // FP, pseudo frame pointer
 }
 
 // Smallest possible faulting page at address zero,
@@ -141,6 +141,32 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		// input args need no code
 	case ssa.OpSP, ssa.OpSB, ssa.OpGetG:
 		// nothing to do
+
+	case ssa.OpCopy:
+		if v.Type.IsMemory() {
+			return
+		}
+		x := gc.SSARegNum(v.Args[0])
+		y := gc.SSARegNum(v)
+		if x == y {
+			return
+		}
+		as := sparc64.AMOVD
+		if v.Type.IsFloat() {
+			switch v.Type.Size() {
+			case 4:
+				as = sparc64.AFMOVS
+			case 8:
+				as = sparc64.AFMOVD
+			default:
+				panic("bad float size")
+			}
+		}
+		p := gc.Prog(as)
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = x
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = y
 
 	case ssa.OpLoadReg:
 		loadOp := loadByType(v.Type)
@@ -321,22 +347,22 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		// 	ADD	$8, RT1
 		// 	CMP	Rarg1, RT1
 		// 	BLED	loop
+		// arg0 is address of dst memory
 		// arg1 is the address of the last element to zero
 		p := gc.Prog(sparc64.AMOVD)
 		p.From.Type = obj.TYPE_REG
 		p.From.Reg = sparc64.REG_ZR
 		p.To.Type = obj.TYPE_MEM
-		p.To.Reg = sparc64.REG_RT1
+		p.To.Reg = gc.SSARegNum(v.Args[0])
 		p2 := gc.Prog(sparc64.AADD)
 		p2.From.Type = obj.TYPE_CONST
 		p2.From.Offset = 8
 		p2.To.Type = obj.TYPE_REG
-		p2.To.Reg = sparc64.REG_RT1
-		p2.Reg = sparc64.REG_RT1
+		p2.To.Reg = gc.SSARegNum(v.Args[0])
 		p3 := gc.Prog(sparc64.ACMP)
 		p3.From.Type = obj.TYPE_REG
 		p3.From.Reg = gc.SSARegNum(v.Args[1])
-		p3.Reg = sparc64.REG_RT1
+		p3.Reg = gc.SSARegNum(v.Args[0])
 		p4 := gc.Prog(sparc64.ABLED)
 		p4.To.Type = obj.TYPE_BRANCH
 		gc.Patch(p4, p)
@@ -349,31 +375,33 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		//	ADD	$8, RT2
 		// 	CMP	Rarg2, RT1
 		// 	BLED	loop
+		// arg0 is address of dst memory
+		// arg1 is address of src memory
 		// arg2 is the address of the last element of src
 		p := gc.Prog(sparc64.AMOVD)
 		p.From.Type = obj.TYPE_MEM
-		p.From.Reg = sparc64.REG_RT1
+		p.From.Reg = gc.SSARegNum(v.Args[1])
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = sparc64.REG_TMP
 		p2 := gc.Prog(sparc64.AADD)
 		p2.From.Type = obj.TYPE_CONST
 		p2.From.Offset = 8
 		p2.To.Type = obj.TYPE_REG
-		p2.To.Reg = sparc64.REG_RT1
+		p2.To.Reg = gc.SSARegNum(v.Args[1])
 		p3 := gc.Prog(sparc64.AMOVD)
 		p3.From.Type = obj.TYPE_REG
 		p3.From.Reg = sparc64.REG_TMP
 		p3.To.Type = obj.TYPE_MEM
-		p3.To.Reg = sparc64.REG_RT2
+		p3.To.Reg = gc.SSARegNum(v.Args[0])
 		p4 := gc.Prog(sparc64.AADD)
 		p4.From.Type = obj.TYPE_CONST
 		p4.From.Offset = 8
 		p4.To.Type = obj.TYPE_REG
-		p4.To.Reg = sparc64.REG_RT2
+		p4.To.Reg = gc.SSARegNum(v.Args[0])
 		p5 := gc.Prog(sparc64.ACMP)
 		p5.From.Type = obj.TYPE_REG
 		p5.From.Reg = gc.SSARegNum(v.Args[2])
-		p5.Reg = sparc64.REG_RT1
+		p5.Reg = gc.SSARegNum(v.Args[0])
 		p6 := gc.Prog(sparc64.ABLED)
 		p6.To.Type = obj.TYPE_BRANCH
 		gc.Patch(p6, p)
