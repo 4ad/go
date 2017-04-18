@@ -63,7 +63,7 @@ var ssaRegToReg = []int16{
 	// sparc64.REG_YTWO, // uncertain if used
 	// sparc64.REG_YTMP, // uncertain if used
 
-	0, // SB, pseudo symbol address
+	0, // SB, pseudo symbol static base
 	1, // SP, pseudo stack pointer
 	2, // FP, pseudo frame pointer
 }
