@@ -26,6 +26,16 @@
 (Mul32F x y) -> (FMULS x y)
 (Mul64F x y) -> (FMULD x y)
 
+// TODO(shawn): handle high-multiply via mulx? vis3 has [u]mulxhi
+(Hmul64 x y) -> (MULD x y)
+(Hmul64u x y) -> (MULD x y)
+(Hmul32 x y) -> (SRAconst (MULD <config.fe.TypeInt64()> x y) [32])
+(Hmul32u x y) -> (SRAconst (MULD <config.fe.TypeUInt64()> x y) [32])
+(Hmul16 x y) -> (SRAconst (MULD <config.fe.TypeInt32()> (SignExt16to32 x) (SignExt16to32 y)) [16])
+(Hmul16u x y) -> (SRLconst (MULD <config.fe.TypeUInt32()> (ZeroExt16to32 x) (ZeroExt16to32 y)) [16])
+(Hmul8 x y) -> (SRAconst (MULD <config.fe.TypeInt16()> (SignExt8to32 x) (SignExt8to32 y)) [8])
+(Hmul8u x y) -> (SRLconst (MULD <config.fe.TypeUInt16()> (ZeroExt8to32 x) (ZeroExt8to32 y)) [8])
+
 (Div64 x y) -> (SDIVD x y)
 (Div32 x y) -> (SDIVD x y)
 (Div16 x y) -> (SDIVD x y)
@@ -45,6 +55,8 @@
 (Mod32u x y) -> (Mod64u (ZeroExt32to64 x) (ZeroExt32to64 y))
 (Mod64 x y) -> (SUB x (MULD y (SDIVD x y)))
 (Mod64u x y) -> (SUB x (MULD y (UDIVD x y)))
+
+(Avg64u <t> x y) -> (ADD (ADD <t> (SRLconst <t> x [1]) (SRLconst <t> y [1])) (AND <t> (AND <t> x y) (MOVDconst [1])))
 
 (And64 x y) -> (AND x y)
 (And32 x y) -> (AND x y)
@@ -115,6 +127,100 @@
 (Addr {sym} base) -> (MOVDaddr {sym} base)
 
 (Store [8] ptr val mem) -> (MOVDstore ptr val mem)
+
+// constant shifts
+(Lsh64x64  x (MOVDconst [c])) && uint64(c) < 64 -> (SLLconst x [c])
+(Rsh64x64  x (MOVDconst [c])) && uint64(c) < 64 -> (SRAconst x [c])
+(Rsh64Ux64 x (MOVDconst [c])) && uint64(c) < 64 -> (SRLconst x [c])
+(Lsh32x64  x (MOVDconst [c])) && uint64(c) < 32 -> (SLLconst x [c])
+(Rsh32x64  x (MOVDconst [c])) && uint64(c) < 32 -> (SRAconst (SignExt32to64 x) [c])
+(Rsh32Ux64 x (MOVDconst [c])) && uint64(c) < 32 -> (SRLconst (ZeroExt32to64 x) [c])
+(Lsh16x64  x (MOVDconst [c])) && uint64(c) < 16 -> (SLLconst x [c])
+(Rsh16x64  x (MOVDconst [c])) && uint64(c) < 16 -> (SRAconst (SignExt16to64 x) [c])
+(Rsh16Ux64 x (MOVDconst [c])) && uint64(c) < 16 -> (SRLconst (ZeroExt16to64 x) [c])
+(Lsh8x64   x (MOVDconst [c])) && uint64(c) < 8  -> (SLLconst x [c])
+(Rsh8x64   x (MOVDconst [c])) && uint64(c) < 8  -> (SRAconst (SignExt8to64  x) [c])
+(Rsh8Ux64  x (MOVDconst [c])) && uint64(c) < 8  -> (SRLconst (ZeroExt8to64  x) [c])
+
+// large constant shifts
+(Lsh64x64  _ (MOVDconst [c])) && uint64(c) >= 64 -> (MOVDconst [0])
+(Rsh64Ux64 _ (MOVDconst [c])) && uint64(c) >= 64 -> (MOVDconst [0])
+(Lsh32x64  _ (MOVDconst [c])) && uint64(c) >= 32 -> (MOVDconst [0])
+(Rsh32Ux64 _ (MOVDconst [c])) && uint64(c) >= 32 -> (MOVDconst [0])
+(Lsh16x64  _ (MOVDconst [c])) && uint64(c) >= 16 -> (MOVDconst [0])
+(Rsh16Ux64 _ (MOVDconst [c])) && uint64(c) >= 16 -> (MOVDconst [0])
+(Lsh8x64   _ (MOVDconst [c])) && uint64(c) >= 8  -> (MOVDconst [0])
+(Rsh8Ux64  _ (MOVDconst [c])) && uint64(c) >= 8  -> (MOVDconst [0])
+
+// large constant signed right shift, we leave the sign bit
+(Rsh64x64 x (MOVDconst [c])) && uint64(c) >= 64 -> (SRAconst x [63])
+(Rsh32x64 x (MOVDconst [c])) && uint64(c) >= 32 -> (SRAconst (SignExt32to64 x) [63])
+(Rsh16x64 x (MOVDconst [c])) && uint64(c) >= 16 -> (SRAconst (SignExt16to64 x) [63])
+(Rsh8x64  x (MOVDconst [c])) && uint64(c) >= 8  -> (SRAconst (SignExt8to64  x) [63])
+
+// shifts
+// hardware instruction uses only up to the low 6 bits of the shift
+// so the S**max functions limit shifts to 63 and either zero the
+// result or preserve the sign as required by Go semantics
+(Lsh64x64 <t> x y) -> (SLLmax <t> x y [63])
+(Lsh64x32 <t> x y) -> (SLLmax <t> x (ZeroExt32to64 y) [63])
+(Lsh64x16 <t> x y) -> (SLLmax <t> x (ZeroExt16to64 y) [63])
+(Lsh64x8  <t> x y) -> (SLLmax <t> x (ZeroExt8to64  y) [63])
+
+(Lsh32x64 <t> x y) -> (SLLmax <t> x y [63])
+(Lsh32x32 <t> x y) -> (SLLmax <t> x (ZeroExt32to64 y) [63])
+(Lsh32x16 <t> x y) -> (SLLmax <t> x (ZeroExt16to64 y) [63])
+(Lsh32x8  <t> x y) -> (SLLmax <t> x (ZeroExt8to64  y) [63])
+
+(Lsh16x64 <t> x y) -> (SLLmax <t> x y [63])
+(Lsh16x32 <t> x y) -> (SLLmax <t> x (ZeroExt32to64 y) [63])
+(Lsh16x16 <t> x y) -> (SLLmax <t> x (ZeroExt16to64 y) [63])
+(Lsh16x8  <t> x y) -> (SLLmax <t> x (ZeroExt8to64  y) [63])
+
+(Lsh8x64 <t> x y) -> (SLLmax <t> x y [63])
+(Lsh8x32 <t> x y) -> (SLLmax <t> x (ZeroExt32to64 y) [63])
+(Lsh8x16 <t> x y) -> (SLLmax <t> x (ZeroExt16to64 y) [63])
+(Lsh8x8  <t> x y) -> (SLLmax <t> x (ZeroExt8to64  y) [63])
+
+(Rsh64Ux64 <t> x y) -> (SRLmax <t> x y [63])
+(Rsh64Ux32 <t> x y) -> (SRLmax <t> x (ZeroExt32to64 y) [63])
+(Rsh64Ux16 <t> x y) -> (SRLmax <t> x (ZeroExt16to64 y) [63])
+(Rsh64Ux8  <t> x y) -> (SRLmax <t> x (ZeroExt8to64  y) [63])
+
+(Rsh32Ux64 <t> x y) -> (SRLmax <t> (ZeroExt32to64 x) y [63])
+(Rsh32Ux32 <t> x y) -> (SRLmax <t> (ZeroExt32to64 x) (ZeroExt32to64 y) [63])
+(Rsh32Ux16 <t> x y) -> (SRLmax <t> (ZeroExt32to64 x) (ZeroExt16to64 y) [63])
+(Rsh32Ux8  <t> x y) -> (SRLmax <t> (ZeroExt32to64 x) (ZeroExt8to64  y) [63])
+
+(Rsh16Ux64 <t> x y) -> (SRLmax <t> (ZeroExt16to64 x) y [63])
+(Rsh16Ux32 <t> x y) -> (SRLmax <t> (ZeroExt16to64 x) (ZeroExt32to64 y) [63])
+(Rsh16Ux16 <t> x y) -> (SRLmax <t> (ZeroExt16to64 x) (ZeroExt16to64 y) [63])
+(Rsh16Ux8  <t> x y) -> (SRLmax <t> (ZeroExt16to64 x) (ZeroExt8to64  y) [63])
+
+(Rsh8Ux64 <t> x y) -> (SRLmax <t> (ZeroExt8to64 x) y [63])
+(Rsh8Ux32 <t> x y) -> (SRLmax <t> (ZeroExt8to64 x) (ZeroExt32to64 y) [63])
+(Rsh8Ux16 <t> x y) -> (SRLmax <t> (ZeroExt8to64 x) (ZeroExt16to64 y) [63])
+(Rsh8Ux8  <t> x y) -> (SRLmax <t> (ZeroExt8to64 x) (ZeroExt8to64  y) [63])
+
+(Rsh64x64 x y) -> (SRAmax x <y.Type> y [63])
+(Rsh64x32 x y) -> (SRAmax x <y.Type> (ZeroExt32to64 y) [63])
+(Rsh64x16 x y) -> (SRAmax x <y.Type> (ZeroExt16to64 y) [63])
+(Rsh64x8  x y) -> (SRAmax x <y.Type> (ZeroExt8to64  y) [63])
+
+(Rsh32x64 x y) -> (SRAmax (SignExt32to64 x) <y.Type> y [63])
+(Rsh32x32 x y) -> (SRAmax (SignExt32to64 x) <y.Type> (ZeroExt32to64 y) [63])
+(Rsh32x16 x y) -> (SRAmax (SignExt32to64 x) <y.Type> (ZeroExt16to64 y) [63])
+(Rsh32x8  x y) -> (SRAmax (SignExt32to64 x) <y.Type> (ZeroExt8to64  y) [63])
+
+(Rsh16x64 x y) -> (SRAmax (SignExt16to64 x) <y.Type> y [63])
+(Rsh16x32 x y) -> (SRAmax (SignExt16to64 x) <y.Type> (ZeroExt32to64 y) [63])
+(Rsh16x16 x y) -> (SRAmax (SignExt16to64 x) <y.Type> (ZeroExt16to64 y) [63])
+(Rsh16x8  x y) -> (SRAmax (SignExt16to64 x) <y.Type> (ZeroExt8to64  y) [63])
+
+(Rsh8x64 x y) -> (SRAmax (SignExt8to64 x) <y.Type> y [63])
+(Rsh8x32 x y) -> (SRAmax (SignExt8to64 x) <y.Type> (ZeroExt32to64 y) [63])
+(Rsh8x16 x y) -> (SRAmax (SignExt8to64 x) <y.Type> (ZeroExt16to64 y) [63])
+(Rsh8x8  x y) -> (SRAmax (SignExt8to64 x) <y.Type> (ZeroExt8to64  y) [63])
 
 // calls
 (StaticCall [argwid] {target} mem) -> (CALLstatic [argwid] {target} mem)
@@ -277,6 +383,10 @@
 (Geq16U x y) -> (GreaterEqual32U (CMP (ZeroExt16to32 x) (ZeroExt16to32 y)))
 (Geq32U x y) -> (GreaterEqual32U (CMP x y))
 (Geq64U x y) -> (GreaterEqual64U (CMP x y))
+
+// checks
+(NilCheck ptr mem) -> (LoweredNilCheck ptr mem)
+(IsInBounds idx len) -> (LessThan64U (CMP idx len))
 
 // Absorb pseudo-ops into blocks.
 (If (Equal32 cc) yes no) -> (EW cc yes no)

@@ -213,12 +213,71 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 	case ssa.OpPhi:
 		gc.CheckLoweredPhi(v)
 
+	case ssa.OpSPARC64SLLmax,
+		ssa.OpSPARC64SRLmax:
+
+		r := gc.SSARegNum(v)
+		r1 := gc.SSARegNum(v.Args[0])
+		r2 := gc.SSARegNum(v.Args[1])
+
+		p := gc.Prog(v.Op.Asm())
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = r2
+		p.Reg = r1
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = r
+		p2 := gc.Prog(sparc64.ACMP)
+		p2.From.Type = obj.TYPE_CONST
+		p2.From.Offset = v.AuxInt
+		p2.Reg = r2
+		p3 := gc.Prog(sparc64.AMOVGU)
+		p3.From.Type = obj.TYPE_REG
+		p3.From.Reg = sparc64.REG_XCC
+		p3.From3 = &obj.Addr{}
+		p3.From3.Type = obj.TYPE_CONST
+		p3.From3.Offset = 0
+		p3.To.Type = obj.TYPE_REG
+		p3.To.Reg = r
+
+	case ssa.OpSPARC64SRAmax:
+
+		r := gc.SSARegNum(v)
+		r1 := gc.SSARegNum(v.Args[0])
+		r2 := gc.SSARegNum(v.Args[1])
+
+		p := gc.Prog(sparc64.AMOVD)
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = r1
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_TMP
+		p2 := gc.Prog(sparc64.ACMP)
+		p2.From.Type = obj.TYPE_CONST
+		p2.From.Offset = v.AuxInt
+		p2.Reg = sparc64.REG_TMP
+		p3 := gc.Prog(sparc64.AMOVGU)
+		p3.From.Type = obj.TYPE_REG
+		p3.From.Reg = sparc64.REG_XCC
+		p3.From3 = &obj.Addr{}
+		p3.From3.Type = obj.TYPE_CONST
+		p3.From3.Offset = 63
+		p3.To.Type = obj.TYPE_REG
+		p3.To.Reg = sparc64.REG_TMP
+		p4 := gc.Prog(v.Op.Asm())
+		p4.From.Type = obj.TYPE_REG
+		p4.From.Reg = r2
+		p4.Reg = sparc64.REG_TMP
+		p4.To.Type = obj.TYPE_REG
+		p4.To.Reg = r
+
 	case ssa.OpSPARC64ADD,
 		ssa.OpSPARC64SUB,
 		ssa.OpSPARC64AND,
 		ssa.OpSPARC64OR,
 		ssa.OpSPARC64XOR,
 		ssa.OpSPARC64MULD,
+		ssa.OpSPARC64SLL,
+		ssa.OpSPARC64SRL,
+		ssa.OpSPARC64SRA,
 		ssa.OpSPARC64SDIVD,
 		ssa.OpSPARC64UDIVD,
 		ssa.OpSPARC64FADDS,
@@ -244,7 +303,10 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		ssa.OpSPARC64SUBconst,
 		ssa.OpSPARC64ANDconst,
 		ssa.OpSPARC64ORconst,
-		ssa.OpSPARC64XORconst:
+		ssa.OpSPARC64XORconst,
+		ssa.OpSPARC64SLLconst,
+		ssa.OpSPARC64SRLconst,
+		ssa.OpSPARC64SRAconst:
 
 		p := gc.Prog(v.Op.Asm())
 		p.From.Type = obj.TYPE_CONST
@@ -443,6 +505,73 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 			gc.Maxarg = v.AuxInt
 		}
 
+	case ssa.OpSPARC64LoweredNilCheck:
+		// Optimization - if the subsequent block has a load or store
+		// at the same address, we don't need to issue this instruction.
+		mem := v.Args[1]
+		for _, w := range v.Block.Succs[0].Block().Values {
+			if w.Op == ssa.OpPhi {
+				if w.Type.IsMemory() {
+					mem = w
+				}
+				continue
+			}
+			if len(w.Args) == 0 || !w.Args[len(w.Args)-1].Type.IsMemory() {
+				// w doesn't use a store - can't be a memory op.
+				continue
+			}
+			if w.Args[len(w.Args)-1] != mem {
+				v.Fatalf("wrong store after nilcheck v=%s w=%s", v, w)
+			}
+			switch w.Op {
+			case ssa.OpSPARC64MOVBload, ssa.OpSPARC64MOVUBload, ssa.OpSPARC64MOVHload, ssa.OpSPARC64MOVUHload,
+				ssa.OpSPARC64MOVWload, ssa.OpSPARC64MOVUWload, ssa.OpSPARC64MOVDload,
+				ssa.OpSPARC64MOVBstore, ssa.OpSPARC64MOVHstore, ssa.OpSPARC64MOVWstore, ssa.OpSPARC64MOVDstore:
+				// arg0 is ptr, auxint is offset (atomic ops have auxint 0)
+				if w.Args[0] == v.Args[0] && w.Aux == nil && w.AuxInt >= 0 && w.AuxInt < minZeroPage {
+					if gc.Debug_checknil != 0 && int(v.Line) > 1 {
+						gc.Warnl(v.Line, "removed nil check")
+					}
+					return
+				}
+			case ssa.OpSPARC64LoweredZero:
+				// arg0 is ptr
+				if w.Args[0] == v.Args[0] {
+					if gc.Debug_checknil != 0 && int(v.Line) > 1 {
+						gc.Warnl(v.Line, "removed nil check")
+					}
+					return
+				}
+			case ssa.OpSPARC64LoweredMove:
+				// arg0 is dst ptr, arg1 is src ptr
+				if w.Args[0] == v.Args[0] || w.Args[1] == v.Args[0] {
+					if gc.Debug_checknil != 0 && int(v.Line) > 1 {
+						gc.Warnl(v.Line, "removed nil check")
+					}
+					return
+				}
+			default:
+			}
+			if w.Type.IsMemory() || w.Type.IsTuple() && w.Type.FieldType(1).IsMemory() {
+				if w.Op == ssa.OpVarDef || w.Op == ssa.OpVarKill || w.Op == ssa.OpVarLive {
+					// these ops are OK
+					mem = w
+					continue
+				}
+				// We can't delay the nil check past the next store.
+				break
+			}
+		}
+		// Issue a load which will fault if arg is nil.
+		p := gc.Prog(sparc64.AMOVB)
+		p.From.Type = obj.TYPE_MEM
+		p.From.Reg = gc.SSARegNum(v.Args[0])
+		gc.AddAux(&p.From, v)
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_TMP
+		if gc.Debug_checknil != 0 && v.Line > 1 { // v.Line==1 in generated wrappers
+			gc.Warnl(v.Line, "generated nil check")
+		}
 	case ssa.OpSPARC64Equal32,
 		ssa.OpSPARC64Equal64,
 		ssa.OpSPARC64NotEqual32,
@@ -477,6 +606,12 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p := gc.Prog(v.Op.Asm())
 		p.From.Type = obj.TYPE_REG
 		p.From.Reg = gc.SSARegNum(v.Args[1])
+		p.Reg = gc.SSARegNum(v.Args[0])
+
+	case ssa.OpSPARC64CMPconst:
+		p := gc.Prog(v.Op.Asm())
+		p.From.Type = obj.TYPE_CONST
+		p.From.Offset = v.AuxInt
 		p.Reg = gc.SSARegNum(v.Args[0])
 
 	default:

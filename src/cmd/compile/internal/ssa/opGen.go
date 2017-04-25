@@ -1506,7 +1506,17 @@ const (
 	OpSPARC64MOVWconst
 	OpSPARC64FMOVDconst
 	OpSPARC64FMOVSconst
+	OpSPARC64SLL
+	OpSPARC64SLLmax
+	OpSPARC64SLLconst
+	OpSPARC64SRL
+	OpSPARC64SRLmax
+	OpSPARC64SRLconst
+	OpSPARC64SRA
+	OpSPARC64SRAmax
+	OpSPARC64SRAconst
 	OpSPARC64CMP
+	OpSPARC64CMPconst
 	OpSPARC64MOVBreg
 	OpSPARC64MOVUBreg
 	OpSPARC64MOVHreg
@@ -1517,6 +1527,7 @@ const (
 	OpSPARC64CALLstatic
 	OpSPARC64CALLdefer
 	OpSPARC64CALLgo
+	OpSPARC64LoweredNilCheck
 	OpSPARC64Equal32
 	OpSPARC64Equal64
 	OpSPARC64NotEqual32
@@ -18222,6 +18233,135 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
+		name:   "SLL",
+		argLen: 2,
+		asm:    sparc64.ASLLD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{1, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+			outputs: []outputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+		},
+	},
+	{
+		name:    "SLLmax",
+		auxType: auxInt64,
+		argLen:  2,
+		asm:     sparc64.ASLLD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{1, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+			outputs: []outputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+		},
+	},
+	{
+		name:    "SLLconst",
+		auxType: auxInt64,
+		argLen:  1,
+		asm:     sparc64.ASLLD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+			outputs: []outputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+		},
+	},
+	{
+		name:   "SRL",
+		argLen: 2,
+		asm:    sparc64.ASRLD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{1, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+			outputs: []outputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+		},
+	},
+	{
+		name:    "SRLmax",
+		auxType: auxInt64,
+		argLen:  2,
+		asm:     sparc64.ASLLD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{1, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+			outputs: []outputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+		},
+	},
+	{
+		name:    "SRLconst",
+		auxType: auxInt64,
+		argLen:  1,
+		asm:     sparc64.ASRLD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+			outputs: []outputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+		},
+	},
+	{
+		name:   "SRA",
+		argLen: 2,
+		asm:    sparc64.ASRAD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{1, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+			outputs: []outputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+		},
+	},
+	{
+		name:    "SRAmax",
+		auxType: auxInt64,
+		argLen:  2,
+		asm:     sparc64.ASRAD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{1, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+			outputs: []outputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+		},
+	},
+	{
+		name:    "SRAconst",
+		auxType: auxInt64,
+		argLen:  1,
+		asm:     sparc64.ASRAD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+			outputs: []outputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+		},
+	},
+	{
 		name:   "CMP",
 		argLen: 2,
 		asm:    sparc64.ACMP,
@@ -18229,6 +18369,17 @@ var opcodeTable = [...]opInfo{
 			inputs: []inputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 				{1, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+		},
+	},
+	{
+		name:    "CMPconst",
+		auxType: auxInt64,
+		argLen:  1,
+		asm:     sparc64.ACMP,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 		},
 	},
@@ -18351,6 +18502,15 @@ var opcodeTable = [...]opInfo{
 		call:         true,
 		reg: regInfo{
 			clobbers: 549739035636, // g O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+		},
+	},
+	{
+		name:   "LoweredNilCheck",
+		argLen: 2,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 16776180}, // g O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
 		},
 	},
 	{

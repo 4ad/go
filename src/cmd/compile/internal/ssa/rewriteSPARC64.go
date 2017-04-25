@@ -34,6 +34,8 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpAnd8(v, config)
 	case OpAndB:
 		return rewriteValueSPARC64_OpAndB(v, config)
+	case OpAvg64u:
+		return rewriteValueSPARC64_OpAvg64u(v, config)
 	case OpConst16:
 		return rewriteValueSPARC64_OpConst16(v, config)
 	case OpConst32:
@@ -116,6 +118,24 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpGreater8(v, config)
 	case OpGreater8U:
 		return rewriteValueSPARC64_OpGreater8U(v, config)
+	case OpHmul16:
+		return rewriteValueSPARC64_OpHmul16(v, config)
+	case OpHmul16u:
+		return rewriteValueSPARC64_OpHmul16u(v, config)
+	case OpHmul32:
+		return rewriteValueSPARC64_OpHmul32(v, config)
+	case OpHmul32u:
+		return rewriteValueSPARC64_OpHmul32u(v, config)
+	case OpHmul64:
+		return rewriteValueSPARC64_OpHmul64(v, config)
+	case OpHmul64u:
+		return rewriteValueSPARC64_OpHmul64u(v, config)
+	case OpHmul8:
+		return rewriteValueSPARC64_OpHmul8(v, config)
+	case OpHmul8u:
+		return rewriteValueSPARC64_OpHmul8u(v, config)
+	case OpIsInBounds:
+		return rewriteValueSPARC64_OpIsInBounds(v, config)
 	case OpLeq16:
 		return rewriteValueSPARC64_OpLeq16(v, config)
 	case OpLeq16U:
@@ -150,6 +170,38 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpLess8U(v, config)
 	case OpLoad:
 		return rewriteValueSPARC64_OpLoad(v, config)
+	case OpLsh16x16:
+		return rewriteValueSPARC64_OpLsh16x16(v, config)
+	case OpLsh16x32:
+		return rewriteValueSPARC64_OpLsh16x32(v, config)
+	case OpLsh16x64:
+		return rewriteValueSPARC64_OpLsh16x64(v, config)
+	case OpLsh16x8:
+		return rewriteValueSPARC64_OpLsh16x8(v, config)
+	case OpLsh32x16:
+		return rewriteValueSPARC64_OpLsh32x16(v, config)
+	case OpLsh32x32:
+		return rewriteValueSPARC64_OpLsh32x32(v, config)
+	case OpLsh32x64:
+		return rewriteValueSPARC64_OpLsh32x64(v, config)
+	case OpLsh32x8:
+		return rewriteValueSPARC64_OpLsh32x8(v, config)
+	case OpLsh64x16:
+		return rewriteValueSPARC64_OpLsh64x16(v, config)
+	case OpLsh64x32:
+		return rewriteValueSPARC64_OpLsh64x32(v, config)
+	case OpLsh64x64:
+		return rewriteValueSPARC64_OpLsh64x64(v, config)
+	case OpLsh64x8:
+		return rewriteValueSPARC64_OpLsh64x8(v, config)
+	case OpLsh8x16:
+		return rewriteValueSPARC64_OpLsh8x16(v, config)
+	case OpLsh8x32:
+		return rewriteValueSPARC64_OpLsh8x32(v, config)
+	case OpLsh8x64:
+		return rewriteValueSPARC64_OpLsh8x64(v, config)
+	case OpLsh8x8:
+		return rewriteValueSPARC64_OpLsh8x8(v, config)
 	case OpMod16:
 		return rewriteValueSPARC64_OpMod16(v, config)
 	case OpMod16u:
@@ -202,6 +254,8 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpNeq8(v, config)
 	case OpNeqPtr:
 		return rewriteValueSPARC64_OpNeqPtr(v, config)
+	case OpNilCheck:
+		return rewriteValueSPARC64_OpNilCheck(v, config)
 	case OpNot:
 		return rewriteValueSPARC64_OpNot(v, config)
 	case OpOffPtr:
@@ -216,6 +270,70 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpOr8(v, config)
 	case OpOrB:
 		return rewriteValueSPARC64_OpOrB(v, config)
+	case OpRsh16Ux16:
+		return rewriteValueSPARC64_OpRsh16Ux16(v, config)
+	case OpRsh16Ux32:
+		return rewriteValueSPARC64_OpRsh16Ux32(v, config)
+	case OpRsh16Ux64:
+		return rewriteValueSPARC64_OpRsh16Ux64(v, config)
+	case OpRsh16Ux8:
+		return rewriteValueSPARC64_OpRsh16Ux8(v, config)
+	case OpRsh16x16:
+		return rewriteValueSPARC64_OpRsh16x16(v, config)
+	case OpRsh16x32:
+		return rewriteValueSPARC64_OpRsh16x32(v, config)
+	case OpRsh16x64:
+		return rewriteValueSPARC64_OpRsh16x64(v, config)
+	case OpRsh16x8:
+		return rewriteValueSPARC64_OpRsh16x8(v, config)
+	case OpRsh32Ux16:
+		return rewriteValueSPARC64_OpRsh32Ux16(v, config)
+	case OpRsh32Ux32:
+		return rewriteValueSPARC64_OpRsh32Ux32(v, config)
+	case OpRsh32Ux64:
+		return rewriteValueSPARC64_OpRsh32Ux64(v, config)
+	case OpRsh32Ux8:
+		return rewriteValueSPARC64_OpRsh32Ux8(v, config)
+	case OpRsh32x16:
+		return rewriteValueSPARC64_OpRsh32x16(v, config)
+	case OpRsh32x32:
+		return rewriteValueSPARC64_OpRsh32x32(v, config)
+	case OpRsh32x64:
+		return rewriteValueSPARC64_OpRsh32x64(v, config)
+	case OpRsh32x8:
+		return rewriteValueSPARC64_OpRsh32x8(v, config)
+	case OpRsh64Ux16:
+		return rewriteValueSPARC64_OpRsh64Ux16(v, config)
+	case OpRsh64Ux32:
+		return rewriteValueSPARC64_OpRsh64Ux32(v, config)
+	case OpRsh64Ux64:
+		return rewriteValueSPARC64_OpRsh64Ux64(v, config)
+	case OpRsh64Ux8:
+		return rewriteValueSPARC64_OpRsh64Ux8(v, config)
+	case OpRsh64x16:
+		return rewriteValueSPARC64_OpRsh64x16(v, config)
+	case OpRsh64x32:
+		return rewriteValueSPARC64_OpRsh64x32(v, config)
+	case OpRsh64x64:
+		return rewriteValueSPARC64_OpRsh64x64(v, config)
+	case OpRsh64x8:
+		return rewriteValueSPARC64_OpRsh64x8(v, config)
+	case OpRsh8Ux16:
+		return rewriteValueSPARC64_OpRsh8Ux16(v, config)
+	case OpRsh8Ux32:
+		return rewriteValueSPARC64_OpRsh8Ux32(v, config)
+	case OpRsh8Ux64:
+		return rewriteValueSPARC64_OpRsh8Ux64(v, config)
+	case OpRsh8Ux8:
+		return rewriteValueSPARC64_OpRsh8Ux8(v, config)
+	case OpRsh8x16:
+		return rewriteValueSPARC64_OpRsh8x16(v, config)
+	case OpRsh8x32:
+		return rewriteValueSPARC64_OpRsh8x32(v, config)
+	case OpRsh8x64:
+		return rewriteValueSPARC64_OpRsh8x64(v, config)
+	case OpRsh8x8:
+		return rewriteValueSPARC64_OpRsh8x8(v, config)
 	case OpSignExt16to32:
 		return rewriteValueSPARC64_OpSignExt16to32(v, config)
 	case OpSignExt16to64:
@@ -477,6 +595,39 @@ func rewriteValueSPARC64_OpAndB(v *Value, config *Config) bool {
 		v.reset(OpSPARC64AND)
 		v.AddArg(x)
 		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpAvg64u(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Avg64u <t> x y)
+	// cond:
+	// result: (ADD (ADD <t> (SRLconst <t> x [1]) (SRLconst <t> y [1])) (AND <t> (AND <t> x y) (MOVDconst [1])))
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64ADD)
+		v0 := b.NewValue0(v.Line, OpSPARC64ADD, t)
+		v1 := b.NewValue0(v.Line, OpSPARC64SRLconst, t)
+		v1.AuxInt = 1
+		v1.AddArg(x)
+		v0.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpSPARC64SRLconst, t)
+		v2.AuxInt = 1
+		v2.AddArg(y)
+		v0.AddArg(v2)
+		v.AddArg(v0)
+		v3 := b.NewValue0(v.Line, OpSPARC64AND, t)
+		v4 := b.NewValue0(v.Line, OpSPARC64AND, t)
+		v4.AddArg(x)
+		v4.AddArg(y)
+		v3.AddArg(v4)
+		v5 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v5.AuxInt = 1
+		v3.AddArg(v5)
+		v.AddArg(v3)
 		return true
 	}
 }
@@ -1160,6 +1311,177 @@ func rewriteValueSPARC64_OpGreater8U(v *Value, config *Config) bool {
 		return true
 	}
 }
+func rewriteValueSPARC64_OpHmul16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Hmul16 x y)
+	// cond:
+	// result: (SRAconst (MULD <config.fe.TypeInt32()> (SignExt16to32 x) (SignExt16to32 y)) [16])
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRAconst)
+		v.AuxInt = 16
+		v0 := b.NewValue0(v.Line, OpSPARC64MULD, config.fe.TypeInt32())
+		v1 := b.NewValue0(v.Line, OpSignExt16to32, config.fe.TypeInt32())
+		v1.AddArg(x)
+		v0.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpSignExt16to32, config.fe.TypeInt32())
+		v2.AddArg(y)
+		v0.AddArg(v2)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpHmul16u(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Hmul16u x y)
+	// cond:
+	// result: (SRLconst (MULD <config.fe.TypeUInt32()> (ZeroExt16to32 x) (ZeroExt16to32 y)) [16])
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRLconst)
+		v.AuxInt = 16
+		v0 := b.NewValue0(v.Line, OpSPARC64MULD, config.fe.TypeUInt32())
+		v1 := b.NewValue0(v.Line, OpZeroExt16to32, config.fe.TypeUInt32())
+		v1.AddArg(x)
+		v0.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpZeroExt16to32, config.fe.TypeUInt32())
+		v2.AddArg(y)
+		v0.AddArg(v2)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpHmul32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Hmul32 x y)
+	// cond:
+	// result: (SRAconst (MULD <config.fe.TypeInt64()> x y) [32])
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRAconst)
+		v.AuxInt = 32
+		v0 := b.NewValue0(v.Line, OpSPARC64MULD, config.fe.TypeInt64())
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpHmul32u(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Hmul32u x y)
+	// cond:
+	// result: (SRAconst (MULD <config.fe.TypeUInt64()> x y) [32])
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRAconst)
+		v.AuxInt = 32
+		v0 := b.NewValue0(v.Line, OpSPARC64MULD, config.fe.TypeUInt64())
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpHmul64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Hmul64 x y)
+	// cond:
+	// result: (MULD x y)
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64MULD)
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpHmul64u(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Hmul64u x y)
+	// cond:
+	// result: (MULD x y)
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64MULD)
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpHmul8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Hmul8 x y)
+	// cond:
+	// result: (SRAconst (MULD <config.fe.TypeInt16()> (SignExt8to32 x) (SignExt8to32 y)) [8])
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRAconst)
+		v.AuxInt = 8
+		v0 := b.NewValue0(v.Line, OpSPARC64MULD, config.fe.TypeInt16())
+		v1 := b.NewValue0(v.Line, OpSignExt8to32, config.fe.TypeInt32())
+		v1.AddArg(x)
+		v0.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpSignExt8to32, config.fe.TypeInt32())
+		v2.AddArg(y)
+		v0.AddArg(v2)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpHmul8u(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Hmul8u x y)
+	// cond:
+	// result: (SRLconst (MULD <config.fe.TypeUInt16()> (ZeroExt8to32 x) (ZeroExt8to32 y)) [8])
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRLconst)
+		v.AuxInt = 8
+		v0 := b.NewValue0(v.Line, OpSPARC64MULD, config.fe.TypeUInt16())
+		v1 := b.NewValue0(v.Line, OpZeroExt8to32, config.fe.TypeUInt32())
+		v1.AddArg(x)
+		v0.AddArg(v1)
+		v2 := b.NewValue0(v.Line, OpZeroExt8to32, config.fe.TypeUInt32())
+		v2.AddArg(y)
+		v0.AddArg(v2)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpIsInBounds(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (IsInBounds idx len)
+	// cond:
+	// result: (LessThan64U (CMP idx len))
+	for {
+		idx := v.Args[0]
+		len := v.Args[1]
+		v.reset(OpSPARC64LessThan64U)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(idx)
+		v0.AddArg(len)
+		v.AddArg(v0)
+		return true
+	}
+}
 func rewriteValueSPARC64_OpLeq16(v *Value, config *Config) bool {
 	b := v.Block
 	_ = b
@@ -1588,6 +1910,454 @@ func rewriteValueSPARC64_OpLoad(v *Value, config *Config) bool {
 		return true
 	}
 	return false
+}
+func rewriteValueSPARC64_OpLsh16x16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Lsh16x16 <t> x y)
+	// cond:
+	// result: (SLLmax <t> x (ZeroExt16to64 y) [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SLLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v.AddArg(x)
+		v0 := b.NewValue0(v.Line, OpZeroExt16to64, config.fe.TypeUInt64())
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLsh16x32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Lsh16x32 <t> x y)
+	// cond:
+	// result: (SLLmax <t> x (ZeroExt32to64 y) [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SLLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v.AddArg(x)
+		v0 := b.NewValue0(v.Line, OpZeroExt32to64, config.fe.TypeUInt64())
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLsh16x64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Lsh16x64  x (MOVDconst [c]))
+	// cond: uint64(c) < 16
+	// result: (SLLconst x [c])
+	for {
+		x := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		c := v_1.AuxInt
+		if !(uint64(c) < 16) {
+			break
+		}
+		v.reset(OpSPARC64SLLconst)
+		v.AuxInt = c
+		v.AddArg(x)
+		return true
+	}
+	// match: (Lsh16x64  _ (MOVDconst [c]))
+	// cond: uint64(c) >= 16
+	// result: (MOVDconst [0])
+	for {
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		c := v_1.AuxInt
+		if !(uint64(c) >= 16) {
+			break
+		}
+		v.reset(OpSPARC64MOVDconst)
+		v.AuxInt = 0
+		return true
+	}
+	// match: (Lsh16x64 <t> x y)
+	// cond:
+	// result: (SLLmax <t> x y [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SLLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLsh16x8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Lsh16x8  <t> x y)
+	// cond:
+	// result: (SLLmax <t> x (ZeroExt8to64  y) [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SLLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v.AddArg(x)
+		v0 := b.NewValue0(v.Line, OpZeroExt8to64, config.fe.TypeUInt64())
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLsh32x16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Lsh32x16 <t> x y)
+	// cond:
+	// result: (SLLmax <t> x (ZeroExt16to64 y) [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SLLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v.AddArg(x)
+		v0 := b.NewValue0(v.Line, OpZeroExt16to64, config.fe.TypeUInt64())
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLsh32x32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Lsh32x32 <t> x y)
+	// cond:
+	// result: (SLLmax <t> x (ZeroExt32to64 y) [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SLLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v.AddArg(x)
+		v0 := b.NewValue0(v.Line, OpZeroExt32to64, config.fe.TypeUInt64())
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLsh32x64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Lsh32x64  x (MOVDconst [c]))
+	// cond: uint64(c) < 32
+	// result: (SLLconst x [c])
+	for {
+		x := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		c := v_1.AuxInt
+		if !(uint64(c) < 32) {
+			break
+		}
+		v.reset(OpSPARC64SLLconst)
+		v.AuxInt = c
+		v.AddArg(x)
+		return true
+	}
+	// match: (Lsh32x64  _ (MOVDconst [c]))
+	// cond: uint64(c) >= 32
+	// result: (MOVDconst [0])
+	for {
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		c := v_1.AuxInt
+		if !(uint64(c) >= 32) {
+			break
+		}
+		v.reset(OpSPARC64MOVDconst)
+		v.AuxInt = 0
+		return true
+	}
+	// match: (Lsh32x64 <t> x y)
+	// cond:
+	// result: (SLLmax <t> x y [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SLLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLsh32x8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Lsh32x8  <t> x y)
+	// cond:
+	// result: (SLLmax <t> x (ZeroExt8to64  y) [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SLLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v.AddArg(x)
+		v0 := b.NewValue0(v.Line, OpZeroExt8to64, config.fe.TypeUInt64())
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLsh64x16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Lsh64x16 <t> x y)
+	// cond:
+	// result: (SLLmax <t> x (ZeroExt16to64 y) [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SLLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v.AddArg(x)
+		v0 := b.NewValue0(v.Line, OpZeroExt16to64, config.fe.TypeUInt64())
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLsh64x32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Lsh64x32 <t> x y)
+	// cond:
+	// result: (SLLmax <t> x (ZeroExt32to64 y) [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SLLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v.AddArg(x)
+		v0 := b.NewValue0(v.Line, OpZeroExt32to64, config.fe.TypeUInt64())
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLsh64x64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Lsh64x64  x (MOVDconst [c]))
+	// cond: uint64(c) < 64
+	// result: (SLLconst x [c])
+	for {
+		x := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		c := v_1.AuxInt
+		if !(uint64(c) < 64) {
+			break
+		}
+		v.reset(OpSPARC64SLLconst)
+		v.AuxInt = c
+		v.AddArg(x)
+		return true
+	}
+	// match: (Lsh64x64  _ (MOVDconst [c]))
+	// cond: uint64(c) >= 64
+	// result: (MOVDconst [0])
+	for {
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		c := v_1.AuxInt
+		if !(uint64(c) >= 64) {
+			break
+		}
+		v.reset(OpSPARC64MOVDconst)
+		v.AuxInt = 0
+		return true
+	}
+	// match: (Lsh64x64 <t> x y)
+	// cond:
+	// result: (SLLmax <t> x y [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SLLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLsh64x8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Lsh64x8  <t> x y)
+	// cond:
+	// result: (SLLmax <t> x (ZeroExt8to64  y) [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SLLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v.AddArg(x)
+		v0 := b.NewValue0(v.Line, OpZeroExt8to64, config.fe.TypeUInt64())
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLsh8x16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Lsh8x16 <t> x y)
+	// cond:
+	// result: (SLLmax <t> x (ZeroExt16to64 y) [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SLLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v.AddArg(x)
+		v0 := b.NewValue0(v.Line, OpZeroExt16to64, config.fe.TypeUInt64())
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLsh8x32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Lsh8x32 <t> x y)
+	// cond:
+	// result: (SLLmax <t> x (ZeroExt32to64 y) [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SLLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v.AddArg(x)
+		v0 := b.NewValue0(v.Line, OpZeroExt32to64, config.fe.TypeUInt64())
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLsh8x64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Lsh8x64   x (MOVDconst [c]))
+	// cond: uint64(c) < 8
+	// result: (SLLconst x [c])
+	for {
+		x := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		c := v_1.AuxInt
+		if !(uint64(c) < 8) {
+			break
+		}
+		v.reset(OpSPARC64SLLconst)
+		v.AuxInt = c
+		v.AddArg(x)
+		return true
+	}
+	// match: (Lsh8x64   _ (MOVDconst [c]))
+	// cond: uint64(c) >= 8
+	// result: (MOVDconst [0])
+	for {
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		c := v_1.AuxInt
+		if !(uint64(c) >= 8) {
+			break
+		}
+		v.reset(OpSPARC64MOVDconst)
+		v.AuxInt = 0
+		return true
+	}
+	// match: (Lsh8x64 <t> x y)
+	// cond:
+	// result: (SLLmax <t> x y [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SLLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLsh8x8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Lsh8x8  <t> x y)
+	// cond:
+	// result: (SLLmax <t> x (ZeroExt8to64  y) [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SLLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v.AddArg(x)
+		v0 := b.NewValue0(v.Line, OpZeroExt8to64, config.fe.TypeUInt64())
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
 }
 func rewriteValueSPARC64_OpMod16(v *Value, config *Config) bool {
 	b := v.Block
@@ -2376,6 +3146,21 @@ func rewriteValueSPARC64_OpNeqPtr(v *Value, config *Config) bool {
 		return true
 	}
 }
+func rewriteValueSPARC64_OpNilCheck(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (NilCheck ptr mem)
+	// cond:
+	// result: (LoweredNilCheck ptr mem)
+	for {
+		ptr := v.Args[0]
+		mem := v.Args[1]
+		v.reset(OpSPARC64LoweredNilCheck)
+		v.AddArg(ptr)
+		v.AddArg(mem)
+		return true
+	}
+}
 func rewriteValueSPARC64_OpNot(v *Value, config *Config) bool {
 	b := v.Block
 	_ = b
@@ -2491,6 +3276,960 @@ func rewriteValueSPARC64_OpOrB(v *Value, config *Config) bool {
 		v.reset(OpSPARC64OR)
 		v.AddArg(x)
 		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh16Ux16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh16Ux16 <t> x y)
+	// cond:
+	// result: (SRLmax <t> (ZeroExt16to64 x) (ZeroExt16to64 y) [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpZeroExt16to64, config.fe.TypeUInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpZeroExt16to64, config.fe.TypeUInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh16Ux32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh16Ux32 <t> x y)
+	// cond:
+	// result: (SRLmax <t> (ZeroExt16to64 x) (ZeroExt32to64 y) [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpZeroExt16to64, config.fe.TypeUInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpZeroExt32to64, config.fe.TypeUInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh16Ux64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh16Ux64 x (MOVDconst [c]))
+	// cond: uint64(c) < 16
+	// result: (SRLconst (ZeroExt16to64 x) [c])
+	for {
+		x := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		c := v_1.AuxInt
+		if !(uint64(c) < 16) {
+			break
+		}
+		v.reset(OpSPARC64SRLconst)
+		v.AuxInt = c
+		v0 := b.NewValue0(v.Line, OpZeroExt16to64, config.fe.TypeUInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		return true
+	}
+	// match: (Rsh16Ux64 _ (MOVDconst [c]))
+	// cond: uint64(c) >= 16
+	// result: (MOVDconst [0])
+	for {
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		c := v_1.AuxInt
+		if !(uint64(c) >= 16) {
+			break
+		}
+		v.reset(OpSPARC64MOVDconst)
+		v.AuxInt = 0
+		return true
+	}
+	// match: (Rsh16Ux64 <t> x y)
+	// cond:
+	// result: (SRLmax <t> (ZeroExt16to64 x) y [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpZeroExt16to64, config.fe.TypeUInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh16Ux8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh16Ux8  <t> x y)
+	// cond:
+	// result: (SRLmax <t> (ZeroExt16to64 x) (ZeroExt8to64  y) [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpZeroExt16to64, config.fe.TypeUInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpZeroExt8to64, config.fe.TypeUInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh16x16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh16x16 x y)
+	// cond:
+	// result: (SRAmax (SignExt16to64 x) <y.Type> (ZeroExt16to64 y) [63])
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRAmax)
+		v.Type = y.Type
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpSignExt16to64, config.fe.TypeInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpZeroExt16to64, config.fe.TypeUInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh16x32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh16x32 x y)
+	// cond:
+	// result: (SRAmax (SignExt16to64 x) <y.Type> (ZeroExt32to64 y) [63])
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRAmax)
+		v.Type = y.Type
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpSignExt16to64, config.fe.TypeInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpZeroExt32to64, config.fe.TypeUInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh16x64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh16x64  x (MOVDconst [c]))
+	// cond: uint64(c) < 16
+	// result: (SRAconst (SignExt16to64 x) [c])
+	for {
+		x := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		c := v_1.AuxInt
+		if !(uint64(c) < 16) {
+			break
+		}
+		v.reset(OpSPARC64SRAconst)
+		v.AuxInt = c
+		v0 := b.NewValue0(v.Line, OpSignExt16to64, config.fe.TypeInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		return true
+	}
+	// match: (Rsh16x64 x (MOVDconst [c]))
+	// cond: uint64(c) >= 16
+	// result: (SRAconst (SignExt16to64 x) [63])
+	for {
+		x := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		c := v_1.AuxInt
+		if !(uint64(c) >= 16) {
+			break
+		}
+		v.reset(OpSPARC64SRAconst)
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpSignExt16to64, config.fe.TypeInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		return true
+	}
+	// match: (Rsh16x64 x y)
+	// cond:
+	// result: (SRAmax (SignExt16to64 x) <y.Type> y [63])
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRAmax)
+		v.Type = y.Type
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpSignExt16to64, config.fe.TypeInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh16x8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh16x8  x y)
+	// cond:
+	// result: (SRAmax (SignExt16to64 x) <y.Type> (ZeroExt8to64  y) [63])
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRAmax)
+		v.Type = y.Type
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpSignExt16to64, config.fe.TypeInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpZeroExt8to64, config.fe.TypeUInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh32Ux16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh32Ux16 <t> x y)
+	// cond:
+	// result: (SRLmax <t> (ZeroExt32to64 x) (ZeroExt16to64 y) [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpZeroExt32to64, config.fe.TypeUInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpZeroExt16to64, config.fe.TypeUInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh32Ux32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh32Ux32 <t> x y)
+	// cond:
+	// result: (SRLmax <t> (ZeroExt32to64 x) (ZeroExt32to64 y) [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpZeroExt32to64, config.fe.TypeUInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpZeroExt32to64, config.fe.TypeUInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh32Ux64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh32Ux64 x (MOVDconst [c]))
+	// cond: uint64(c) < 32
+	// result: (SRLconst (ZeroExt32to64 x) [c])
+	for {
+		x := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		c := v_1.AuxInt
+		if !(uint64(c) < 32) {
+			break
+		}
+		v.reset(OpSPARC64SRLconst)
+		v.AuxInt = c
+		v0 := b.NewValue0(v.Line, OpZeroExt32to64, config.fe.TypeUInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		return true
+	}
+	// match: (Rsh32Ux64 _ (MOVDconst [c]))
+	// cond: uint64(c) >= 32
+	// result: (MOVDconst [0])
+	for {
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		c := v_1.AuxInt
+		if !(uint64(c) >= 32) {
+			break
+		}
+		v.reset(OpSPARC64MOVDconst)
+		v.AuxInt = 0
+		return true
+	}
+	// match: (Rsh32Ux64 <t> x y)
+	// cond:
+	// result: (SRLmax <t> (ZeroExt32to64 x) y [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpZeroExt32to64, config.fe.TypeUInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh32Ux8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh32Ux8  <t> x y)
+	// cond:
+	// result: (SRLmax <t> (ZeroExt32to64 x) (ZeroExt8to64  y) [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpZeroExt32to64, config.fe.TypeUInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpZeroExt8to64, config.fe.TypeUInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh32x16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh32x16 x y)
+	// cond:
+	// result: (SRAmax (SignExt32to64 x) <y.Type> (ZeroExt16to64 y) [63])
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRAmax)
+		v.Type = y.Type
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpSignExt32to64, config.fe.TypeInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpZeroExt16to64, config.fe.TypeUInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh32x32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh32x32 x y)
+	// cond:
+	// result: (SRAmax (SignExt32to64 x) <y.Type> (ZeroExt32to64 y) [63])
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRAmax)
+		v.Type = y.Type
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpSignExt32to64, config.fe.TypeInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpZeroExt32to64, config.fe.TypeUInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh32x64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh32x64  x (MOVDconst [c]))
+	// cond: uint64(c) < 32
+	// result: (SRAconst (SignExt32to64 x) [c])
+	for {
+		x := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		c := v_1.AuxInt
+		if !(uint64(c) < 32) {
+			break
+		}
+		v.reset(OpSPARC64SRAconst)
+		v.AuxInt = c
+		v0 := b.NewValue0(v.Line, OpSignExt32to64, config.fe.TypeInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		return true
+	}
+	// match: (Rsh32x64 x (MOVDconst [c]))
+	// cond: uint64(c) >= 32
+	// result: (SRAconst (SignExt32to64 x) [63])
+	for {
+		x := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		c := v_1.AuxInt
+		if !(uint64(c) >= 32) {
+			break
+		}
+		v.reset(OpSPARC64SRAconst)
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpSignExt32to64, config.fe.TypeInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		return true
+	}
+	// match: (Rsh32x64 x y)
+	// cond:
+	// result: (SRAmax (SignExt32to64 x) <y.Type> y [63])
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRAmax)
+		v.Type = y.Type
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpSignExt32to64, config.fe.TypeInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh32x8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh32x8  x y)
+	// cond:
+	// result: (SRAmax (SignExt32to64 x) <y.Type> (ZeroExt8to64  y) [63])
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRAmax)
+		v.Type = y.Type
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpSignExt32to64, config.fe.TypeInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpZeroExt8to64, config.fe.TypeUInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh64Ux16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh64Ux16 <t> x y)
+	// cond:
+	// result: (SRLmax <t> x (ZeroExt16to64 y) [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v.AddArg(x)
+		v0 := b.NewValue0(v.Line, OpZeroExt16to64, config.fe.TypeUInt64())
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh64Ux32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh64Ux32 <t> x y)
+	// cond:
+	// result: (SRLmax <t> x (ZeroExt32to64 y) [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v.AddArg(x)
+		v0 := b.NewValue0(v.Line, OpZeroExt32to64, config.fe.TypeUInt64())
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh64Ux64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh64Ux64 x (MOVDconst [c]))
+	// cond: uint64(c) < 64
+	// result: (SRLconst x [c])
+	for {
+		x := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		c := v_1.AuxInt
+		if !(uint64(c) < 64) {
+			break
+		}
+		v.reset(OpSPARC64SRLconst)
+		v.AuxInt = c
+		v.AddArg(x)
+		return true
+	}
+	// match: (Rsh64Ux64 _ (MOVDconst [c]))
+	// cond: uint64(c) >= 64
+	// result: (MOVDconst [0])
+	for {
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		c := v_1.AuxInt
+		if !(uint64(c) >= 64) {
+			break
+		}
+		v.reset(OpSPARC64MOVDconst)
+		v.AuxInt = 0
+		return true
+	}
+	// match: (Rsh64Ux64 <t> x y)
+	// cond:
+	// result: (SRLmax <t> x y [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh64Ux8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh64Ux8  <t> x y)
+	// cond:
+	// result: (SRLmax <t> x (ZeroExt8to64  y) [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v.AddArg(x)
+		v0 := b.NewValue0(v.Line, OpZeroExt8to64, config.fe.TypeUInt64())
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh64x16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh64x16 x y)
+	// cond:
+	// result: (SRAmax x <y.Type> (ZeroExt16to64 y) [63])
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRAmax)
+		v.Type = y.Type
+		v.AuxInt = 63
+		v.AddArg(x)
+		v0 := b.NewValue0(v.Line, OpZeroExt16to64, config.fe.TypeUInt64())
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh64x32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh64x32 x y)
+	// cond:
+	// result: (SRAmax x <y.Type> (ZeroExt32to64 y) [63])
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRAmax)
+		v.Type = y.Type
+		v.AuxInt = 63
+		v.AddArg(x)
+		v0 := b.NewValue0(v.Line, OpZeroExt32to64, config.fe.TypeUInt64())
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh64x64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh64x64  x (MOVDconst [c]))
+	// cond: uint64(c) < 64
+	// result: (SRAconst x [c])
+	for {
+		x := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		c := v_1.AuxInt
+		if !(uint64(c) < 64) {
+			break
+		}
+		v.reset(OpSPARC64SRAconst)
+		v.AuxInt = c
+		v.AddArg(x)
+		return true
+	}
+	// match: (Rsh64x64 x (MOVDconst [c]))
+	// cond: uint64(c) >= 64
+	// result: (SRAconst x [63])
+	for {
+		x := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		c := v_1.AuxInt
+		if !(uint64(c) >= 64) {
+			break
+		}
+		v.reset(OpSPARC64SRAconst)
+		v.AuxInt = 63
+		v.AddArg(x)
+		return true
+	}
+	// match: (Rsh64x64 x y)
+	// cond:
+	// result: (SRAmax x <y.Type> y [63])
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRAmax)
+		v.Type = y.Type
+		v.AuxInt = 63
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh64x8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh64x8  x y)
+	// cond:
+	// result: (SRAmax x <y.Type> (ZeroExt8to64  y) [63])
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRAmax)
+		v.Type = y.Type
+		v.AuxInt = 63
+		v.AddArg(x)
+		v0 := b.NewValue0(v.Line, OpZeroExt8to64, config.fe.TypeUInt64())
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh8Ux16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh8Ux16 <t> x y)
+	// cond:
+	// result: (SRLmax <t> (ZeroExt8to64 x) (ZeroExt16to64 y) [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpZeroExt8to64, config.fe.TypeUInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpZeroExt16to64, config.fe.TypeUInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh8Ux32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh8Ux32 <t> x y)
+	// cond:
+	// result: (SRLmax <t> (ZeroExt8to64 x) (ZeroExt32to64 y) [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpZeroExt8to64, config.fe.TypeUInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpZeroExt32to64, config.fe.TypeUInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh8Ux64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh8Ux64  x (MOVDconst [c]))
+	// cond: uint64(c) < 8
+	// result: (SRLconst (ZeroExt8to64  x) [c])
+	for {
+		x := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		c := v_1.AuxInt
+		if !(uint64(c) < 8) {
+			break
+		}
+		v.reset(OpSPARC64SRLconst)
+		v.AuxInt = c
+		v0 := b.NewValue0(v.Line, OpZeroExt8to64, config.fe.TypeUInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		return true
+	}
+	// match: (Rsh8Ux64  _ (MOVDconst [c]))
+	// cond: uint64(c) >= 8
+	// result: (MOVDconst [0])
+	for {
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		c := v_1.AuxInt
+		if !(uint64(c) >= 8) {
+			break
+		}
+		v.reset(OpSPARC64MOVDconst)
+		v.AuxInt = 0
+		return true
+	}
+	// match: (Rsh8Ux64 <t> x y)
+	// cond:
+	// result: (SRLmax <t> (ZeroExt8to64 x) y [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpZeroExt8to64, config.fe.TypeUInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh8Ux8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh8Ux8  <t> x y)
+	// cond:
+	// result: (SRLmax <t> (ZeroExt8to64 x) (ZeroExt8to64  y) [63])
+	for {
+		t := v.Type
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRLmax)
+		v.Type = t
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpZeroExt8to64, config.fe.TypeUInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpZeroExt8to64, config.fe.TypeUInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh8x16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh8x16 x y)
+	// cond:
+	// result: (SRAmax (SignExt8to64 x) <y.Type> (ZeroExt16to64 y) [63])
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRAmax)
+		v.Type = y.Type
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpSignExt8to64, config.fe.TypeInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpZeroExt16to64, config.fe.TypeUInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh8x32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh8x32 x y)
+	// cond:
+	// result: (SRAmax (SignExt8to64 x) <y.Type> (ZeroExt32to64 y) [63])
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRAmax)
+		v.Type = y.Type
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpSignExt8to64, config.fe.TypeInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpZeroExt32to64, config.fe.TypeUInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh8x64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh8x64   x (MOVDconst [c]))
+	// cond: uint64(c) < 8
+	// result: (SRAconst (SignExt8to64  x) [c])
+	for {
+		x := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		c := v_1.AuxInt
+		if !(uint64(c) < 8) {
+			break
+		}
+		v.reset(OpSPARC64SRAconst)
+		v.AuxInt = c
+		v0 := b.NewValue0(v.Line, OpSignExt8to64, config.fe.TypeInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		return true
+	}
+	// match: (Rsh8x64  x (MOVDconst [c]))
+	// cond: uint64(c) >= 8
+	// result: (SRAconst (SignExt8to64  x) [63])
+	for {
+		x := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		c := v_1.AuxInt
+		if !(uint64(c) >= 8) {
+			break
+		}
+		v.reset(OpSPARC64SRAconst)
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpSignExt8to64, config.fe.TypeInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		return true
+	}
+	// match: (Rsh8x64 x y)
+	// cond:
+	// result: (SRAmax (SignExt8to64 x) <y.Type> y [63])
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRAmax)
+		v.Type = y.Type
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpSignExt8to64, config.fe.TypeInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v.AddArg(y)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpRsh8x8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Rsh8x8  x y)
+	// cond:
+	// result: (SRAmax (SignExt8to64 x) <y.Type> (ZeroExt8to64  y) [63])
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64SRAmax)
+		v.Type = y.Type
+		v.AuxInt = 63
+		v0 := b.NewValue0(v.Line, OpSignExt8to64, config.fe.TypeInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpZeroExt8to64, config.fe.TypeUInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
 		return true
 	}
 }

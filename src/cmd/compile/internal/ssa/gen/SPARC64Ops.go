@@ -104,10 +104,12 @@ func init() {
 		fp = buildReg("Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13")
 		sp = buildReg("SP")
 		sb = buildReg("SB")
+		g = buildReg("g")
 
 		gp01 = regInfo{inputs: nil, outputs: []regMask{gp}}
 		gp11 = regInfo{inputs: []regMask{gp}, outputs: []regMask{gp}}
 		gp21 = regInfo{inputs: []regMask{gp, gp}, outputs: []regMask{gp}}
+		gp1flags  = regInfo{inputs: []regMask{gp}}
 		gp2flags  = regInfo{inputs: []regMask{gp, gp}}
 		gpload      = regInfo{inputs: []regMask{gp | sp | sb}, outputs: []regMask{gp}}
 		gpstore     = regInfo{inputs: []regMask{gp | sp | sb, gp | sp | sb}}
@@ -115,7 +117,7 @@ func init() {
 		fp11 = regInfo{inputs: []regMask{fp}, outputs: []regMask{fp}}
 		fp21 = regInfo{inputs: []regMask{fp, fp}, outputs: []regMask{fp}}
 		readflags = regInfo{inputs: nil, outputs: []regMask{gp}}
-		callerSave = gp | fp | buildReg("g") // runtime.setg (and anything calling it) may clobber g
+		callerSave = gp | fp | g // runtime.setg (and anything calling it) may clobber g
 	)
 	ops := []opData{
 		{name: "ADD", argLength: 2, reg: gp21, asm: "ADD", commutative: true}, // arg0 + arg1
@@ -169,7 +171,21 @@ func init() {
 		{name: "MOVWconst", argLength: 0, reg: gp01, aux: "Int32", asm: "MOVW", rematerializeable: true},     // 32 low bits of auxint
 		{name: "FMOVDconst", argLength: 0, reg: fp01, aux: "Float64", asm: "FMOVD", typ: "Float64", rematerializeable: true},
 		{name: "FMOVSconst", argLength: 0, reg: fp01, aux: "Float32", asm: "FMOVS", rematerializeable: true},
+
+		// shifts
+		{name: "SLL", argLength: 2, reg: gp21, asm: "SLLD"},                      // arg0 << arg1, shift amount is mod 64
+		{name: "SLLmax", argLength: 2, reg: gp21, asm: "SLLD", aux: "Int64"},     // arg0 << arg1, shift amount is mod 64, aux is max shift until zero result
+		{name: "SLLconst", argLength: 1, reg: gp11, asm: "SLLD", aux: "Int64"},   // arg0 << auxInt
+		{name: "SRL", argLength: 2, reg: gp21, asm: "SRLD"},                      // arg0 >> arg1, unsigned, shift amount is mod 64
+		{name: "SRLmax", argLength: 2, reg: gp21, asm: "SLLD", aux: "Int64"},     // arg0 >> arg1, shift amount is mod 64, aux is max shift until zero result
+		{name: "SRLconst", argLength: 1, reg: gp11, asm: "SRLD", aux: "Int64"},   // arg0 >> auxInt, unsigned
+		{name: "SRA", argLength: 2, reg: gp21, asm: "SRAD"},                      // arg0 >> arg1, signed, shift amount is mod 64
+		{name: "SRAmax", argLength: 2, reg: gp21, asm: "SRAD", aux: "Int64"},     // arg0 >> arg1, signed, shift amount is mod 64, aux is max shift
+		{name: "SRAconst", argLength: 1, reg: gp11, asm: "SRAD", aux: "Int64"},   // arg0 >> auxInt, signed
+
+		// comparisons
 		{name: "CMP", argLength: 2, reg: gp2flags, asm: "CMP", typ: "Flags"},                      // arg0 compare to arg1
+		{name: "CMPconst", argLength: 1, reg: gp1flags, asm: "CMP", aux: "Int64", typ: "Flags"},   // arg0 compare to auxInt
 
 		// conversions
 		{name: "MOVBreg", argLength: 1, reg: gp11, asm: "MOVB"},   // move from arg0, sign-extended from byte
@@ -186,6 +202,7 @@ func init() {
 		{name: "CALLgo", argLength: 1, reg: regInfo{clobbers: callerSave}, aux: "Int64", clobberFlags: true, call: true},                                                   // call newproc.  arg0=mem, auxint=argsize, returns mem
 
 		// pseudo-ops
+		{name: "LoweredNilCheck", argLength: 2, reg: regInfo{inputs: []regMask{gp | g}}}, // panic if arg0 is nil.  arg1=mem.
 		{name: "Equal32", argLength: 1, reg: readflags},         // bool, true flags encode x==y false otherwise.
 		{name: "Equal64", argLength: 1, reg: readflags},         // bool, true flags encode x==y false otherwise.
 		{name: "NotEqual32", argLength: 1, reg: readflags},      // bool, true flags encode x!=y false otherwise.
