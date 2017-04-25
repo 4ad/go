@@ -36,6 +36,8 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpAndB(v, config)
 	case OpAvg64u:
 		return rewriteValueSPARC64_OpAvg64u(v, config)
+	case OpClosureCall:
+		return rewriteValueSPARC64_OpClosureCall(v, config)
 	case OpConst16:
 		return rewriteValueSPARC64_OpConst16(v, config)
 	case OpConst32:
@@ -630,6 +632,25 @@ func rewriteValueSPARC64_OpAvg64u(v *Value, config *Config) bool {
 		v5.AuxInt = 1
 		v3.AddArg(v5)
 		v.AddArg(v3)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpClosureCall(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (ClosureCall [argwid] entry closure mem)
+	// cond:
+	// result: (CALLclosure [argwid] entry closure mem)
+	for {
+		argwid := v.AuxInt
+		entry := v.Args[0]
+		closure := v.Args[1]
+		mem := v.Args[2]
+		v.reset(OpSPARC64CALLclosure)
+		v.AuxInt = argwid
+		v.AddArg(entry)
+		v.AddArg(closure)
+		v.AddArg(mem)
 		return true
 	}
 }
