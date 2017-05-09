@@ -1498,10 +1498,14 @@ const (
 	OpSPARC64MOVWload
 	OpSPARC64MOVUWload
 	OpSPARC64MOVDload
+	OpSPARC64FMOVSload
+	OpSPARC64FMOVDload
 	OpSPARC64MOVDstore
 	OpSPARC64MOVWstore
 	OpSPARC64MOVHstore
 	OpSPARC64MOVBstore
+	OpSPARC64FMOVSstore
+	OpSPARC64FMOVDstore
 	OpSPARC64MOVDconst
 	OpSPARC64MOVWconst
 	OpSPARC64FMOVDconst
@@ -18138,6 +18142,34 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
+		name:    "FMOVSload",
+		auxType: auxSymOff,
+		argLen:  2,
+		asm:     sparc64.ALDSF,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+			},
+			outputs: []outputInfo{
+				{0, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+		},
+	},
+	{
+		name:    "FMOVDload",
+		auxType: auxSymOff,
+		argLen:  2,
+		asm:     sparc64.ALDDF,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+			},
+			outputs: []outputInfo{
+				{0, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+		},
+	},
+	{
 		name:    "MOVDstore",
 		auxType: auxSymOff,
 		argLen:  3,
@@ -18182,6 +18214,30 @@ var opcodeTable = [...]opInfo{
 			inputs: []inputInfo{
 				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
 				{1, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+			},
+		},
+	},
+	{
+		name:    "FMOVSstore",
+		auxType: auxSymOff,
+		argLen:  3,
+		asm:     sparc64.ASTSF,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{1, 549722259456},  // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+			},
+		},
+	},
+	{
+		name:    "FMOVDstore",
+		auxType: auxSymOff,
+		argLen:  3,
+		asm:     sparc64.ASTDF,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{1, 549722259456},  // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
 			},
 		},
 	},

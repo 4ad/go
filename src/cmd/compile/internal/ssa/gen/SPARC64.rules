@@ -237,12 +237,16 @@
 (Load <t> ptr mem) && (is32BitInt(t) && isSigned(t)) -> (MOVWload ptr mem)
 (Load <t> ptr mem) && (is32BitInt(t) && !isSigned(t)) -> (MOVUWload ptr mem)
 (Load <t> ptr mem) && (is64BitInt(t) || isPtr(t)) -> (MOVDload ptr mem)
+(Load <t> ptr mem) && is32BitFloat(t) -> (FMOVSload ptr mem)
+(Load <t> ptr mem) && is64BitFloat(t) -> (FMOVDload ptr mem)
 
 // stores
 (Store [1] ptr val mem) -> (MOVBstore ptr val mem)
 (Store [2] ptr val mem) -> (MOVHstore ptr val mem)
 (Store [4] ptr val mem) && !is32BitFloat(val.Type) -> (MOVWstore ptr val mem)
 (Store [8] ptr val mem) && !is64BitFloat(val.Type) -> (MOVDstore ptr val mem)
+(Store [4] ptr val mem) && is32BitFloat(val.Type) -> (FMOVSstore ptr val mem)
+(Store [8] ptr val mem) && is64BitFloat(val.Type) -> (FMOVDstore ptr val mem)
 
 // zeroing
 (Zero [s] _ mem) && SizeAndAlign(s).Size() == 0 -> mem

@@ -142,7 +142,7 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 	case ssa.OpSP, ssa.OpSB, ssa.OpGetG:
 		// nothing to do
 
-	case ssa.OpCopy:
+	case ssa.OpCopy, ssa.OpSPARC64MOVDreg:
 		if v.Type.IsMemory() {
 			return
 		}
@@ -383,7 +383,10 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		ssa.OpSPARC64MOVUHload,
 		ssa.OpSPARC64MOVWload,
 		ssa.OpSPARC64MOVUWload,
-		ssa.OpSPARC64MOVDload:
+		ssa.OpSPARC64MOVDload,
+		ssa.OpSPARC64FMOVSload,
+		ssa.OpSPARC64FMOVDload:
+
 		p := gc.Prog(v.Op.Asm())
 		p.From.Type = obj.TYPE_MEM
 		p.From.Reg = gc.SSARegNum(v.Args[0])
@@ -394,7 +397,9 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 	case ssa.OpSPARC64MOVDstore,
 		ssa.OpSPARC64MOVWstore,
 		ssa.OpSPARC64MOVHstore,
-		ssa.OpSPARC64MOVBstore:
+		ssa.OpSPARC64MOVBstore,
+		ssa.OpSPARC64FMOVSstore,
+		ssa.OpSPARC64FMOVDstore:
 
 		p := gc.Prog(v.Op.Asm())
 		p.From.Type = obj.TYPE_REG
@@ -533,7 +538,9 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 			}
 			switch w.Op {
 			case ssa.OpSPARC64MOVBload, ssa.OpSPARC64MOVUBload, ssa.OpSPARC64MOVHload, ssa.OpSPARC64MOVUHload,
+				ssa.OpSPARC64FMOVSload, ssa.OpSPARC64FMOVDload,
 				ssa.OpSPARC64MOVWload, ssa.OpSPARC64MOVUWload, ssa.OpSPARC64MOVDload,
+				ssa.OpSPARC64FMOVSstore, ssa.OpSPARC64FMOVDstore,
 				ssa.OpSPARC64MOVBstore, ssa.OpSPARC64MOVHstore, ssa.OpSPARC64MOVWstore, ssa.OpSPARC64MOVDstore:
 				// arg0 is ptr, auxint is offset (atomic ops have auxint 0)
 				if w.Args[0] == v.Args[0] && w.Aux == nil && w.AuxInt >= 0 && w.AuxInt < minZeroPage {

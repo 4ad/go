@@ -117,6 +117,8 @@ func init() {
 		fp01        = regInfo{inputs: nil, outputs: []regMask{fp}}
 		fp11 = regInfo{inputs: []regMask{fp}, outputs: []regMask{fp}}
 		fp21 = regInfo{inputs: []regMask{fp, fp}, outputs: []regMask{fp}}
+		fpload    = regInfo{inputs: []regMask{gp | sp | sb}, outputs: []regMask{fp}}
+		fpstore   = regInfo{inputs: []regMask{gp | sp | sb, fp}}
 		readflags = regInfo{inputs: nil, outputs: []regMask{gp}}
 		callerSave = gp | fp | g // runtime.setg (and anything calling it) may clobber g
 	)
@@ -162,16 +164,20 @@ func init() {
 		{name: "MOVWload", argLength: 2, reg: gpload, aux: "SymOff", asm: "MOVW", typ: "Int32"},     // load from arg0 + auxInt + aux.  arg1=mem.
 		{name: "MOVUWload", argLength: 2, reg: gpload, aux: "SymOff", asm: "MOVUW", typ: "UInt32"},  // load from arg0 + auxInt + aux.  arg1=mem.
 		{name: "MOVDload", argLength: 2, reg: gpload, aux: "SymOff", asm: "MOVD", typ: "UInt64"},    // load from arg0 + auxInt + aux.  arg1=mem.
+		{name: "FMOVSload", argLength: 2, reg: fpload, aux: "SymOff", asm: "LDSF", typ: "Float32"},  // load from arg0 + auxInt + aux.  arg1=mem.
+		{name: "FMOVDload", argLength: 2, reg: fpload, aux: "SymOff", asm: "LDDF", typ: "Float64"},  // load from arg0 + auxInt + aux.  arg1=mem.
 
 		{name: "MOVDstore", argLength: 3, reg: gpstore, asm: "MOVD", aux: "SymOff", typ: "Mem"},
 		{name: "MOVWstore", argLength: 3, reg: gpstore, asm: "MOVW", aux: "SymOff", typ: "Mem"},
 		{name: "MOVHstore", argLength: 3, reg: gpstore, asm: "MOVH", aux: "SymOff", typ: "Mem"},
 		{name: "MOVBstore", argLength: 3, reg: gpstore, asm: "MOVB", aux: "SymOff", typ: "Mem"},
+		{name: "FMOVSstore", argLength: 3, reg: fpstore, aux: "SymOff", asm: "STSF", typ: "Mem"}, // store 4 bytes of arg1 to arg0 + auxInt + aux.  arg2=mem.
+		{name: "FMOVDstore", argLength: 3, reg: fpstore, aux: "SymOff", asm: "STDF", typ: "Mem"}, // store 8 bytes of arg1 to arg0 + auxInt + aux.  arg2=mem.
 
 		{name: "MOVDconst", argLength: 0, reg: gp01, aux: "Int64", asm: "MOVD", typ: "UInt64", rematerializeable: true},
 		{name: "MOVWconst", argLength: 0, reg: gp01, aux: "Int32", asm: "MOVW", rematerializeable: true},     // 32 low bits of auxint
-		{name: "FMOVDconst", argLength: 0, reg: fp01, aux: "Float64", asm: "FMOVD", typ: "Float64", rematerializeable: true},
-		{name: "FMOVSconst", argLength: 0, reg: fp01, aux: "Float32", asm: "FMOVS", rematerializeable: true},
+		{name: "FMOVDconst", argLength: 0, reg: fp01, aux: "Float64", asm: "FMOVD", typ: "Float64", rematerializeable: true}, // auxint as 64-bit float
+		{name: "FMOVSconst", argLength: 0, reg: fp01, aux: "Float32", asm: "FMOVS", typ: "Float32", rematerializeable: true},
 
 		// shifts
 		{name: "SLL", argLength: 2, reg: gp21, asm: "SLLD"},                      // arg0 << arg1, shift amount is mod 64

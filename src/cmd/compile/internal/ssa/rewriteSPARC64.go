@@ -1967,6 +1967,36 @@ func rewriteValueSPARC64_OpLoad(v *Value, config *Config) bool {
 		v.AddArg(mem)
 		return true
 	}
+	// match: (Load <t> ptr mem)
+	// cond: is32BitFloat(t)
+	// result: (FMOVSload ptr mem)
+	for {
+		t := v.Type
+		ptr := v.Args[0]
+		mem := v.Args[1]
+		if !(is32BitFloat(t)) {
+			break
+		}
+		v.reset(OpSPARC64FMOVSload)
+		v.AddArg(ptr)
+		v.AddArg(mem)
+		return true
+	}
+	// match: (Load <t> ptr mem)
+	// cond: is64BitFloat(t)
+	// result: (FMOVDload ptr mem)
+	for {
+		t := v.Type
+		ptr := v.Args[0]
+		mem := v.Args[1]
+		if !(is64BitFloat(t)) {
+			break
+		}
+		v.reset(OpSPARC64FMOVDload)
+		v.AddArg(ptr)
+		v.AddArg(mem)
+		return true
+	}
 	return false
 }
 func rewriteValueSPARC64_OpLsh16x16(v *Value, config *Config) bool {
@@ -4483,6 +4513,44 @@ func rewriteValueSPARC64_OpStore(v *Value, config *Config) bool {
 			break
 		}
 		v.reset(OpSPARC64MOVDstore)
+		v.AddArg(ptr)
+		v.AddArg(val)
+		v.AddArg(mem)
+		return true
+	}
+	// match: (Store [4] ptr val mem)
+	// cond: is32BitFloat(val.Type)
+	// result: (FMOVSstore ptr val mem)
+	for {
+		if v.AuxInt != 4 {
+			break
+		}
+		ptr := v.Args[0]
+		val := v.Args[1]
+		mem := v.Args[2]
+		if !(is32BitFloat(val.Type)) {
+			break
+		}
+		v.reset(OpSPARC64FMOVSstore)
+		v.AddArg(ptr)
+		v.AddArg(val)
+		v.AddArg(mem)
+		return true
+	}
+	// match: (Store [8] ptr val mem)
+	// cond: is64BitFloat(val.Type)
+	// result: (FMOVDstore ptr val mem)
+	for {
+		if v.AuxInt != 8 {
+			break
+		}
+		ptr := v.Args[0]
+		val := v.Args[1]
+		mem := v.Args[2]
+		if !(is64BitFloat(val.Type)) {
+			break
+		}
+		v.reset(OpSPARC64FMOVDstore)
 		v.AddArg(ptr)
 		v.AddArg(val)
 		v.AddArg(mem)
