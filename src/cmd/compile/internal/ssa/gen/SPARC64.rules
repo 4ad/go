@@ -389,6 +389,7 @@
 (NilCheck ptr mem) -> (LoweredNilCheck ptr mem)
 (IsNonNil ptr) -> (NotEqual64 (CMPconst [0] ptr))
 (IsInBounds idx len) -> (LessThan64U (CMP idx len))
+(IsSliceInBounds idx len) -> (LessEqual64U (CMP idx len))
 
 // Absorb pseudo-ops into blocks.
 (If (Equal32 cc) yes no) -> (EW cc yes no)

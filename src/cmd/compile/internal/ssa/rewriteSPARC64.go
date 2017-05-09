@@ -140,6 +140,8 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpIsInBounds(v, config)
 	case OpIsNonNil:
 		return rewriteValueSPARC64_OpIsNonNil(v, config)
+	case OpIsSliceInBounds:
+		return rewriteValueSPARC64_OpIsSliceInBounds(v, config)
 	case OpLeq16:
 		return rewriteValueSPARC64_OpLeq16(v, config)
 	case OpLeq16U:
@@ -1517,6 +1519,23 @@ func rewriteValueSPARC64_OpIsNonNil(v *Value, config *Config) bool {
 		v0 := b.NewValue0(v.Line, OpSPARC64CMPconst, TypeFlags)
 		v0.AuxInt = 0
 		v0.AddArg(ptr)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpIsSliceInBounds(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (IsSliceInBounds idx len)
+	// cond:
+	// result: (LessEqual64U (CMP idx len))
+	for {
+		idx := v.Args[0]
+		len := v.Args[1]
+		v.reset(OpSPARC64LessEqual64U)
+		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(idx)
+		v0.AddArg(len)
 		v.AddArg(v0)
 		return true
 	}
