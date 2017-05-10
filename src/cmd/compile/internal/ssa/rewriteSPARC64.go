@@ -4432,22 +4432,6 @@ func rewriteValueSPARC64_OpStaticCall(v *Value, config *Config) bool {
 func rewriteValueSPARC64_OpStore(v *Value, config *Config) bool {
 	b := v.Block
 	_ = b
-	// match: (Store [8] ptr val mem)
-	// cond:
-	// result: (MOVDstore ptr val mem)
-	for {
-		if v.AuxInt != 8 {
-			break
-		}
-		ptr := v.Args[0]
-		val := v.Args[1]
-		mem := v.Args[2]
-		v.reset(OpSPARC64MOVDstore)
-		v.AddArg(ptr)
-		v.AddArg(val)
-		v.AddArg(mem)
-		return true
-	}
 	// match: (Store [1] ptr val mem)
 	// cond:
 	// result: (MOVBstore ptr val mem)

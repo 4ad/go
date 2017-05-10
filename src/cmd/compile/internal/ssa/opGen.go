@@ -1508,8 +1508,8 @@ const (
 	OpSPARC64FMOVDstore
 	OpSPARC64MOVDconst
 	OpSPARC64MOVWconst
-	OpSPARC64FMOVDconst
 	OpSPARC64FMOVSconst
+	OpSPARC64FMOVDconst
 	OpSPARC64SLL
 	OpSPARC64SLLmax
 	OpSPARC64SLLconst
@@ -18145,7 +18145,7 @@ var opcodeTable = [...]opInfo{
 		name:    "FMOVSload",
 		auxType: auxSymOff,
 		argLen:  2,
-		asm:     sparc64.ALDSF,
+		asm:     sparc64.AFMOVS,
 		reg: regInfo{
 			inputs: []inputInfo{
 				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
@@ -18159,7 +18159,7 @@ var opcodeTable = [...]opInfo{
 		name:    "FMOVDload",
 		auxType: auxSymOff,
 		argLen:  2,
-		asm:     sparc64.ALDDF,
+		asm:     sparc64.AFMOVD,
 		reg: regInfo{
 			inputs: []inputInfo{
 				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
@@ -18221,7 +18221,7 @@ var opcodeTable = [...]opInfo{
 		name:    "FMOVSstore",
 		auxType: auxSymOff,
 		argLen:  3,
-		asm:     sparc64.ASTSF,
+		asm:     sparc64.AFMOVS,
 		reg: regInfo{
 			inputs: []inputInfo{
 				{1, 549722259456},  // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
@@ -18233,7 +18233,7 @@ var opcodeTable = [...]opInfo{
 		name:    "FMOVDstore",
 		auxType: auxSymOff,
 		argLen:  3,
-		asm:     sparc64.ASTDF,
+		asm:     sparc64.AFMOVD,
 		reg: regInfo{
 			inputs: []inputInfo{
 				{1, 549722259456},  // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
@@ -18266,11 +18266,11 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
-		name:              "FMOVDconst",
+		name:              "FMOVSconst",
 		auxType:           auxFloat64,
 		argLen:            0,
 		rematerializeable: true,
-		asm:               sparc64.AFMOVD,
+		asm:               sparc64.AFMOVS,
 		reg: regInfo{
 			outputs: []outputInfo{
 				{0, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
@@ -18278,11 +18278,11 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
-		name:              "FMOVSconst",
-		auxType:           auxFloat32,
+		name:              "FMOVDconst",
+		auxType:           auxFloat64,
 		argLen:            0,
 		rematerializeable: true,
-		asm:               sparc64.AFMOVS,
+		asm:               sparc64.AFMOVD,
 		reg: regInfo{
 			outputs: []outputInfo{
 				{0, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13

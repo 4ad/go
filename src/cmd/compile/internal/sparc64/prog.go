@@ -102,6 +102,8 @@ var progtable = [sparc64.ALAST]obj.ProgInfo{
 	sparc64.ASTD:   {Flags: gc.SizeQ | gc.LeftRead | gc.RightWrite | gc.Move},
 	sparc64.AFMOVS: {Flags: gc.SizeF | gc.LeftRead | gc.RightWrite | gc.Move | gc.Conv},
 	sparc64.AFMOVD: {Flags: gc.SizeD | gc.LeftRead | gc.RightWrite | gc.Move},
+	sparc64.ALDSF:  {Flags: gc.SizeF | gc.LeftRead | gc.RightWrite | gc.Move | gc.Conv},
+	sparc64.ALDDF:  {Flags: gc.SizeD | gc.LeftRead | gc.RightWrite | gc.Move},
 
 	sparc64.AMOVA:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite | gc.Move},
 	sparc64.AMOVN:   {Flags: gc.SizeQ | gc.LeftRead | gc.RegRead | gc.RightWrite | gc.Move},

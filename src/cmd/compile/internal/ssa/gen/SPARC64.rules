@@ -126,8 +126,6 @@
 
 (Addr {sym} base) -> (MOVDaddr {sym} base)
 
-(Store [8] ptr val mem) -> (MOVDstore ptr val mem)
-
 // constant shifts
 (Lsh64x64  x (MOVDconst [c])) && uint64(c) < 64 -> (SLLconst x [c])
 (Rsh64x64  x (MOVDconst [c])) && uint64(c) < 64 -> (SRAconst x [c])
