@@ -142,7 +142,7 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 	case ssa.OpSP, ssa.OpSB, ssa.OpGetG:
 		// nothing to do
 
-	case ssa.OpCopy, ssa.OpSPARC64MOVDreg:
+	case ssa.OpCopy:
 		if v.Type.IsMemory() {
 			return
 		}
