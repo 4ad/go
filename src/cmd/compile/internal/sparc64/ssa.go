@@ -589,24 +589,30 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		}
 	case ssa.OpSPARC64Equal32,
 		ssa.OpSPARC64Equal64,
+		ssa.OpSPARC64EqualF,
 		ssa.OpSPARC64NotEqual32,
 		ssa.OpSPARC64NotEqual64,
+		ssa.OpSPARC64NotEqualF,
 		ssa.OpSPARC64LessThan32,
 		ssa.OpSPARC64LessThan32U,
 		ssa.OpSPARC64LessThan64,
 		ssa.OpSPARC64LessThan64U,
+		ssa.OpSPARC64LessThanF,
 		ssa.OpSPARC64LessEqual32,
 		ssa.OpSPARC64LessEqual32U,
 		ssa.OpSPARC64LessEqual64,
 		ssa.OpSPARC64LessEqual64U,
+		ssa.OpSPARC64LessEqualF,
 		ssa.OpSPARC64GreaterThan32,
 		ssa.OpSPARC64GreaterThan32U,
 		ssa.OpSPARC64GreaterThan64,
 		ssa.OpSPARC64GreaterThan64U,
+		ssa.OpSPARC64GreaterThanF,
 		ssa.OpSPARC64GreaterEqual32,
 		ssa.OpSPARC64GreaterEqual32U,
 		ssa.OpSPARC64GreaterEqual64,
-		ssa.OpSPARC64GreaterEqual64U:
+		ssa.OpSPARC64GreaterEqual64U,
+		ssa.OpSPARC64GreaterEqualF:
 
 		p := gc.Prog(condOps[v.Op])
 		p.From.Type = obj.TYPE_REG
@@ -617,7 +623,9 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = gc.SSARegNum(v)
 
-	case ssa.OpSPARC64CMP:
+	case ssa.OpSPARC64CMP,
+		ssa.OpSPARC64FCMPS,
+		ssa.OpSPARC64FCMPD:
 		p := gc.Prog(v.Op.Asm())
 		p.From.Type = obj.TYPE_REG
 		p.From.Reg = gc.SSARegNum(v.Args[1])
@@ -656,6 +664,13 @@ var condBits = map[ssa.Op]int16{
 	ssa.OpSPARC64GreaterThan64U: sparc64.REG_XCC,
 	ssa.OpSPARC64GreaterEqual64: sparc64.REG_XCC,
 	ssa.OpSPARC64GreaterEqual64U: sparc64.REG_XCC,
+
+	ssa.OpSPARC64EqualF: sparc64.REG_FCC0,
+	ssa.OpSPARC64NotEqualF: sparc64.REG_FCC0,
+	ssa.OpSPARC64LessThanF: sparc64.REG_FCC1,
+	ssa.OpSPARC64LessEqualF: sparc64.REG_FCC1,
+	ssa.OpSPARC64GreaterThanF: sparc64.REG_FCC2,
+	ssa.OpSPARC64GreaterEqualF: sparc64.REG_FCC2,
 }
 
 var condOps = map[ssa.Op]obj.As{
@@ -679,6 +694,12 @@ var condOps = map[ssa.Op]obj.As{
 	ssa.OpSPARC64GreaterEqual64: sparc64.AMOVGE,
 	ssa.OpSPARC64GreaterEqual32U: sparc64.AMOVCC,
 	ssa.OpSPARC64GreaterEqual64U: sparc64.AMOVCC,
+	ssa.OpSPARC64EqualF: sparc64.AMOVE,
+	ssa.OpSPARC64NotEqualF: sparc64.AMOVNE,
+	ssa.OpSPARC64LessThanF: sparc64.AMOVL,
+	ssa.OpSPARC64LessEqualF: sparc64.AMOVLE,
+	ssa.OpSPARC64GreaterThanF: sparc64.AMOVG,
+	ssa.OpSPARC64GreaterEqualF: sparc64.AMOVGE,
 }
 
 var blockJump = map[ssa.BlockKind]struct {
@@ -699,6 +720,7 @@ var blockJump = map[ssa.BlockKind]struct {
 	ssa.BlockSPARC64NEGD:  {sparc64.ABNEGD, sparc64.ABPOSD},
 	ssa.BlockSPARC64VCD:  {sparc64.ABVCD, sparc64.ABVSD},
 	ssa.BlockSPARC64VSD:  {sparc64.ABVSD, sparc64.ABVCD},
+
 	ssa.BlockSPARC64NW:  {sparc64.ABNW, obj.AJMP},
 	ssa.BlockSPARC64NEW:  {sparc64.ABNEW, sparc64.ABEW},
 	ssa.BlockSPARC64EW:  {sparc64.ABEW, sparc64.ABNEW},
@@ -714,6 +736,14 @@ var blockJump = map[ssa.BlockKind]struct {
 	ssa.BlockSPARC64NEGW:  {sparc64.ABNEGW, sparc64.ABPOSW},
 	ssa.BlockSPARC64VCW:  {sparc64.ABVCW, sparc64.ABVSW},
 	ssa.BlockSPARC64VSW:  {sparc64.ABVSW, sparc64.ABVCW},
+
+	ssa.BlockSPARC64NF: {sparc64.AFBN, obj.AJMP},
+	ssa.BlockSPARC64EF: {sparc64.AFBE, sparc64.AFBNE},
+	ssa.BlockSPARC64NEF: {sparc64.AFBNE, sparc64.AFBE},
+	ssa.BlockSPARC64LF: {sparc64.AFBL, sparc64.AFBGE},
+	ssa.BlockSPARC64LEF: {sparc64.AFBLE, sparc64.AFBUG},
+	ssa.BlockSPARC64GF: {sparc64.AFBG, sparc64.AFBLE},
+	ssa.BlockSPARC64GEF: {sparc64.AFBGE, sparc64.AFBUL},
 }
 
 func ssaGenBlock(s *gc.SSAGenState, b, next *ssa.Block) {
@@ -781,7 +811,14 @@ func ssaGenBlock(s *gc.SSAGenState, b, next *ssa.Block) {
 		ssa.BlockSPARC64POSW,
 		ssa.BlockSPARC64NEGW,
 		ssa.BlockSPARC64VCW,
-		ssa.BlockSPARC64VSW:
+		ssa.BlockSPARC64VSW,
+		ssa.BlockSPARC64NF,
+		ssa.BlockSPARC64EF,
+		ssa.BlockSPARC64NEF,
+		ssa.BlockSPARC64LF,
+		ssa.BlockSPARC64LEF,
+		ssa.BlockSPARC64GF,
+		ssa.BlockSPARC64GEF:
 
 		jmp := blockJump[b.Kind]
 		var p *obj.Prog

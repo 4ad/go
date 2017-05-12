@@ -128,6 +128,13 @@ const (
 	BlockSPARC64NEGW
 	BlockSPARC64VCW
 	BlockSPARC64VSW
+	BlockSPARC64NF
+	BlockSPARC64EF
+	BlockSPARC64NEF
+	BlockSPARC64LF
+	BlockSPARC64LEF
+	BlockSPARC64GF
+	BlockSPARC64GEF
 
 	BlockPlain
 	BlockIf
@@ -253,6 +260,13 @@ var blockString = [...]string{
 	BlockSPARC64NEGW: "NEGW",
 	BlockSPARC64VCW:  "VCW",
 	BlockSPARC64VSW:  "VSW",
+	BlockSPARC64NF:   "NF",
+	BlockSPARC64EF:   "EF",
+	BlockSPARC64NEF:  "NEF",
+	BlockSPARC64LF:   "LF",
+	BlockSPARC64LEF:  "LEF",
+	BlockSPARC64GF:   "GF",
+	BlockSPARC64GEF:  "GEF",
 
 	BlockPlain:  "Plain",
 	BlockIf:     "If",
@@ -1521,6 +1535,8 @@ const (
 	OpSPARC64SRAconst
 	OpSPARC64CMP
 	OpSPARC64CMPconst
+	OpSPARC64FCMPS
+	OpSPARC64FCMPD
 	OpSPARC64MOVBreg
 	OpSPARC64MOVUBreg
 	OpSPARC64MOVHreg
@@ -1535,24 +1551,30 @@ const (
 	OpSPARC64LoweredNilCheck
 	OpSPARC64Equal32
 	OpSPARC64Equal64
+	OpSPARC64EqualF
 	OpSPARC64NotEqual32
 	OpSPARC64NotEqual64
+	OpSPARC64NotEqualF
 	OpSPARC64LessThan32
 	OpSPARC64LessThan64
 	OpSPARC64LessThan32U
 	OpSPARC64LessThan64U
+	OpSPARC64LessThanF
 	OpSPARC64LessEqual32
 	OpSPARC64LessEqual64
 	OpSPARC64LessEqual32U
 	OpSPARC64LessEqual64U
+	OpSPARC64LessEqualF
 	OpSPARC64GreaterThan32
 	OpSPARC64GreaterThan64
 	OpSPARC64GreaterThan32U
 	OpSPARC64GreaterThan64U
+	OpSPARC64GreaterThanF
 	OpSPARC64GreaterEqual32
 	OpSPARC64GreaterEqual64
 	OpSPARC64GreaterEqual32U
 	OpSPARC64GreaterEqual64U
+	OpSPARC64GreaterEqualF
 	OpSPARC64LoweredZero
 	OpSPARC64LoweredMove
 
@@ -18441,6 +18463,28 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
+		name:   "FCMPS",
+		argLen: 2,
+		asm:    sparc64.AFCMPS,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+				{1, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+		},
+	},
+	{
+		name:   "FCMPD",
+		argLen: 2,
+		asm:    sparc64.AFCMPD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+				{1, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+		},
+	},
+	{
 		name:   "MOVBreg",
 		argLen: 1,
 		asm:    sparc64.AMOVB,
@@ -18603,6 +18647,15 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
+		name:   "EqualF",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+		},
+	},
+	{
 		name:   "NotEqual32",
 		argLen: 1,
 		reg: regInfo{
@@ -18613,6 +18666,15 @@ var opcodeTable = [...]opInfo{
 	},
 	{
 		name:   "NotEqual64",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+		},
+	},
+	{
+		name:   "NotEqualF",
 		argLen: 1,
 		reg: regInfo{
 			outputs: []outputInfo{
@@ -18657,6 +18719,15 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
+		name:   "LessThanF",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+		},
+	},
+	{
 		name:   "LessEqual32",
 		argLen: 1,
 		reg: regInfo{
@@ -18685,6 +18756,15 @@ var opcodeTable = [...]opInfo{
 	},
 	{
 		name:   "LessEqual64U",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+		},
+	},
+	{
+		name:   "LessEqualF",
 		argLen: 1,
 		reg: regInfo{
 			outputs: []outputInfo{
@@ -18729,6 +18809,15 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
+		name:   "GreaterThanF",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+		},
+	},
+	{
 		name:   "GreaterEqual32",
 		argLen: 1,
 		reg: regInfo{
@@ -18757,6 +18846,15 @@ var opcodeTable = [...]opInfo{
 	},
 	{
 		name:   "GreaterEqual64U",
+		argLen: 1,
+		reg: regInfo{
+			outputs: []outputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+		},
+	},
+	{
+		name:   "GreaterEqualF",
 		argLen: 1,
 		reg: regInfo{
 			outputs: []outputInfo{

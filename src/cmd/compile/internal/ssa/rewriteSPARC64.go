@@ -80,8 +80,12 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpEq16(v, config)
 	case OpEq32:
 		return rewriteValueSPARC64_OpEq32(v, config)
+	case OpEq32F:
+		return rewriteValueSPARC64_OpEq32F(v, config)
 	case OpEq64:
 		return rewriteValueSPARC64_OpEq64(v, config)
+	case OpEq64F:
+		return rewriteValueSPARC64_OpEq64F(v, config)
 	case OpEq8:
 		return rewriteValueSPARC64_OpEq8(v, config)
 	case OpEqPtr:
@@ -92,10 +96,14 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpGeq16U(v, config)
 	case OpGeq32:
 		return rewriteValueSPARC64_OpGeq32(v, config)
+	case OpGeq32F:
+		return rewriteValueSPARC64_OpGeq32F(v, config)
 	case OpGeq32U:
 		return rewriteValueSPARC64_OpGeq32U(v, config)
 	case OpGeq64:
 		return rewriteValueSPARC64_OpGeq64(v, config)
+	case OpGeq64F:
+		return rewriteValueSPARC64_OpGeq64F(v, config)
 	case OpGeq64U:
 		return rewriteValueSPARC64_OpGeq64U(v, config)
 	case OpGeq8:
@@ -110,10 +118,14 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpGreater16U(v, config)
 	case OpGreater32:
 		return rewriteValueSPARC64_OpGreater32(v, config)
+	case OpGreater32F:
+		return rewriteValueSPARC64_OpGreater32F(v, config)
 	case OpGreater32U:
 		return rewriteValueSPARC64_OpGreater32U(v, config)
 	case OpGreater64:
 		return rewriteValueSPARC64_OpGreater64(v, config)
+	case OpGreater64F:
+		return rewriteValueSPARC64_OpGreater64F(v, config)
 	case OpGreater64U:
 		return rewriteValueSPARC64_OpGreater64U(v, config)
 	case OpGreater8:
@@ -148,10 +160,14 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpLeq16U(v, config)
 	case OpLeq32:
 		return rewriteValueSPARC64_OpLeq32(v, config)
+	case OpLeq32F:
+		return rewriteValueSPARC64_OpLeq32F(v, config)
 	case OpLeq32U:
 		return rewriteValueSPARC64_OpLeq32U(v, config)
 	case OpLeq64:
 		return rewriteValueSPARC64_OpLeq64(v, config)
+	case OpLeq64F:
+		return rewriteValueSPARC64_OpLeq64F(v, config)
 	case OpLeq64U:
 		return rewriteValueSPARC64_OpLeq64U(v, config)
 	case OpLeq8:
@@ -164,10 +180,14 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpLess16U(v, config)
 	case OpLess32:
 		return rewriteValueSPARC64_OpLess32(v, config)
+	case OpLess32F:
+		return rewriteValueSPARC64_OpLess32F(v, config)
 	case OpLess32U:
 		return rewriteValueSPARC64_OpLess32U(v, config)
 	case OpLess64:
 		return rewriteValueSPARC64_OpLess64(v, config)
+	case OpLess64F:
+		return rewriteValueSPARC64_OpLess64F(v, config)
 	case OpLess64U:
 		return rewriteValueSPARC64_OpLess64U(v, config)
 	case OpLess8:
@@ -254,8 +274,12 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpNeq16(v, config)
 	case OpNeq32:
 		return rewriteValueSPARC64_OpNeq32(v, config)
+	case OpNeq32F:
+		return rewriteValueSPARC64_OpNeq32F(v, config)
 	case OpNeq64:
 		return rewriteValueSPARC64_OpNeq64(v, config)
+	case OpNeq64F:
+		return rewriteValueSPARC64_OpNeq64F(v, config)
 	case OpNeq8:
 		return rewriteValueSPARC64_OpNeq8(v, config)
 	case OpNeqPtr:
@@ -962,6 +986,23 @@ func rewriteValueSPARC64_OpEq32(v *Value, config *Config) bool {
 		return true
 	}
 }
+func rewriteValueSPARC64_OpEq32F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Eq32F x y)
+	// cond:
+	// result: (EqualF (FCMPS x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64EqualF)
+		v0 := b.NewValue0(v.Line, OpSPARC64FCMPS, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
 func rewriteValueSPARC64_OpEq64(v *Value, config *Config) bool {
 	b := v.Block
 	_ = b
@@ -973,6 +1014,23 @@ func rewriteValueSPARC64_OpEq64(v *Value, config *Config) bool {
 		y := v.Args[1]
 		v.reset(OpSPARC64Equal64)
 		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpEq64F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Eq64F x y)
+	// cond:
+	// result: (EqualF (FCMPD x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64EqualF)
+		v0 := b.NewValue0(v.Line, OpSPARC64FCMPD, TypeFlags)
 		v0.AddArg(x)
 		v0.AddArg(y)
 		v.AddArg(v0)
@@ -1076,6 +1134,23 @@ func rewriteValueSPARC64_OpGeq32(v *Value, config *Config) bool {
 		return true
 	}
 }
+func rewriteValueSPARC64_OpGeq32F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Geq32F x y)
+	// cond:
+	// result: (GreaterEqualF (FCMPS x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64GreaterEqualF)
+		v0 := b.NewValue0(v.Line, OpSPARC64FCMPS, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
 func rewriteValueSPARC64_OpGeq32U(v *Value, config *Config) bool {
 	b := v.Block
 	_ = b
@@ -1104,6 +1179,23 @@ func rewriteValueSPARC64_OpGeq64(v *Value, config *Config) bool {
 		y := v.Args[1]
 		v.reset(OpSPARC64GreaterEqual64)
 		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpGeq64F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Geq64F x y)
+	// cond:
+	// result: (GreaterEqualF (FCMPD x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64GreaterEqualF)
+		v0 := b.NewValue0(v.Line, OpSPARC64FCMPD, TypeFlags)
 		v0.AddArg(x)
 		v0.AddArg(y)
 		v.AddArg(v0)
@@ -1243,6 +1335,23 @@ func rewriteValueSPARC64_OpGreater32(v *Value, config *Config) bool {
 		return true
 	}
 }
+func rewriteValueSPARC64_OpGreater32F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Greater32F x y)
+	// cond:
+	// result: (GreaterThanF (FCMPS x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64GreaterThanF)
+		v0 := b.NewValue0(v.Line, OpSPARC64FCMPS, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
 func rewriteValueSPARC64_OpGreater32U(v *Value, config *Config) bool {
 	b := v.Block
 	_ = b
@@ -1271,6 +1380,23 @@ func rewriteValueSPARC64_OpGreater64(v *Value, config *Config) bool {
 		y := v.Args[1]
 		v.reset(OpSPARC64GreaterThan64)
 		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpGreater64F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Greater64F x y)
+	// cond:
+	// result: (GreaterThanF (FCMPD x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64GreaterThanF)
+		v0 := b.NewValue0(v.Line, OpSPARC64FCMPD, TypeFlags)
 		v0.AddArg(x)
 		v0.AddArg(y)
 		v.AddArg(v0)
@@ -1599,6 +1725,23 @@ func rewriteValueSPARC64_OpLeq32(v *Value, config *Config) bool {
 		return true
 	}
 }
+func rewriteValueSPARC64_OpLeq32F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Leq32F x y)
+	// cond:
+	// result: (LessEqualF (FCMPS x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64LessEqualF)
+		v0 := b.NewValue0(v.Line, OpSPARC64FCMPS, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
 func rewriteValueSPARC64_OpLeq32U(v *Value, config *Config) bool {
 	b := v.Block
 	_ = b
@@ -1627,6 +1770,23 @@ func rewriteValueSPARC64_OpLeq64(v *Value, config *Config) bool {
 		y := v.Args[1]
 		v.reset(OpSPARC64LessEqual64)
 		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLeq64F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Leq64F x y)
+	// cond:
+	// result: (LessEqualF (FCMPD x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64LessEqualF)
+		v0 := b.NewValue0(v.Line, OpSPARC64FCMPD, TypeFlags)
 		v0.AddArg(x)
 		v0.AddArg(y)
 		v.AddArg(v0)
@@ -1751,6 +1911,23 @@ func rewriteValueSPARC64_OpLess32(v *Value, config *Config) bool {
 		return true
 	}
 }
+func rewriteValueSPARC64_OpLess32F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Less32F x y)
+	// cond:
+	// result: (LessThanF (FCMPS x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64LessThanF)
+		v0 := b.NewValue0(v.Line, OpSPARC64FCMPS, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
 func rewriteValueSPARC64_OpLess32U(v *Value, config *Config) bool {
 	b := v.Block
 	_ = b
@@ -1779,6 +1956,23 @@ func rewriteValueSPARC64_OpLess64(v *Value, config *Config) bool {
 		y := v.Args[1]
 		v.reset(OpSPARC64LessThan64)
 		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpLess64F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Less64F x y)
+	// cond:
+	// result: (LessThanF (FCMPD x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64LessThanF)
+		v0 := b.NewValue0(v.Line, OpSPARC64FCMPD, TypeFlags)
 		v0.AddArg(x)
 		v0.AddArg(y)
 		v.AddArg(v0)
@@ -3179,6 +3373,23 @@ func rewriteValueSPARC64_OpNeq32(v *Value, config *Config) bool {
 		return true
 	}
 }
+func rewriteValueSPARC64_OpNeq32F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Neq32F x y)
+	// cond:
+	// result: (NotEqualF (FCMPS x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64NotEqualF)
+		v0 := b.NewValue0(v.Line, OpSPARC64FCMPS, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
 func rewriteValueSPARC64_OpNeq64(v *Value, config *Config) bool {
 	b := v.Block
 	_ = b
@@ -3190,6 +3401,23 @@ func rewriteValueSPARC64_OpNeq64(v *Value, config *Config) bool {
 		y := v.Args[1]
 		v.reset(OpSPARC64NotEqual64)
 		v0 := b.NewValue0(v.Line, OpSPARC64CMP, TypeFlags)
+		v0.AddArg(x)
+		v0.AddArg(y)
+		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpNeq64F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Neq64F x y)
+	// cond:
+	// result: (NotEqualF (FCMPD x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64NotEqualF)
+		v0 := b.NewValue0(v.Line, OpSPARC64FCMPD, TypeFlags)
 		v0.AddArg(x)
 		v0.AddArg(y)
 		v.AddArg(v0)
@@ -5523,6 +5751,108 @@ func rewriteBlockSPARC64(b *Block, config *Config) bool {
 			yes := b.Succs[0]
 			no := b.Succs[1]
 			b.Kind = BlockSPARC64CCD
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (If (EqualF cc) yes no)
+		// cond:
+		// result: (EF cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64EqualF {
+				break
+			}
+			cc := v.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64EF
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (If (NotEqualF cc) yes no)
+		// cond:
+		// result: (NEF cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64NotEqualF {
+				break
+			}
+			cc := v.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64NEF
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (If (LessThanF cc) yes no)
+		// cond:
+		// result: (LF cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64LessThanF {
+				break
+			}
+			cc := v.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64LF
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (If (LessEqualF cc) yes no)
+		// cond:
+		// result: (LEF cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64LessEqualF {
+				break
+			}
+			cc := v.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64LEF
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (If (GreaterThanF cc) yes no)
+		// cond:
+		// result: (GF cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64GreaterThanF {
+				break
+			}
+			cc := v.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64GF
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (If (GreaterEqualF cc) yes no)
+		// cond:
+		// result: (GEF cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64GreaterEqualF {
+				break
+			}
+			cc := v.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64GEF
 			b.SetControl(cc)
 			_ = yes
 			_ = no

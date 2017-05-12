@@ -345,11 +345,16 @@
 (Eq32 x y) -> (Equal32 (CMP x y))
 (Eq64 x y) -> (Equal64 (CMP x y))
 (EqPtr x y) -> (Equal64 (CMP x y))
+(Eq32F x y) -> (EqualF (FCMPS x y))
+(Eq64F x y) -> (EqualF (FCMPD x y))
+
 (Neq8 x y)  -> (NotEqual32 (CMP (ZeroExt8to32 x) (ZeroExt8to32 y)))
 (Neq16 x y) -> (NotEqual32 (CMP (ZeroExt16to32 x) (ZeroExt16to32 y)))
 (Neq32 x y) -> (NotEqual32 (CMP x y))
 (Neq64 x y) -> (NotEqual64 (CMP x y))
 (NeqPtr x y) -> (NotEqual64 (CMP x y))
+(Neq32F x y) -> (NotEqualF (FCMPS x y))
+(Neq64F x y) -> (NotEqualF (FCMPD x y))
 
 (Less8 x y)  -> (LessThan32 (CMP (SignExt8to32 x) (SignExt8to32 y)))
 (Less16 x y) -> (LessThan32 (CMP (SignExt16to32 x) (SignExt16to32 y)))
@@ -359,6 +364,8 @@
 (Less16U x y) -> (LessThan32U (CMP (ZeroExt16to32 x) (ZeroExt16to32 y)))
 (Less32U x y) -> (LessThan32U (CMP x y))
 (Less64U x y) -> (LessThan64U (CMP x y))
+(Less32F x y) -> (LessThanF (FCMPS x y))
+(Less64F x y) -> (LessThanF (FCMPD x y))
 
 (Leq8 x y)  -> (LessEqual32 (CMP (SignExt8to32 x) (SignExt8to32 y)))
 (Leq16 x y) -> (LessEqual32 (CMP (SignExt16to32 x) (SignExt16to32 y)))
@@ -368,6 +375,8 @@
 (Leq16U x y) -> (LessEqual32U (CMP (ZeroExt16to32 x) (ZeroExt16to32 y)))
 (Leq32U x y) -> (LessEqual32U (CMP x y))
 (Leq64U x y) -> (LessEqual64U (CMP x y))
+(Leq32F x y) -> (LessEqualF (FCMPS x y))
+(Leq64F x y) -> (LessEqualF (FCMPD x y))
 
 (Greater8 x y)  -> (GreaterThan32 (CMP (SignExt8to32 x) (SignExt8to32 y)))
 (Greater16 x y) -> (GreaterThan32 (CMP (SignExt16to32 x) (SignExt16to32 y)))
@@ -377,6 +386,8 @@
 (Greater16U x y) -> (GreaterThan32U (CMP (ZeroExt16to32 x) (ZeroExt16to32 y)))
 (Greater32U x y) -> (GreaterThan32U (CMP x y))
 (Greater64U x y) -> (GreaterThan64U (CMP x y))
+(Greater32F x y) -> (GreaterThanF (FCMPS x y))
+(Greater64F x y) -> (GreaterThanF (FCMPD x y))
 
 (Geq8 x y)  -> (GreaterEqual32 (CMP (SignExt8to32 x) (SignExt8to32 y)))
 (Geq16 x y) -> (GreaterEqual32 (CMP (SignExt16to32 x) (SignExt16to32 y)))
@@ -386,6 +397,8 @@
 (Geq16U x y) -> (GreaterEqual32U (CMP (ZeroExt16to32 x) (ZeroExt16to32 y)))
 (Geq32U x y) -> (GreaterEqual32U (CMP x y))
 (Geq64U x y) -> (GreaterEqual64U (CMP x y))
+(Geq32F x y) -> (GreaterEqualF (FCMPS x y))
+(Geq64F x y) -> (GreaterEqualF (FCMPD x y))
 
 // checks
 (NilCheck ptr mem) -> (LoweredNilCheck ptr mem)
@@ -404,6 +417,7 @@
 (If (GreaterThan32U cc) yes no) -> (GUW cc yes no)
 (If (GreaterEqual32 cc) yes no) -> (GEW cc yes no)
 (If (GreaterEqual32U cc) yes no) -> (CCW cc yes no)
+
 (If (Equal64 cc) yes no) -> (ED cc yes no)
 (If (NotEqual64 cc) yes no) -> (NED cc yes no)
 (If (LessThan64 cc) yes no) -> (LD cc yes no)
@@ -414,6 +428,13 @@
 (If (GreaterThan64U cc) yes no) -> (GUD cc yes no)
 (If (GreaterEqual64 cc) yes no) -> (GED cc yes no)
 (If (GreaterEqual64U cc) yes no) -> (CCD cc yes no)
+
+(If (EqualF cc) yes no) -> (EF cc yes no)
+(If (NotEqualF cc) yes no) -> (NEF cc yes no)
+(If (LessThanF cc) yes no) -> (LF cc yes no)
+(If (LessEqualF cc) yes no) -> (LEF cc yes no)
+(If (GreaterThanF cc) yes no) -> (GF cc yes no)
+(If (GreaterEqualF cc) yes no) -> (GEF cc yes no)
 
 (If cond yes no) -> (NEW (CMPconst [0] cond) yes no)
 
