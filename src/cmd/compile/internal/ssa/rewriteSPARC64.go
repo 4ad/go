@@ -38,6 +38,14 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpAvg64u(v, config)
 	case OpClosureCall:
 		return rewriteValueSPARC64_OpClosureCall(v, config)
+	case OpCom16:
+		return rewriteValueSPARC64_OpCom16(v, config)
+	case OpCom32:
+		return rewriteValueSPARC64_OpCom32(v, config)
+	case OpCom64:
+		return rewriteValueSPARC64_OpCom64(v, config)
+	case OpCom8:
+		return rewriteValueSPARC64_OpCom8(v, config)
 	case OpConst16:
 		return rewriteValueSPARC64_OpConst16(v, config)
 	case OpConst32:
@@ -124,6 +132,8 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpEq64F(v, config)
 	case OpEq8:
 		return rewriteValueSPARC64_OpEq8(v, config)
+	case OpEqB:
+		return rewriteValueSPARC64_OpEqB(v, config)
 	case OpEqPtr:
 		return rewriteValueSPARC64_OpEqPtr(v, config)
 	case OpGeq16:
@@ -320,6 +330,8 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpNeq64F(v, config)
 	case OpNeq8:
 		return rewriteValueSPARC64_OpNeq8(v, config)
+	case OpNeqB:
+		return rewriteValueSPARC64_OpNeqB(v, config)
 	case OpNeqPtr:
 		return rewriteValueSPARC64_OpNeqPtr(v, config)
 	case OpNilCheck:
@@ -402,6 +414,16 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpRsh8x64(v, config)
 	case OpRsh8x8:
 		return rewriteValueSPARC64_OpRsh8x8(v, config)
+	case OpSPARC64ADDconst:
+		return rewriteValueSPARC64_OpSPARC64ADDconst(v, config)
+	case OpSPARC64ANDconst:
+		return rewriteValueSPARC64_OpSPARC64ANDconst(v, config)
+	case OpSPARC64ORconst:
+		return rewriteValueSPARC64_OpSPARC64ORconst(v, config)
+	case OpSPARC64SUBconst:
+		return rewriteValueSPARC64_OpSPARC64SUBconst(v, config)
+	case OpSPARC64XORconst:
+		return rewriteValueSPARC64_OpSPARC64XORconst(v, config)
 	case OpSignExt16to32:
 		return rewriteValueSPARC64_OpSignExt16to32(v, config)
 	case OpSignExt16to64:
@@ -715,6 +737,62 @@ func rewriteValueSPARC64_OpClosureCall(v *Value, config *Config) bool {
 		v.AddArg(entry)
 		v.AddArg(closure)
 		v.AddArg(mem)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpCom16(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Com16 x)
+	// cond:
+	// result: (XORconst [-1] x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64XORconst)
+		v.AuxInt = -1
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpCom32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Com32 x)
+	// cond:
+	// result: (XORconst [-1] x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64XORconst)
+		v.AuxInt = -1
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpCom64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Com64 x)
+	// cond:
+	// result: (XORconst [-1] x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64XORconst)
+		v.AuxInt = -1
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpCom8(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Com8  x)
+	// cond:
+	// result: (XORconst [-1] x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64XORconst)
+		v.AuxInt = -1
+		v.AddArg(x)
 		return true
 	}
 }
@@ -1327,6 +1405,26 @@ func rewriteValueSPARC64_OpEq8(v *Value, config *Config) bool {
 		v2.AddArg(y)
 		v0.AddArg(v2)
 		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpEqB(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (EqB x y)
+	// cond:
+	// result: (XOR (MOVDconst [1]) (XOR <config.fe.TypeBool()> x y))
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64XOR)
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v0.AuxInt = 1
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpSPARC64XOR, config.fe.TypeBool())
+		v1.AddArg(x)
+		v1.AddArg(y)
+		v.AddArg(v1)
 		return true
 	}
 }
@@ -3734,6 +3832,21 @@ func rewriteValueSPARC64_OpNeq8(v *Value, config *Config) bool {
 		return true
 	}
 }
+func rewriteValueSPARC64_OpNeqB(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (NeqB x y)
+	// cond:
+	// result: (XOR x y)
+	for {
+		x := v.Args[0]
+		y := v.Args[1]
+		v.reset(OpSPARC64XOR)
+		v.AddArg(x)
+		v.AddArg(y)
+		return true
+	}
+}
 func rewriteValueSPARC64_OpNeqPtr(v *Value, config *Config) bool {
 	b := v.Block
 	_ = b
@@ -4837,6 +4950,118 @@ func rewriteValueSPARC64_OpRsh8x8(v *Value, config *Config) bool {
 		v.AddArg(v1)
 		return true
 	}
+}
+func rewriteValueSPARC64_OpSPARC64ADDconst(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (ADDconst [0]  x)
+	// cond:
+	// result: x
+	for {
+		if v.AuxInt != 0 {
+			break
+		}
+		x := v.Args[0]
+		v.reset(OpCopy)
+		v.Type = x.Type
+		v.AddArg(x)
+		return true
+	}
+	return false
+}
+func rewriteValueSPARC64_OpSPARC64ANDconst(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (ANDconst [0]  _)
+	// cond:
+	// result: (MOVDconst [0])
+	for {
+		if v.AuxInt != 0 {
+			break
+		}
+		v.reset(OpSPARC64MOVDconst)
+		v.AuxInt = 0
+		return true
+	}
+	// match: (ANDconst [-1] x)
+	// cond:
+	// result: x
+	for {
+		if v.AuxInt != -1 {
+			break
+		}
+		x := v.Args[0]
+		v.reset(OpCopy)
+		v.Type = x.Type
+		v.AddArg(x)
+		return true
+	}
+	return false
+}
+func rewriteValueSPARC64_OpSPARC64ORconst(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (ORconst  [0]  x)
+	// cond:
+	// result: x
+	for {
+		if v.AuxInt != 0 {
+			break
+		}
+		x := v.Args[0]
+		v.reset(OpCopy)
+		v.Type = x.Type
+		v.AddArg(x)
+		return true
+	}
+	// match: (ORconst  [-1] _)
+	// cond:
+	// result: (MOVDconst [-1])
+	for {
+		if v.AuxInt != -1 {
+			break
+		}
+		v.reset(OpSPARC64MOVDconst)
+		v.AuxInt = -1
+		return true
+	}
+	return false
+}
+func rewriteValueSPARC64_OpSPARC64SUBconst(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (SUBconst [0]  x)
+	// cond:
+	// result: x
+	for {
+		if v.AuxInt != 0 {
+			break
+		}
+		x := v.Args[0]
+		v.reset(OpCopy)
+		v.Type = x.Type
+		v.AddArg(x)
+		return true
+	}
+	return false
+}
+func rewriteValueSPARC64_OpSPARC64XORconst(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (XORconst [0]  x)
+	// cond:
+	// result: x
+	for {
+		if v.AuxInt != 0 {
+			break
+		}
+		x := v.Args[0]
+		v.reset(OpCopy)
+		v.Type = x.Type
+		v.AddArg(x)
+		return true
+	}
+	return false
 }
 func rewriteValueSPARC64_OpSignExt16to32(v *Value, config *Config) bool {
 	b := v.Block

@@ -83,9 +83,16 @@
 
 (Sqrt x) -> (FSQRTD x)
 
+(Com64 x) -> (XORconst [-1] x)
+(Com32 x) -> (XORconst [-1] x)
+(Com16 x) -> (XORconst [-1] x)
+(Com8  x) -> (XORconst [-1] x)
+
 // Lowering boolean ops
 (AndB x y) -> (AND x y)
 (OrB x y) -> (OR x y)
+(EqB x y) -> (XOR (MOVDconst [1]) (XOR <config.fe.TypeBool()> x y))
+(NeqB x y) -> (XOR x y)
 (Not x) -> (XORconst [1] x)
 
 // Lowering extension
@@ -471,3 +478,12 @@
 (NEW (CMPconst [0] (GreaterThan32U cc)) yes no) -> (GUW cc yes no)
 (NEW (CMPconst [0] (GreaterEqual32 cc)) yes no) -> (GEW cc yes no)
 (NEW (CMPconst [0] (GreaterEqual32U cc)) yes no) -> (CCW cc yes no)
+
+// remove redundant *const ops
+(ADDconst [0]  x) -> x
+(SUBconst [0]  x) -> x
+(ANDconst [0]  _) -> (MOVDconst [0])
+(ANDconst [-1] x) -> x
+(ORconst  [0]  x) -> x
+(ORconst  [-1] _) -> (MOVDconst [-1])
+(XORconst [0]  x) -> x
