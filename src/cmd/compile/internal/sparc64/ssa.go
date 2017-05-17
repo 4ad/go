@@ -325,13 +325,168 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		ssa.OpSPARC64NEG,
 		ssa.OpSPARC64FNEGS,
 		ssa.OpSPARC64FNEGD,
-		ssa.OpSPARC64FSQRTD:
+		ssa.OpSPARC64FSQRTD,
+		ssa.OpSPARC64FITOS,
+		ssa.OpSPARC64FITOD,
+		ssa.OpSPARC64FSTOI,
+		ssa.OpSPARC64FSTOX,
+		ssa.OpSPARC64FDTOI,
+		ssa.OpSPARC64FSTOD,
+		ssa.OpSPARC64FDTOS:
 
 		p := gc.Prog(v.Op.Asm())
 		p.From.Type = obj.TYPE_REG
 		p.From.Reg = gc.SSARegNum(v.Args[0])
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = gc.SSARegNum(v)
+
+	case ssa.OpSPARC64FDTOX:
+	// algorithm is:
+	//	if small enough, use native float64 -> int64 conversion.
+	//	otherwise, subtract 2^63, convert, and add it back.
+		r := gc.SSARegNum(v)
+		r1 := gc.SSARegNum(v.Args[0])
+
+		if !v.Type.IsSigned() {
+			p := gc.Prog(storeByType(v.Args[0].Type))
+			p.From.Type = obj.TYPE_FCONST
+			p.From.Val = math.Float64frombits(uint64(1<<63))
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = sparc64.REG_YTMP
+			p = gc.Prog(sparc64.AFCMPD)
+			p.From.Type = obj.TYPE_REG
+			p.From.Reg = sparc64.REG_YTMP
+			p.Reg = r1
+			q := gc.Prog(sparc64.AFBG)
+			q.To.Type = obj.TYPE_BRANCH
+			q.To.Val = nil
+			p = gc.Prog(sparc64.AFSUBD)
+			p.From.Type = obj.TYPE_REG
+			p.From.Reg = r1
+			p.Reg = sparc64.REG_YTMP
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = sparc64.REG_YTMP
+			gc.Patch(q, gc.Pc)
+			r1 = sparc64.REG_YTMP
+		}
+
+		p := gc.Prog(v.Op.Asm())
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = r1
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_YTMP
+		p = gc.Prog(storeByType(v.Args[0].Type))
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = sparc64.REG_YTMP
+		p.To.Type = obj.TYPE_MEM
+		p.To.Reg = sparc64.REG_RSP
+		p.To.Offset = -8 + sparc64.StackBias
+		p = gc.Prog(loadByType(v.Type))
+		p.From.Type = obj.TYPE_MEM
+		p.From.Reg = sparc64.REG_RSP
+		p.From.Offset = -8 + sparc64.StackBias
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = r
+
+		if !v.Type.IsSigned() {
+			q := gc.Prog(sparc64.AFBG)
+			q.To.Type = obj.TYPE_BRANCH
+			q.To.Val = nil
+			p := gc.Prog(sparc64.AMOVD)
+			p.From.Type = obj.TYPE_CONST
+			p.From.Offset = 1
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = sparc64.REG_TMP
+			p = gc.Prog(sparc64.ASLLD)
+			p.From.Type = obj.TYPE_CONST
+			p.From.Offset = 63
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = sparc64.REG_TMP
+			p = gc.Prog(sparc64.AADD)
+			p.From.Type = obj.TYPE_REG
+			p.From.Reg = sparc64.REG_TMP
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = r
+			gc.Patch(q, gc.Pc)
+		}
+
+	case ssa.OpSPARC64FXTOS,
+		ssa.OpSPARC64FXTOD:
+	// algorithm is:
+	//	if small enough, use native int64 -> float64 conversion,
+	//	otherwise halve (x -> (x>>1)|(x&1)), convert, and double.
+		r := gc.SSARegNum(v)
+		r1 := gc.SSARegNum(v.Args[0])
+
+		if !v.Type.IsSigned() {
+			p := gc.Prog(sparc64.AMOVD)
+			p.From.Type = obj.TYPE_CONST
+			p.From.Offset = 1
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = sparc64.REG_TMP
+			p = gc.Prog(sparc64.ASLLD)
+			p.From.Type = obj.TYPE_CONST
+			p.From.Offset = 63
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = sparc64.REG_TMP
+			p = gc.Prog(sparc64.ACMP)
+			p.From.Type = obj.TYPE_REG
+			p.From.Reg = r1
+			p.Reg = sparc64.REG_TMP
+			q := gc.Prog(sparc64.ABLEUD)
+			q.To.Type = obj.TYPE_BRANCH
+			q.To.Val = nil
+			p = gc.Prog(sparc64.AAND)
+			p.Reg = r1
+			p.From.Type = obj.TYPE_CONST
+			p.From.Offset = 1
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = sparc64.REG_TMP2
+			p = gc.Prog(sparc64.ASRLD)
+			p.From.Type = obj.TYPE_CONST
+			p.From.Offset = 1
+			p.Reg = r1
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = sparc64.REG_TMP
+			p = gc.Prog(sparc64.AOR)
+			p.From.Type = obj.TYPE_REG
+			p.From.Reg = sparc64.REG_TMP
+			p.Reg = sparc64.REG_TMP2
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = sparc64.REG_TMP
+			gc.Patch(q, gc.Pc)
+			r1 = sparc64.REG_TMP
+		}
+
+		p := gc.Prog(storeByType(v.Args[0].Type))
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = r1
+		p.To.Type = obj.TYPE_MEM
+		p.To.Reg = sparc64.REG_RSP
+		p.To.Offset = -8 + sparc64.StackBias
+		p = gc.Prog(loadByType(v.Type))
+		p.From.Type = obj.TYPE_MEM
+		p.From.Reg = sparc64.REG_RSP
+		p.From.Offset = -8 + sparc64.StackBias
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = r
+		p = gc.Prog(v.Op.Asm())
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = r
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = r
+
+		if !v.Type.IsSigned() {
+			q := gc.Prog(sparc64.ABLEUD)
+			q.To.Type = obj.TYPE_BRANCH
+			q.To.Val = nil
+			p := gc.Prog(sparc64.AFMULD)
+			p.From.Type = obj.TYPE_REG
+			p.From.Reg = sparc64.REG_YTWO
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = r
+			gc.Patch(q, gc.Pc)
+		}
 
 	case ssa.OpSPARC64MOVDaddr:
 		p := gc.Prog(sparc64.AMOVD)
@@ -694,12 +849,12 @@ var condOps = map[ssa.Op]obj.As{
 	ssa.OpSPARC64GreaterEqual64: sparc64.AMOVGE,
 	ssa.OpSPARC64GreaterEqual32U: sparc64.AMOVCC,
 	ssa.OpSPARC64GreaterEqual64U: sparc64.AMOVCC,
-	ssa.OpSPARC64EqualF: sparc64.AMOVE,
-	ssa.OpSPARC64NotEqualF: sparc64.AMOVNE,
-	ssa.OpSPARC64LessThanF: sparc64.AMOVL,
-	ssa.OpSPARC64LessEqualF: sparc64.AMOVLE,
-	ssa.OpSPARC64GreaterThanF: sparc64.AMOVG,
-	ssa.OpSPARC64GreaterEqualF: sparc64.AMOVGE,
+	ssa.OpSPARC64EqualF: sparc64.AMOVFE,
+	ssa.OpSPARC64NotEqualF: sparc64.AMOVFNE,
+	ssa.OpSPARC64LessThanF: sparc64.AMOVFL,
+	ssa.OpSPARC64LessEqualF: sparc64.AMOVFLE,
+	ssa.OpSPARC64GreaterThanF: sparc64.AMOVFG,
+	ssa.OpSPARC64GreaterEqualF: sparc64.AMOVFGE,
 }
 
 var blockJump = map[ssa.BlockKind]struct {

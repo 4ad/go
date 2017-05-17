@@ -1544,6 +1544,16 @@ const (
 	OpSPARC64MOVWreg
 	OpSPARC64MOVUWreg
 	OpSPARC64MOVDreg
+	OpSPARC64FITOS
+	OpSPARC64FITOD
+	OpSPARC64FXTOS
+	OpSPARC64FXTOD
+	OpSPARC64FSTOI
+	OpSPARC64FDTOI
+	OpSPARC64FSTOX
+	OpSPARC64FDTOX
+	OpSPARC64FSTOD
+	OpSPARC64FDTOS
 	OpSPARC64CALLstatic
 	OpSPARC64CALLclosure
 	OpSPARC64CALLdefer
@@ -18572,6 +18582,136 @@ var opcodeTable = [...]opInfo{
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+		},
+	},
+	{
+		name:   "FITOS",
+		argLen: 1,
+		asm:    sparc64.AFITOS,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+			outputs: []outputInfo{
+				{0, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+		},
+	},
+	{
+		name:   "FITOD",
+		argLen: 1,
+		asm:    sparc64.AFITOD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+			outputs: []outputInfo{
+				{0, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+		},
+	},
+	{
+		name:   "FXTOS",
+		argLen: 1,
+		asm:    sparc64.AFXTOS,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+			outputs: []outputInfo{
+				{0, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+		},
+	},
+	{
+		name:   "FXTOD",
+		argLen: 1,
+		asm:    sparc64.AFXTOD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+			outputs: []outputInfo{
+				{0, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+		},
+	},
+	{
+		name:   "FSTOI",
+		argLen: 1,
+		asm:    sparc64.AFSTOI,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+			outputs: []outputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+		},
+	},
+	{
+		name:   "FDTOI",
+		argLen: 1,
+		asm:    sparc64.AFDTOI,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+			outputs: []outputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+		},
+	},
+	{
+		name:   "FSTOX",
+		argLen: 1,
+		asm:    sparc64.AFSTOX,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+			outputs: []outputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+		},
+	},
+	{
+		name:   "FDTOX",
+		argLen: 1,
+		asm:    sparc64.AFDTOX,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+			outputs: []outputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+		},
+	},
+	{
+		name:   "FSTOD",
+		argLen: 1,
+		asm:    sparc64.AFSTOD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+			outputs: []outputInfo{
+				{0, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+		},
+	},
+	{
+		name:   "FDTOS",
+		argLen: 1,
+		asm:    sparc64.AFDTOS,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+			},
+			outputs: []outputInfo{
+				{0, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
 			},
 		},
 	},

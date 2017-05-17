@@ -54,6 +54,42 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpConstBool(v, config)
 	case OpConstNil:
 		return rewriteValueSPARC64_OpConstNil(v, config)
+	case OpCvt32Fto32:
+		return rewriteValueSPARC64_OpCvt32Fto32(v, config)
+	case OpCvt32Fto32U:
+		return rewriteValueSPARC64_OpCvt32Fto32U(v, config)
+	case OpCvt32Fto64:
+		return rewriteValueSPARC64_OpCvt32Fto64(v, config)
+	case OpCvt32Fto64F:
+		return rewriteValueSPARC64_OpCvt32Fto64F(v, config)
+	case OpCvt32Fto64U:
+		return rewriteValueSPARC64_OpCvt32Fto64U(v, config)
+	case OpCvt32Uto32F:
+		return rewriteValueSPARC64_OpCvt32Uto32F(v, config)
+	case OpCvt32Uto64F:
+		return rewriteValueSPARC64_OpCvt32Uto64F(v, config)
+	case OpCvt32to32F:
+		return rewriteValueSPARC64_OpCvt32to32F(v, config)
+	case OpCvt32to64F:
+		return rewriteValueSPARC64_OpCvt32to64F(v, config)
+	case OpCvt64Fto32:
+		return rewriteValueSPARC64_OpCvt64Fto32(v, config)
+	case OpCvt64Fto32F:
+		return rewriteValueSPARC64_OpCvt64Fto32F(v, config)
+	case OpCvt64Fto32U:
+		return rewriteValueSPARC64_OpCvt64Fto32U(v, config)
+	case OpCvt64Fto64:
+		return rewriteValueSPARC64_OpCvt64Fto64(v, config)
+	case OpCvt64Fto64U:
+		return rewriteValueSPARC64_OpCvt64Fto64U(v, config)
+	case OpCvt64Uto32F:
+		return rewriteValueSPARC64_OpCvt64Uto32F(v, config)
+	case OpCvt64Uto64F:
+		return rewriteValueSPARC64_OpCvt64Uto64F(v, config)
+	case OpCvt64to32F:
+		return rewriteValueSPARC64_OpCvt64to32F(v, config)
+	case OpCvt64to64F:
+		return rewriteValueSPARC64_OpCvt64to64F(v, config)
 	case OpDeferCall:
 		return rewriteValueSPARC64_OpDeferCall(v, config)
 	case OpDiv16:
@@ -780,6 +816,240 @@ func rewriteValueSPARC64_OpConstNil(v *Value, config *Config) bool {
 	for {
 		v.reset(OpSPARC64MOVDconst)
 		v.AuxInt = 0
+		return true
+	}
+}
+func rewriteValueSPARC64_OpCvt32Fto32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Cvt32Fto32 x)
+	// cond:
+	// result: (FSTOI x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64FSTOI)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpCvt32Fto32U(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Cvt32Fto32U x)
+	// cond:
+	// result: (FSTOI x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64FSTOI)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpCvt32Fto64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Cvt32Fto64 x)
+	// cond:
+	// result: (FSTOX x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64FSTOX)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpCvt32Fto64F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Cvt32Fto64F x)
+	// cond:
+	// result: (FSTOD x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64FSTOD)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpCvt32Fto64U(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Cvt32Fto64U x)
+	// cond:
+	// result: (FSTOX x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64FSTOX)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpCvt32Uto32F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Cvt32Uto32F x)
+	// cond:
+	// result: (FITOS x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64FITOS)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpCvt32Uto64F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Cvt32Uto64F x)
+	// cond:
+	// result: (FITOD x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64FITOD)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpCvt32to32F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Cvt32to32F x)
+	// cond:
+	// result: (FITOS x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64FITOS)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpCvt32to64F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Cvt32to64F x)
+	// cond:
+	// result: (FITOD x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64FITOD)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpCvt64Fto32(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Cvt64Fto32 x)
+	// cond:
+	// result: (FDTOI x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64FDTOI)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpCvt64Fto32F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Cvt64Fto32F x)
+	// cond:
+	// result: (FDTOS x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64FDTOS)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpCvt64Fto32U(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Cvt64Fto32U x)
+	// cond:
+	// result: (FDTOI x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64FDTOI)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpCvt64Fto64(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Cvt64Fto64 x)
+	// cond:
+	// result: (FDTOX x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64FDTOX)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpCvt64Fto64U(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Cvt64Fto64U x)
+	// cond:
+	// result: (FDTOX x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64FDTOX)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpCvt64Uto32F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Cvt64Uto32F x)
+	// cond:
+	// result: (FXTOS x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64FXTOS)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpCvt64Uto64F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Cvt64Uto64F x)
+	// cond:
+	// result: (FXTOD x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64FXTOD)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpCvt64to32F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Cvt64to32F x)
+	// cond:
+	// result: (FXTOS x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64FXTOS)
+		v.AddArg(x)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpCvt64to64F(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Cvt64to64F x)
+	// cond:
+	// result: (FXTOD x)
+	for {
+		x := v.Args[0]
+		v.reset(OpSPARC64FXTOD)
+		v.AddArg(x)
 		return true
 	}
 }

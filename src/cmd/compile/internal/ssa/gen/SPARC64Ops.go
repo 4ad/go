@@ -116,6 +116,8 @@ func init() {
 		gpstore     = regInfo{inputs: []regMask{gp | sp | sb, gp | sp | sb}}
 		fp01        = regInfo{inputs: nil, outputs: []regMask{fp}}
 		fp11        = regInfo{inputs: []regMask{fp}, outputs: []regMask{fp}}
+		fpgp        = regInfo{inputs: []regMask{fp}, outputs: []regMask{gp}}
+		gpfp        = regInfo{inputs: []regMask{gp}, outputs: []regMask{fp}}
 		fp21        = regInfo{inputs: []regMask{fp, fp}, outputs: []regMask{fp}}
 		fp2flags    = regInfo{inputs: []regMask{fp, fp}}
 		fpload      = regInfo{inputs: []regMask{gp | sp | sb}, outputs: []regMask{fp}}
@@ -205,6 +207,17 @@ func init() {
 		{name: "MOVWreg", argLength: 1, reg: gp11, asm: "MOVW"},   // move from arg0, sign-extended from word
 		{name: "MOVUWreg", argLength: 1, reg: gp11, asm: "MOVUW"}, // move from arg0, unsign-extended from word
 		{name: "MOVDreg", argLength: 1, reg: gp11, asm: "MOVD"},   // move from arg0
+
+		{name: "FITOS", argLength: 1, reg: gpfp, asm: "FITOS"}, // int32/uint32 -> float32
+		{name: "FITOD", argLength: 1, reg: gpfp, asm: "FITOD"}, // int32/uint32 -> float64
+		{name: "FXTOS", argLength: 1, reg: gpfp, asm: "FXTOS"}, // int64/uint64 -> float32
+		{name: "FXTOD", argLength: 1, reg: gpfp, asm: "FXTOD"}, // int64/uint64 -> float64
+		{name: "FSTOI", argLength: 1, reg: fpgp, asm: "FSTOI"}, // float32 -> int32/uint32
+		{name: "FDTOI", argLength: 1, reg: fpgp, asm: "FDTOI"}, // float64 -> int32/uint32
+		{name: "FSTOX", argLength: 1, reg: fpgp, asm: "FSTOX"}, // float32 -> int64/uint64
+		{name: "FDTOX", argLength: 1, reg: fpgp, asm: "FDTOX"}, // float64 -> int64/uint64
+		{name: "FSTOD", argLength: 1, reg: fp11, asm: "FSTOD"}, // float32 -> float64
+		{name: "FDTOS", argLength: 1, reg: fp11, asm: "FDTOS"}, // float64 -> float32
 
 		// function calls
 		{name: "CALLstatic", argLength: 1, reg: regInfo{clobbers: callerSave}, aux: "SymOff", clobberFlags: true, call: true},                                              // call static function aux.(*gc.Sym).  arg0=mem, auxint=argsize, returns mem

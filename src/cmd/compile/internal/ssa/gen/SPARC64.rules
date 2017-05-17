@@ -104,6 +104,27 @@
 (ZeroExt16to64 x) -> (MOVUHreg x)
 (ZeroExt32to64 x) -> (MOVUWreg x)
 
+// float <-> int conversion
+(Cvt32to32F x) -> (FITOS x)
+(Cvt32to64F x) -> (FITOD x)
+(Cvt64to32F x) -> (FXTOS x)
+(Cvt64to64F x) -> (FXTOD x)
+(Cvt32Uto32F x) -> (FITOS x)
+(Cvt32Uto64F x) -> (FITOD x)
+(Cvt64Uto32F x) -> (FXTOS x)
+(Cvt64Uto64F x) -> (FXTOD x)
+(Cvt32Fto32 x) -> (FSTOI x)
+(Cvt64Fto32 x) -> (FDTOI x)
+(Cvt32Fto64 x) -> (FSTOX x)
+(Cvt64Fto64 x) -> (FDTOX x)
+(Cvt32Fto32U x) -> (FSTOI x)
+(Cvt64Fto32U x) -> (FDTOI x)
+(Cvt32Fto64U x) -> (FSTOX x)
+(Cvt64Fto64U x) -> (FDTOX x)
+(Cvt32Fto64F x) -> (FSTOD x)
+(Cvt64Fto32F x) -> (FDTOS x)
+
+// truncations
 (Trunc16to8  x) -> (MOVBreg x)
 (Trunc32to8  x) -> (MOVBreg x)
 (Trunc32to16 x) -> (MOVHreg x)

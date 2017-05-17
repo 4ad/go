@@ -34,4 +34,10 @@ func main() {
 		println("wrong y", y)
 		panic("fail")
 	}
+
+	z := uint64(float64(uint64(1)<<x))	// used to fail to compile
+	if z != 32 {
+		println("wrong z", y)
+		panic("fail")
+	}
 }

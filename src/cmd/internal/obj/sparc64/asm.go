@@ -118,13 +118,13 @@ var optab = map[Optab]Opval{
 
 	Optab{AFMOVD, ClassDReg, ClassNone, ClassNone, ClassDReg}: {11, 4, 0},
 
-	Optab{AFXTOD, ClassDReg, ClassNone, ClassNone, ClassDReg}: {11, 4, 0},
+	Optab{AFXTOD, ClassDReg, ClassNone, ClassNone, ClassDReg}: {11, 4, ClobberTMP},
 	Optab{AFITOD, ClassFReg, ClassNone, ClassNone, ClassDReg}: {11, 4, 0},
-	Optab{AFXTOS, ClassDReg, ClassNone, ClassNone, ClassFReg}: {11, 4, 0},
+	Optab{AFXTOS, ClassDReg, ClassNone, ClassNone, ClassFReg}: {11, 4, ClobberTMP},
 	Optab{AFITOS, ClassFReg, ClassNone, ClassNone, ClassFReg}: {11, 4, 0},
 
 	Optab{AFSTOX, ClassFReg, ClassNone, ClassNone, ClassDReg}: {11, 4, 0},
-	Optab{AFDTOX, ClassDReg, ClassNone, ClassNone, ClassDReg}: {11, 4, 0},
+	Optab{AFDTOX, ClassDReg, ClassNone, ClassNone, ClassDReg}: {11, 4, ClobberTMP},
 	Optab{AFDTOI, ClassDReg, ClassNone, ClassNone, ClassFReg}: {11, 4, 0},
 	Optab{AFSTOI, ClassFReg, ClassNone, ClassNone, ClassFReg}: {11, 4, 0},
 
@@ -207,6 +207,9 @@ var optab = map[Optab]Opval{
 
 	Optab{AMOVA, ClassCond, ClassNone, ClassConst11, ClassReg}: {46, 4, 0},
 	Optab{AMOVA, ClassCond, ClassReg, ClassNone, ClassReg}:     {47, 4, 0},
+
+	Optab{AMOVFA, ClassFCond, ClassNone, ClassConst11, ClassReg}: {46, 4, 0},
+	Optab{AMOVFA, ClassFCond, ClassReg, ClassNone, ClassReg}:     {47, 4, 0},
 
 	Optab{AMOVRZ, ClassReg, ClassNone, ClassConst10, ClassReg}: {48, 4, 0},
 	Optab{AMOVRZ, ClassReg, ClassReg, ClassNone, ClassReg}:     {49, 4, 0},
@@ -339,6 +342,7 @@ var ci = map[obj.As][]obj.As{
 	ALDD:   {ALDSB, ALDSH, ALDSW, ALDUB, ALDUH, ALDUW, AMOVB, AMOVH, AMOVW, AMOVUB, AMOVUH, AMOVUW, AMOVD},
 	ALDDF:  {ALDSF, AFMOVD, AFMOVS},
 	AMOVA:  {AMOVN, AMOVNE, AMOVE, AMOVG, AMOVLE, AMOVGE, AMOVL, AMOVGU, AMOVLEU, AMOVCC, AMOVCS, AMOVPOS, AMOVNEG, AMOVVC, AMOVVS},
+	AMOVFA: {AMOVFN, AMOVFU, AMOVFG, AMOVFUG, AMOVFL, AMOVFUL, AMOVFLG, AMOVFNE, AMOVFE, AMOVFUE, AMOVFGE, AMOVFUGE, AMOVFLE, AMOVFULE, AMOVFO},
 	AMOVRZ: {AMOVRLEZ, AMOVRLZ, AMOVRNZ, AMOVRGZ, AMOVRGEZ},
 	AMULD:  {ASDIVD, AUDIVD},
 	ARD:    {AMOVD},
@@ -866,6 +870,40 @@ func opcode(a obj.As) uint32 {
 		return op3(2, 0x2C) | 15<<14 | 1<<18
 	case AMOVVS:
 		return op3(2, 0x2C) | 7<<14 | 1<<18
+
+	// Move Integer Register on Floating-Point Condition (MOVcc).
+	case AMOVFA:
+		return op3(2, 0x2C) | 8<<14 | 0<<18
+	case AMOVFN:
+		return op3(2, 0x2C) | 0<<14 | 0<<18
+	case AMOVFU:
+		return op3(2, 0x2C) | 7<<14 | 0<<18
+	case AMOVFG:
+		return op3(2, 0x2C) | 6<<14 | 0<<18
+	case AMOVFUG:
+		return op3(2, 0x2C) | 5<<14 | 0<<18
+	case AMOVFL:
+		return op3(2, 0x2C) | 4<<14 | 0<<18
+	case AMOVFUL:
+		return op3(2, 0x2C) | 3<<14 | 0<<18
+	case AMOVFLG:
+		return op3(2, 0x2C) | 2<<14 | 0<<18
+	case AMOVFNE:
+		return op3(2, 0x2C) | 1<<14 | 0<<18
+	case AMOVFE:
+		return op3(2, 0x2C) | 9<<14 | 0<<18
+	case AMOVFUE:
+		return op3(2, 0x2C) | 10<<14 | 0<<18
+	case AMOVFGE:
+		return op3(2, 0x2C) | 11<<14 | 0<<18
+	case AMOVFUGE:
+		return op3(2, 0x2C) | 12<<14 | 0<<18
+	case AMOVFLE:
+		return op3(2, 0x2C) | 13<<14 | 0<<18
+	case AMOVFULE:
+		return op3(2, 0x2C) | 14<<14 | 0<<18
+	case AMOVFO:
+		return op3(2, 0x2C) | 15<<14 | 0<<18
 
 	// Move Integer Register on Register Condition (MOVr).
 	case AMOVRZ:
@@ -1612,11 +1650,11 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 		*o6 = opalu(AOR) | rrr(REG_TMP, 0, REG_TMP2, REG_TMP2)
 		*o7 = opcode(AJMPL) | rsr(REG_TMP2, 0, REG_ZR)
 
-	// MOVPOS XCC, $simm11, R
+	// MOV[F]A ICC/XCC/FCC, $simm11, R
 	case 46:
 		*o1 = opcode(p.As) | rsr(0, p.From3.Offset, p.To.Reg) | 1<<13 | uint32(p.From.Reg&3<<11)
 
-	// MOVPOS ICC, R, R
+	// MOV[F]A ICC/XCC/FCC, R, R
 	case 47:
 		*o1 = opcode(p.As) | rrr(0, 0, p.Reg, p.To.Reg) | uint32(p.From.Reg&3<<11)
 
