@@ -184,6 +184,8 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpHmul8(v, config)
 	case OpHmul8u:
 		return rewriteValueSPARC64_OpHmul8u(v, config)
+	case OpInterCall:
+		return rewriteValueSPARC64_OpInterCall(v, config)
 	case OpIsInBounds:
 		return rewriteValueSPARC64_OpIsInBounds(v, config)
 	case OpIsNonNil:
@@ -1883,6 +1885,23 @@ func rewriteValueSPARC64_OpHmul8u(v *Value, config *Config) bool {
 		v2.AddArg(y)
 		v0.AddArg(v2)
 		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpInterCall(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (InterCall [argwid] entry mem)
+	// cond:
+	// result: (CALLinter [argwid] entry mem)
+	for {
+		argwid := v.AuxInt
+		entry := v.Args[0]
+		mem := v.Args[1]
+		v.reset(OpSPARC64CALLinter)
+		v.AuxInt = argwid
+		v.AddArg(entry)
+		v.AddArg(mem)
 		return true
 	}
 }

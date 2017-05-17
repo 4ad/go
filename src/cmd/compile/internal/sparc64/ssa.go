@@ -716,6 +716,14 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		if gc.Maxarg < v.AuxInt {
 			gc.Maxarg = v.AuxInt
 		}
+	case ssa.OpSPARC64CALLinter:
+		p := gc.Prog(obj.ACALL)
+		p.To.Type = obj.TYPE_MEM
+		p.To.Offset = 0
+		p.To.Reg = gc.SSARegNum(v.Args[0])
+		if gc.Maxarg < v.AuxInt {
+			gc.Maxarg = v.AuxInt
+		}
 
 	case ssa.OpSPARC64LoweredNilCheck:
 		// Optimization - if the subsequent block has a load or store

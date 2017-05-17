@@ -246,6 +246,7 @@
 (ClosureCall [argwid] entry closure mem) -> (CALLclosure [argwid] entry closure mem)
 (DeferCall [argwid] mem) -> (CALLdefer [argwid] mem)
 (GoCall [argwid] mem) -> (CALLgo [argwid] mem)
+(InterCall [argwid] entry mem) -> (CALLinter [argwid] entry mem)
 
 // loads
 (Load <t> ptr mem) && t.IsBoolean() -> (MOVUBload ptr mem)
