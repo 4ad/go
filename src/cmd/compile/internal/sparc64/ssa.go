@@ -326,11 +326,6 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		ssa.OpSPARC64FNEGS,
 		ssa.OpSPARC64FNEGD,
 		ssa.OpSPARC64FSQRTD,
-		ssa.OpSPARC64FITOS,
-		ssa.OpSPARC64FITOD,
-		ssa.OpSPARC64FSTOI,
-		ssa.OpSPARC64FSTOX,
-		ssa.OpSPARC64FDTOI,
 		ssa.OpSPARC64FSTOD,
 		ssa.OpSPARC64FDTOS:
 
@@ -339,6 +334,31 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p.From.Reg = gc.SSARegNum(v.Args[0])
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = gc.SSARegNum(v)
+
+	case ssa.OpSPARC64FSTOI,
+		ssa.OpSPARC64FSTOX,
+		ssa.OpSPARC64FDTOI:
+
+		r := gc.SSARegNum(v)
+		r1 := gc.SSARegNum(v.Args[0])
+
+		p := gc.Prog(v.Op.Asm())
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = r1
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_YTMP
+		p = gc.Prog(storeByType(v.Args[0].Type))
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = sparc64.REG_YTMP
+		p.To.Type = obj.TYPE_MEM
+		p.To.Reg = sparc64.REG_RSP
+		p.To.Offset = -8 + sparc64.StackBias
+		p = gc.Prog(loadByType(v.Type))
+		p.From.Type = obj.TYPE_MEM
+		p.From.Reg = sparc64.REG_RSP
+		p.From.Offset = -8 + sparc64.StackBias
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = r
 
 	case ssa.OpSPARC64FDTOX:
 	// algorithm is:
@@ -409,6 +429,30 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 			p.To.Reg = r
 			gc.Patch(q, gc.Pc)
 		}
+
+	case ssa.OpSPARC64FITOS,
+		ssa.OpSPARC64FITOD:
+
+		r := gc.SSARegNum(v)
+		r1 := gc.SSARegNum(v.Args[0])
+
+		p := gc.Prog(storeByType(v.Args[0].Type))
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = r1
+		p.To.Type = obj.TYPE_MEM
+		p.To.Reg = sparc64.REG_RSP
+		p.To.Offset = -8 + sparc64.StackBias
+		p = gc.Prog(loadByType(v.Type))
+		p.From.Type = obj.TYPE_MEM
+		p.From.Reg = sparc64.REG_RSP
+		p.From.Offset = -8 + sparc64.StackBias
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = r
+		p = gc.Prog(v.Op.Asm())
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = r
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = r
 
 	case ssa.OpSPARC64FXTOS,
 		ssa.OpSPARC64FXTOD:
