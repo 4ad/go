@@ -62,6 +62,8 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpConstBool(v, config)
 	case OpConstNil:
 		return rewriteValueSPARC64_OpConstNil(v, config)
+	case OpConvert:
+		return rewriteValueSPARC64_OpConvert(v, config)
 	case OpCvt32Fto32:
 		return rewriteValueSPARC64_OpCvt32Fto32(v, config)
 	case OpCvt32Fto32U:
@@ -896,6 +898,21 @@ func rewriteValueSPARC64_OpConstNil(v *Value, config *Config) bool {
 	for {
 		v.reset(OpSPARC64MOVDconst)
 		v.AuxInt = 0
+		return true
+	}
+}
+func rewriteValueSPARC64_OpConvert(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (Convert x mem)
+	// cond:
+	// result: (MOVDconvert x mem)
+	for {
+		x := v.Args[0]
+		mem := v.Args[1]
+		v.reset(OpSPARC64MOVDconvert)
+		v.AddArg(x)
+		v.AddArg(mem)
 		return true
 	}
 }

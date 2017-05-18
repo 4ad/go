@@ -295,6 +295,13 @@ func init() {
 			},
 			clobberFlags: true,
 		},
+
+		// MOVDconvert converts between pointers and integers.
+		// We have a special op for this so as to not confuse GC
+		// (particularly stack maps).  It takes a memory arg so it
+		// gets correctly ordered with respect to GC safepoints.
+		// arg0=ptr/int arg1=mem, output=int/ptr
+		{name: "MOVDconvert", argLength: 2, reg: gp11, asm: "MOVD"},
 	}
 
 	blocks := []blockData{

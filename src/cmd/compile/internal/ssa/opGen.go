@@ -1588,6 +1588,7 @@ const (
 	OpSPARC64GreaterEqualF
 	OpSPARC64LoweredZero
 	OpSPARC64LoweredMove
+	OpSPARC64MOVDconvert
 
 	OpAdd8
 	OpAdd16
@@ -19039,6 +19040,19 @@ var opcodeTable = [...]opInfo{
 				{2, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			clobbers: 9, // RT1 RT2
+		},
+	},
+	{
+		name:   "MOVDconvert",
+		argLen: 2,
+		asm:    sparc64.AMOVD,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+			outputs: []outputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
 		},
 	},
 

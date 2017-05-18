@@ -435,6 +435,9 @@
 (IsInBounds idx len) -> (LessThan64U (CMP idx len))
 (IsSliceInBounds idx len) -> (LessEqual64U (CMP idx len))
 
+// pseudo-ops
+(Convert x mem) -> (MOVDconvert x mem)
+
 // Absorb pseudo-ops into blocks.
 (If (Equal32 cc) yes no) -> (EW cc yes no)
 (If (NotEqual32 cc) yes no) -> (NEW cc yes no)
