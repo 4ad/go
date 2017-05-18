@@ -1076,26 +1076,12 @@ func aclass(ctxt *obj.Link, a *obj.Addr) int8 {
 	return ClassUnknown
 }
 
-func span(ctxt *obj.Link, cursym *obj.LSym) {
-	if cursym.Text == nil || cursym.Text.Link == nil { // handle external functions and ELF section symbols
-		return
-	}
-
-	var pc int64 // relative to entry point
+// Assign Pcs and reclassify branches that exceed the standard 21-bit signed
+// maximum offset and recalculate; multiple invocations may be required.
+func assignPc(ctxt *obj.Link, cursym *obj.LSym, prevpc int64) (pc int64) {
+	expandBranch := prevpc > 0
 	for p := cursym.Text.Link; p != nil; p = p.Link {
-		o, err := oplook(autoeditprog(ctxt, p))
-		if err != nil {
-			ctxt.Diag(err.Error())
-		}
-		p.Pc = pc
-		pc += int64(o.size)
-	}
-
-	// Now that initial Pcs have been determined, reclassify branches that
-	// exceed the standard 21-bit signed maximum offset and recalculate.
-	pc = 0
-	for p := cursym.Text.Link; p != nil; p = p.Link {
-		if p.To.Type == obj.TYPE_BRANCH && p.To.Class == ClassBranch {
+		if expandBranch && p.To.Type == obj.TYPE_BRANCH && p.To.Class == ClassBranch {
 			var offset int64
 			if p.Pcond != nil {
 				offset = p.Pcond.Pc - p.Pc
@@ -1123,6 +1109,27 @@ func span(ctxt *obj.Link, cursym *obj.LSym) {
 		pc += int64(o.size)
 	}
 
+	if prevpc == 0 {
+		// After initial Pc assignment, reassign until Pc no longer
+		// increases.
+		prevpc := pc
+		for {
+			pc = assignPc(ctxt, cursym, prevpc)
+			if pc <= prevpc {
+				break
+			}
+			prevpc = pc
+		}
+	}
+	return
+}
+
+func span(ctxt *obj.Link, cursym *obj.LSym) {
+	if cursym.Text == nil || cursym.Text.Link == nil { // handle external functions and ELF section symbols
+		return
+	}
+
+	var pc = assignPc(ctxt, cursym, 0)
 	cursym.Size = pc
 	cursym.Grow(cursym.Size)
 
