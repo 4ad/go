@@ -139,6 +139,9 @@ var optab = map[Optab]Opval{
 	Optab{AFCMPD, ClassDReg, ClassDReg, ClassNone, ClassFCond}: {14, 4, 0},
 	Optab{AFCMPD, ClassDReg, ClassDReg, ClassNone, ClassNone}:  {14, 4, 0},
 
+	Optab{AMOVW, ClassConst32, ClassNone, ClassNone, ClassReg}:  {15, 8, 0},
+	Optab{AMOVW, ClassConst31_, ClassNone, ClassNone, ClassReg}: {16, 8, 0},
+
 	Optab{AMOVD, ClassConst32, ClassNone, ClassNone, ClassReg}:  {15, 8, 0},
 	Optab{AMOVD, ClassConst31_, ClassNone, ClassNone, ClassReg}: {16, 8, 0},
 
@@ -1150,14 +1153,14 @@ func bigmove(ctxt *obj.Link, addr *obj.Addr, reg int16) (out []uint32) {
 		class = constclass(addr.Offset)
 	}
 	switch class {
-	// MOVD $imm32, R ->
+	// MOV[WD] $imm32, R ->
 	// 	SETHI hi($imm32), R
 	// 	OR R, lo($imm32), R
 	case ClassConst31, ClassConst32:
 		out[0] = opcode(ASETHI) | ir(uint32(addr.Offset)>>10, reg)
 		out[1] = opalu(AOR) | rsr(reg, int64(addr.Offset&0x3FF), reg)
 
-	// MOVD -$imm31, R ->
+	// MOV[WD] -$imm31, R ->
 	// 	SETHI hi(^$imm32), R
 	// 	XOR R, lo($imm32)|0x1C00, R
 	case ClassConst31_:
@@ -1348,6 +1351,8 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	case 14:
 		*o1 = opcode(p.As) | rrr(p.Reg, 0, p.From.Reg, p.To.Reg&3)
 
+	// MOVW $imm32, R
+	// MOVW -$imm31, R
 	// MOVD $imm32, R
 	// MOVD -$imm31, R
 	case 15, 16:
