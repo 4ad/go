@@ -1689,7 +1689,7 @@ func (s *state) expr(n *Node) *ssa.Value {
 					conv = conv1
 				}
 			}
-			if Thearch.LinkArch.Name == "arm64" {
+			if Thearch.LinkArch.Name == "arm64" || Thearch.LinkArch.Name == "sparc64" {
 				if conv1, ok1 := uint64fpConvOpToSSA[twoTypes{s.concreteEtype(ft), s.concreteEtype(tt)}]; ok1 {
 					conv = conv1
 				}
