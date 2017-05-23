@@ -821,7 +821,13 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		ssa.OpSPARC64GreaterEqual64U,
 		ssa.OpSPARC64GreaterEqualF:
 
-		p := gc.Prog(condOps[v.Op])
+		p := gc.Prog(sparc64.AMOVD)
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = sparc64.REG_ZR
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = gc.SSARegNum(v)
+
+		p = gc.Prog(condOps[v.Op])
 		p.From.Type = obj.TYPE_REG
 		p.From.Reg = condBits[v.Op]
 		p.From3 = &obj.Addr{}
