@@ -468,19 +468,19 @@
 (If (GreaterThanF cc) yes no) -> (GF cc yes no)
 (If (GreaterEqualF cc) yes no) -> (GEF cc yes no)
 
-(If cond yes no) -> (NEW (CMPconst [0] cond) yes no)
+// (If cond yes no) -> (NEW (CMPconst [0] cond) yes no)
 
 // Absorb boolean tests into block
-(NEW (CMPconst [0] (Equal32 cc)) yes no) -> (EW cc yes no)
-(NEW (CMPconst [0] (NotEqual32 cc)) yes no) -> (NEW cc yes no)
-(NEW (CMPconst [0] (LessThan32 cc)) yes no) -> (LW cc yes no)
-(NEW (CMPconst [0] (LessThan32U cc)) yes no) -> (CSW cc yes no)
-(NEW (CMPconst [0] (LessEqual32 cc)) yes no) -> (LEW cc yes no)
-(NEW (CMPconst [0] (LessEqual32U cc)) yes no) -> (LEUW cc yes no)
-(NEW (CMPconst [0] (GreaterThan32 cc)) yes no) -> (GW cc yes no)
-(NEW (CMPconst [0] (GreaterThan32U cc)) yes no) -> (GUW cc yes no)
-(NEW (CMPconst [0] (GreaterEqual32 cc)) yes no) -> (GEW cc yes no)
-(NEW (CMPconst [0] (GreaterEqual32U cc)) yes no) -> (CCW cc yes no)
+// (NEW (CMPconst [0] (Equal32 cc)) yes no) -> (EW cc yes no)
+// (NEW (CMPconst [0] (NotEqual32 cc)) yes no) -> (NEW cc yes no)
+// (NEW (CMPconst [0] (LessThan32 cc)) yes no) -> (LW cc yes no)
+// (NEW (CMPconst [0] (LessThan32U cc)) yes no) -> (CSW cc yes no)
+// (NEW (CMPconst [0] (LessEqual32 cc)) yes no) -> (LEW cc yes no)
+// (NEW (CMPconst [0] (LessEqual32U cc)) yes no) -> (LEUW cc yes no)
+// (NEW (CMPconst [0] (GreaterThan32 cc)) yes no) -> (GW cc yes no)
+// (NEW (CMPconst [0] (GreaterThan32U cc)) yes no) -> (GUW cc yes no)
+// (NEW (CMPconst [0] (GreaterEqual32 cc)) yes no) -> (GEW cc yes no)
+// (NEW (CMPconst [0] (GreaterEqual32U cc)) yes no) -> (CCW cc yes no)
 
 // remove redundant *const ops
 (ADDconst [0]  x) -> x
