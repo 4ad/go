@@ -341,19 +341,21 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 
 		r := gc.SSARegNum(v)
 		r1 := gc.SSARegNum(v.Args[0])
+		ft := v.Args[0].Type
+		tt := v.Type
 
 		p := gc.Prog(v.Op.Asm())
 		p.From.Type = obj.TYPE_REG
 		p.From.Reg = r1
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = sparc64.REG_YTMP
-		p = gc.Prog(storeByType(v.Args[0].Type))
+		p = gc.Prog(storeByType(ft))
 		p.From.Type = obj.TYPE_REG
 		p.From.Reg = sparc64.REG_YTMP
 		p.To.Type = obj.TYPE_MEM
 		p.To.Reg = sparc64.REG_RSP
 		p.To.Offset = -8 + sparc64.StackBias
-		p = gc.Prog(loadByType(v.Type))
+		p = gc.Prog(loadByType(tt))
 		p.From.Type = obj.TYPE_MEM
 		p.From.Reg = sparc64.REG_RSP
 		p.From.Offset = -8 + sparc64.StackBias
@@ -366,9 +368,11 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 	//	otherwise, subtract 2^63, convert, and add it back.
 		r := gc.SSARegNum(v)
 		r1 := gc.SSARegNum(v.Args[0])
+		ft := v.Args[0].Type
+		tt := v.Type
 
-		if !v.Type.IsSigned() {
-			p := gc.Prog(storeByType(v.Args[0].Type))
+		if !tt.IsSigned() {
+			p := gc.Prog(storeByType(ft))
 			p.From.Type = obj.TYPE_FCONST
 			p.From.Val = math.Float64frombits(uint64(1<<63))
 			p.To.Type = obj.TYPE_REG
@@ -395,20 +399,20 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p.From.Reg = r1
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = sparc64.REG_YTMP
-		p = gc.Prog(storeByType(v.Args[0].Type))
+		p = gc.Prog(storeByType(ft))
 		p.From.Type = obj.TYPE_REG
 		p.From.Reg = sparc64.REG_YTMP
 		p.To.Type = obj.TYPE_MEM
 		p.To.Reg = sparc64.REG_RSP
 		p.To.Offset = -8 + sparc64.StackBias
-		p = gc.Prog(loadByType(v.Type))
+		p = gc.Prog(loadByType(tt))
 		p.From.Type = obj.TYPE_MEM
 		p.From.Reg = sparc64.REG_RSP
 		p.From.Offset = -8 + sparc64.StackBias
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = r
 
-		if !v.Type.IsSigned() {
+		if !tt.IsSigned() {
 			q := gc.Prog(sparc64.AFBG)
 			q.To.Type = obj.TYPE_BRANCH
 			q.To.Val = nil
@@ -435,14 +439,16 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 
 		r := gc.SSARegNum(v)
 		r1 := gc.SSARegNum(v.Args[0])
+		ft := v.Args[0].Type
+		tt := v.Type
 
-		p := gc.Prog(storeByType(v.Args[0].Type))
+		p := gc.Prog(storeByType(ft))
 		p.From.Type = obj.TYPE_REG
 		p.From.Reg = r1
 		p.To.Type = obj.TYPE_MEM
 		p.To.Reg = sparc64.REG_RSP
 		p.To.Offset = -8 + sparc64.StackBias
-		p = gc.Prog(loadByType(v.Type))
+		p = gc.Prog(loadByType(tt))
 		p.From.Type = obj.TYPE_MEM
 		p.From.Reg = sparc64.REG_RSP
 		p.From.Offset = -8 + sparc64.StackBias
@@ -461,8 +467,10 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 	//	otherwise halve (x -> (x>>1)|(x&1)), convert, and double.
 		r := gc.SSARegNum(v)
 		r1 := gc.SSARegNum(v.Args[0])
+		ft := v.Args[0].Type
+		tt := v.Type
 
-		if !v.Type.IsSigned() {
+		if !ft.IsSigned() {
 			p := gc.Prog(sparc64.AMOVD)
 			p.From.Type = obj.TYPE_CONST
 			p.From.Offset = 1
@@ -502,13 +510,13 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 			r1 = sparc64.REG_TMP
 		}
 
-		p := gc.Prog(storeByType(v.Args[0].Type))
+		p := gc.Prog(storeByType(ft))
 		p.From.Type = obj.TYPE_REG
 		p.From.Reg = r1
 		p.To.Type = obj.TYPE_MEM
 		p.To.Reg = sparc64.REG_RSP
 		p.To.Offset = -8 + sparc64.StackBias
-		p = gc.Prog(loadByType(v.Type))
+		p = gc.Prog(loadByType(tt))
 		p.From.Type = obj.TYPE_MEM
 		p.From.Reg = sparc64.REG_RSP
 		p.From.Offset = -8 + sparc64.StackBias
@@ -520,7 +528,7 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = r
 
-		if !v.Type.IsSigned() {
+		if !ft.IsSigned() {
 			q := gc.Prog(sparc64.ABLEUD)
 			q.To.Type = obj.TYPE_BRANCH
 			q.To.Val = nil
