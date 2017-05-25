@@ -1568,7 +1568,7 @@ func asmout(p *obj.Prog, o Opval, cursym *obj.LSym) (out []uint32, err error) {
 	case 36:
 		*o1 = opalu(ASUBCC) | rrr(p.Reg, 0, p.From.Reg, REG_ZR)
 
-	// CMP $42, R2
+	// CMP $imm13, R2
 	case 37:
 		*o1 = opalu(ASUBCC) | rsr(p.Reg, p.From.Offset, REG_ZR)
 
