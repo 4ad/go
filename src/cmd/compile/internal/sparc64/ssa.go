@@ -888,10 +888,10 @@ var condBits = map[ssa.Op]int16{
 
 	ssa.OpSPARC64EqualF: sparc64.REG_FCC0,
 	ssa.OpSPARC64NotEqualF: sparc64.REG_FCC0,
-	ssa.OpSPARC64LessThanF: sparc64.REG_FCC1,
-	ssa.OpSPARC64LessEqualF: sparc64.REG_FCC1,
-	ssa.OpSPARC64GreaterThanF: sparc64.REG_FCC2,
-	ssa.OpSPARC64GreaterEqualF: sparc64.REG_FCC2,
+	ssa.OpSPARC64LessThanF: sparc64.REG_FCC0,
+	ssa.OpSPARC64LessEqualF: sparc64.REG_FCC0,
+	ssa.OpSPARC64GreaterThanF: sparc64.REG_FCC0,
+	ssa.OpSPARC64GreaterEqualF: sparc64.REG_FCC0,
 }
 
 var condOps = map[ssa.Op]obj.As{

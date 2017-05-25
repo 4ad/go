@@ -6389,6 +6389,24 @@ func rewriteBlockSPARC64(b *Block, config *Config) bool {
 			_ = no
 			return true
 		}
+		// match: (If cond yes no)
+		// cond:
+		// result: (NEW (CMPconst [0] cond) yes no)
+		for {
+			v := b.Control
+			_ = v
+			cond := b.Control
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64NEW
+			v0 := b.NewValue0(v.Line, OpSPARC64CMPconst, TypeFlags)
+			v0.AuxInt = 0
+			v0.AddArg(cond)
+			b.SetControl(v0)
+			_ = yes
+			_ = no
+			return true
+		}
 	}
 	return false
 }
