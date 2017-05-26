@@ -123,7 +123,7 @@ func init() {
 		fpload      = regInfo{inputs: []regMask{gp | sp | sb}, outputs: []regMask{fp}}
 		fpstore     = regInfo{inputs: []regMask{gp | sp | sb, fp}}
 		readflags   = regInfo{inputs: nil, outputs: []regMask{gp}}
-		callerSave  = gp | fp | g // runtime.setg (and anything calling it) may clobber g
+		callerSave  = gp | gprt | ctxt | fp | g // runtime.setg (and anything calling it) may clobber g
 	)
 	ops := []opData{
 		{name: "ADD", argLength: 2, reg: gp21, asm: "ADD", commutative: true}, // arg0 + arg1
