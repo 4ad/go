@@ -6407,6 +6407,631 @@ func rewriteBlockSPARC64(b *Block, config *Config) bool {
 			_ = no
 			return true
 		}
+	case BlockSPARC64NEW:
+		// match: (NEW (CMPconst [0] (Equal32 cc)) yes no)
+		// cond:
+		// result: (EW cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64Equal32 {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64EW
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NEW (CMPconst [0] (NotEqual32 cc)) yes no)
+		// cond:
+		// result: (NEW cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64NotEqual32 {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64NEW
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NEW (CMPconst [0] (LessThan32 cc)) yes no)
+		// cond:
+		// result: (LW cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64LessThan32 {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64LW
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NEW (CMPconst [0] (LessThan32U cc)) yes no)
+		// cond:
+		// result: (CSW cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64LessThan32U {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64CSW
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NEW (CMPconst [0] (LessEqual32 cc)) yes no)
+		// cond:
+		// result: (LEW cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64LessEqual32 {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64LEW
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NEW (CMPconst [0] (LessEqual32U cc)) yes no)
+		// cond:
+		// result: (LEUW cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64LessEqual32U {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64LEUW
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NEW (CMPconst [0] (GreaterThan32 cc)) yes no)
+		// cond:
+		// result: (GW cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64GreaterThan32 {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64GW
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NEW (CMPconst [0] (GreaterThan32U cc)) yes no)
+		// cond:
+		// result: (GUW cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64GreaterThan32U {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64GUW
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NEW (CMPconst [0] (GreaterEqual32 cc)) yes no)
+		// cond:
+		// result: (GEW cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64GreaterEqual32 {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64GEW
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NEW (CMPconst [0] (GreaterEqual32U cc)) yes no)
+		// cond:
+		// result: (CCW cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64GreaterEqual32U {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64CCW
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NEW (CMPconst [0] (Equal64 cc)) yes no)
+		// cond:
+		// result: (ED cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64Equal64 {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64ED
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NEW (CMPconst [0] (NotEqual64 cc)) yes no)
+		// cond:
+		// result: (NED cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64NotEqual64 {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64NED
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NEW (CMPconst [0] (LessThan64 cc)) yes no)
+		// cond:
+		// result: (LD cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64LessThan64 {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64LD
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NEW (CMPconst [0] (LessThan64U cc)) yes no)
+		// cond:
+		// result: (CSD cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64LessThan64U {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64CSD
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NEW (CMPconst [0] (LessEqual64 cc)) yes no)
+		// cond:
+		// result: (LED cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64LessEqual64 {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64LED
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NEW (CMPconst [0] (LessEqual64U cc)) yes no)
+		// cond:
+		// result: (LEUD cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64LessEqual64U {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64LEUD
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NEW (CMPconst [0] (GreaterThan64 cc)) yes no)
+		// cond:
+		// result: (GD cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64GreaterThan64 {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64GD
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NEW (CMPconst [0] (GreaterThan64U cc)) yes no)
+		// cond:
+		// result: (GUD cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64GreaterThan64U {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64GUD
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NEW (CMPconst [0] (GreaterEqual64 cc)) yes no)
+		// cond:
+		// result: (GED cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64GreaterEqual64 {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64GED
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NEW (CMPconst [0] (GreaterEqual64U cc)) yes no)
+		// cond:
+		// result: (CCD cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64GreaterEqual64U {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64CCD
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NEW (CMPconst [0] (EqualF cc)) yes no)
+		// cond:
+		// result: (EF cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64EqualF {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64EF
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NEW (CMPconst [0] (NotEqualF cc)) yes no)
+		// cond:
+		// result: (NEF cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64NotEqualF {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64NEF
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NEW (CMPconst [0] (LessThanF cc)) yes no)
+		// cond:
+		// result: (LF cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64LessThanF {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64LF
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NEW (CMPconst [0] (LessEqualF cc)) yes no)
+		// cond:
+		// result: (LEF cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64LessEqualF {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64LEF
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NEW (CMPconst [0] (GreaterThanF cc)) yes no)
+		// cond:
+		// result: (GF cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64GreaterThanF {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64GF
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
+		// match: (NEW (CMPconst [0] (GreaterEqualF cc)) yes no)
+		// cond:
+		// result: (GEF cc yes no)
+		for {
+			v := b.Control
+			if v.Op != OpSPARC64CMPconst {
+				break
+			}
+			if v.AuxInt != 0 {
+				break
+			}
+			v_0 := v.Args[0]
+			if v_0.Op != OpSPARC64GreaterEqualF {
+				break
+			}
+			cc := v_0.Args[0]
+			yes := b.Succs[0]
+			no := b.Succs[1]
+			b.Kind = BlockSPARC64GEF
+			b.SetControl(cc)
+			_ = yes
+			_ = no
+			return true
+		}
 	}
 	return false
 }
