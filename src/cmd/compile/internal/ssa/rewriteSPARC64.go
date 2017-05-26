@@ -5018,6 +5018,24 @@ func rewriteValueSPARC64_OpRsh8x8(v *Value, config *Config) bool {
 func rewriteValueSPARC64_OpSPARC64ADDconst(v *Value, config *Config) bool {
 	b := v.Block
 	_ = b
+	// match: (ADDconst [off1] (MOVDaddr [off2] {sym} ptr))
+	// cond:
+	// result: (MOVDaddr [off1+off2] {sym} ptr)
+	for {
+		off1 := v.AuxInt
+		v_0 := v.Args[0]
+		if v_0.Op != OpSPARC64MOVDaddr {
+			break
+		}
+		off2 := v_0.AuxInt
+		sym := v_0.Aux
+		ptr := v_0.Args[0]
+		v.reset(OpSPARC64MOVDaddr)
+		v.AuxInt = off1 + off2
+		v.Aux = sym
+		v.AddArg(ptr)
+		return true
+	}
 	// match: (ADDconst [0]  x)
 	// cond:
 	// result: x

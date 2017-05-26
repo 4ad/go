@@ -510,6 +510,9 @@
 (NEW (CMPconst [0] (GreaterThanF cc)) yes no) -> (GF cc yes no)
 (NEW (CMPconst [0] (GreaterEqualF cc)) yes no) -> (GEF cc yes no)
 
+// fold offset into address
+(ADDconst [off1] (MOVDaddr [off2] {sym} ptr)) -> (MOVDaddr [off1+off2] {sym} ptr)
+
 // remove redundant *const ops
 (ADDconst [0]  x) -> x
 (SUBconst [0]  x) -> x
