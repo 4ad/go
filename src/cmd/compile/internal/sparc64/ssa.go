@@ -675,7 +675,7 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p5 := gc.Prog(sparc64.ACMP)
 		p5.From.Type = obj.TYPE_REG
 		p5.From.Reg = gc.SSARegNum(v.Args[2])
-		p5.Reg = gc.SSARegNum(v.Args[0])
+		p5.Reg = gc.SSARegNum(v.Args[1])
 		p6 := gc.Prog(sparc64.ABLED)
 		p6.To.Type = obj.TYPE_BRANCH
 		gc.Patch(p6, p)
