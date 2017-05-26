@@ -3520,6 +3520,53 @@ func rewriteValueSPARC64_OpMove(v *Value, config *Config) bool {
 		return true
 	}
 	// match: (Move [s] dst src mem)
+	// cond: SizeAndAlign(s).Size() == 32
+	// result: (MOVDstore [24] dst (MOVDload [24] src mem) 		(MOVDstore [16] dst (MOVDload [16] src mem) 			(MOVDstore [8] dst (MOVDload [8] src mem) 				(MOVDstore dst (MOVDload src mem) mem))))
+	for {
+		s := v.AuxInt
+		dst := v.Args[0]
+		src := v.Args[1]
+		mem := v.Args[2]
+		if !(SizeAndAlign(s).Size() == 32) {
+			break
+		}
+		v.reset(OpSPARC64MOVDstore)
+		v.AuxInt = 24
+		v.AddArg(dst)
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVDload, config.fe.TypeUInt64())
+		v0.AuxInt = 24
+		v0.AddArg(src)
+		v0.AddArg(mem)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpSPARC64MOVDstore, TypeMem)
+		v1.AuxInt = 16
+		v1.AddArg(dst)
+		v2 := b.NewValue0(v.Line, OpSPARC64MOVDload, config.fe.TypeUInt64())
+		v2.AuxInt = 16
+		v2.AddArg(src)
+		v2.AddArg(mem)
+		v1.AddArg(v2)
+		v3 := b.NewValue0(v.Line, OpSPARC64MOVDstore, TypeMem)
+		v3.AuxInt = 8
+		v3.AddArg(dst)
+		v4 := b.NewValue0(v.Line, OpSPARC64MOVDload, config.fe.TypeUInt64())
+		v4.AuxInt = 8
+		v4.AddArg(src)
+		v4.AddArg(mem)
+		v3.AddArg(v4)
+		v5 := b.NewValue0(v.Line, OpSPARC64MOVDstore, TypeMem)
+		v5.AddArg(dst)
+		v6 := b.NewValue0(v.Line, OpSPARC64MOVDload, config.fe.TypeUInt64())
+		v6.AddArg(src)
+		v6.AddArg(mem)
+		v5.AddArg(v6)
+		v5.AddArg(mem)
+		v3.AddArg(v5)
+		v1.AddArg(v3)
+		v.AddArg(v1)
+		return true
+	}
+	// match: (Move [s] dst src mem)
 	// cond: SizeAndAlign(s).Size()%8 != 0 && SizeAndAlign(s).Size() > 8
 	// result: (Move [MakeSizeAndAlign(SizeAndAlign(s).Size()%8, 1).Int64()] 		(OffPtr <dst.Type> dst [SizeAndAlign(s).Size()-SizeAndAlign(s).Size()%8]) 		(OffPtr <src.Type> src [SizeAndAlign(s).Size()-SizeAndAlign(s).Size()%8]) 		(Move [MakeSizeAndAlign(SizeAndAlign(s).Size()-SizeAndAlign(s).Size()%8, 1).Int64()] dst src mem))
 	for {
@@ -3549,14 +3596,14 @@ func rewriteValueSPARC64_OpMove(v *Value, config *Config) bool {
 		return true
 	}
 	// match: (Move [s] dst src mem)
-	// cond: SizeAndAlign(s).Size() > 24 && SizeAndAlign(s).Size()%8 == 0
+	// cond: SizeAndAlign(s).Size() > 32 && SizeAndAlign(s).Size()%8 == 0
 	// result: (LoweredMove 		dst 		src 		(ADDconst <src.Type> src [SizeAndAlign(s).Size()-moveSize(SizeAndAlign(s).Align(), config)]) 		mem)
 	for {
 		s := v.AuxInt
 		dst := v.Args[0]
 		src := v.Args[1]
 		mem := v.Args[2]
-		if !(SizeAndAlign(s).Size() > 24 && SizeAndAlign(s).Size()%8 == 0) {
+		if !(SizeAndAlign(s).Size() > 32 && SizeAndAlign(s).Size()%8 == 0) {
 			break
 		}
 		v.reset(OpSPARC64LoweredMove)
@@ -5823,6 +5870,45 @@ func rewriteValueSPARC64_OpZero(v *Value, config *Config) bool {
 		return true
 	}
 	// match: (Zero [s] ptr mem)
+	// cond: SizeAndAlign(s).Size() == 32
+	// result: (MOVDstore [24] ptr (MOVDconst [0]) 		(MOVDstore [16] ptr (MOVDconst [0]) 			(MOVDstore [8] ptr (MOVDconst [0]) 				(MOVDstore ptr (MOVDconst [0]) mem))))
+	for {
+		s := v.AuxInt
+		ptr := v.Args[0]
+		mem := v.Args[1]
+		if !(SizeAndAlign(s).Size() == 32) {
+			break
+		}
+		v.reset(OpSPARC64MOVDstore)
+		v.AuxInt = 24
+		v.AddArg(ptr)
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v0.AuxInt = 0
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpSPARC64MOVDstore, TypeMem)
+		v1.AuxInt = 16
+		v1.AddArg(ptr)
+		v2 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v2.AuxInt = 0
+		v1.AddArg(v2)
+		v3 := b.NewValue0(v.Line, OpSPARC64MOVDstore, TypeMem)
+		v3.AuxInt = 8
+		v3.AddArg(ptr)
+		v4 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v4.AuxInt = 0
+		v3.AddArg(v4)
+		v5 := b.NewValue0(v.Line, OpSPARC64MOVDstore, TypeMem)
+		v5.AddArg(ptr)
+		v6 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v6.AuxInt = 0
+		v5.AddArg(v6)
+		v5.AddArg(mem)
+		v3.AddArg(v5)
+		v1.AddArg(v3)
+		v.AddArg(v1)
+		return true
+	}
+	// match: (Zero [s] ptr mem)
 	// cond: SizeAndAlign(s).Size()%8 != 0 && SizeAndAlign(s).Size() > 8
 	// result: (Zero [MakeSizeAndAlign(SizeAndAlign(s).Size()%8, 1).Int64()] 		(OffPtr <ptr.Type> ptr [SizeAndAlign(s).Size()-SizeAndAlign(s).Size()%8]) 		(Zero [MakeSizeAndAlign(SizeAndAlign(s).Size()-SizeAndAlign(s).Size()%8, 1).Int64()] ptr mem))
 	for {
@@ -5846,13 +5932,13 @@ func rewriteValueSPARC64_OpZero(v *Value, config *Config) bool {
 		return true
 	}
 	// match: (Zero [s] ptr mem)
-	// cond: SizeAndAlign(s).Size()%8 == 0 && (SizeAndAlign(s).Size() > 24 || config.noDuffDevice)
+	// cond: SizeAndAlign(s).Size()%8 == 0 && (SizeAndAlign(s).Size() > 32 || config.noDuffDevice)
 	// result: (LoweredZero 		ptr 		(ADDconst <ptr.Type> [SizeAndAlign(s).Size()-moveSize(SizeAndAlign(s).Align(), config)] ptr) 		mem)
 	for {
 		s := v.AuxInt
 		ptr := v.Args[0]
 		mem := v.Args[1]
-		if !(SizeAndAlign(s).Size()%8 == 0 && (SizeAndAlign(s).Size() > 24 || config.noDuffDevice)) {
+		if !(SizeAndAlign(s).Size()%8 == 0 && (SizeAndAlign(s).Size() > 32 || config.noDuffDevice)) {
 			break
 		}
 		v.reset(OpSPARC64LoweredZero)

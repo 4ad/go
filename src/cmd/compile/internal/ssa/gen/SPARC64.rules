@@ -305,6 +305,11 @@
 	(MOVDstore [16] ptr (MOVDconst [0])
 		(MOVDstore [8] ptr (MOVDconst [0])
 			(MOVDstore ptr (MOVDconst [0]) mem)))
+(Zero [s] ptr mem) && SizeAndAlign(s).Size() == 32 ->
+	(MOVDstore [24] ptr (MOVDconst [0])
+		(MOVDstore [16] ptr (MOVDconst [0])
+			(MOVDstore [8] ptr (MOVDconst [0])
+				(MOVDstore ptr (MOVDconst [0]) mem))))
 
 // strip off fractional word zeroing
 (Zero [s] ptr mem) && SizeAndAlign(s).Size()%8 != 0 && SizeAndAlign(s).Size() > 8 ->
@@ -314,7 +319,7 @@
 
 // medium and large zeroing uses a loop; no duff's device implemented yet
 (Zero [s] ptr mem)
-	&& SizeAndAlign(s).Size()%8 == 0 && (SizeAndAlign(s).Size() > 24 || config.noDuffDevice) ->
+	&& SizeAndAlign(s).Size()%8 == 0 && (SizeAndAlign(s).Size() > 32 || config.noDuffDevice) ->
 	(LoweredZero
 		ptr
 		(ADDconst <ptr.Type> [SizeAndAlign(s).Size()-moveSize(SizeAndAlign(s).Align(), config)] ptr)
@@ -350,6 +355,11 @@
 	(MOVDstore [16] dst (MOVDload [16] src mem)
 		(MOVDstore [8] dst (MOVDload [8] src mem)
 			(MOVDstore dst (MOVDload src mem) mem)))
+(Move [s] dst src mem) && SizeAndAlign(s).Size() == 32 ->
+	(MOVDstore [24] dst (MOVDload [24] src mem)
+		(MOVDstore [16] dst (MOVDload [16] src mem)
+			(MOVDstore [8] dst (MOVDload [8] src mem)
+				(MOVDstore dst (MOVDload src mem) mem))))
 
 // strip off fractional word move
 (Move [s] dst src mem) && SizeAndAlign(s).Size()%8 != 0 && SizeAndAlign(s).Size() > 8 ->
@@ -361,7 +371,7 @@
 // large move uses a loop
 // DUFFCOPY is not implemented on SPARC64 (TODO)
 (Move [s] dst src mem)
-	&& SizeAndAlign(s).Size() > 24 && SizeAndAlign(s).Size()%8 == 0 ->
+	&& SizeAndAlign(s).Size() > 32 && SizeAndAlign(s).Size()%8 == 0 ->
 	(LoweredMove
 		dst
 		src
