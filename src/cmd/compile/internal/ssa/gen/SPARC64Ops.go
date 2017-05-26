@@ -296,6 +296,11 @@ func init() {
 			clobberFlags: true,
 		},
 
+		// Scheduler ensures LoweredGetClosurePtr occurs only in entry block,
+		// and sorts it to the very beginning of the block to prevent other
+		// use of CTXT (sparc64.REG_CTXT, the closure pointer)
+		{name: "LoweredGetClosurePtr", reg: regInfo{outputs: []regMask{buildReg("CTXT")}}},
+
 		// MOVDconvert converts between pointers and integers.
 		// We have a special op for this so as to not confuse GC
 		// (particularly stack maps).  It takes a memory arg so it

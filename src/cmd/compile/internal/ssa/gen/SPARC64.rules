@@ -446,6 +446,7 @@
 (IsSliceInBounds idx len) -> (LessEqual64U (CMP idx len))
 
 // pseudo-ops
+(GetClosurePtr) -> (LoweredGetClosurePtr)
 (Convert x mem) -> (MOVDconvert x mem)
 
 // Absorb pseudo-ops into blocks.

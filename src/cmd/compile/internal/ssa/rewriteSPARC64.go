@@ -158,6 +158,8 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpGeq8(v, config)
 	case OpGeq8U:
 		return rewriteValueSPARC64_OpGeq8U(v, config)
+	case OpGetClosurePtr:
+		return rewriteValueSPARC64_OpGetClosurePtr(v, config)
 	case OpGoCall:
 		return rewriteValueSPARC64_OpGoCall(v, config)
 	case OpGreater16:
@@ -1645,6 +1647,17 @@ func rewriteValueSPARC64_OpGeq8U(v *Value, config *Config) bool {
 		v2.AddArg(y)
 		v0.AddArg(v2)
 		v.AddArg(v0)
+		return true
+	}
+}
+func rewriteValueSPARC64_OpGetClosurePtr(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (GetClosurePtr)
+	// cond:
+	// result: (LoweredGetClosurePtr)
+	for {
+		v.reset(OpSPARC64LoweredGetClosurePtr)
 		return true
 	}
 }

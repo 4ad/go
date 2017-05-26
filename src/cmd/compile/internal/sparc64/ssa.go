@@ -858,6 +858,10 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p.From.Offset = v.AuxInt
 		p.Reg = gc.SSARegNum(v.Args[0])
 
+	case ssa.OpSPARC64LoweredGetClosurePtr:
+		// Closure pointer is sparc64.REG_CTXT.
+		gc.CheckLoweredGetClosurePtr(v)
+
 	default:
 		v.Unimplementedf("genValue not implemented: %s", v.LongString())
 	}
