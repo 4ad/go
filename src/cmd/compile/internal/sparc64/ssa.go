@@ -374,13 +374,13 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		if !tt.IsSigned() {
 			p := gc.Prog(storeByType(ft))
 			p.From.Type = obj.TYPE_FCONST
-			p.From.Val = math.Float64frombits(uint64(1<<63))
+			p.From.Val = float64(uint64(1<<63))
 			p.To.Type = obj.TYPE_REG
 			p.To.Reg = sparc64.REG_YTMP
 			p = gc.Prog(sparc64.AFCMPD)
 			p.From.Type = obj.TYPE_REG
-			p.From.Reg = sparc64.REG_YTMP
-			p.Reg = r1
+			p.From.Reg = r1
+			p.Reg = sparc64.REG_YTMP
 			q := gc.Prog(sparc64.AFBG)
 			q.To.Type = obj.TYPE_BRANCH
 			q.To.Val = nil
@@ -390,7 +390,16 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 			p.Reg = sparc64.REG_YTMP
 			p.To.Type = obj.TYPE_REG
 			p.To.Reg = sparc64.REG_YTMP
+			q2 := gc.Prog(obj.AJMP)
+			q2.To.Type = obj.TYPE_BRANCH
+			q2.To.Val = nil
 			gc.Patch(q, gc.Pc)
+			p = gc.Prog(storeByType(ft))
+			p.From.Type = obj.TYPE_REG
+			p.From.Reg = r1
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = sparc64.REG_YTMP
+			gc.Patch(q2, gc.Pc)
 			r1 = sparc64.REG_YTMP
 		}
 
