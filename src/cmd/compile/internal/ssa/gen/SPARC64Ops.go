@@ -114,6 +114,7 @@ func init() {
 		gp2flags    = regInfo{inputs: []regMask{gp, gp}}
 		gpload      = regInfo{inputs: []regMask{gp | sp | sb}, outputs: []regMask{gp}}
 		gpstore     = regInfo{inputs: []regMask{gp | sp | sb, gp | sp | sb}}
+		gpstore0    = regInfo{inputs: []regMask{gp | sp | sb}}
 		fp01        = regInfo{inputs: nil, outputs: []regMask{fp}}
 		fp11        = regInfo{inputs: []regMask{fp}, outputs: []regMask{fp}}
 		fpgp        = regInfo{inputs: []regMask{fp}, outputs: []regMask{gp}}
@@ -176,6 +177,11 @@ func init() {
 		{name: "MOVBstore", argLength: 3, reg: gpstore, asm: "MOVB", aux: "SymOff", typ: "Mem"},
 		{name: "FMOVSstore", argLength: 3, reg: fpstore, aux: "SymOff", asm: "FMOVS", typ: "Mem"}, // store 4 bytes of arg1 to arg0 + auxInt + aux.  arg2=mem.
 		{name: "FMOVDstore", argLength: 3, reg: fpstore, aux: "SymOff", asm: "FMOVD", typ: "Mem"}, // store 8 bytes of arg1 to arg0 + auxInt + aux.  arg2=mem.
+
+		{name: "MOVBstorezero", argLength: 2, reg: gpstore0, aux: "SymOff", asm: "MOVB", typ: "Mem"}, // store 1 byte of zero to arg0 + auxInt + aux.  arg1=mem.
+		{name: "MOVHstorezero", argLength: 2, reg: gpstore0, aux: "SymOff", asm: "MOVH", typ: "Mem"}, // store 2 bytes of zero to arg0 + auxInt + aux.  arg1=mem.
+		{name: "MOVWstorezero", argLength: 2, reg: gpstore0, aux: "SymOff", asm: "MOVW", typ: "Mem"}, // store 4 bytes of zero to arg0 + auxInt + aux.  arg1=mem.
+		{name: "MOVDstorezero", argLength: 2, reg: gpstore0, aux: "SymOff", asm: "MOVD", typ: "Mem"}, // store 8 bytes of zero to arg0 + auxInt + aux.  ar12=mem.
 
 		{name: "MOVDconst", argLength: 0, reg: gp01, aux: "Int64", asm: "MOVD", typ: "UInt64", rematerializeable: true},
 		{name: "MOVWconst", argLength: 0, reg: gp01, aux: "Int32", asm: "MOVW", rematerializeable: true},     // 32 low bits of auxint

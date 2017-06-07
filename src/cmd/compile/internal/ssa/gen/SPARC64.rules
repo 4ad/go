@@ -277,39 +277,39 @@
 
 // zeroing
 (Zero [s] _ mem) && SizeAndAlign(s).Size() == 0 -> mem
-(Zero [s] ptr mem) && SizeAndAlign(s).Size() == 1 -> (MOVBstore ptr (MOVDconst [0]) mem)
-(Zero [s] ptr mem) && SizeAndAlign(s).Size() == 2 -> (MOVHstore ptr (MOVDconst [0]) mem)
-(Zero [s] ptr mem) && SizeAndAlign(s).Size() == 4 -> (MOVWstore ptr (MOVDconst [0]) mem)
-(Zero [s] ptr mem) && SizeAndAlign(s).Size() == 8 -> (MOVDstore ptr (MOVDconst [0]) mem)
+(Zero [s] ptr mem) && SizeAndAlign(s).Size() == 1 -> (MOVBstorezero ptr mem)
+(Zero [s] ptr mem) && SizeAndAlign(s).Size() == 2 -> (MOVHstorezero ptr mem)
+(Zero [s] ptr mem) && SizeAndAlign(s).Size() == 4 -> (MOVWstorezero ptr mem)
+(Zero [s] ptr mem) && SizeAndAlign(s).Size() == 8 -> (MOVDstorezero ptr mem)
 
 (Zero [s] ptr mem) && SizeAndAlign(s).Size() == 3 ->
-	(MOVBstore [2] ptr (MOVDconst [0])
-		(MOVHstore ptr (MOVDconst [0]) mem))
+	(MOVBstorezero [2] ptr
+		(MOVHstorezero [0] ptr mem))
 (Zero [s] ptr mem) && SizeAndAlign(s).Size() == 5 ->
-	(MOVBstore [4] ptr (MOVDconst [0])
-		(MOVWstore ptr (MOVDconst [0]) mem))
+	(MOVBstorezero [4] ptr
+		(MOVWstorezero [0] ptr mem))
 (Zero [s] ptr mem) && SizeAndAlign(s).Size() == 6 ->
-	(MOVHstore [4] ptr (MOVDconst [0])
-		(MOVWstore ptr (MOVDconst [0]) mem))
+	(MOVHstorezero [4] ptr
+		(MOVWstorezero [0] ptr mem))
 (Zero [s] ptr mem) && SizeAndAlign(s).Size() == 7 ->
-	(MOVBstore [6] ptr (MOVDconst [0])
-		(MOVHstore [4] ptr (MOVDconst [0])
-			(MOVWstore ptr (MOVDconst [0]) mem)))
+	(MOVBstorezero [6] ptr
+		(MOVHstorezero [4] ptr
+			(MOVWstorezero [0] ptr mem)))
 (Zero [s] ptr mem) && SizeAndAlign(s).Size() == 12 ->
-	(MOVWstore [8] ptr (MOVDconst [0])
-		(MOVDstore ptr (MOVDconst [0]) mem))
+	(MOVWstorezero [8] ptr
+		(MOVDstorezero [0] ptr mem))
 (Zero [s] ptr mem) && SizeAndAlign(s).Size() == 16 ->
-	(MOVDstore [8] ptr (MOVDconst [0])
-		(MOVDstore ptr (MOVDconst [0]) mem))
+	(MOVDstorezero [8] ptr
+		(MOVDstorezero [0] ptr mem))
 (Zero [s] ptr mem) && SizeAndAlign(s).Size() == 24 ->
-	(MOVDstore [16] ptr (MOVDconst [0])
-		(MOVDstore [8] ptr (MOVDconst [0])
-			(MOVDstore ptr (MOVDconst [0]) mem)))
+	(MOVDstorezero [16] ptr
+		(MOVDstorezero [8] ptr
+			(MOVDstorezero [0] ptr mem)))
 (Zero [s] ptr mem) && SizeAndAlign(s).Size() == 32 ->
-	(MOVDstore [24] ptr (MOVDconst [0])
-		(MOVDstore [16] ptr (MOVDconst [0])
-			(MOVDstore [8] ptr (MOVDconst [0])
-				(MOVDstore ptr (MOVDconst [0]) mem))))
+	(MOVDstorezero [24] ptr
+		(MOVDstorezero [16] ptr
+			(MOVDstorezero [8] ptr
+				(MOVDstorezero [0] ptr mem))))
 
 // strip off fractional word zeroing
 (Zero [s] ptr mem) && SizeAndAlign(s).Size()%8 != 0 && SizeAndAlign(s).Size() > 8 ->
@@ -324,6 +324,16 @@
 		ptr
 		(ADDconst <ptr.Type> [SizeAndAlign(s).Size()-moveSize(SizeAndAlign(s).Align(), config)] ptr)
 		mem)
+
+// store zero
+(MOVBstore [off] {sym} ptr (MOVWconst [0]) mem) -> (MOVBstorezero [off] {sym} ptr mem)
+(MOVBstore [off] {sym} ptr (MOVDconst [0]) mem) -> (MOVBstorezero [off] {sym} ptr mem)
+(MOVHstore [off] {sym} ptr (MOVWconst [0]) mem) -> (MOVHstorezero [off] {sym} ptr mem)
+(MOVHstore [off] {sym} ptr (MOVDconst [0]) mem) -> (MOVHstorezero [off] {sym} ptr mem)
+(MOVWstore [off] {sym} ptr (MOVWconst [0]) mem) -> (MOVWstorezero [off] {sym} ptr mem)
+(MOVWstore [off] {sym} ptr (MOVDconst [0]) mem) -> (MOVWstorezero [off] {sym} ptr mem)
+(MOVDstore [off] {sym} ptr (MOVWconst [0]) mem) -> (MOVDstorezero [off] {sym} ptr mem)
+(MOVDstore [off] {sym} ptr (MOVDconst [0]) mem) -> (MOVDstorezero [off] {sym} ptr mem)
 
 // moves
 (Move [s] _ _ mem) && SizeAndAlign(s).Size() == 0 -> mem
@@ -513,6 +523,18 @@
 
 // fold offset into address
 (ADDconst [off1] (MOVDaddr [off2] {sym} ptr)) -> (MOVDaddr [off1+off2] {sym} ptr)
+
+// fold offsets for storezero
+(MOVBstorezero [off1] {sym} (ADDconst [off2] ptr) mem) -> (MOVBstorezero [off1+off2] {sym} ptr mem)
+(MOVHstorezero [off1] {sym} (ADDconst [off2] ptr) mem)
+	&& (off1+off2)%2==0 || off1+off2<4096 && off1+off2>-4097 && !isArg(sym) && !isAuto(sym) ->
+	(MOVHstorezero [off1+off2] {sym} ptr mem)
+(MOVWstorezero [off1] {sym} (ADDconst [off2] ptr) mem)
+	&& (off1+off2)%4==0 || off1+off2<4096 && off1+off2>-4097 && !isArg(sym) && !isAuto(sym) ->
+	(MOVWstorezero [off1+off2] {sym} ptr mem)
+(MOVDstorezero [off1] {sym} (ADDconst [off2] ptr) mem)
+	&& (off1+off2)%8==0 || off1+off2<4096 && off1+off2>-4097 && !isArg(sym) && !isAuto(sym) ->
+	(MOVDstorezero [off1+off2] {sym} ptr mem)
 
 // remove redundant *const ops
 (ADDconst [0]  x) -> x

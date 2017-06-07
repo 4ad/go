@@ -422,6 +422,22 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpSPARC64ADDconst(v, config)
 	case OpSPARC64ANDconst:
 		return rewriteValueSPARC64_OpSPARC64ANDconst(v, config)
+	case OpSPARC64MOVBstore:
+		return rewriteValueSPARC64_OpSPARC64MOVBstore(v, config)
+	case OpSPARC64MOVBstorezero:
+		return rewriteValueSPARC64_OpSPARC64MOVBstorezero(v, config)
+	case OpSPARC64MOVDstore:
+		return rewriteValueSPARC64_OpSPARC64MOVDstore(v, config)
+	case OpSPARC64MOVDstorezero:
+		return rewriteValueSPARC64_OpSPARC64MOVDstorezero(v, config)
+	case OpSPARC64MOVHstore:
+		return rewriteValueSPARC64_OpSPARC64MOVHstore(v, config)
+	case OpSPARC64MOVHstorezero:
+		return rewriteValueSPARC64_OpSPARC64MOVHstorezero(v, config)
+	case OpSPARC64MOVWstore:
+		return rewriteValueSPARC64_OpSPARC64MOVWstore(v, config)
+	case OpSPARC64MOVWstorezero:
+		return rewriteValueSPARC64_OpSPARC64MOVWstorezero(v, config)
 	case OpSPARC64ORconst:
 		return rewriteValueSPARC64_OpSPARC64ORconst(v, config)
 	case OpSPARC64SUBconst:
@@ -5093,6 +5109,311 @@ func rewriteValueSPARC64_OpSPARC64ANDconst(v *Value, config *Config) bool {
 	}
 	return false
 }
+func rewriteValueSPARC64_OpSPARC64MOVBstore(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (MOVBstore [off] {sym} ptr (MOVWconst [0]) mem)
+	// cond:
+	// result: (MOVBstorezero [off] {sym} ptr mem)
+	for {
+		off := v.AuxInt
+		sym := v.Aux
+		ptr := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVWconst {
+			break
+		}
+		if v_1.AuxInt != 0 {
+			break
+		}
+		mem := v.Args[2]
+		v.reset(OpSPARC64MOVBstorezero)
+		v.AuxInt = off
+		v.Aux = sym
+		v.AddArg(ptr)
+		v.AddArg(mem)
+		return true
+	}
+	// match: (MOVBstore [off] {sym} ptr (MOVDconst [0]) mem)
+	// cond:
+	// result: (MOVBstorezero [off] {sym} ptr mem)
+	for {
+		off := v.AuxInt
+		sym := v.Aux
+		ptr := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		if v_1.AuxInt != 0 {
+			break
+		}
+		mem := v.Args[2]
+		v.reset(OpSPARC64MOVBstorezero)
+		v.AuxInt = off
+		v.Aux = sym
+		v.AddArg(ptr)
+		v.AddArg(mem)
+		return true
+	}
+	return false
+}
+func rewriteValueSPARC64_OpSPARC64MOVBstorezero(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (MOVBstorezero [off1] {sym} (ADDconst [off2] ptr) mem)
+	// cond:
+	// result: (MOVBstorezero [off1+off2] {sym} ptr mem)
+	for {
+		off1 := v.AuxInt
+		sym := v.Aux
+		v_0 := v.Args[0]
+		if v_0.Op != OpSPARC64ADDconst {
+			break
+		}
+		off2 := v_0.AuxInt
+		ptr := v_0.Args[0]
+		mem := v.Args[1]
+		v.reset(OpSPARC64MOVBstorezero)
+		v.AuxInt = off1 + off2
+		v.Aux = sym
+		v.AddArg(ptr)
+		v.AddArg(mem)
+		return true
+	}
+	return false
+}
+func rewriteValueSPARC64_OpSPARC64MOVDstore(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (MOVDstore [off] {sym} ptr (MOVWconst [0]) mem)
+	// cond:
+	// result: (MOVDstorezero [off] {sym} ptr mem)
+	for {
+		off := v.AuxInt
+		sym := v.Aux
+		ptr := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVWconst {
+			break
+		}
+		if v_1.AuxInt != 0 {
+			break
+		}
+		mem := v.Args[2]
+		v.reset(OpSPARC64MOVDstorezero)
+		v.AuxInt = off
+		v.Aux = sym
+		v.AddArg(ptr)
+		v.AddArg(mem)
+		return true
+	}
+	// match: (MOVDstore [off] {sym} ptr (MOVDconst [0]) mem)
+	// cond:
+	// result: (MOVDstorezero [off] {sym} ptr mem)
+	for {
+		off := v.AuxInt
+		sym := v.Aux
+		ptr := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		if v_1.AuxInt != 0 {
+			break
+		}
+		mem := v.Args[2]
+		v.reset(OpSPARC64MOVDstorezero)
+		v.AuxInt = off
+		v.Aux = sym
+		v.AddArg(ptr)
+		v.AddArg(mem)
+		return true
+	}
+	return false
+}
+func rewriteValueSPARC64_OpSPARC64MOVDstorezero(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (MOVDstorezero [off1] {sym} (ADDconst [off2] ptr) mem)
+	// cond: (off1+off2)%8==0 || off1+off2<4096 && off1+off2>-4097 && !isArg(sym) && !isAuto(sym)
+	// result: (MOVDstorezero [off1+off2] {sym} ptr mem)
+	for {
+		off1 := v.AuxInt
+		sym := v.Aux
+		v_0 := v.Args[0]
+		if v_0.Op != OpSPARC64ADDconst {
+			break
+		}
+		off2 := v_0.AuxInt
+		ptr := v_0.Args[0]
+		mem := v.Args[1]
+		if !((off1+off2)%8 == 0 || off1+off2 < 4096 && off1+off2 > -4097 && !isArg(sym) && !isAuto(sym)) {
+			break
+		}
+		v.reset(OpSPARC64MOVDstorezero)
+		v.AuxInt = off1 + off2
+		v.Aux = sym
+		v.AddArg(ptr)
+		v.AddArg(mem)
+		return true
+	}
+	return false
+}
+func rewriteValueSPARC64_OpSPARC64MOVHstore(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (MOVHstore [off] {sym} ptr (MOVWconst [0]) mem)
+	// cond:
+	// result: (MOVHstorezero [off] {sym} ptr mem)
+	for {
+		off := v.AuxInt
+		sym := v.Aux
+		ptr := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVWconst {
+			break
+		}
+		if v_1.AuxInt != 0 {
+			break
+		}
+		mem := v.Args[2]
+		v.reset(OpSPARC64MOVHstorezero)
+		v.AuxInt = off
+		v.Aux = sym
+		v.AddArg(ptr)
+		v.AddArg(mem)
+		return true
+	}
+	// match: (MOVHstore [off] {sym} ptr (MOVDconst [0]) mem)
+	// cond:
+	// result: (MOVHstorezero [off] {sym} ptr mem)
+	for {
+		off := v.AuxInt
+		sym := v.Aux
+		ptr := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		if v_1.AuxInt != 0 {
+			break
+		}
+		mem := v.Args[2]
+		v.reset(OpSPARC64MOVHstorezero)
+		v.AuxInt = off
+		v.Aux = sym
+		v.AddArg(ptr)
+		v.AddArg(mem)
+		return true
+	}
+	return false
+}
+func rewriteValueSPARC64_OpSPARC64MOVHstorezero(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (MOVHstorezero [off1] {sym} (ADDconst [off2] ptr) mem)
+	// cond: (off1+off2)%2==0 || off1+off2<4096 && off1+off2>-4097 && !isArg(sym) && !isAuto(sym)
+	// result: (MOVHstorezero [off1+off2] {sym} ptr mem)
+	for {
+		off1 := v.AuxInt
+		sym := v.Aux
+		v_0 := v.Args[0]
+		if v_0.Op != OpSPARC64ADDconst {
+			break
+		}
+		off2 := v_0.AuxInt
+		ptr := v_0.Args[0]
+		mem := v.Args[1]
+		if !((off1+off2)%2 == 0 || off1+off2 < 4096 && off1+off2 > -4097 && !isArg(sym) && !isAuto(sym)) {
+			break
+		}
+		v.reset(OpSPARC64MOVHstorezero)
+		v.AuxInt = off1 + off2
+		v.Aux = sym
+		v.AddArg(ptr)
+		v.AddArg(mem)
+		return true
+	}
+	return false
+}
+func rewriteValueSPARC64_OpSPARC64MOVWstore(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (MOVWstore [off] {sym} ptr (MOVWconst [0]) mem)
+	// cond:
+	// result: (MOVWstorezero [off] {sym} ptr mem)
+	for {
+		off := v.AuxInt
+		sym := v.Aux
+		ptr := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVWconst {
+			break
+		}
+		if v_1.AuxInt != 0 {
+			break
+		}
+		mem := v.Args[2]
+		v.reset(OpSPARC64MOVWstorezero)
+		v.AuxInt = off
+		v.Aux = sym
+		v.AddArg(ptr)
+		v.AddArg(mem)
+		return true
+	}
+	// match: (MOVWstore [off] {sym} ptr (MOVDconst [0]) mem)
+	// cond:
+	// result: (MOVWstorezero [off] {sym} ptr mem)
+	for {
+		off := v.AuxInt
+		sym := v.Aux
+		ptr := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		if v_1.AuxInt != 0 {
+			break
+		}
+		mem := v.Args[2]
+		v.reset(OpSPARC64MOVWstorezero)
+		v.AuxInt = off
+		v.Aux = sym
+		v.AddArg(ptr)
+		v.AddArg(mem)
+		return true
+	}
+	return false
+}
+func rewriteValueSPARC64_OpSPARC64MOVWstorezero(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (MOVWstorezero [off1] {sym} (ADDconst [off2] ptr) mem)
+	// cond: (off1+off2)%4==0 || off1+off2<4096 && off1+off2>-4097 && !isArg(sym) && !isAuto(sym)
+	// result: (MOVWstorezero [off1+off2] {sym} ptr mem)
+	for {
+		off1 := v.AuxInt
+		sym := v.Aux
+		v_0 := v.Args[0]
+		if v_0.Op != OpSPARC64ADDconst {
+			break
+		}
+		off2 := v_0.AuxInt
+		ptr := v_0.Args[0]
+		mem := v.Args[1]
+		if !((off1+off2)%4 == 0 || off1+off2 < 4096 && off1+off2 > -4097 && !isArg(sym) && !isAuto(sym)) {
+			break
+		}
+		v.reset(OpSPARC64MOVWstorezero)
+		v.AuxInt = off1 + off2
+		v.Aux = sym
+		v.AddArg(ptr)
+		v.AddArg(mem)
+		return true
+	}
+	return false
+}
 func rewriteValueSPARC64_OpSPARC64ORconst(v *Value, config *Config) bool {
 	b := v.Block
 	_ = b
@@ -5641,7 +5962,7 @@ func rewriteValueSPARC64_OpZero(v *Value, config *Config) bool {
 	}
 	// match: (Zero [s] ptr mem)
 	// cond: SizeAndAlign(s).Size() == 1
-	// result: (MOVBstore ptr (MOVDconst [0]) mem)
+	// result: (MOVBstorezero ptr mem)
 	for {
 		s := v.AuxInt
 		ptr := v.Args[0]
@@ -5649,17 +5970,14 @@ func rewriteValueSPARC64_OpZero(v *Value, config *Config) bool {
 		if !(SizeAndAlign(s).Size() == 1) {
 			break
 		}
-		v.reset(OpSPARC64MOVBstore)
+		v.reset(OpSPARC64MOVBstorezero)
 		v.AddArg(ptr)
-		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
-		v0.AuxInt = 0
-		v.AddArg(v0)
 		v.AddArg(mem)
 		return true
 	}
 	// match: (Zero [s] ptr mem)
 	// cond: SizeAndAlign(s).Size() == 2
-	// result: (MOVHstore ptr (MOVDconst [0]) mem)
+	// result: (MOVHstorezero ptr mem)
 	for {
 		s := v.AuxInt
 		ptr := v.Args[0]
@@ -5667,17 +5985,14 @@ func rewriteValueSPARC64_OpZero(v *Value, config *Config) bool {
 		if !(SizeAndAlign(s).Size() == 2) {
 			break
 		}
-		v.reset(OpSPARC64MOVHstore)
+		v.reset(OpSPARC64MOVHstorezero)
 		v.AddArg(ptr)
-		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
-		v0.AuxInt = 0
-		v.AddArg(v0)
 		v.AddArg(mem)
 		return true
 	}
 	// match: (Zero [s] ptr mem)
 	// cond: SizeAndAlign(s).Size() == 4
-	// result: (MOVWstore ptr (MOVDconst [0]) mem)
+	// result: (MOVWstorezero ptr mem)
 	for {
 		s := v.AuxInt
 		ptr := v.Args[0]
@@ -5685,17 +6000,14 @@ func rewriteValueSPARC64_OpZero(v *Value, config *Config) bool {
 		if !(SizeAndAlign(s).Size() == 4) {
 			break
 		}
-		v.reset(OpSPARC64MOVWstore)
+		v.reset(OpSPARC64MOVWstorezero)
 		v.AddArg(ptr)
-		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
-		v0.AuxInt = 0
-		v.AddArg(v0)
 		v.AddArg(mem)
 		return true
 	}
 	// match: (Zero [s] ptr mem)
 	// cond: SizeAndAlign(s).Size() == 8
-	// result: (MOVDstore ptr (MOVDconst [0]) mem)
+	// result: (MOVDstorezero ptr mem)
 	for {
 		s := v.AuxInt
 		ptr := v.Args[0]
@@ -5703,17 +6015,14 @@ func rewriteValueSPARC64_OpZero(v *Value, config *Config) bool {
 		if !(SizeAndAlign(s).Size() == 8) {
 			break
 		}
-		v.reset(OpSPARC64MOVDstore)
+		v.reset(OpSPARC64MOVDstorezero)
 		v.AddArg(ptr)
-		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
-		v0.AuxInt = 0
-		v.AddArg(v0)
 		v.AddArg(mem)
 		return true
 	}
 	// match: (Zero [s] ptr mem)
 	// cond: SizeAndAlign(s).Size() == 3
-	// result: (MOVBstore [2] ptr (MOVDconst [0]) 		(MOVHstore ptr (MOVDconst [0]) mem))
+	// result: (MOVBstorezero [2] ptr 		(MOVHstorezero [0] ptr mem))
 	for {
 		s := v.AuxInt
 		ptr := v.Args[0]
@@ -5721,24 +6030,19 @@ func rewriteValueSPARC64_OpZero(v *Value, config *Config) bool {
 		if !(SizeAndAlign(s).Size() == 3) {
 			break
 		}
-		v.reset(OpSPARC64MOVBstore)
+		v.reset(OpSPARC64MOVBstorezero)
 		v.AuxInt = 2
 		v.AddArg(ptr)
-		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVHstorezero, TypeMem)
 		v0.AuxInt = 0
+		v0.AddArg(ptr)
+		v0.AddArg(mem)
 		v.AddArg(v0)
-		v1 := b.NewValue0(v.Line, OpSPARC64MOVHstore, TypeMem)
-		v1.AddArg(ptr)
-		v2 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
-		v2.AuxInt = 0
-		v1.AddArg(v2)
-		v1.AddArg(mem)
-		v.AddArg(v1)
 		return true
 	}
 	// match: (Zero [s] ptr mem)
 	// cond: SizeAndAlign(s).Size() == 5
-	// result: (MOVBstore [4] ptr (MOVDconst [0]) 		(MOVWstore ptr (MOVDconst [0]) mem))
+	// result: (MOVBstorezero [4] ptr 		(MOVWstorezero [0] ptr mem))
 	for {
 		s := v.AuxInt
 		ptr := v.Args[0]
@@ -5746,24 +6050,19 @@ func rewriteValueSPARC64_OpZero(v *Value, config *Config) bool {
 		if !(SizeAndAlign(s).Size() == 5) {
 			break
 		}
-		v.reset(OpSPARC64MOVBstore)
+		v.reset(OpSPARC64MOVBstorezero)
 		v.AuxInt = 4
 		v.AddArg(ptr)
-		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVWstorezero, TypeMem)
 		v0.AuxInt = 0
+		v0.AddArg(ptr)
+		v0.AddArg(mem)
 		v.AddArg(v0)
-		v1 := b.NewValue0(v.Line, OpSPARC64MOVWstore, TypeMem)
-		v1.AddArg(ptr)
-		v2 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
-		v2.AuxInt = 0
-		v1.AddArg(v2)
-		v1.AddArg(mem)
-		v.AddArg(v1)
 		return true
 	}
 	// match: (Zero [s] ptr mem)
 	// cond: SizeAndAlign(s).Size() == 6
-	// result: (MOVHstore [4] ptr (MOVDconst [0]) 		(MOVWstore ptr (MOVDconst [0]) mem))
+	// result: (MOVHstorezero [4] ptr 		(MOVWstorezero [0] ptr mem))
 	for {
 		s := v.AuxInt
 		ptr := v.Args[0]
@@ -5771,24 +6070,19 @@ func rewriteValueSPARC64_OpZero(v *Value, config *Config) bool {
 		if !(SizeAndAlign(s).Size() == 6) {
 			break
 		}
-		v.reset(OpSPARC64MOVHstore)
+		v.reset(OpSPARC64MOVHstorezero)
 		v.AuxInt = 4
 		v.AddArg(ptr)
-		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVWstorezero, TypeMem)
 		v0.AuxInt = 0
+		v0.AddArg(ptr)
+		v0.AddArg(mem)
 		v.AddArg(v0)
-		v1 := b.NewValue0(v.Line, OpSPARC64MOVWstore, TypeMem)
-		v1.AddArg(ptr)
-		v2 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
-		v2.AuxInt = 0
-		v1.AddArg(v2)
-		v1.AddArg(mem)
-		v.AddArg(v1)
 		return true
 	}
 	// match: (Zero [s] ptr mem)
 	// cond: SizeAndAlign(s).Size() == 7
-	// result: (MOVBstore [6] ptr (MOVDconst [0]) 		(MOVHstore [4] ptr (MOVDconst [0]) 			(MOVWstore ptr (MOVDconst [0]) mem)))
+	// result: (MOVBstorezero [6] ptr 		(MOVHstorezero [4] ptr 			(MOVWstorezero [0] ptr mem)))
 	for {
 		s := v.AuxInt
 		ptr := v.Args[0]
@@ -5796,31 +6090,23 @@ func rewriteValueSPARC64_OpZero(v *Value, config *Config) bool {
 		if !(SizeAndAlign(s).Size() == 7) {
 			break
 		}
-		v.reset(OpSPARC64MOVBstore)
+		v.reset(OpSPARC64MOVBstorezero)
 		v.AuxInt = 6
 		v.AddArg(ptr)
-		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
-		v0.AuxInt = 0
-		v.AddArg(v0)
-		v1 := b.NewValue0(v.Line, OpSPARC64MOVHstore, TypeMem)
-		v1.AuxInt = 4
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVHstorezero, TypeMem)
+		v0.AuxInt = 4
+		v0.AddArg(ptr)
+		v1 := b.NewValue0(v.Line, OpSPARC64MOVWstorezero, TypeMem)
+		v1.AuxInt = 0
 		v1.AddArg(ptr)
-		v2 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
-		v2.AuxInt = 0
-		v1.AddArg(v2)
-		v3 := b.NewValue0(v.Line, OpSPARC64MOVWstore, TypeMem)
-		v3.AddArg(ptr)
-		v4 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
-		v4.AuxInt = 0
-		v3.AddArg(v4)
-		v3.AddArg(mem)
-		v1.AddArg(v3)
-		v.AddArg(v1)
+		v1.AddArg(mem)
+		v0.AddArg(v1)
+		v.AddArg(v0)
 		return true
 	}
 	// match: (Zero [s] ptr mem)
 	// cond: SizeAndAlign(s).Size() == 12
-	// result: (MOVWstore [8] ptr (MOVDconst [0]) 		(MOVDstore ptr (MOVDconst [0]) mem))
+	// result: (MOVWstorezero [8] ptr 		(MOVDstorezero [0] ptr mem))
 	for {
 		s := v.AuxInt
 		ptr := v.Args[0]
@@ -5828,24 +6114,19 @@ func rewriteValueSPARC64_OpZero(v *Value, config *Config) bool {
 		if !(SizeAndAlign(s).Size() == 12) {
 			break
 		}
-		v.reset(OpSPARC64MOVWstore)
+		v.reset(OpSPARC64MOVWstorezero)
 		v.AuxInt = 8
 		v.AddArg(ptr)
-		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVDstorezero, TypeMem)
 		v0.AuxInt = 0
+		v0.AddArg(ptr)
+		v0.AddArg(mem)
 		v.AddArg(v0)
-		v1 := b.NewValue0(v.Line, OpSPARC64MOVDstore, TypeMem)
-		v1.AddArg(ptr)
-		v2 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
-		v2.AuxInt = 0
-		v1.AddArg(v2)
-		v1.AddArg(mem)
-		v.AddArg(v1)
 		return true
 	}
 	// match: (Zero [s] ptr mem)
 	// cond: SizeAndAlign(s).Size() == 16
-	// result: (MOVDstore [8] ptr (MOVDconst [0]) 		(MOVDstore ptr (MOVDconst [0]) mem))
+	// result: (MOVDstorezero [8] ptr 		(MOVDstorezero [0] ptr mem))
 	for {
 		s := v.AuxInt
 		ptr := v.Args[0]
@@ -5853,24 +6134,19 @@ func rewriteValueSPARC64_OpZero(v *Value, config *Config) bool {
 		if !(SizeAndAlign(s).Size() == 16) {
 			break
 		}
-		v.reset(OpSPARC64MOVDstore)
+		v.reset(OpSPARC64MOVDstorezero)
 		v.AuxInt = 8
 		v.AddArg(ptr)
-		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVDstorezero, TypeMem)
 		v0.AuxInt = 0
+		v0.AddArg(ptr)
+		v0.AddArg(mem)
 		v.AddArg(v0)
-		v1 := b.NewValue0(v.Line, OpSPARC64MOVDstore, TypeMem)
-		v1.AddArg(ptr)
-		v2 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
-		v2.AuxInt = 0
-		v1.AddArg(v2)
-		v1.AddArg(mem)
-		v.AddArg(v1)
 		return true
 	}
 	// match: (Zero [s] ptr mem)
 	// cond: SizeAndAlign(s).Size() == 24
-	// result: (MOVDstore [16] ptr (MOVDconst [0]) 		(MOVDstore [8] ptr (MOVDconst [0]) 			(MOVDstore ptr (MOVDconst [0]) mem)))
+	// result: (MOVDstorezero [16] ptr 		(MOVDstorezero [8] ptr 			(MOVDstorezero [0] ptr mem)))
 	for {
 		s := v.AuxInt
 		ptr := v.Args[0]
@@ -5878,31 +6154,23 @@ func rewriteValueSPARC64_OpZero(v *Value, config *Config) bool {
 		if !(SizeAndAlign(s).Size() == 24) {
 			break
 		}
-		v.reset(OpSPARC64MOVDstore)
+		v.reset(OpSPARC64MOVDstorezero)
 		v.AuxInt = 16
 		v.AddArg(ptr)
-		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
-		v0.AuxInt = 0
-		v.AddArg(v0)
-		v1 := b.NewValue0(v.Line, OpSPARC64MOVDstore, TypeMem)
-		v1.AuxInt = 8
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVDstorezero, TypeMem)
+		v0.AuxInt = 8
+		v0.AddArg(ptr)
+		v1 := b.NewValue0(v.Line, OpSPARC64MOVDstorezero, TypeMem)
+		v1.AuxInt = 0
 		v1.AddArg(ptr)
-		v2 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
-		v2.AuxInt = 0
-		v1.AddArg(v2)
-		v3 := b.NewValue0(v.Line, OpSPARC64MOVDstore, TypeMem)
-		v3.AddArg(ptr)
-		v4 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
-		v4.AuxInt = 0
-		v3.AddArg(v4)
-		v3.AddArg(mem)
-		v1.AddArg(v3)
-		v.AddArg(v1)
+		v1.AddArg(mem)
+		v0.AddArg(v1)
+		v.AddArg(v0)
 		return true
 	}
 	// match: (Zero [s] ptr mem)
 	// cond: SizeAndAlign(s).Size() == 32
-	// result: (MOVDstore [24] ptr (MOVDconst [0]) 		(MOVDstore [16] ptr (MOVDconst [0]) 			(MOVDstore [8] ptr (MOVDconst [0]) 				(MOVDstore ptr (MOVDconst [0]) mem))))
+	// result: (MOVDstorezero [24] ptr 		(MOVDstorezero [16] ptr 			(MOVDstorezero [8] ptr 				(MOVDstorezero [0] ptr mem))))
 	for {
 		s := v.AuxInt
 		ptr := v.Args[0]
@@ -5910,33 +6178,22 @@ func rewriteValueSPARC64_OpZero(v *Value, config *Config) bool {
 		if !(SizeAndAlign(s).Size() == 32) {
 			break
 		}
-		v.reset(OpSPARC64MOVDstore)
+		v.reset(OpSPARC64MOVDstorezero)
 		v.AuxInt = 24
 		v.AddArg(ptr)
-		v0 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
-		v0.AuxInt = 0
-		v.AddArg(v0)
-		v1 := b.NewValue0(v.Line, OpSPARC64MOVDstore, TypeMem)
-		v1.AuxInt = 16
+		v0 := b.NewValue0(v.Line, OpSPARC64MOVDstorezero, TypeMem)
+		v0.AuxInt = 16
+		v0.AddArg(ptr)
+		v1 := b.NewValue0(v.Line, OpSPARC64MOVDstorezero, TypeMem)
+		v1.AuxInt = 8
 		v1.AddArg(ptr)
-		v2 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
+		v2 := b.NewValue0(v.Line, OpSPARC64MOVDstorezero, TypeMem)
 		v2.AuxInt = 0
+		v2.AddArg(ptr)
+		v2.AddArg(mem)
 		v1.AddArg(v2)
-		v3 := b.NewValue0(v.Line, OpSPARC64MOVDstore, TypeMem)
-		v3.AuxInt = 8
-		v3.AddArg(ptr)
-		v4 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
-		v4.AuxInt = 0
-		v3.AddArg(v4)
-		v5 := b.NewValue0(v.Line, OpSPARC64MOVDstore, TypeMem)
-		v5.AddArg(ptr)
-		v6 := b.NewValue0(v.Line, OpSPARC64MOVDconst, config.fe.TypeUInt64())
-		v6.AuxInt = 0
-		v5.AddArg(v6)
-		v5.AddArg(mem)
-		v3.AddArg(v5)
-		v1.AddArg(v3)
-		v.AddArg(v1)
+		v0.AddArg(v1)
+		v.AddArg(v0)
 		return true
 	}
 	// match: (Zero [s] ptr mem)

@@ -1520,6 +1520,10 @@ const (
 	OpSPARC64MOVBstore
 	OpSPARC64FMOVSstore
 	OpSPARC64FMOVDstore
+	OpSPARC64MOVBstorezero
+	OpSPARC64MOVHstorezero
+	OpSPARC64MOVWstorezero
+	OpSPARC64MOVDstorezero
 	OpSPARC64MOVDconst
 	OpSPARC64MOVWconst
 	OpSPARC64FMOVSconst
@@ -18272,6 +18276,50 @@ var opcodeTable = [...]opInfo{
 		reg: regInfo{
 			inputs: []inputInfo{
 				{1, 549722259456},  // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
+				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+			},
+		},
+	},
+	{
+		name:    "MOVBstorezero",
+		auxType: auxSymOff,
+		argLen:  2,
+		asm:     sparc64.AMOVB,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+			},
+		},
+	},
+	{
+		name:    "MOVHstorezero",
+		auxType: auxSymOff,
+		argLen:  2,
+		asm:     sparc64.AMOVH,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+			},
+		},
+	},
+	{
+		name:    "MOVWstorezero",
+		auxType: auxSymOff,
+		argLen:  2,
+		asm:     sparc64.AMOVW,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+			},
+		},
+	},
+	{
+		name:    "MOVDstorezero",
+		auxType: auxSymOff,
+		argLen:  2,
+		asm:     sparc64.AMOVD,
+		reg: regInfo{
+			inputs: []inputInfo{
 				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
 			},
 		},

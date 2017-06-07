@@ -624,6 +624,17 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p.To.Reg = gc.SSARegNum(v.Args[0])
 		gc.AddAux(&p.To, v)
 
+	case ssa.OpSPARC64MOVBstorezero,
+		ssa.OpSPARC64MOVHstorezero,
+		ssa.OpSPARC64MOVWstorezero,
+		ssa.OpSPARC64MOVDstorezero:
+		p := gc.Prog(v.Op.Asm())
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = sparc64.REG_ZR
+		p.To.Type = obj.TYPE_MEM
+		p.To.Reg = gc.SSARegNum(v.Args[0])
+		gc.AddAux(&p.To, v)
+
 	case ssa.OpSPARC64LoweredZero:
 		// loop:
 		// 	MOVD	ZR, (RT1)
@@ -765,7 +776,8 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 				ssa.OpSPARC64FMOVSload, ssa.OpSPARC64FMOVDload,
 				ssa.OpSPARC64MOVWload, ssa.OpSPARC64MOVUWload, ssa.OpSPARC64MOVDload,
 				ssa.OpSPARC64FMOVSstore, ssa.OpSPARC64FMOVDstore,
-				ssa.OpSPARC64MOVBstore, ssa.OpSPARC64MOVHstore, ssa.OpSPARC64MOVWstore, ssa.OpSPARC64MOVDstore:
+				ssa.OpSPARC64MOVBstore, ssa.OpSPARC64MOVHstore, ssa.OpSPARC64MOVWstore, ssa.OpSPARC64MOVDstore,
+				ssa.OpSPARC64MOVBstorezero, ssa.OpSPARC64MOVHstorezero, ssa.OpSPARC64MOVWstorezero, ssa.OpSPARC64MOVDstorezero:
 				// arg0 is ptr, auxint is offset (atomic ops have auxint 0)
 				if w.Args[0] == v.Args[0] && w.Aux == nil && w.AuxInt >= 0 && w.AuxInt < minZeroPage {
 					if gc.Debug_checknil != 0 && int(v.Line) > 1 {
