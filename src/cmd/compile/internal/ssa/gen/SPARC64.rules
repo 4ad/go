@@ -536,6 +536,14 @@
 	&& (off1+off2)%8==0 || off1+off2<4096 && off1+off2>-4097 && !isArg(sym) && !isAuto(sym) ->
 	(MOVDstorezero [off1+off2] {sym} ptr mem)
 
+// generic simplifications
+(ADD x (NEG y)) -> (SUB x y)
+(ADD (NEG y) x) -> (SUB x y)
+(SUB x x) -> (MOVDconst [0])
+(AND x x) -> x
+(OR  x x) -> x
+(XOR x x) -> (MOVDconst [0])
+
 // remove redundant *const ops
 (ADDconst [0]  x) -> x
 (SUBconst [0]  x) -> x
@@ -546,5 +554,44 @@
 (XORconst [0]  x) -> x
 
 // fold constant into arithmatic ops
+(ADD (MOVDconst [c]) x) -> (ADDconst [c] x)
+(ADD x (MOVDconst [c])) -> (ADDconst [c] x)
+(SUB x (MOVDconst [c])) -> (SUBconst [c] x)
+(AND (MOVDconst [c]) x) -> (ANDconst [c] x)
+(AND x (MOVDconst [c])) -> (ANDconst [c] x)
+(OR  (MOVDconst [c]) x) -> (ORconst  [c] x)
+(OR  x (MOVDconst [c])) -> (ORconst  [c] x)
+(XOR (MOVDconst [c]) x) -> (XORconst [c] x)
+(XOR x (MOVDconst [c])) -> (XORconst [c] x)
+
+(ADD (MOVWconst [c]) x) -> (ADDconst [c] x)
+(ADD x (MOVWconst [c])) -> (ADDconst [c] x)
+(SUB x (MOVWconst [c])) -> (SUBconst [c] x)
+(AND (MOVWconst [c]) x) -> (ANDconst [c] x)
+(AND x (MOVWconst [c])) -> (ANDconst [c] x)
+(OR  (MOVWconst [c]) x) -> (ORconst  [c] x)
+(OR  x (MOVWconst [c])) -> (ORconst  [c] x)
+(XOR (MOVWconst [c]) x) -> (XORconst [c] x)
+(XOR x (MOVWconst [c])) -> (XORconst [c] x)
+
+(SLL x (MOVDconst [c])) -> (SLLconst x [c&63]) // Note: I don't think we ever generate bad constant shifts (i.e. c>=64)
+(SRL x (MOVDconst [c])) -> (SRLconst x [c&63])
+(SRA x (MOVDconst [c])) -> (SRAconst x [c&63])
+
+(SLL x (MOVWconst [c])) -> (SLLconst x [c&63]) // Note: I don't think we ever generate bad constant shifts (i.e. c>=64)
+(SRL x (MOVWconst [c])) -> (SRLconst x [c&63])
+(SRA x (MOVWconst [c])) -> (SRAconst x [c&63])
+
 (CMP x (MOVDconst [c])) -> (CMPconst [c] x)
 (CMP x (MOVWconst [c])) -> (CMPconst [c] x)
+
+// generic constant folding
+(ADDconst [c] (MOVDconst [d]))  -> (MOVDconst [c+d])
+(ADDconst [c] (MOVWconst [d]))  -> (MOVWconst [c+d])
+(ADDconst [c] (ADDconst [d] x)) -> (ADDconst [c+d] x)
+(ADDconst [c] (SUBconst [d] x)) -> (ADDconst [c-d] x)
+
+(SUBconst [c] (MOVDconst [d]))  -> (MOVDconst [d-c])
+(SUBconst [c] (MOVWconst [d]))  -> (MOVWconst [d-c])
+(SUBconst [c] (SUBconst [d] x)) -> (ADDconst [-c-d] x)
+(SUBconst [c] (ADDconst [d] x)) -> (ADDconst [-c+d] x)
