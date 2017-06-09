@@ -422,6 +422,8 @@ func rewriteValueSPARC64(v *Value, config *Config) bool {
 		return rewriteValueSPARC64_OpSPARC64ADDconst(v, config)
 	case OpSPARC64ANDconst:
 		return rewriteValueSPARC64_OpSPARC64ANDconst(v, config)
+	case OpSPARC64CMP:
+		return rewriteValueSPARC64_OpSPARC64CMP(v, config)
 	case OpSPARC64MOVBstore:
 		return rewriteValueSPARC64_OpSPARC64MOVBstore(v, config)
 	case OpSPARC64MOVBstorezero:
@@ -5104,6 +5106,41 @@ func rewriteValueSPARC64_OpSPARC64ANDconst(v *Value, config *Config) bool {
 		x := v.Args[0]
 		v.reset(OpCopy)
 		v.Type = x.Type
+		v.AddArg(x)
+		return true
+	}
+	return false
+}
+func rewriteValueSPARC64_OpSPARC64CMP(v *Value, config *Config) bool {
+	b := v.Block
+	_ = b
+	// match: (CMP x (MOVDconst [c]))
+	// cond:
+	// result: (CMPconst [c] x)
+	for {
+		x := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVDconst {
+			break
+		}
+		c := v_1.AuxInt
+		v.reset(OpSPARC64CMPconst)
+		v.AuxInt = c
+		v.AddArg(x)
+		return true
+	}
+	// match: (CMP x (MOVWconst [c]))
+	// cond:
+	// result: (CMPconst [c] x)
+	for {
+		x := v.Args[0]
+		v_1 := v.Args[1]
+		if v_1.Op != OpSPARC64MOVWconst {
+			break
+		}
+		c := v_1.AuxInt
+		v.reset(OpSPARC64CMPconst)
+		v.AuxInt = c
 		v.AddArg(x)
 		return true
 	}

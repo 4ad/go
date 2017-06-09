@@ -17719,8 +17719,8 @@ var opcodeTable = [...]opInfo{
 		asm:         sparc64.AADD,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-				{1, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{1, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -17733,8 +17733,8 @@ var opcodeTable = [...]opInfo{
 		asm:    sparc64.ASUB,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-				{1, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{1, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -17748,8 +17748,8 @@ var opcodeTable = [...]opInfo{
 		asm:         sparc64.AAND,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-				{1, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{1, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -17763,8 +17763,8 @@ var opcodeTable = [...]opInfo{
 		asm:         sparc64.AOR,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-				{1, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{1, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -17778,8 +17778,8 @@ var opcodeTable = [...]opInfo{
 		asm:         sparc64.AXOR,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-				{1, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{1, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -17793,7 +17793,7 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.AADD,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 1099528403967}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SP
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -17807,7 +17807,7 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.ASUB,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -17821,7 +17821,7 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.AAND,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -17835,7 +17835,7 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.AOR,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -17849,7 +17849,7 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.AXOR,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -17863,8 +17863,8 @@ var opcodeTable = [...]opInfo{
 		asm:         sparc64.AMULD,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-				{1, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{1, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -17877,8 +17877,8 @@ var opcodeTable = [...]opInfo{
 		asm:    sparc64.ASDIVD,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-				{1, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{1, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -17891,8 +17891,8 @@ var opcodeTable = [...]opInfo{
 		asm:    sparc64.AUDIVD,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-				{1, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{1, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18021,7 +18021,7 @@ var opcodeTable = [...]opInfo{
 		asm:    sparc64.ANEG,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18089,7 +18089,7 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.AMOVB,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+				{0, 1649284217855}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18103,7 +18103,7 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.AMOVUB,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+				{0, 1649284217855}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18117,7 +18117,7 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.AMOVH,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+				{0, 1649284217855}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18131,7 +18131,7 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.AMOVUH,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+				{0, 1649284217855}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18145,7 +18145,7 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.AMOVW,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+				{0, 1649284217855}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18159,7 +18159,7 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.AMOVUW,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+				{0, 1649284217855}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18173,7 +18173,7 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.AMOVD,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+				{0, 1649284217855}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18187,7 +18187,7 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.AFMOVS,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+				{0, 1649284217855}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
 			},
 			outputs: []outputInfo{
 				{0, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
@@ -18201,7 +18201,7 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.AFMOVD,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+				{0, 1649284217855}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
 			},
 			outputs: []outputInfo{
 				{0, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
@@ -18215,8 +18215,8 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.AMOVD,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
-				{1, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+				{0, 1649284217855}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+				{1, 1649284217855}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
 			},
 		},
 	},
@@ -18227,8 +18227,8 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.AMOVW,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
-				{1, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+				{0, 1649284217855}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+				{1, 1649284217855}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
 			},
 		},
 	},
@@ -18239,8 +18239,8 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.AMOVH,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
-				{1, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+				{0, 1649284217855}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+				{1, 1649284217855}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
 			},
 		},
 	},
@@ -18251,8 +18251,8 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.AMOVB,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
-				{1, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+				{0, 1649284217855}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+				{1, 1649284217855}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
 			},
 		},
 	},
@@ -18264,7 +18264,7 @@ var opcodeTable = [...]opInfo{
 		reg: regInfo{
 			inputs: []inputInfo{
 				{1, 549722259456},  // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
-				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+				{0, 1649284217855}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
 			},
 		},
 	},
@@ -18276,7 +18276,7 @@ var opcodeTable = [...]opInfo{
 		reg: regInfo{
 			inputs: []inputInfo{
 				{1, 549722259456},  // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
-				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+				{0, 1649284217855}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
 			},
 		},
 	},
@@ -18287,7 +18287,7 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.AMOVB,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+				{0, 1649284217855}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
 			},
 		},
 	},
@@ -18298,7 +18298,7 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.AMOVH,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+				{0, 1649284217855}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
 			},
 		},
 	},
@@ -18309,7 +18309,7 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.AMOVW,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+				{0, 1649284217855}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
 			},
 		},
 	},
@@ -18320,7 +18320,7 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.AMOVD,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 1649284217840}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
+				{0, 1649284217855}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5 SB SP
 			},
 		},
 	},
@@ -18378,8 +18378,8 @@ var opcodeTable = [...]opInfo{
 		asm:    sparc64.ASLLD,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-				{1, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{1, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18393,8 +18393,8 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.ASLLD,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-				{1, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{1, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18408,7 +18408,7 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.ASLLD,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18421,8 +18421,8 @@ var opcodeTable = [...]opInfo{
 		asm:    sparc64.ASRLD,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-				{1, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{1, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18436,8 +18436,8 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.ASLLD,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-				{1, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{1, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18451,7 +18451,7 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.ASRLD,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18464,8 +18464,8 @@ var opcodeTable = [...]opInfo{
 		asm:    sparc64.ASRAD,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-				{1, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{1, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18479,8 +18479,8 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.ASRAD,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-				{1, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{1, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18494,7 +18494,7 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.ASRAD,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18507,8 +18507,8 @@ var opcodeTable = [...]opInfo{
 		asm:    sparc64.ACMP,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-				{1, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{1, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 		},
 	},
@@ -18519,7 +18519,7 @@ var opcodeTable = [...]opInfo{
 		asm:     sparc64.ACMP,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 		},
 	},
@@ -18551,7 +18551,7 @@ var opcodeTable = [...]opInfo{
 		asm:    sparc64.AMOVB,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18564,7 +18564,7 @@ var opcodeTable = [...]opInfo{
 		asm:    sparc64.AMOVUB,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18577,7 +18577,7 @@ var opcodeTable = [...]opInfo{
 		asm:    sparc64.AMOVH,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18590,7 +18590,7 @@ var opcodeTable = [...]opInfo{
 		asm:    sparc64.AMOVUH,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18603,7 +18603,7 @@ var opcodeTable = [...]opInfo{
 		asm:    sparc64.AMOVW,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18616,7 +18616,7 @@ var opcodeTable = [...]opInfo{
 		asm:    sparc64.AMOVUW,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18629,7 +18629,7 @@ var opcodeTable = [...]opInfo{
 		asm:    sparc64.AMOVD,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18642,7 +18642,7 @@ var opcodeTable = [...]opInfo{
 		asm:    sparc64.AFITOS,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
@@ -18655,7 +18655,7 @@ var opcodeTable = [...]opInfo{
 		asm:    sparc64.AFITOD,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
@@ -18668,7 +18668,7 @@ var opcodeTable = [...]opInfo{
 		asm:    sparc64.AFXTOS,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
@@ -18681,7 +18681,7 @@ var opcodeTable = [...]opInfo{
 		asm:    sparc64.AFXTOD,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
@@ -18828,7 +18828,7 @@ var opcodeTable = [...]opInfo{
 		argLen: 2,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776180}, // g O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 		},
 	},
@@ -19106,7 +19106,7 @@ var opcodeTable = [...]opInfo{
 		asm:    sparc64.AMOVD,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5

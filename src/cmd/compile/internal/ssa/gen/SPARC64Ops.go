@@ -106,25 +106,27 @@ func init() {
 		sb = buildReg("SB")
 		g = buildReg("g")
 		ctxt = buildReg("CTXT")
+		gpin = gp | gprt | ctxt | g
+		gpout = gp
 
-		gp01        = regInfo{inputs: nil, outputs: []regMask{gp}}
-		gp11        = regInfo{inputs: []regMask{gp}, outputs: []regMask{gp}}
-		gp21        = regInfo{inputs: []regMask{gp, gp}, outputs: []regMask{gp}}
-		gp1flags    = regInfo{inputs: []regMask{gp}}
-		gp2flags    = regInfo{inputs: []regMask{gp, gp}}
-		gpload      = regInfo{inputs: []regMask{gp | sp | sb}, outputs: []regMask{gp}}
-		gpstore     = regInfo{inputs: []regMask{gp | sp | sb, gp | sp | sb}}
-		gpstore0    = regInfo{inputs: []regMask{gp | sp | sb}}
+		gp01        = regInfo{inputs: nil, outputs: []regMask{gpout}}
+		gp11        = regInfo{inputs: []regMask{gpin}, outputs: []regMask{gpout}}
+		gp21        = regInfo{inputs: []regMask{gpin, gpin}, outputs: []regMask{gpout}}
+		gp1flags    = regInfo{inputs: []regMask{gpin}}
+		gp2flags    = regInfo{inputs: []regMask{gpin, gpin}}
+		gpload      = regInfo{inputs: []regMask{gpin | sp | sb}, outputs: []regMask{gpout}}
+		gpstore     = regInfo{inputs: []regMask{gpin | sp | sb, gpin | sp | sb}}
+		gpstore0    = regInfo{inputs: []regMask{gpin | sp | sb}}
 		fp01        = regInfo{inputs: nil, outputs: []regMask{fp}}
 		fp11        = regInfo{inputs: []regMask{fp}, outputs: []regMask{fp}}
-		fpgp        = regInfo{inputs: []regMask{fp}, outputs: []regMask{gp}}
-		gpfp        = regInfo{inputs: []regMask{gp}, outputs: []regMask{fp}}
+		fpgp        = regInfo{inputs: []regMask{fp}, outputs: []regMask{gpout}}
+		gpfp        = regInfo{inputs: []regMask{gpin}, outputs: []regMask{fp}}
 		fp21        = regInfo{inputs: []regMask{fp, fp}, outputs: []regMask{fp}}
 		fp2flags    = regInfo{inputs: []regMask{fp, fp}}
-		fpload      = regInfo{inputs: []regMask{gp | sp | sb}, outputs: []regMask{fp}}
-		fpstore     = regInfo{inputs: []regMask{gp | sp | sb, fp}}
-		readflags   = regInfo{inputs: nil, outputs: []regMask{gp}}
-		callerSave  = gp | gprt | ctxt | fp | g // runtime.setg (and anything calling it) may clobber g
+		fpload      = regInfo{inputs: []regMask{gpin | sp | sb}, outputs: []regMask{fp}}
+		fpstore     = regInfo{inputs: []regMask{gpin | sp | sb, fp}}
+		readflags   = regInfo{inputs: nil, outputs: []regMask{gpout}}
+		callerSave  = gpin | fp | g // runtime.setg (and anything calling it) may clobber g
 	)
 	ops := []opData{
 		{name: "ADD", argLength: 2, reg: gp21, asm: "ADD", commutative: true}, // arg0 + arg1
@@ -134,7 +136,7 @@ func init() {
 		{name: "OR", argLength: 2, reg: gp21, asm: "OR", commutative: true},  // arg0 | arg1
 		{name: "XOR", argLength: 2, reg: gp21, asm: "XOR", commutative: true}, // arg0 ^ arg1
 
-		{name: "ADDconst", argLength: 1, reg: gp11, asm: "ADD", aux: "Int64"}, // arg0 + auxInt
+		{name: "ADDconst", argLength: 1, reg: regInfo{inputs: []regMask{gpin | sp}, outputs: []regMask{gpout}}, asm: "ADD", aux: "Int64"}, // arg0 + auxInt
 		{name: "SUBconst", argLength: 1, reg: gp11, asm: "SUB", aux: "Int64"}, // arg0 - auxInt
 		{name: "ANDconst", argLength: 1, reg: gp11, asm: "AND", aux: "Int64"}, // arg0 & auxInt
 		{name: "ORconst", argLength: 1, reg: gp11, asm: "OR", aux: "Int64"},  // arg0 | auxInt
@@ -233,7 +235,7 @@ func init() {
 		{name: "CALLinter", argLength: 2, reg: regInfo{inputs: []regMask{gp}, clobbers: callerSave}, aux: "Int64", clobberFlags: true, call: true},                         // call fn by pointer.  arg0=codeptr, arg1=mem, auxint=argsize, returns mem
 
 		// pseudo-ops
-		{name: "LoweredNilCheck", argLength: 2, reg: regInfo{inputs: []regMask{gp | g}}}, // panic if arg0 is nil.  arg1=mem.
+		{name: "LoweredNilCheck", argLength: 2, reg: regInfo{inputs: []regMask{gpin}}}, // panic if arg0 is nil.  arg1=mem.
 
 		{name: "Equal32", argLength: 1, reg: readflags},         // bool, true flags encode x==y false otherwise.
 		{name: "Equal64", argLength: 1, reg: readflags},         // bool, true flags encode x==y false otherwise.
@@ -364,7 +366,7 @@ func init() {
 		ops:             ops,
 		blocks:          blocks,
 		regnames:        regNamesSPARC64,
-		gpregmask:       gp | gprt | ctxt,
+		gpregmask:       gp | gprt | ctxt, // must not include g
 		fpregmask:       fp,
 		framepointerreg: int8(num["RFP"]),
 	})

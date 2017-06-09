@@ -544,3 +544,7 @@
 (ORconst  [0]  x) -> x
 (ORconst  [-1] _) -> (MOVDconst [-1])
 (XORconst [0]  x) -> x
+
+// fold constant into arithmatic ops
+(CMP x (MOVDconst [c])) -> (CMPconst [c] x)
+(CMP x (MOVWconst [c])) -> (CMPconst [c] x)
