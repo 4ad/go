@@ -247,7 +247,7 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 
 		p := gc.Prog(sparc64.AMOVD)
 		p.From.Type = obj.TYPE_REG
-		p.From.Reg = r1
+		p.From.Reg = r2
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = sparc64.REG_TMP
 		p2 := gc.Prog(sparc64.ACMP)
@@ -264,8 +264,8 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p3.To.Reg = sparc64.REG_TMP
 		p4 := gc.Prog(v.Op.Asm())
 		p4.From.Type = obj.TYPE_REG
-		p4.From.Reg = r2
-		p4.Reg = sparc64.REG_TMP
+		p4.From.Reg = sparc64.REG_TMP
+		p4.Reg = r1
 		p4.To.Type = obj.TYPE_REG
 		p4.To.Reg = r
 

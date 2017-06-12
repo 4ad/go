@@ -195,7 +195,7 @@ func init() {
 		{name: "SLLmax", argLength: 2, reg: gp21, asm: "SLLD", aux: "Int64"},     // arg0 << arg1, shift amount is mod 64, aux is max shift until zero result
 		{name: "SLLconst", argLength: 1, reg: gp11, asm: "SLLD", aux: "Int64"},   // arg0 << auxInt
 		{name: "SRL", argLength: 2, reg: gp21, asm: "SRLD"},                      // arg0 >> arg1, unsigned, shift amount is mod 64
-		{name: "SRLmax", argLength: 2, reg: gp21, asm: "SLLD", aux: "Int64"},     // arg0 >> arg1, shift amount is mod 64, aux is max shift until zero result
+		{name: "SRLmax", argLength: 2, reg: gp21, asm: "SRLD", aux: "Int64"},     // arg0 >> arg1, shift amount is mod 64, aux is max shift until zero result
 		{name: "SRLconst", argLength: 1, reg: gp11, asm: "SRLD", aux: "Int64"},   // arg0 >> auxInt, unsigned
 		{name: "SRA", argLength: 2, reg: gp21, asm: "SRAD"},                      // arg0 >> arg1, signed, shift amount is mod 64
 		{name: "SRAmax", argLength: 2, reg: gp21, asm: "SRAD", aux: "Int64"},     // arg0 >> arg1, signed, shift amount is mod 64, aux is max shift
