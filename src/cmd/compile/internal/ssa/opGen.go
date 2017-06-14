@@ -1492,6 +1492,8 @@ const (
 	OpSPARC64MULD
 	OpSPARC64SDIVD
 	OpSPARC64UDIVD
+	OpSPARC64MULXHI
+	OpSPARC64UMULXHI
 	OpSPARC64FADDS
 	OpSPARC64FADDD
 	OpSPARC64FSUBS
@@ -17894,6 +17896,36 @@ var opcodeTable = [...]opInfo{
 				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 				{1, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
+			outputs: []outputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+		},
+	},
+	{
+		name:        "MULXHI",
+		argLen:      2,
+		commutative: true,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{1, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+			clobbers: 9, // RT1 RT2
+			outputs: []outputInfo{
+				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+		},
+	},
+	{
+		name:        "UMULXHI",
+		argLen:      2,
+		commutative: true,
+		reg: regInfo{
+			inputs: []inputInfo{
+				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{1, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+			},
+			clobbers: 9, // RT1 RT2
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},

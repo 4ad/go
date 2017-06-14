@@ -26,9 +26,8 @@
 (Mul32F x y) -> (FMULS x y)
 (Mul64F x y) -> (FMULD x y)
 
-// TODO(shawn): handle high-multiply via mulx? vis3 has [u]mulxhi
-(Hmul64 x y) -> (MULD x y)
-(Hmul64u x y) -> (MULD x y)
+(Hmul64 x y) -> (MULXHI x y)
+(Hmul64u x y) -> (UMULXHI x y)
 (Hmul32 x y) -> (SRAconst (MULD <config.fe.TypeInt64()> x y) [32])
 (Hmul32u x y) -> (SRAconst (MULD <config.fe.TypeUInt64()> x y) [32])
 (Hmul16 x y) -> (SRAconst (MULD <config.fe.TypeInt32()> (SignExt16to32 x) (SignExt16to32 y)) [16])

@@ -299,6 +299,159 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = r
 
+	case ssa.OpSPARC64MULXHI,
+		ssa.OpSPARC64UMULXHI:
+
+		// TODO(shawn): UMULXHI is a single instruction in vis3.
+		r := gc.SSARegNum(v)
+		r1 := gc.SSARegNum(v.Args[0])
+		r2 := gc.SSARegNum(v.Args[1])
+
+		// srl       r2, 0x0, TMP
+		p := gc.Prog(sparc64.ASRLW)
+		p.From.Type = obj.TYPE_CONST
+		p.From.Offset = 0
+		p.Reg = r2
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_TMP
+
+		// mulx      TMP, r1, r
+		// srlx      r1, 0x20, RT1
+		p = gc.Prog(sparc64.AMULD)
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = r1
+		p.Reg = sparc64.REG_TMP
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = r
+		p = gc.Prog(sparc64.ASRLD)
+		p.From.Type = obj.TYPE_CONST
+		p.From.Offset = 32
+		p.Reg = r1
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_RT1
+
+		// mulx      RT1, TMP, TMP2
+		// sllx      TMP2, 0x20, RT2
+		p = gc.Prog(sparc64.AMULD)
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = sparc64.REG_TMP
+		p.Reg = sparc64.REG_RT1
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_TMP2
+		p = gc.Prog(sparc64.ASLLD)
+		p.From.Type = obj.TYPE_CONST
+		p.From.Offset = 32
+		p.Reg = sparc64.REG_TMP2
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_RT2
+
+		// srl       r1, 0x0, TMP
+		// sub       r, RT2, RT2 
+		p = gc.Prog(sparc64.ASRLW)
+		p.From.Type = obj.TYPE_CONST
+		p.From.Offset = 0
+		p.Reg = r1
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_TMP
+		p = gc.Prog(sparc64.ASUB)
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = sparc64.REG_RT2
+		p.Reg = r
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_RT2
+
+		// srlx      RT2, 0x20, RT2
+		// addcc     TMP2, RT2, TMP2
+		// srlx      r2, 0x20, RT2
+		p = gc.Prog(sparc64.ASRLD)
+		p.From.Type = obj.TYPE_CONST
+		p.From.Offset = 32
+		p.Reg = sparc64.REG_RT2
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_RT2
+		p = gc.Prog(sparc64.AADDCC)
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = sparc64.REG_RT2
+		p.Reg = sparc64.REG_TMP2
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_TMP2
+		p = gc.Prog(sparc64.ASRLD)
+		p.From.Type = obj.TYPE_CONST
+		p.From.Offset = 32
+		p.Reg = r2
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_RT2
+
+		// mulx      TMP, RT2, TMP
+		p = gc.Prog(sparc64.AMULD)
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = sparc64.REG_RT2
+		p.Reg = sparc64.REG_TMP
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_TMP
+
+		// mulx      RT1, RT2, RT2
+		p = gc.Prog(sparc64.AMULD)
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = sparc64.REG_RT2
+		p.Reg = sparc64.REG_RT1
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_RT2
+
+		// sethi     %hi(0xffffffff80000000), RT1
+		p = gc.Prog(sparc64.ASETHI)
+		p.From.Type = obj.TYPE_CONST
+		p.From.Offset = int64(-1<<31)
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_RT1
+
+		// addcc     TMP2, TMP, TMP2
+		// srlx      %g5, 0x20, %g5
+		p = gc.Prog(sparc64.AADDCC)
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = sparc64.REG_TMP
+		p.Reg = sparc64.REG_TMP2
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_TMP2
+		p = gc.Prog(sparc64.ASRLD)
+		p.From.Type = obj.TYPE_CONST
+		p.From.Offset = 32
+		p.Reg = sparc64.REG_TMP2
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_TMP2
+
+		// add       RT1, RT1, RT1
+		// movcc     %xcc, ZR, RT1
+		p = gc.Prog(sparc64.AADD)
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = sparc64.REG_RT1
+		p.Reg = sparc64.REG_RT1
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_RT1
+		p = gc.Prog(sparc64.AMOVCC)
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = sparc64.REG_XCC
+		p.From3 = &obj.Addr{}
+		p.From3.Type = obj.TYPE_REG
+		p.From3.Reg = sparc64.REG_ZR
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_RT1
+
+		// addcc     RT2, TMP2, RT2
+		// add       RT2, RT1, r
+		p = gc.Prog(sparc64.AADDCC)
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = sparc64.REG_TMP2
+		p.Reg = sparc64.REG_RT2
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_RT2
+		p = gc.Prog(sparc64.AADD)
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = sparc64.REG_RT1
+		p.Reg = sparc64.REG_RT2
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = r
+
 	case ssa.OpSPARC64ADDconst,
 		ssa.OpSPARC64SUBconst,
 		ssa.OpSPARC64ANDconst,

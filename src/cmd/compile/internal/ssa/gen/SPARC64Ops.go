@@ -146,6 +146,19 @@ func init() {
 		{name: "SDIVD", argLength: 2, reg: gp21, typ: "Int64", asm: "SDIVD"},                       // arg0 / arg1, signed
 		{name: "UDIVD", argLength: 2, reg: gp21, typ: "UInt64", asm: "UDIVD"},                       // arg0 / arg1, unsigned
 
+		{
+			name: "MULXHI",
+			argLength: 2,
+			reg: regInfo{inputs: []regMask{gpin, gpin}, outputs: []regMask{gpout}, clobbers: gprt },
+			commutative: true,
+		}, // (arg0 * arg1) >> 64, signed
+		{
+			name: "UMULXHI",
+			argLength: 2,
+			reg: regInfo{inputs: []regMask{gpin, gpin}, outputs: []regMask{gpout}, clobbers: gprt },
+			commutative: true,
+		}, // (arg0 * arg1) >> 64, unsigned
+
 		{name: "FADDS", argLength: 2, reg: fp21, asm: "FADDS", commutative: true}, // arg0 + arg1
 		{name: "FADDD", argLength: 2, reg: fp21, asm: "FADDD", commutative: true}, // arg0 + arg1
 		{name: "FSUBS", argLength: 2, reg: fp21, asm: "FSUBS"},                    // arg0 - arg1

@@ -1981,11 +1981,11 @@ func rewriteValueSPARC64_OpHmul64(v *Value, config *Config) bool {
 	_ = b
 	// match: (Hmul64 x y)
 	// cond:
-	// result: (MULD x y)
+	// result: (MULXHI x y)
 	for {
 		x := v.Args[0]
 		y := v.Args[1]
-		v.reset(OpSPARC64MULD)
+		v.reset(OpSPARC64MULXHI)
 		v.AddArg(x)
 		v.AddArg(y)
 		return true
@@ -1996,11 +1996,11 @@ func rewriteValueSPARC64_OpHmul64u(v *Value, config *Config) bool {
 	_ = b
 	// match: (Hmul64u x y)
 	// cond:
-	// result: (MULD x y)
+	// result: (UMULXHI x y)
 	for {
 		x := v.Args[0]
 		y := v.Args[1]
-		v.reset(OpSPARC64MULD)
+		v.reset(OpSPARC64UMULXHI)
 		v.AddArg(x)
 		v.AddArg(y)
 		return true
