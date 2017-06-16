@@ -205,13 +205,34 @@ func init() {
 
 		// shifts
 		{name: "SLL", argLength: 2, reg: gp21, asm: "SLLD"},                      // arg0 << arg1, shift amount is mod 64
-		{name: "SLLmax", argLength: 2, reg: gp21, asm: "SLLD", aux: "Int64"},     // arg0 << arg1, shift amount is mod 64, aux is max shift until zero result
+		{
+			name: "SLLmax",
+			argLength: 2,
+			reg: gp21,
+			asm: "SLLD",
+			clobberFlags: true,
+			aux: "Int64",
+		},     // arg0 << arg1, shift amount is mod 64, aux is max shift until zero result
 		{name: "SLLconst", argLength: 1, reg: gp11, asm: "SLLD", aux: "Int64"},   // arg0 << auxInt
 		{name: "SRL", argLength: 2, reg: gp21, asm: "SRLD"},                      // arg0 >> arg1, unsigned, shift amount is mod 64
-		{name: "SRLmax", argLength: 2, reg: gp21, asm: "SRLD", aux: "Int64"},     // arg0 >> arg1, shift amount is mod 64, aux is max shift until zero result
+		{
+			name: "SRLmax",
+			argLength: 2,
+			reg: gp21,
+			asm: "SRLD",
+			clobberFlags: true,
+			aux: "Int64",
+		},     // arg0 >> arg1, shift amount is mod 64, aux is max shift until zero result
 		{name: "SRLconst", argLength: 1, reg: gp11, asm: "SRLD", aux: "Int64"},   // arg0 >> auxInt, unsigned
 		{name: "SRA", argLength: 2, reg: gp21, asm: "SRAD"},                      // arg0 >> arg1, signed, shift amount is mod 64
-		{name: "SRAmax", argLength: 2, reg: gp21, asm: "SRAD", aux: "Int64"},     // arg0 >> arg1, signed, shift amount is mod 64, aux is max shift
+		{
+			name: "SRAmax",
+			argLength: 2,
+			reg: gp21,
+			asm: "SRAD",
+			clobberFlags: true,
+			aux: "Int64",
+		},     // arg0 >> arg1, signed, shift amount is mod 64, aux is max shift
 		{name: "SRAconst", argLength: 1, reg: gp11, asm: "SRAD", aux: "Int64"},   // arg0 >> auxInt, signed
 
 		// comparisons
@@ -231,12 +252,12 @@ func init() {
 
 		{name: "FITOS", argLength: 1, reg: gpfp, asm: "FITOS"}, // int32/uint32 -> float32
 		{name: "FITOD", argLength: 1, reg: gpfp, asm: "FITOD"}, // int32/uint32 -> float64
-		{name: "FXTOS", argLength: 1, reg: gpfp, asm: "FXTOS"}, // int64/uint64 -> float32
-		{name: "FXTOD", argLength: 1, reg: gpfp, asm: "FXTOD"}, // int64/uint64 -> float64
+		{name: "FXTOS", argLength: 1, reg: gpfp, clobberFlags: true, asm: "FXTOS"}, // int64/uint64 -> float32
+		{name: "FXTOD", argLength: 1, reg: gpfp, clobberFlags: true, asm: "FXTOD"}, // int64/uint64 -> float64
 		{name: "FSTOI", argLength: 1, reg: fpgp, asm: "FSTOI"}, // float32 -> int32/uint32
 		{name: "FDTOI", argLength: 1, reg: fpgp, asm: "FDTOI"}, // float64 -> int32/uint32
 		{name: "FSTOX", argLength: 1, reg: fpgp, asm: "FSTOX"}, // float32 -> int64/uint64
-		{name: "FDTOX", argLength: 1, reg: fpgp, asm: "FDTOX"}, // float64 -> int64/uint64
+		{name: "FDTOX", argLength: 1, reg: fpgp, clobberFlags: true, asm: "FDTOX"}, // float64 -> int64/uint64
 		{name: "FSTOD", argLength: 1, reg: fp11, asm: "FSTOD"}, // float32 -> float64
 		{name: "FDTOS", argLength: 1, reg: fp11, asm: "FDTOS"}, // float64 -> float32
 

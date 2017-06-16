@@ -18419,10 +18419,11 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
-		name:    "SLLmax",
-		auxType: auxInt64,
-		argLen:  2,
-		asm:     sparc64.ASLLD,
+		name:         "SLLmax",
+		auxType:      auxInt64,
+		argLen:       2,
+		clobberFlags: true,
+		asm:          sparc64.ASLLD,
 		reg: regInfo{
 			inputs: []inputInfo{
 				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18462,10 +18463,11 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
-		name:    "SRLmax",
-		auxType: auxInt64,
-		argLen:  2,
-		asm:     sparc64.ASRLD,
+		name:         "SRLmax",
+		auxType:      auxInt64,
+		argLen:       2,
+		clobberFlags: true,
+		asm:          sparc64.ASRLD,
 		reg: regInfo{
 			inputs: []inputInfo{
 				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18505,10 +18507,11 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
-		name:    "SRAmax",
-		auxType: auxInt64,
-		argLen:  2,
-		asm:     sparc64.ASRAD,
+		name:         "SRAmax",
+		auxType:      auxInt64,
+		argLen:       2,
+		clobberFlags: true,
+		asm:          sparc64.ASRAD,
 		reg: regInfo{
 			inputs: []inputInfo{
 				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18695,9 +18698,10 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
-		name:   "FXTOS",
-		argLen: 1,
-		asm:    sparc64.AFXTOS,
+		name:         "FXTOS",
+		argLen:       1,
+		clobberFlags: true,
+		asm:          sparc64.AFXTOS,
 		reg: regInfo{
 			inputs: []inputInfo{
 				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18708,9 +18712,10 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
-		name:   "FXTOD",
-		argLen: 1,
-		asm:    sparc64.AFXTOD,
+		name:         "FXTOD",
+		argLen:       1,
+		clobberFlags: true,
+		asm:          sparc64.AFXTOD,
 		reg: regInfo{
 			inputs: []inputInfo{
 				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -18760,9 +18765,10 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
-		name:   "FDTOX",
-		argLen: 1,
-		asm:    sparc64.AFDTOX,
+		name:         "FDTOX",
+		argLen:       1,
+		clobberFlags: true,
+		asm:          sparc64.AFDTOX,
 		reg: regInfo{
 			inputs: []inputInfo{
 				{0, 549722259456}, // Y0 Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10 Y11 Y12 Y13
