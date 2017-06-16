@@ -108,6 +108,9 @@ func init() {
 		ctxt = buildReg("CTXT")
 		gpin = gp | gprt | ctxt | g
 		gpout = gp
+		multmp = buildReg("O0 O1 O2")
+		mulin = gpin&^multmp
+		mulout = gpout&^multmp
 
 		gp01        = regInfo{inputs: nil, outputs: []regMask{gpout}}
 		gp11        = regInfo{inputs: []regMask{gpin}, outputs: []regMask{gpout}}
@@ -126,7 +129,7 @@ func init() {
 		fpload      = regInfo{inputs: []regMask{gpin | sp | sb}, outputs: []regMask{fp}}
 		fpstore     = regInfo{inputs: []regMask{gpin | sp | sb, fp}}
 		readflags   = regInfo{inputs: nil, outputs: []regMask{gpout}}
-		callerSave  = gpin | fp | g // runtime.setg (and anything calling it) may clobber g
+		callerSave  = gpin | fp // runtime.setg (and anything calling it) may clobber g
 	)
 	ops := []opData{
 		{name: "ADD", argLength: 2, reg: gp21, asm: "ADD", commutative: true}, // arg0 + arg1
@@ -149,13 +152,13 @@ func init() {
 		{
 			name: "MULXHI",
 			argLength: 2,
-			reg: regInfo{inputs: []regMask{gpin, gpin}, outputs: []regMask{gpout}, clobbers: gprt },
+			reg: regInfo{inputs: []regMask{mulin, mulin}, outputs: []regMask{mulout}, clobbers: multmp},
 			commutative: true,
 		}, // (arg0 * arg1) >> 64, signed
 		{
 			name: "UMULXHI",
 			argLength: 2,
-			reg: regInfo{inputs: []regMask{gpin, gpin}, outputs: []regMask{gpout}, clobbers: gprt },
+			reg: regInfo{inputs: []regMask{mulin, mulin}, outputs: []regMask{mulout}, clobbers: multmp},
 			commutative: true,
 		}, // (arg0 * arg1) >> 64, unsigned
 

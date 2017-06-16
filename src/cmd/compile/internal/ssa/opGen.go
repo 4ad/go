@@ -17907,12 +17907,12 @@ var opcodeTable = [...]opInfo{
 		commutative: true,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-				{1, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776079}, // RT1 CTXT g RT2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{1, 16776079}, // RT1 CTXT g RT2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
-			clobbers: 9, // RT1 RT2
+			clobbers: 112, // O0 O1 O2
 			outputs: []outputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776064}, // O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 		},
 	},
@@ -17922,12 +17922,12 @@ var opcodeTable = [...]opInfo{
 		commutative: true,
 		reg: regInfo{
 			inputs: []inputInfo{
-				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-				{1, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776079}, // RT1 CTXT g RT2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{1, 16776079}, // RT1 CTXT g RT2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
-			clobbers: 9, // RT1 RT2
+			clobbers: 112, // O0 O1 O2
 			outputs: []outputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
+				{0, 16776064}, // O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 		},
 	},
