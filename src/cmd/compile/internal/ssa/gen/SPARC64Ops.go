@@ -153,12 +153,14 @@ func init() {
 			name: "MULXHI",
 			argLength: 2,
 			reg: regInfo{inputs: []regMask{mulin, mulin}, outputs: []regMask{mulout}, clobbers: multmp},
+			clobberFlags: true,
 			commutative: true,
 		}, // (arg0 * arg1) >> 64, signed
 		{
 			name: "UMULXHI",
 			argLength: 2,
 			reg: regInfo{inputs: []regMask{mulin, mulin}, outputs: []regMask{mulout}, clobbers: multmp},
+			clobberFlags: true,
 			commutative: true,
 		}, // (arg0 * arg1) >> 64, unsigned
 

@@ -17902,9 +17902,10 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
-		name:        "MULXHI",
-		argLen:      2,
-		commutative: true,
+		name:         "MULXHI",
+		argLen:       2,
+		commutative:  true,
+		clobberFlags: true,
 		reg: regInfo{
 			inputs: []inputInfo{
 				{0, 16776079}, // RT1 CTXT g RT2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
@@ -17917,9 +17918,10 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
-		name:        "UMULXHI",
-		argLen:      2,
-		commutative: true,
+		name:         "UMULXHI",
+		argLen:       2,
+		commutative:  true,
+		clobberFlags: true,
 		reg: regInfo{
 			inputs: []inputInfo{
 				{0, 16776079}, // RT1 CTXT g RT2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
