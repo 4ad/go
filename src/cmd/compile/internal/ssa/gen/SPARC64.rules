@@ -609,8 +609,8 @@
 (SRL x (MOVWconst [c])) -> (SRLconst x [c&63])
 (SRA x (MOVWconst [c])) -> (SRAconst x [c&63])
 
-(CMP x (MOVDconst [c])) -> (CMPconst [c] x)
-(CMP x (MOVWconst [c])) -> (CMPconst [c] x)
+(CMP x (MOVDconst [c])) && c>-4097 && c<4096 -> (CMPconst [c] x)
+(CMP x (MOVWconst [c])) && c>-4097 && c<4096 -> (CMPconst [c] x)
 
 // generic constant folding
 (ADDconst [c] (MOVDconst [d]))  -> (MOVDconst [c+d])

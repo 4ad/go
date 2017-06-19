@@ -5798,7 +5798,7 @@ func rewriteValueSPARC64_OpSPARC64CMP(v *Value, config *Config) bool {
 	b := v.Block
 	_ = b
 	// match: (CMP x (MOVDconst [c]))
-	// cond:
+	// cond: c>-4097 && c<4096
 	// result: (CMPconst [c] x)
 	for {
 		x := v.Args[0]
@@ -5807,13 +5807,16 @@ func rewriteValueSPARC64_OpSPARC64CMP(v *Value, config *Config) bool {
 			break
 		}
 		c := v_1.AuxInt
+		if !(c > -4097 && c < 4096) {
+			break
+		}
 		v.reset(OpSPARC64CMPconst)
 		v.AuxInt = c
 		v.AddArg(x)
 		return true
 	}
 	// match: (CMP x (MOVWconst [c]))
-	// cond:
+	// cond: c>-4097 && c<4096
 	// result: (CMPconst [c] x)
 	for {
 		x := v.Args[0]
@@ -5822,6 +5825,9 @@ func rewriteValueSPARC64_OpSPARC64CMP(v *Value, config *Config) bool {
 			break
 		}
 		c := v_1.AuxInt
+		if !(c > -4097 && c < 4096) {
+			break
+		}
 		v.reset(OpSPARC64CMPconst)
 		v.AuxInt = c
 		v.AddArg(x)
