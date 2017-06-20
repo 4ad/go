@@ -313,10 +313,12 @@ func init() {
 		// arg1 = address of the last element to zero
 		// arg2 = mem
 		// returns mem
+		// auxInt is alignment
 		// Note: the-end-of-the-memory may be not a valid pointer. it's a problem if it is spilled.
 		// the-end-of-the-memory - 8 is with the area to zero, ok to spill.
 		{
 			name:      "LoweredZero",
+			aux:       "Int64",
 			argLength: 3,
 			reg: regInfo{
 				inputs:   []regMask{buildReg("RT1"), gp},
@@ -331,10 +333,12 @@ func init() {
 		// arg2 = address of the last element of src
 		// arg3 = mem
 		// returns mem
+		// auxInt is alignment
 		// Note: the-end-of-src may be not a valid pointer. it's a problem if it is spilled.
 		// the-end-of-src - 8 is within the area to copy, ok to spill.
 		{
 			name:      "LoweredMove",
+			aux:       "Int64",
 			argLength: 4,
 			reg: regInfo{
 				inputs:   []regMask{buildReg("RT2"), buildReg("RT1"), gp},

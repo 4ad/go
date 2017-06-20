@@ -796,20 +796,41 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		// 	BLED	loop
 		// arg0 is address of dst memory
 		// arg1 is the address of the last element to zero
-		p := gc.Prog(sparc64.AMOVD)
+		// auxint is alignment
+		r1 := gc.SSARegNum(v.Args[0])
+		r2 := gc.SSARegNum(v.Args[1])
+
+		var sz int64
+		var movu obj.As
+		switch {
+		case v.AuxInt%8 == 0:
+			sz = 8
+			movu = sparc64.AMOVD
+		case v.AuxInt%4 == 0:
+			sz = 4
+			movu = sparc64.AMOVUW
+		case v.AuxInt%2 == 0:
+			sz = 2
+			movu = sparc64.AMOVUH
+		default:
+			sz = 1
+			movu = sparc64.AMOVUB
+		}
+
+		p := gc.Prog(movu)
 		p.From.Type = obj.TYPE_REG
 		p.From.Reg = sparc64.REG_ZR
 		p.To.Type = obj.TYPE_MEM
-		p.To.Reg = gc.SSARegNum(v.Args[0])
+		p.To.Reg = r1
 		p2 := gc.Prog(sparc64.AADD)
 		p2.From.Type = obj.TYPE_CONST
-		p2.From.Offset = 8
+		p2.From.Offset = sz
 		p2.To.Type = obj.TYPE_REG
-		p2.To.Reg = gc.SSARegNum(v.Args[0])
+		p2.To.Reg = r1
 		p3 := gc.Prog(sparc64.ACMP)
 		p3.From.Type = obj.TYPE_REG
-		p3.From.Reg = gc.SSARegNum(v.Args[1])
-		p3.Reg = gc.SSARegNum(v.Args[0])
+		p3.From.Reg = r2
+		p3.Reg = r1
 		p4 := gc.Prog(sparc64.ABLED)
 		p4.To.Type = obj.TYPE_BRANCH
 		gc.Patch(p4, p)
@@ -825,30 +846,52 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		// arg0 is address of dst memory
 		// arg1 is address of src memory
 		// arg2 is the address of the last element of src
-		p := gc.Prog(sparc64.AMOVD)
+		// auxint is alignment
+		r1 := gc.SSARegNum(v.Args[0])
+		r2 := gc.SSARegNum(v.Args[1])
+		r3 := gc.SSARegNum(v.Args[2])
+
+		var sz int64
+		var movu obj.As
+		switch {
+		case v.AuxInt%8 == 0:
+			sz = 8
+			movu = sparc64.AMOVD
+		case v.AuxInt%4 == 0:
+			sz = 4
+			movu = sparc64.AMOVUW
+		case v.AuxInt%2 == 0:
+			sz = 2
+			movu = sparc64.AMOVUH
+		default:
+			sz = 1
+			movu = sparc64.AMOVUB
+		}
+
+		p := gc.Prog(movu)
 		p.From.Type = obj.TYPE_MEM
-		p.From.Reg = gc.SSARegNum(v.Args[1])
+		p.From.Reg = r2
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = sparc64.REG_TMP
 		p2 := gc.Prog(sparc64.AADD)
 		p2.From.Type = obj.TYPE_CONST
-		p2.From.Offset = 8
+		p2.From.Offset = sz
 		p2.To.Type = obj.TYPE_REG
-		p2.To.Reg = gc.SSARegNum(v.Args[1])
-		p3 := gc.Prog(sparc64.AMOVD)
+		p2.To.Reg = r2
+		p3 := gc.Prog(movu)
 		p3.From.Type = obj.TYPE_REG
 		p3.From.Reg = sparc64.REG_TMP
 		p3.To.Type = obj.TYPE_MEM
-		p3.To.Reg = gc.SSARegNum(v.Args[0])
+		p3.To.Reg = r1
 		p4 := gc.Prog(sparc64.AADD)
 		p4.From.Type = obj.TYPE_CONST
-		p4.From.Offset = 8
+		p4.From.Offset = sz
 		p4.To.Type = obj.TYPE_REG
-		p4.To.Reg = gc.SSARegNum(v.Args[0])
+		p4.To.Reg = r1
 		p5 := gc.Prog(sparc64.ACMP)
 		p5.From.Type = obj.TYPE_REG
-		p5.From.Reg = gc.SSARegNum(v.Args[2])
-		p5.Reg = gc.SSARegNum(v.Args[1])
+		p5.From.Reg = r3
+		p5.Reg = r2
 		p6 := gc.Prog(sparc64.ABLED)
 		p6.To.Type = obj.TYPE_BRANCH
 		gc.Patch(p6, p)

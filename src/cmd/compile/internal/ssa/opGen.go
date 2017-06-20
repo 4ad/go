@@ -19108,6 +19108,7 @@ var opcodeTable = [...]opInfo{
 	},
 	{
 		name:         "LoweredZero",
+		auxType:      auxInt64,
 		argLen:       3,
 		clobberFlags: true,
 		reg: regInfo{
@@ -19120,6 +19121,7 @@ var opcodeTable = [...]opInfo{
 	},
 	{
 		name:         "LoweredMove",
+		auxType:      auxInt64,
 		argLen:       4,
 		clobberFlags: true,
 		reg: regInfo{
