@@ -153,7 +153,6 @@
 
 (Addr {sym} base) -> (MOVDaddr {sym} base)
 
-// XXX should be able to use MOVDconst below instead of Const64; why not?
 // constant shifts
 (Lsh64x64  x (MOVDconst [c])) && uint64(c) < 64 -> (SLLconst x [c])
 (Rsh64x64  x (MOVDconst [c])) && uint64(c) < 64 -> (SRAconst x [c])
@@ -168,19 +167,6 @@
 (Rsh8x64   x (MOVDconst [c])) && uint64(c) < 8  -> (SRAconst (SignExt8to64  x) [c])
 (Rsh8Ux64  x (MOVDconst [c])) && uint64(c) < 8  -> (SRLconst (ZeroExt8to64  x) [c])
 
-(Lsh64x64  x (Const64 [c])) && uint64(c) < 64 -> (SLLconst x [c])
-(Rsh64x64  x (Const64 [c])) && uint64(c) < 64 -> (SRAconst x [c])
-(Rsh64Ux64 x (Const64 [c])) && uint64(c) < 64 -> (SRLconst x [c])
-(Lsh32x64  x (Const64 [c])) && uint64(c) < 32 -> (SLLconst x [c])
-(Rsh32x64  x (Const64 [c])) && uint64(c) < 32 -> (SRAconst (SignExt32to64 x) [c])
-(Rsh32Ux64 x (Const64 [c])) && uint64(c) < 32 -> (SRLconst (ZeroExt32to64 x) [c])
-(Lsh16x64  x (Const64 [c])) && uint64(c) < 16 -> (SLLconst x [c])
-(Rsh16x64  x (Const64 [c])) && uint64(c) < 16 -> (SRAconst (SignExt16to64 x) [c])
-(Rsh16Ux64 x (Const64 [c])) && uint64(c) < 16 -> (SRLconst (ZeroExt16to64 x) [c])
-(Lsh8x64   x (Const64 [c])) && uint64(c) < 8  -> (SLLconst x [c])
-(Rsh8x64   x (Const64 [c])) && uint64(c) < 8  -> (SRAconst (SignExt8to64  x) [c])
-(Rsh8Ux64  x (Const64 [c])) && uint64(c) < 8  -> (SRLconst (ZeroExt8to64  x) [c])
-
 // large constant shifts
 (Lsh64x64  _ (MOVDconst [c])) && uint64(c) >= 64 -> (MOVDconst [0])
 (Rsh64Ux64 _ (MOVDconst [c])) && uint64(c) >= 64 -> (MOVDconst [0])
@@ -191,25 +177,11 @@
 (Lsh8x64   _ (MOVDconst [c])) && uint64(c) >= 8  -> (MOVDconst [0])
 (Rsh8Ux64  _ (MOVDconst [c])) && uint64(c) >= 8  -> (MOVDconst [0])
 
-(Lsh64x64  _ (Const64 [c])) && uint64(c) >= 64 -> (Const64 [0])
-(Rsh64Ux64 _ (Const64 [c])) && uint64(c) >= 64 -> (Const64 [0])
-(Lsh32x64  _ (Const64 [c])) && uint64(c) >= 32 -> (Const64 [0])
-(Rsh32Ux64 _ (Const64 [c])) && uint64(c) >= 32 -> (Const64 [0])
-(Lsh16x64  _ (Const64 [c])) && uint64(c) >= 16 -> (Const64 [0])
-(Rsh16Ux64 _ (Const64 [c])) && uint64(c) >= 16 -> (Const64 [0])
-(Lsh8x64   _ (Const64 [c])) && uint64(c) >= 8  -> (Const64 [0])
-(Rsh8Ux64  _ (Const64 [c])) && uint64(c) >= 8  -> (Const64 [0])
-
 // large constant signed right shift, we leave the sign bit
 (Rsh64x64 x (MOVDconst [c])) && uint64(c) >= 64 -> (SRAconst x [63])
 (Rsh32x64 x (MOVDconst [c])) && uint64(c) >= 32 -> (SRAconst (SignExt32to64 x) [63])
 (Rsh16x64 x (MOVDconst [c])) && uint64(c) >= 16 -> (SRAconst (SignExt16to64 x) [63])
 (Rsh8x64  x (MOVDconst [c])) && uint64(c) >= 8  -> (SRAconst (SignExt8to64  x) [63])
-
-(Rsh64x64 x (Const64 [c])) && uint64(c) >= 64 -> (SRAconst x [63])
-(Rsh32x64 x (Const64 [c])) && uint64(c) >= 32 -> (SRAconst (SignExt32to64 x) [63])
-(Rsh16x64 x (Const64 [c])) && uint64(c) >= 16 -> (SRAconst (SignExt16to64 x) [63])
-(Rsh8x64  x (Const64 [c])) && uint64(c) >= 8  -> (SRAconst (SignExt8to64  x) [63])
 
 // shifts
 // hardware instruction uses only up to the low 6 bits of the shift
