@@ -1530,13 +1530,10 @@ const (
 	OpSPARC64MOVWconst
 	OpSPARC64FMOVSconst
 	OpSPARC64FMOVDconst
-	OpSPARC64SLL
 	OpSPARC64SLLmax
 	OpSPARC64SLLconst
-	OpSPARC64SRL
 	OpSPARC64SRLmax
 	OpSPARC64SRLconst
-	OpSPARC64SRA
 	OpSPARC64SRAmax
 	OpSPARC64SRAconst
 	OpSPARC64CMP
@@ -18407,20 +18404,6 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
-		name:   "SLL",
-		argLen: 2,
-		asm:    sparc64.ASLLD,
-		reg: regInfo{
-			inputs: []inputInfo{
-				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-				{1, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-			},
-			outputs: []outputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-			},
-		},
-	},
-	{
 		name:         "SLLmax",
 		auxType:      auxInt64,
 		argLen:       2,
@@ -18451,20 +18434,6 @@ var opcodeTable = [...]opInfo{
 		},
 	},
 	{
-		name:   "SRL",
-		argLen: 2,
-		asm:    sparc64.ASRLD,
-		reg: regInfo{
-			inputs: []inputInfo{
-				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-				{1, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-			},
-			outputs: []outputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-			},
-		},
-	},
-	{
 		name:         "SRLmax",
 		auxType:      auxInt64,
 		argLen:       2,
@@ -18488,20 +18457,6 @@ var opcodeTable = [...]opInfo{
 		reg: regInfo{
 			inputs: []inputInfo{
 				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-			},
-			outputs: []outputInfo{
-				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-			},
-		},
-	},
-	{
-		name:   "SRA",
-		argLen: 2,
-		asm:    sparc64.ASRAD,
-		reg: regInfo{
-			inputs: []inputInfo{
-				{0, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
-				{1, 16776191}, // RT1 CTXT g RT2 O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5
 			},
 			outputs: []outputInfo{
 				{0, 16776176}, // O0 O1 O2 O3 O4 O5 L1 L2 L3 L4 L5 L6 L7 I0 I1 I2 I3 I4 I5

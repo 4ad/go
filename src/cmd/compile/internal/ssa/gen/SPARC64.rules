@@ -154,34 +154,63 @@
 (Addr {sym} base) -> (MOVDaddr {sym} base)
 
 // constant shifts
-(Lsh64x64  x (MOVDconst [c])) && uint64(c) < 64 -> (SLLconst x [c])
-(Rsh64x64  x (MOVDconst [c])) && uint64(c) < 64 -> (SRAconst x [c])
-(Rsh64Ux64 x (MOVDconst [c])) && uint64(c) < 64 -> (SRLconst x [c])
-(Lsh32x64  x (MOVDconst [c])) && uint64(c) < 32 -> (SLLconst x [c])
-(Rsh32x64  x (MOVDconst [c])) && uint64(c) < 32 -> (SRAconst (SignExt32to64 x) [c])
-(Rsh32Ux64 x (MOVDconst [c])) && uint64(c) < 32 -> (SRLconst (ZeroExt32to64 x) [c])
-(Lsh16x64  x (MOVDconst [c])) && uint64(c) < 16 -> (SLLconst x [c])
-(Rsh16x64  x (MOVDconst [c])) && uint64(c) < 16 -> (SRAconst (SignExt16to64 x) [c])
-(Rsh16Ux64 x (MOVDconst [c])) && uint64(c) < 16 -> (SRLconst (ZeroExt16to64 x) [c])
-(Lsh8x64   x (MOVDconst [c])) && uint64(c) < 8  -> (SLLconst x [c])
-(Rsh8x64   x (MOVDconst [c])) && uint64(c) < 8  -> (SRAconst (SignExt8to64  x) [c])
-(Rsh8Ux64  x (MOVDconst [c])) && uint64(c) < 8  -> (SRLconst (ZeroExt8to64  x) [c])
+(SLLmax x (MOVDconst [c])) && is64BitInt(x.Type) && uint64(c) < 64 ->
+	(SLLconst x [c])
+(SLLmax x (MOVDconst [c])) && is32BitInt(x.Type) && uint64(c) < 32 ->
+	(SLLconst x [c])
+(SLLmax x (MOVDconst [c])) && is16BitInt(x.Type) && uint64(c) < 16 ->
+	(SLLconst x [c])
+(SLLmax x (MOVDconst [c])) && is8BitInt(x.Type) && uint64(c) < 8 ->
+	(SLLconst x [c])
+
+(SRLmax x (MOVDconst [c])) && is64BitInt(x.Type) && uint64(c) < 64 ->
+	(SRLconst x [c])
+(SRLmax x (MOVDconst [c])) && is32BitInt(x.Type) && uint64(c) < 32 ->
+	(SRLconst x [c])
+(SRLmax x (MOVDconst [c])) && is16BitInt(x.Type) && uint64(c) < 16 ->
+	(SRLconst x [c])
+(SRLmax x (MOVDconst [c])) && is8BitInt(x.Type) && uint64(c) < 8 ->
+	(SRLconst x [c])
+
+(SRAmax (SignExt32to64 x) (MOVDconst [c])) && uint64(c) < 32 ->
+	(SRAconst x [c])
+(SRAmax (SignExt16to64 x) (MOVDconst [c])) && uint64(c) < 16 ->
+	(SRAconst x [c])
+(SRAmax (SignExt8to64 x) (MOVDconst [c])) && uint64(c) < 8 ->
+	(SRAconst x [c])
 
 // large constant shifts
-(Lsh64x64  _ (MOVDconst [c])) && uint64(c) >= 64 -> (MOVDconst [0])
-(Rsh64Ux64 _ (MOVDconst [c])) && uint64(c) >= 64 -> (MOVDconst [0])
-(Lsh32x64  _ (MOVDconst [c])) && uint64(c) >= 32 -> (MOVDconst [0])
-(Rsh32Ux64 _ (MOVDconst [c])) && uint64(c) >= 32 -> (MOVDconst [0])
-(Lsh16x64  _ (MOVDconst [c])) && uint64(c) >= 16 -> (MOVDconst [0])
-(Rsh16Ux64 _ (MOVDconst [c])) && uint64(c) >= 16 -> (MOVDconst [0])
-(Lsh8x64   _ (MOVDconst [c])) && uint64(c) >= 8  -> (MOVDconst [0])
-(Rsh8Ux64  _ (MOVDconst [c])) && uint64(c) >= 8  -> (MOVDconst [0])
+(SLLmax x (MOVDconst [c])) && is64BitInt(x.Type) && uint64(c) >= 64 ->
+	(MOVDconst [0])
+(SLLmax x (MOVDconst [c])) && is32BitInt(x.Type) && uint64(c) >= 32 ->
+	(MOVDconst [0])
+(SLLmax x (MOVDconst [c])) && is16BitInt(x.Type) && uint64(c) >= 16 ->
+	(MOVDconst [0])
+(SLLmax x (MOVDconst [c])) && is8BitInt(x.Type) && uint64(c) >= 8 ->
+	(MOVDconst [0])
+
+(SRLmax x (MOVDconst [c])) && is64BitInt(x.Type) && uint64(c) >= 64 ->
+	(MOVDconst [0])
+(SRLmax x (MOVDconst [c])) && is32BitInt(x.Type) && uint64(c) >= 32 ->
+	(MOVDconst [0])
+(SRLmax x (MOVDconst [c])) && is16BitInt(x.Type) && uint64(c) >= 16 ->
+	(MOVDconst [0])
+(SRLmax x (MOVDconst [c])) && is8BitInt(x.Type) && uint64(c) >= 8 ->
+	(MOVDconst [0])
 
 // large constant signed right shift, we leave the sign bit
-(Rsh64x64 x (MOVDconst [c])) && uint64(c) >= 64 -> (SRAconst x [63])
-(Rsh32x64 x (MOVDconst [c])) && uint64(c) >= 32 -> (SRAconst (SignExt32to64 x) [63])
-(Rsh16x64 x (MOVDconst [c])) && uint64(c) >= 16 -> (SRAconst (SignExt16to64 x) [63])
-(Rsh8x64  x (MOVDconst [c])) && uint64(c) >= 8  -> (SRAconst (SignExt8to64  x) [63])
+(SRAmax (SignExt32to64 x) (MOVDconst [c])) && uint64(c) >= 32 ->
+	(SRAconst x [63])
+(SRAmax (SignExt16to64 x) (MOVDconst [c])) && uint64(c) >= 16 ->
+	(SRAconst x [63])
+(SRAmax (SignExt8to64 x) (MOVDconst [c])) && uint64(c) >= 8 ->
+	(SRAconst x [63])
+
+// general signed right shift rules; must be evaluated last
+(SRAmax x (MOVDconst [c])) && uint64(c) < 64 ->
+	(SRAconst x [c])
+(SRAmax x (MOVDconst [c])) && uint64(c) >= 64 ->
+	(SRAconst x [63])
 
 // shifts
 // hardware instruction uses only up to the low 6 bits of the shift
@@ -678,14 +707,6 @@
 (OR  x (MOVWconst [c])) -> (ORconst  [c] x)
 (XOR (MOVWconst [c]) x) -> (XORconst [c] x)
 (XOR x (MOVWconst [c])) -> (XORconst [c] x)
-
-(SLL x (MOVDconst [c])) -> (SLLconst x [c&63]) // Note: I don't think we ever generate bad constant shifts (i.e. c>=64)
-(SRL x (MOVDconst [c])) -> (SRLconst x [c&63])
-(SRA x (MOVDconst [c])) -> (SRAconst x [c&63])
-
-(SLL x (MOVWconst [c])) -> (SLLconst x [c&63]) // Note: I don't think we ever generate bad constant shifts (i.e. c>=64)
-(SRL x (MOVWconst [c])) -> (SRLconst x [c&63])
-(SRA x (MOVWconst [c])) -> (SRAconst x [c&63])
 
 (CMP x (MOVDconst [c])) && c>-4097 && c<4096 -> (CMPconst [c] x)
 (CMP x (MOVWconst [c])) && c>-4097 && c<4096 -> (CMPconst [c] x)
