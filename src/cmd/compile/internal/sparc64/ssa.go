@@ -447,6 +447,62 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p.From.Reg = sparc64.REG_O0
 		p.Reg = sparc64.REG_O1
 		p.To.Type = obj.TYPE_REG
+		if v.Op == ssa.OpSPARC64UMULXHI {
+			p.To.Reg = r
+			return
+		}
+		// Don't write to r as it may be an input register.
+		p.To.Reg = sparc64.REG_TMP
+
+		// The remainder of this logic calculates an int64*int64
+		// product using the result of UMULXHI. Go currently never
+		// calls MULXHI with unsigned * signed, so this does not handle
+		// that case.
+
+		// srlx      r1, 0x3f, O0
+		// mulx	     O0, r2, O0
+		p = gc.Prog(sparc64.ASRLD)
+		p.From.Type = obj.TYPE_CONST
+		p.From.Offset = 63
+		p.Reg = r1
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_O0
+		p = gc.Prog(sparc64.AMULD)
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = r2
+		p.Reg = sparc64.REG_O0
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_O0
+
+		// srlx      r2, 0x3f, O1
+		// mulx      O1, r1, O1
+		p = gc.Prog(sparc64.ASRLD)
+		p.From.Type = obj.TYPE_CONST
+		p.From.Offset = 63
+		p.Reg = r2
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_O1
+		p = gc.Prog(sparc64.AMULD)
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = r1
+		p.Reg = sparc64.REG_O1
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_O1
+
+		// unsigned * signed would only use O1.
+		// add	     O0, O1, TMP2
+		// sub       r, TMP2, r
+		p = gc.Prog(sparc64.AADD)
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = sparc64.REG_O1
+		p.Reg = sparc64.REG_O0
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_TMP2
+		p = gc.Prog(sparc64.ASUB)
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = sparc64.REG_TMP2
+		p.Reg = sparc64.REG_TMP
+		p.To.Type = obj.TYPE_REG
 		p.To.Reg = r
 
 	case ssa.OpSPARC64ADDconst,
