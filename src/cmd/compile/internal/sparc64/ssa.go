@@ -683,7 +683,6 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		r := gc.SSARegNum(v)
 		r1 := gc.SSARegNum(v.Args[0])
 		ft := v.Args[0].Type
-		tt := v.Type
 
 		if !ft.IsSigned() {
 			p := gc.Prog(sparc64.AMOVD)
@@ -731,7 +730,9 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p.To.Type = obj.TYPE_MEM
 		p.To.Reg = sparc64.REG_RSP
 		p.To.Offset = -8 + sparc64.StackBias
-		p = gc.Prog(loadByType(tt))
+		// Always load as double since FXTOS/FXTOD require the source
+		// to be a double.
+		p = gc.Prog(sparc64.AFMOVD)
 		p.From.Type = obj.TYPE_MEM
 		p.From.Reg = sparc64.REG_RSP
 		p.From.Offset = -8 + sparc64.StackBias
