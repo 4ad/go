@@ -542,12 +542,10 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p.To.Reg = gc.SSARegNum(v)
 
 	case ssa.OpSPARC64FSTOI,
-		ssa.OpSPARC64FSTOX,
 		ssa.OpSPARC64FDTOI:
 
 		r := gc.SSARegNum(v)
 		r1 := gc.SSARegNum(v.Args[0])
-		ft := v.Args[0].Type
 		tt := v.Type
 
 		p := gc.Prog(v.Op.Asm())
@@ -555,7 +553,35 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p.From.Reg = r1
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = sparc64.REG_YTMP
-		p = gc.Prog(storeByType(ft))
+		// Always store as single since FSTOI/FDTOI required the
+		// destination register to be a single.
+		p = gc.Prog(sparc64.AFMOVS)
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = sparc64.REG_YTMP
+		p.To.Type = obj.TYPE_MEM
+		p.To.Reg = sparc64.REG_RSP
+		p.To.Offset = -8 + sparc64.StackBias
+		p = gc.Prog(loadByType(tt))
+		p.From.Type = obj.TYPE_MEM
+		p.From.Reg = sparc64.REG_RSP
+		p.From.Offset = -8 + sparc64.StackBias
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = r
+
+	case ssa.OpSPARC64FSTOX:
+
+		r := gc.SSARegNum(v)
+		r1 := gc.SSARegNum(v.Args[0])
+		tt := v.Type
+
+		p := gc.Prog(v.Op.Asm())
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = r1
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_YTMP
+		// Always store as double since FSTOX required the destination
+		// register to be a double.
+		p = gc.Prog(sparc64.AFMOVD)
 		p.From.Type = obj.TYPE_REG
 		p.From.Reg = sparc64.REG_YTMP
 		p.To.Type = obj.TYPE_MEM
@@ -655,7 +681,6 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		r := gc.SSARegNum(v)
 		r1 := gc.SSARegNum(v.Args[0])
 		ft := v.Args[0].Type
-		tt := v.Type
 
 		p := gc.Prog(storeByType(ft))
 		p.From.Type = obj.TYPE_REG
@@ -663,7 +688,9 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p.To.Type = obj.TYPE_MEM
 		p.To.Reg = sparc64.REG_RSP
 		p.To.Offset = -8 + sparc64.StackBias
-		p = gc.Prog(loadByType(tt))
+		// Always load as single since FITOS/FITOD required the source
+		// to be a single.
+		p = gc.Prog(sparc64.AFMOVS)
 		p.From.Type = obj.TYPE_MEM
 		p.From.Reg = sparc64.REG_RSP
 		p.From.Offset = -8 + sparc64.StackBias
