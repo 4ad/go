@@ -1300,7 +1300,7 @@ func ssaGenBlock(s *gc.SSAGenState, b, next *ssa.Block) {
 	case ssa.BlockRet:
 		gc.Prog(obj.ARET)
 	case ssa.BlockRetJmp:
-		p := gc.Prog(obj.AJMP)
+		p := gc.Prog(obj.ARET) // obj will transform this into AJMP
 		p.To.Type = obj.TYPE_MEM
 		p.To.Name = obj.NAME_EXTERN
 		p.To.Sym = gc.Linksym(b.Aux.(*gc.Sym))
