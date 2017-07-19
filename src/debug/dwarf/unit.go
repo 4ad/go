@@ -62,12 +62,23 @@ func (d *Data) parseUnits() ([]unit, error) {
 		var n Offset
 		n, u.is64 = b.unitLength()
 		vers := b.uint16()
+		var header_bytes_read uint
+		header_bytes_read = 2 // Not counting size
 		if vers != 2 && vers != 3 && vers != 4 {
 			b.error("unsupported DWARF version " + strconv.Itoa(int(vers)))
 			break
 		}
 		u.vers = int(vers)
-		atable, err := d.parseAbbrev(b.uint32(), u.vers)
+		var aoff uint32
+		if !u.is64 {
+			aoff = b.uint32()
+			header_bytes_read += 4
+		} else {
+			// For now ignore the high bits
+			aoff = uint32(b.uint64())
+			header_bytes_read += 8
+		}
+		atable, err := d.parseAbbrev(aoff, u.vers)
 		if err != nil {
 			if b.err == nil {
 				b.err = err
@@ -76,8 +87,9 @@ func (d *Data) parseUnits() ([]unit, error) {
 		}
 		u.atable = atable
 		u.asize = int(b.uint8())
+		header_bytes_read += 1
 		u.off = b.off
-		u.data = b.bytes(int(n - (2 + 4 + 1)))
+		u.data = b.bytes(int(n - Offset(header_bytes_read)))
 	}
 	if b.err != nil {
 		return nil, b.err
