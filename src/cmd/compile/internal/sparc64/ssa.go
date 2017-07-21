@@ -220,24 +220,29 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		r1 := gc.SSARegNum(v.Args[0])
 		r2 := gc.SSARegNum(v.Args[1])
 
-		p := gc.Prog(v.Op.Asm())
+		p := gc.Prog(sparc64.AMOVD)
 		p.From.Type = obj.TYPE_REG
 		p.From.Reg = r2
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = sparc64.REG_TMP
+		p = gc.Prog(v.Op.Asm())
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = sparc64.REG_TMP
 		p.Reg = r1
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = r
-		p2 := gc.Prog(sparc64.ACMP)
-		p2.From.Type = obj.TYPE_CONST
-		p2.From.Offset = v.AuxInt
-		p2.Reg = r2
-		p3 := gc.Prog(sparc64.AMOVGU)
-		p3.From.Type = obj.TYPE_REG
-		p3.From.Reg = sparc64.REG_XCC
-		p3.From3 = &obj.Addr{}
-		p3.From3.Type = obj.TYPE_CONST
-		p3.From3.Offset = 0
-		p3.To.Type = obj.TYPE_REG
-		p3.To.Reg = r
+		p = gc.Prog(sparc64.ACMP)
+		p.From.Type = obj.TYPE_CONST
+		p.From.Offset = v.AuxInt
+		p.Reg = sparc64.REG_TMP
+		p = gc.Prog(sparc64.AMOVGU)
+		p.From.Type = obj.TYPE_REG
+		p.From.Reg = sparc64.REG_XCC
+		p.From3 = &obj.Addr{}
+		p.From3.Type = obj.TYPE_CONST
+		p.From3.Offset = 0
+		p.To.Type = obj.TYPE_REG
+		p.To.Reg = r
 
 	case ssa.OpSPARC64SRAmax:
 
