@@ -58,7 +58,14 @@ func New(abbrev, aranges, frame, info, line, pubnames, ranges, str []byte) (*Dat
 	if len(d.info) < 6 {
 		return nil, DecodeError{"info", Offset(len(d.info)), "too short"}
 	}
+	// 32-bit dwarf has 4 byte size then 2 byte version
 	x, y := d.info[4], d.info[5]
+	if d.info[0] == 255 && d.info[1] == 255 {
+		// 64-bit DWARF has 4 bytes of FF, then 8 byte size,
+		// then 2 byte version
+		x = d.info[12]
+		y = d.info[13]
+	}
 	switch {
 	case x == 0 && y == 0:
 		return nil, DecodeError{"info", 4, "unsupported version 0"}
