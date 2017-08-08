@@ -98,8 +98,8 @@ func deferproc(siz int32, fn *funcval) { // arguments of fn follow fn
 		d.pc = callerpc
 		if sys.GoarchSparc64 == 1 {
 			// on SPARC64 the link register contains the address of the
-			// 4-byte CALL instruction, which is always follwed by a
-			// 4-byteNOP.
+			// 4-byte CALL instruction, which is always followed by a
+			// 4-byte NOP.
 			d.pc += 8
 		}
 		d.sp = sp
