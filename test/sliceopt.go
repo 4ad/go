@@ -1,4 +1,4 @@
-// +build !amd64,!arm,!amd64p32,!386,!arm64,!ppc64le,!mips64,!mips64le,!s390x
+// +build !amd64,!arm,!amd64p32,!386,!arm64,!ppc64le,!mips64,!mips64le,!s390x,!sparc64
 // errorcheck -0 -d=append,slice
 
 // Copyright 2015 The Go Authors. All rights reserved.
