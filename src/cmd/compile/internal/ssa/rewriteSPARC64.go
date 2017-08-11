@@ -1206,13 +1206,17 @@ func rewriteValueSPARC64_OpDiv16(v *Value, config *Config) bool {
 	_ = b
 	// match: (Div16 x y)
 	// cond:
-	// result: (SDIVD x y)
+	// result: (SDIVD (SignExt16to64 x) (SignExt16to64 y))
 	for {
 		x := v.Args[0]
 		y := v.Args[1]
 		v.reset(OpSPARC64SDIVD)
-		v.AddArg(x)
-		v.AddArg(y)
+		v0 := b.NewValue0(v.Line, OpSignExt16to64, config.fe.TypeInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpSignExt16to64, config.fe.TypeInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
 		return true
 	}
 }
@@ -1221,13 +1225,17 @@ func rewriteValueSPARC64_OpDiv16u(v *Value, config *Config) bool {
 	_ = b
 	// match: (Div16u x y)
 	// cond:
-	// result: (UDIVD x y)
+	// result: (UDIVD (ZeroExt16to64 x) (ZeroExt16to64 y))
 	for {
 		x := v.Args[0]
 		y := v.Args[1]
 		v.reset(OpSPARC64UDIVD)
-		v.AddArg(x)
-		v.AddArg(y)
+		v0 := b.NewValue0(v.Line, OpZeroExt16to64, config.fe.TypeUInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpZeroExt16to64, config.fe.TypeUInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
 		return true
 	}
 }
@@ -1236,13 +1244,17 @@ func rewriteValueSPARC64_OpDiv32(v *Value, config *Config) bool {
 	_ = b
 	// match: (Div32 x y)
 	// cond:
-	// result: (SDIVD x y)
+	// result: (SDIVD (SignExt32to64 x) (SignExt32to64 y))
 	for {
 		x := v.Args[0]
 		y := v.Args[1]
 		v.reset(OpSPARC64SDIVD)
-		v.AddArg(x)
-		v.AddArg(y)
+		v0 := b.NewValue0(v.Line, OpSignExt32to64, config.fe.TypeInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpSignExt32to64, config.fe.TypeInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
 		return true
 	}
 }
@@ -1266,13 +1278,17 @@ func rewriteValueSPARC64_OpDiv32u(v *Value, config *Config) bool {
 	_ = b
 	// match: (Div32u x y)
 	// cond:
-	// result: (UDIVD x y)
+	// result: (UDIVD (ZeroExt32to64 x) (ZeroExt32to64 y))
 	for {
 		x := v.Args[0]
 		y := v.Args[1]
 		v.reset(OpSPARC64UDIVD)
-		v.AddArg(x)
-		v.AddArg(y)
+		v0 := b.NewValue0(v.Line, OpZeroExt32to64, config.fe.TypeUInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpZeroExt32to64, config.fe.TypeUInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
 		return true
 	}
 }
@@ -1326,13 +1342,17 @@ func rewriteValueSPARC64_OpDiv8(v *Value, config *Config) bool {
 	_ = b
 	// match: (Div8 x y)
 	// cond:
-	// result: (SDIVD x y)
+	// result: (SDIVD (SignExt8to64 x) (SignExt8to64 y))
 	for {
 		x := v.Args[0]
 		y := v.Args[1]
 		v.reset(OpSPARC64SDIVD)
-		v.AddArg(x)
-		v.AddArg(y)
+		v0 := b.NewValue0(v.Line, OpSignExt8to64, config.fe.TypeInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpSignExt8to64, config.fe.TypeInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
 		return true
 	}
 }
@@ -1341,13 +1361,17 @@ func rewriteValueSPARC64_OpDiv8u(v *Value, config *Config) bool {
 	_ = b
 	// match: (Div8u x y)
 	// cond:
-	// result: (UDIVD x y)
+	// result: (UDIVD (ZeroExt8to64 x) (ZeroExt8to64 y))
 	for {
 		x := v.Args[0]
 		y := v.Args[1]
 		v.reset(OpSPARC64UDIVD)
-		v.AddArg(x)
-		v.AddArg(y)
+		v0 := b.NewValue0(v.Line, OpZeroExt8to64, config.fe.TypeUInt64())
+		v0.AddArg(x)
+		v.AddArg(v0)
+		v1 := b.NewValue0(v.Line, OpZeroExt8to64, config.fe.TypeUInt64())
+		v1.AddArg(y)
+		v.AddArg(v1)
 		return true
 	}
 }
