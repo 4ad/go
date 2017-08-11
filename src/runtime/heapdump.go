@@ -249,9 +249,8 @@ func dumpframe(s *stkframe, arg unsafe.Pointer) bool {
 
 	// Figure out what we can about our stack map
 	pc := s.pc
-	// SPARC64's PC holds the address of the *current* instruction.
-	if pc != f.entry && sys.GoarchSparc64 == 0 {
-		pc--
+	if pc != f.entry {
+		pc -= sys.PCQuantum
 	}
 	pcdata := pcdatavalue(f, _PCDATA_StackMapIndex, pc, nil)
 	if pcdata == -1 {
@@ -595,9 +594,8 @@ func dumpmemprof_callback(b *bucket, nstk uintptr, pstk *uintptr, size, allocs, 
 			dumpint(0)
 		} else {
 			dumpstr(funcname(f))
-			// SPARC64's PC holds the address of the *current* instruction.
-			if i > 0 && pc > f.entry && sys.GoarchSparc64 == 0 {
-				pc--
+			if i > 0 && pc > f.entry {
+				pc -= sys.PCQuantum
 			}
 			file, line := funcline(f, pc)
 			dumpstr(file)

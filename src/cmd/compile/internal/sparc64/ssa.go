@@ -984,7 +984,6 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 
 	case ssa.OpSPARC64CALLstatic:
 		if v.Aux.(*gc.Sym) == gc.Deferreturn.Sym {
-			// TODO(shawn): is this true on sparc due to pc/npc difference?
 			// Deferred calls will appear to be returning to
 			// the CALL deferreturn(SB) that we are about to emit.
 			// However, the stack trace code will show the line

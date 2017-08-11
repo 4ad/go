@@ -169,6 +169,11 @@ func gentraceback(pc0, sp0, lr0 uintptr, gp *g, skip int, pcbuf *uintptr, max in
 	nprint := 0
 	var frame stkframe
 	frame.pc = pc0
+	if pc0 != 0 && sys.GoarchSparc64 == 1 {
+		// last executed pc, not next pc; for consistency with
+		// other arches, adjust to next pc
+		frame.pc += sys.PCQuantum
+	}
 	frame.sp = sp0
 	if usesLR {
 		frame.lr = lr0
@@ -191,6 +196,12 @@ func gentraceback(pc0, sp0, lr0 uintptr, gp *g, skip int, pcbuf *uintptr, max in
 		} else {
 			frame.pc = uintptr(*(*sys.Uintreg)(unsafe.Pointer(frame.sp)))
 			frame.sp += sys.RegSize
+		}
+
+		if sys.GoarchSparc64 == 1 {
+			// lr holds caller's last executed pc, not next pc,
+			// and is always nop-padded
+			frame.pc += sys.PCQuantum*2
 		}
 	}
 
@@ -220,6 +231,12 @@ func gentraceback(pc0, sp0, lr0 uintptr, gp *g, skip int, pcbuf *uintptr, max in
 		}
 
 		frame.pc = gp.stkbar[stkbarPos].savedLRVal
+		if sys.GoarchSparc64 == 1 {
+			// lr holds caller's last executed pc, not next pc,
+			// and is always nop-padded
+			frame.pc += sys.PCQuantum*2
+		}
+
 		stkbar = gp.stkbar[stkbarPos+1:]
 		f = findfunc(frame.pc)
 	}
@@ -308,7 +325,7 @@ func gentraceback(pc0, sp0, lr0 uintptr, gp *g, skip int, pcbuf *uintptr, max in
 				frame.lr = stkbar[0].savedLRVal
 				stkbar = stkbar[1:]
 			}
-			flr = findfunc(frame.lr)
+			flr = findfunc(frame.lr + sys.GoarchSparc64*sys.PCQuantum*2)
 			if flr == nil {
 				// This happens if you get a profiling interrupt at just the wrong time.
 				// In that context it is okay to stop early.
@@ -388,10 +405,8 @@ func gentraceback(pc0, sp0, lr0 uintptr, gp *g, skip int, pcbuf *uintptr, max in
 				//		/home/rsc/go/src/runtime/x.go:23 +0xf
 				//
 				tracepc := frame.pc // back up to CALL instruction for funcline.
-				// SPARC64's PC holds the address of the *current* 
-				// instruction, so it doesn't need this.
-				if (n > 0 || flags&_TraceTrap == 0) && frame.pc > f.entry && !waspanic && sys.GoarchSparc64 == 0 {
-					tracepc--
+				if (n > 0 || flags&_TraceTrap == 0) && frame.pc > f.entry && !waspanic {
+					tracepc -= sys.PCQuantum
 				}
 				name := funcname(f)
 				if name == "runtime.gopanic" {
@@ -447,6 +462,11 @@ func gentraceback(pc0, sp0, lr0 uintptr, gp *g, skip int, pcbuf *uintptr, max in
 		// Unwind to next frame.
 		frame.fn = flr
 		frame.pc = frame.lr
+		if sys.GoarchSparc64 == 1 && !waspanic{
+			// if we're not panicing, lr holds caller's last
+			// executed pc, not next pc, and is always nop-padded
+			frame.pc += sys.PCQuantum*2
+		}
 		frame.lr = 0
 		frame.sp = frame.fp
 		frame.fp = 0

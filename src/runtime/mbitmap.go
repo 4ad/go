@@ -1918,9 +1918,8 @@ func getgcmask(ep interface{}) (mask []byte) {
 			if targetpc == 0 {
 				return
 			}
-			// SPARC64's PC holds the address of the *current* instruction.
-			if targetpc != f.entry && sys.GoarchSparc64 == 0 {
-				targetpc--
+			if targetpc != f.entry {
+				targetpc -= sys.PCQuantum
 			}
 			pcdata := pcdatavalue(f, _PCDATA_StackMapIndex, targetpc, nil)
 			if pcdata == -1 {

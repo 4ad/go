@@ -1101,6 +1101,8 @@ TEXT runtime·return0(SB), NOSPLIT, $0
 TEXT runtime·goexit(SB),NOSPLIT|NOFRAME,$0-0
 	MOVD	I3, I3	// NOP
 	CALL	runtime·goexit1(SB)	// does not return
+	// traceback from goexit1 must hit code range of goexit
+	MOVD	ZR, ZR	// NOP
 
 // TODO(aram):
 TEXT runtime·prefetcht0(SB),NOSPLIT|NOFRAME,$0-8

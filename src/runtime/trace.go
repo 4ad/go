@@ -808,11 +808,7 @@ func traceFrameForPC(buf *traceBuf, frames map[uintptr]traceFrame, pc uintptr) (
 	}
 	frame.funcID, buf = traceString(buf, fn)
 	tracepc := pc
-	if sys.GoarchSparc64 != 1 {
-		// SPARC64's PC holds the address of the *current*
-		// instruction, so it doesn't need this.
-		tracepc -= sys.PCQuantum
-	}
+	tracepc -= sys.PCQuantum
 	file, line := funcline(f, tracepc)
 	frame.line = uint64(line)
 	if len(file) > maxLen {
@@ -923,12 +919,9 @@ func traceGoCreate(newg *g, pc uintptr) {
 	newg.traceseq = 0
 	newg.tracelastp = getg().m.p
 	tracepc := pc
-	if sys.GoarchSparc64 != 1 {
-		// +PCQuantum because traceFrameForPC expects return PCs and
-		// subtracts PCQuantum. SPARC64's PC holds the address of the
-		// *current* instruction, so it doesn't need this.
-		tracepc += sys.PCQuantum
-	}
+	// +PCQuantum because traceFrameForPC expects return PCs and
+	// subtracts PCQuantum.
+	tracepc += sys.PCQuantum
 	id := trace.stackTab.put([]uintptr{tracepc})
 	traceEvent(traceEvGoCreate, 2, uint64(newg.goid), uint64(id))
 }

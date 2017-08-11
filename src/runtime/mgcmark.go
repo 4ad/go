@@ -810,9 +810,8 @@ func scanframeworker(frame *stkframe, cache *pcvalueCache, gcw *gcWork) {
 	if _DebugGC > 1 {
 		print("scanframe ", funcname(f), "\n")
 	}
-	// SPARC64's PC holds the address of the *current* instruction.
-	if targetpc != f.entry && sys.GoarchSparc64 == 0 {
-		targetpc--
+	if targetpc != f.entry {
+		targetpc -= sys.PCQuantum
 	}
 	pcdata := pcdatavalue(f, _PCDATA_StackMapIndex, targetpc, cache)
 	if pcdata == -1 {

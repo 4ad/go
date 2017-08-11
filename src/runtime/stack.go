@@ -695,9 +695,8 @@ func adjustframe(frame *stkframe, arg unsafe.Pointer) bool {
 		// have full GC info for it (because it is written in asm).
 		return true
 	}
-	// SPARC64's PC holds the address of the *current* instruction.
-	if targetpc != f.entry && sys.GoarchSparc64 == 0 {
-		targetpc--
+	if targetpc != f.entry {
+		targetpc -= sys.PCQuantum
 	}
 	pcdata := pcdatavalue(f, _PCDATA_StackMapIndex, targetpc, &adjinfo.cache)
 	if pcdata == -1 {

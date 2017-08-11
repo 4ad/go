@@ -85,9 +85,8 @@ func (ci *Frames) Next() (frame Frame, more bool) {
 
 	entry := f.Entry()
 	xpc := pc
-	// SPARC64's PC holds the address of the *current* instruction.
-	if xpc > entry && !ci.wasPanic && sys.GoarchSparc64 == 0 {
-		xpc--
+	if xpc > entry && !ci.wasPanic {
+		xpc -= sys.PCQuantum
 	}
 	file, line := f.FileLine(xpc)
 
