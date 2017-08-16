@@ -573,33 +573,8 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = r
 
-	case ssa.OpSPARC64FSTOX:
-
-		r := gc.SSARegNum(v)
-		r1 := gc.SSARegNum(v.Args[0])
-		tt := v.Type
-
-		p := gc.Prog(v.Op.Asm())
-		p.From.Type = obj.TYPE_REG
-		p.From.Reg = r1
-		p.To.Type = obj.TYPE_REG
-		p.To.Reg = sparc64.REG_YTMP
-		// Always store as double since FSTOX required the destination
-		// register to be a double.
-		p = gc.Prog(sparc64.AFMOVD)
-		p.From.Type = obj.TYPE_REG
-		p.From.Reg = sparc64.REG_YTMP
-		p.To.Type = obj.TYPE_MEM
-		p.To.Reg = sparc64.REG_RSP
-		p.To.Offset = -8 + sparc64.StackBias
-		p = gc.Prog(loadByType(tt))
-		p.From.Type = obj.TYPE_MEM
-		p.From.Reg = sparc64.REG_RSP
-		p.From.Offset = -8 + sparc64.StackBias
-		p.To.Type = obj.TYPE_REG
-		p.To.Reg = r
-
-	case ssa.OpSPARC64FDTOX:
+	case ssa.OpSPARC64FSTOX,
+		ssa.OpSPARC64FDTOX:
 	// algorithm is:
 	//	if small enough, use native float64 -> int64 conversion.
 	//	otherwise, subtract 2^63, convert, and add it back.
@@ -608,23 +583,33 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		ft := v.Args[0].Type
 		tt := v.Type
 
+		var fcmp, fsub obj.As
+		switch ft.Size() {
+		case 4:
+			fcmp = sparc64.AFCMPS
+			fsub = sparc64.AFSUBS
+		case 8:
+			fcmp = sparc64.AFCMPD
+			fsub = sparc64.AFSUBD
+		}
+
 		if !tt.IsSigned() {
 			p := gc.Prog(storeByType(ft))
 			p.From.Type = obj.TYPE_FCONST
 			p.From.Val = float64(uint64(1<<63))
 			p.To.Type = obj.TYPE_REG
 			p.To.Reg = sparc64.REG_YTMP
-			p = gc.Prog(sparc64.AFCMPD)
+			p = gc.Prog(fcmp)
 			p.From.Type = obj.TYPE_REG
 			p.From.Reg = r1
 			p.Reg = sparc64.REG_YTMP
 			q := gc.Prog(sparc64.AFBG)
 			q.To.Type = obj.TYPE_BRANCH
 			q.To.Val = nil
-			p = gc.Prog(sparc64.AFSUBD)
+			p = gc.Prog(fsub)
 			p.From.Type = obj.TYPE_REG
-			p.From.Reg = r1
-			p.Reg = sparc64.REG_YTMP
+			p.From.Reg = sparc64.REG_YTMP
+			p.Reg = r1
 			p.To.Type = obj.TYPE_REG
 			p.To.Reg = sparc64.REG_YTMP
 			q2 := gc.Prog(obj.AJMP)
@@ -645,7 +630,9 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		p.From.Reg = r1
 		p.To.Type = obj.TYPE_REG
 		p.To.Reg = sparc64.REG_YTMP
-		p = gc.Prog(storeByType(ft))
+		// Always store as double since FSTOX/FDTOX required the
+		// destination register to be a double.
+		p = gc.Prog(sparc64.AFMOVD)
 		p.From.Type = obj.TYPE_REG
 		p.From.Reg = sparc64.REG_YTMP
 		p.To.Type = obj.TYPE_MEM
@@ -715,22 +702,28 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 		r := gc.SSARegNum(v)
 		r1 := gc.SSARegNum(v.Args[0])
 		ft := v.Args[0].Type
+		tt := v.Type
 
 		if !ft.IsSigned() {
 			p := gc.Prog(sparc64.AMOVD)
+			p.From.Type = obj.TYPE_REG
+			p.From.Reg = r1
+			p.To.Type = obj.TYPE_REG
+			p.To.Reg = sparc64.REG_TMP
+			p = gc.Prog(sparc64.AMOVD)
 			p.From.Type = obj.TYPE_CONST
 			p.From.Offset = 1
 			p.To.Type = obj.TYPE_REG
-			p.To.Reg = sparc64.REG_TMP
+			p.To.Reg = sparc64.REG_TMP2
 			p = gc.Prog(sparc64.ASLLD)
 			p.From.Type = obj.TYPE_CONST
 			p.From.Offset = 63
 			p.To.Type = obj.TYPE_REG
-			p.To.Reg = sparc64.REG_TMP
+			p.To.Reg = sparc64.REG_TMP2
 			p = gc.Prog(sparc64.ACMP)
 			p.From.Type = obj.TYPE_REG
-			p.From.Reg = r1
-			p.Reg = sparc64.REG_TMP
+			p.From.Reg = sparc64.REG_TMP2
+			p.Reg = r1
 			q := gc.Prog(sparc64.ABLEUD)
 			q.To.Type = obj.TYPE_BRANCH
 			q.To.Val = nil
@@ -780,7 +773,16 @@ func ssaGenValue(s *gc.SSAGenState, v *ssa.Value) {
 			q := gc.Prog(sparc64.ABLEUD)
 			q.To.Type = obj.TYPE_BRANCH
 			q.To.Val = nil
-			p := gc.Prog(sparc64.AFMULD)
+
+			var mula obj.As
+			switch tt.Size() {
+			case 4:
+				mula = sparc64.AFMULS
+			case 8:
+				mula = sparc64.AFMULD
+			}
+
+			p := gc.Prog(mula)
 			p.From.Type = obj.TYPE_REG
 			p.From.Reg = sparc64.REG_YTWO
 			p.To.Type = obj.TYPE_REG
