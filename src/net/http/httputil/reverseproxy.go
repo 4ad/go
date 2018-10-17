@@ -64,6 +64,14 @@ type ReverseProxy struct {
 	// get byte slices for use by io.CopyBuffer when
 	// copying HTTP response bodies.
 	BufferPool BufferPool
+	
+	// ErrorHandler is an optional function that handles errors
+        // reaching the backend or errors from ModifyResponse.
+        //
+        // If nil, the default is to log the provided error and return
+        // a 502 Status Bad Gateway response.
+        // This is to support EC Solaris SPARC64 build
+        ErrorHandler func(http.ResponseWriter, *http.Request, error)
 }
 
 // A BufferPool is an interface for getting and returning temporary
@@ -71,6 +79,27 @@ type ReverseProxy struct {
 type BufferPool interface {
 	Get() []byte
 	Put([]byte)
+}
+
+// Add default Error Handler to support EC Solaris SPARC64 build
+func (p *ReverseProxy) defaultErrorHandler(rw http.ResponseWriter, req *http.Request, err error)\
+ {
+
+     p.logf("http: proxy error: %v", err)
+
+     rw.WriteHeader(http.StatusBadGateway)
+
+}
+
+
+// Add Error Handler to support EC Solaris SPARC64 build
+func (p *ReverseProxy) getErrorHandler() func(http.ResponseWriter, *http.Request, error) {
+     if p.ErrorHandler != nil {
+
+        return p.ErrorHandler
+     }
+
+     return p.defaultErrorHandler
 }
 
 func singleJoiningSlash(a, b string) string {
