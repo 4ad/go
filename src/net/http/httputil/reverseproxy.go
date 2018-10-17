@@ -47,6 +47,18 @@ type ReverseProxy struct {
 	// If nil, logging goes to os.Stderr via the log package's
 	// standard logger.
 	ErrorLog *log.Logger
+	
+	// ModifyResponse is an optional function that modifies the
+        // Response from the backend. It is called if the backend
+        // returns a response at all, with any HTTP status code.
+        // If the backend is unreachable, the optional ErrorHandler is
+        // called without any call to ModifyResponse.
+        //
+        // If ModifyResponse returns an error, ErrorHandler is called
+        // with its error value. If ErrorHandler is nil, its default
+        // implementation is used.
+	// This is to enhance EC Solaris SPARC64 plugin build so that it will modify the TLS response header.
+        ModifyResponse func(*http.Response) error
 
 	// BufferPool optionally specifies a buffer pool to
 	// get byte slices for use by io.CopyBuffer when
@@ -215,6 +227,15 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	for _, h := range hopHeaders {
 		res.Header.Del(h)
 	}
+	
+	// add to support EC Solaris build
+	if p.ModifyResponse != nil {
+              if err := p.ModifyResponse(res); err != nil {
+                     res.Body.Close()
+                     p.getErrorHandler()(rw, outreq, err)
+                     return
+              }
+        }
 
 	copyHeader(rw.Header(), res.Header)
 
