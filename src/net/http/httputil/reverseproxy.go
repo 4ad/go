@@ -47,11 +47,31 @@ type ReverseProxy struct {
 	// If nil, logging goes to os.Stderr via the log package's
 	// standard logger.
 	ErrorLog *log.Logger
+	
+	// ModifyResponse is an optional function that modifies the
+        // Response from the backend. It is called if the backend
+        // returns a response at all, with any HTTP status code.
+        // If the backend is unreachable, the optional ErrorHandler is
+        // called without any call to ModifyResponse.
+        //
+        // If ModifyResponse returns an error, ErrorHandler is called
+        // with its error value. If ErrorHandler is nil, its default
+        // implementation is used.
+	// This is to enhance EC Solaris SPARC64 plugin build so that it will modify the TLS response header.
+        ModifyResponse func(*http.Response) error
 
 	// BufferPool optionally specifies a buffer pool to
 	// get byte slices for use by io.CopyBuffer when
 	// copying HTTP response bodies.
 	BufferPool BufferPool
+	
+	// ErrorHandler is an optional function that handles errors
+        // reaching the backend or errors from ModifyResponse.
+        //
+        // If nil, the default is to log the provided error and return
+        // a 502 Status Bad Gateway response.
+        // This is to support EC Solaris SPARC64 build
+        ErrorHandler func(http.ResponseWriter, *http.Request, error)
 }
 
 // A BufferPool is an interface for getting and returning temporary
@@ -59,6 +79,27 @@ type ReverseProxy struct {
 type BufferPool interface {
 	Get() []byte
 	Put([]byte)
+}
+
+// Add default Error Handler to support EC Solaris SPARC64 build
+func (p *ReverseProxy) defaultErrorHandler(rw http.ResponseWriter, req *http.Request, err error)\
+ {
+
+     p.logf("http: proxy error: %v", err)
+
+     rw.WriteHeader(http.StatusBadGateway)
+
+}
+
+
+// Add Error Handler to support EC Solaris SPARC64 build
+func (p *ReverseProxy) getErrorHandler() func(http.ResponseWriter, *http.Request, error) {
+     if p.ErrorHandler != nil {
+
+        return p.ErrorHandler
+     }
+
+     return p.defaultErrorHandler
 }
 
 func singleJoiningSlash(a, b string) string {
@@ -215,6 +256,15 @@ func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	for _, h := range hopHeaders {
 		res.Header.Del(h)
 	}
+	
+	// add to support EC Solaris build
+	if p.ModifyResponse != nil {
+              if err := p.ModifyResponse(res); err != nil {
+                     res.Body.Close()
+                     p.getErrorHandler()(rw, outreq, err)
+                     return
+              }
+        }
 
 	copyHeader(rw.Header(), res.Header)
 
